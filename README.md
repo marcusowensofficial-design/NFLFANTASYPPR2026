@@ -148,29 +148,116 @@ When connected, the ESPN Fantasy v3 API provides:
 
 ---
 
-## 🗺️ Project Roadmap (Phases 1 through 8)
+## 📁 Repository Directory Structure
+
+```
+fantasydfs/
+├── data/                               # Local SQLite databases (fantasy.db, player_crosswalk.db)
+├── scripts/                            # Diagnostic, mock test & sync automation scripts
+│   ├── test_espn_connection.py         # Diagnostic ESPN credential & league connectivity tester
+│   └── test_fantasypros_integration.py # FantasyPros consensus data validator
+├── src/                                # FastAPI Python Backend Engine
+│   ├── main.py                         # Application entrypoint & CORS middleware
+│   ├── adapters/                       # External API Integration Layer
+│   │   ├── espn/                       # ESPN Fantasy v3 client, auth & slot translation
+│   │   ├── fantasypros/                # FantasyPros consensus ECR & projection client
+│   │   ├── nfl/                        # NFL schedule, game clock, Vegas lines & injury wire
+│   │   └── weather/                    # Open-Meteo stadium forecast provider
+│   ├── api/                            # REST API Endpoint Routers
+│   │   ├── backtest_routes.py          # Model weight tuning & historical validation
+│   │   ├── fantasypros_routes.py       # Consensus ECR rankings & streaming recommendations
+│   │   ├── injury_routes.py            # Live NFL injury wire & practice tracker
+│   │   ├── league_routes.py            # Standings, matchups, rosters & ESPN sync
+│   │   ├── lineup_routes.py            # Optimal lineup solver, push to ESPN & inactives sweeper
+│   │   ├── recommendation_routes.py    # Start/Sit comparator & persistent slider settings
+│   │   └── waiver_routes.py            # Waiver upgrades & bench architecture audit
+│   ├── core/                           # System Constants & Settings
+│   │   ├── config.py                   # Pydantic environment configuration
+│   │   └── constants.py                # ESPN slot IDs, scoring constants & default weights
+│   ├── db/                             # Database Models & ORM
+│   │   ├── models.py                   # SQLAlchemy schema (League, Player, UserSettings, etc.)
+│   │   └── session.py                  # Database engine session factory
+│   └── services/                       # Business Logic & Algorithms
+│       ├── espn_sync.py                # Bidirectional ESPN league state synchronizer
+│       ├── fantasypros_sync.py         # Multi-expert consensus sync pipeline
+│       ├── backtesting/                # Historical backtest analysis & parameter tuning
+│       ├── optimizer/                  # PuLP Integer Linear Programming (ILP) lineup solver
+│       ├── recommendation/             # Explainable Start/Sit scoring engine & comparator
+│       ├── trade/                      # 2-for-1 consolidation trade recommendation engine
+│       └── waiver/                     # Waiver wire efficiency & deadweight bench analyzer
+├── frontend/                           # React 19 + Vite Frontend Dashboard
+│   ├── src/
+│   │   ├── App.tsx                     # Modular orchestrator (~430 lines, reduced from 5,290 lines!)
+│   │   ├── types.ts                    # Strongly-typed TypeScript interfaces
+│   │   ├── main.tsx                    # React application entrypoint
+│   │   ├── index.css                   # Custom dark-mode glassmorphism design system
+│   │   └── components/
+│   │       ├── modals/
+│   │       │   └── PreFlightPushModal.tsx   # 1-Click ESPN push review & diff confirmation
+│   │       ├── shared/
+│   │       │   ├── InstitutionalStatCard.tsx# Itemized NFL box-score stats drawer
+│   │       │   ├── InjuryStatusPill.tsx     # Interactive injury badge with doctor/practice notes
+│   │       │   ├── MatchupRatingKey.tsx     # Collapsible star rating legend
+│   │       │   ├── MatchupStarRating.tsx    # 1-to-5 star defensive matchup indicator
+│   │       │   └── WhyHelpers.tsx           # Provenance driver badges & formula helpers
+│   │       └── tabs/
+│   │           ├── LineupTab.tsx            # Tab 1: Optimal Lineup & interactive swap sandbox
+│   │           ├── CompareTab.tsx           # Tab 2: Head-to-Head Start/Sit Comparator (2-4 players)
+│   │           ├── WaiversTab.tsx           # Tab 3: Waiver Upgrades & Bench Architecture Audit
+│   │           ├── TradesTab.tsx            # Tab 4: 2-for-1 Consolidation Trade Analyzer
+│   │           ├── InjuriesTab.tsx          # Tab 5: Live NFL Injury Wire & practice reports
+│   │           ├── LeagueTab.tsx            # Tab 6: Official League Standings & Roster Explorer
+│   │           ├── SettingsTab.tsx          # Tab 7: SQLite-Persisted Weights & Backtest Tuning
+│   │           └── FantasyProsTab.tsx       # Tab 8: FantasyPros Consensus ECR & Streamers
+├── tests/                              # Pytest Automated Test Suite (106 tests, 100% pass)
+│   ├── test_8man_ppr_expert_enhancements.py
+│   ├── test_8team_advanced_features.py
+│   ├── test_8team_features.py
+│   ├── test_all_features_e2e.py
+│   ├── test_analytics_and_optimizer.py
+│   ├── test_api.py
+│   ├── test_db_and_sync.py
+│   ├── test_dst_dvp_matchups.py
+│   ├── test_elite_8team_upgrades.py
+│   ├── test_enhanced_features.py
+│   ├── test_espn_client.py
+│   ├── test_fantasypros_integration.py
+│   ├── test_matchups_and_accuracy.py
+│   ├── test_roster_ordering.py
+│   ├── test_start_sit_factor_scores.py
+│   └── test_why_triggers.py
+├── .gitignore                          # Safeguarded against DB locks and secrets
+├── start.bat                           # 1-Click Windows launcher (Backend + Frontend)
+└── pyproject.toml                      # Project metadata, dependencies & pytest config
+```
+
+---
+
+## 🗺️ Project Roadmap & Implementation Status
 
 - [x] **Phase 1: Architecture, Scaffolding & ESPN Connection Test** *(Completed)*
-- [ ] **Phase 2: ESPN League Dashboard & SQLite Database**
-  - SQLAlchemy models for League, Team, Player, RosterEntry, Matchup.
+- [x] **Phase 2: ESPN League Dashboard & SQLite Database** *(Completed)*
+  - SQLAlchemy models for League, Team, Player, RosterEntry, Matchup, and UserSettings.
   - Automated sync and snapshot caching with last-updated timestamps.
   - Full league overview UI: Standings, team rosters, and weekly matchups.
-- [ ] **Phase 3: External NFL Data & Player Identity Resolver**
+- [x] **Phase 3: External NFL Data & Player Identity Resolver** *(Completed)*
   - Ingestion of DynastyProcess ID mapping crosswalk into SQLite.
   - ESPN public NFL schedule, game times, dome flags, and DraftKings spreads/totals.
-  - Official NFL injury reports and practice notes.
-- [ ] **Phase 4: Explainable Start/Sit Scoring Engine**
+  - Official NFL injury reports, practice participation notes, and game-day inactive alerts.
+- [x] **Phase 4: Explainable Start/Sit Scoring Engine** *(Completed)*
   - Transparent formula: Projection + Matchup + Opportunity + Trend + Game Environment + Weather + Availability.
+  - Recalibrated composite scoring and interactive formula inspection drawers.
   - Positive and negative factor bullets with factual provenance.
-- [ ] **Phase 5: Lineup Optimizer**
+- [x] **Phase 5: Lineup Optimizer & 1-Click Push to ESPN** *(Completed)*
   - Integer Linear Programming (ILP) solver matching ESPN roster slots.
-  - Support for locked players, bye weeks, and questionable designations.
-  - Close-call head-to-head comparison module.
-- [ ] **Phase 6: Waiver-Wire Upgrade Analyzer**
-  - Evaluates unowned players vs current rostered players.
-  - Highlights drop candidates and immediate starting lineup improvements.
-- [ ] **Phase 7: Head-to-Head Comparison Tool & UI Polish**
-  - 2-4 player comparison workbench with metric radar/bar charts.
-  - Weekly workflow tabs: My Team, Start/Sit, Matchups, Waivers, Rosters, Settings.
-- [ ] **Phase 8: Backtesting & Model-Weight Optimization**
-  - Validation against prior weeks to refine factor weights.
+  - Anti-Thursday early kickoff FLEX guardrails and correlation stacking synergy.
+  - Pre-flight diff preview modal and real-time roster push directly to ESPN.
+- [x] **Phase 6: Waiver-Wire Upgrade Analyzer** *(Completed)*
+  - Evaluates unowned players vs current rostered players with live VORP calculation.
+  - 8-Man Roster Architecture & Bench Audit (Grades A-D) with deadweight drop identification.
+- [x] **Phase 7: Head-to-Head Comparison Tool & Modular Frontend** *(Completed)*
+  - 2-4 player comparison workbench with factor breakdown bars and transparent calibration formulas.
+  - Decomposed 5,290-line monolith `App.tsx` into 8 modular tabs and reusable components under `frontend/src/components/`.
+- [x] **Phase 8: Backtesting & Model-Weight Optimization** *(Completed)*
+  - Historical validation against prior weeks with Nelder-Mead automated weight optimization.
+  - Persistent slider settings stored in SQLite (`UserSettingsModel`).
