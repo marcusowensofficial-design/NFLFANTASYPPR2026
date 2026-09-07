@@ -370,3 +370,94 @@ async def push_lineup_to_espn(
         team_id=request.team_id,
         raw_payload=payload,
     )
+
+
+class InactiveAlertItem(BaseModel):
+    starter_id: int
+    starter_name: str
+    position: str
+    injury_status: str
+    pro_team: str
+    recommended_bench_id: int | None = None
+    recommended_bench_name: str | None = None
+    recommended_bench_pos: str | None = None
+    net_projected_pts: float = 0.0
+    alert_message: str
+
+
+class InactiveAlertsResponse(BaseModel):
+    team_id: int
+    has_critical_inactives: bool
+    alerts_count: int
+    alerts: list[InactiveAlertItem]
+
+
+@router.get("/inactives-alert", response_model=InactiveAlertsResponse)
+async def check_inactives_alert(
+    team_id: int | None = Query(default=None, description="Team ID to check (defaults to user team)"),
+    db: Session = Depends(get_db),
+) -> InactiveAlertsResponse:
+    """Pre-kickoff sweep identifying any active starting players ruled OUT, INACTIVE, or DOUBTFUL with bench replacements."""
+    league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+    if not league:
+        return InactiveAlertsResponse(team_id=1, has_critical_inactives=False, alerts_count=0, alerts=[])
+
+    target_team_id = team_id or league.user_team_id or 1
+    entries = db.execute(
+        select(RosterEntryModel, PlayerModel)
+        .join(PlayerModel, RosterEntryModel.player_id == PlayerModel.id)
+        .where(
+            RosterEntryModel.league_id == league.id,
+            RosterEntryModel.team_id == target_team_id,
+        )
+    ).all()
+
+    if not entries:
+        return InactiveAlertsResponse(team_id=target_team_id, has_critical_inactives=False, alerts_count=0, alerts=[])
+
+    # Fetch live injuries
+    injuries_by_athlete = await nfl_injuries_client.fetch_injuries()
+
+    starters = [(re, p) for re, p in entries if re.is_starter]
+    bench_players = [p for re, p in entries if not re.is_starter]
+
+    critical_inactives: list[InactiveAlertItem] = []
+    for re, player in starters:
+        live_inj = injuries_by_athlete.get(player.id)
+        raw_status = (live_inj.status if live_inj else player.injury_status or "ACTIVE").upper()
+
+        if raw_status in ("OUT", "INACTIVE", "IR", "SUSPENDED") or (raw_status == "DOUBTFUL"):
+            eligible_bench = [
+                bp for bp in bench_players
+                if (bp.position == player.position or re.slot_name in ("FLEX", "SUPERFLEX", "OP", "RB/WR", "WR/TE"))
+                and (bp.injury_status or "ACTIVE").upper() not in ("OUT", "INACTIVE", "IR", "DOUBTFUL")
+            ]
+            eligible_bench.sort(key=lambda b: b.projected_points, reverse=True)
+            top_sub = eligible_bench[0] if eligible_bench else None
+
+            msg = (
+                f"🚨 CRITICAL: Starter {player.full_name} ({player.position}) is {raw_status}."
+                + (f" Replace with bench {top_sub.full_name} ({top_sub.position}, {top_sub.projected_points:.1f} pts)." if top_sub else " No healthy bench backup found; check waiver wire.")
+            )
+
+            critical_inactives.append(
+                InactiveAlertItem(
+                    starter_id=player.id,
+                    starter_name=player.full_name,
+                    position=player.position,
+                    injury_status=raw_status,
+                    pro_team=player.pro_team,
+                    recommended_bench_id=top_sub.id if top_sub else None,
+                    recommended_bench_name=top_sub.full_name if top_sub else None,
+                    recommended_bench_pos=top_sub.position if top_sub else None,
+                    net_projected_pts=round(top_sub.projected_points - player.projected_points, 1) if top_sub else 0.0,
+                    alert_message=msg,
+                )
+            )
+
+    return InactiveAlertsResponse(
+        team_id=target_team_id,
+        has_critical_inactives=len(critical_inactives) > 0,
+        alerts_count=len(critical_inactives),
+        alerts=critical_inactives,
+    )

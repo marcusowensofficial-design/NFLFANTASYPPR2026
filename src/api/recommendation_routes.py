@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from src.adapters.nfl.injuries_client import nfl_injuries_client
 from src.adapters.nfl.schedule_client import nfl_schedule_client
 from src.adapters.weather.client import weather_client
-from src.db.models import LeagueModel, PlayerModel, RosterEntryModel
+from src.db.models import LeagueModel, PlayerModel, RosterEntryModel, UserSettingsModel
 from src.db.session import get_db
 from src.services.recommendation.comparator import ComparisonResult, player_comparator
 from src.services.recommendation.start_sit_factor_scores import (
@@ -29,6 +29,7 @@ router = APIRouter(prefix="/api/recommendation", tags=["Recommendation"])
 class CompareRequest(BaseModel):
     player_ids: list[int] = Field(min_length=2, max_length=4, description="List of 2 to 4 player IDs to compare")
     mode: str = Field(default="BALANCED", description="Strategy mode: BALANCED, CEILING, or FLOOR")
+    projection_source: str = Field(default="MODEL", description="Projection source: MODEL, FANTASYPROS, ESPN, or CONSENSUS")
 
 
 class ScoringSettings(BaseModel):
@@ -89,6 +90,7 @@ async def compare_players(payload: CompareRequest, db: Session = Depends(get_db)
             weather=weather,
             mode=payload.mode,
             league_size=league_size,
+            projection_source=payload.projection_source,
         )
 
         # Apply Start/Sit Comparator specific factor calibrations and transparency
@@ -98,6 +100,23 @@ async def compare_players(payload: CompareRequest, db: Session = Depends(get_db)
         ev.components.matchup_score = factors.matchup.score
         ev.components.environment_score = factors.environment.score
         ev.comparator_factors = factors.model_dump()
+
+        # Recalculate ev.start_score from the calibrated factors for complete mathematical truth
+        w = scoring_engine.weights
+        calibrated_composite = (
+            w.projection_weight * factors.projection.score
+            + w.opportunity_weight * factors.opportunity.score
+            + w.matchup_weight * factors.matchup.score
+            + w.environment_weight * factors.environment.score
+            + w.health_weight * ev.components.health_score
+            + w.weather_weight * ev.components.weather_score
+        )
+        mode_upper = payload.mode.upper()
+        if mode_upper == "CEILING":
+            calibrated_composite = (calibrated_composite * 0.40) + (ev.ceiling_score * 0.60)
+        elif mode_upper == "FLOOR":
+            calibrated_composite = (calibrated_composite * 0.40) + (ev.floor_score * 0.60)
+        ev.start_score = round(max(0.0, min(100.0, calibrated_composite)), 1)
 
         # Harmonize positive/negative evaluation drivers with the 4 factor scores
         factor_reasons = (
@@ -121,21 +140,36 @@ async def compare_players(payload: CompareRequest, db: Session = Depends(get_db)
 
 
 @router.get("/weights", response_model=ScoringWeights)
-def get_weights() -> ScoringWeights:
+def get_weights(db: Session = Depends(get_db)) -> ScoringWeights:
     """Retrieve current Start/Sit scoring weights."""
+    row = db.execute(select(UserSettingsModel).where(UserSettingsModel.id == 1)).scalar_one_or_none()
+    if row and row.weights:
+        scoring_engine.weights = ScoringWeights(**row.weights).normalize()
     return scoring_engine.weights
 
 
 @router.post("/weights", response_model=ScoringWeights)
-def update_weights(new_weights: ScoringWeights) -> ScoringWeights:
-    """Update Start/Sit scoring weights."""
+def update_weights(new_weights: ScoringWeights, db: Session = Depends(get_db)) -> ScoringWeights:
+    """Update Start/Sit scoring weights and persist to database."""
     scoring_engine.weights = new_weights.normalize()
+    row = db.execute(select(UserSettingsModel).where(UserSettingsModel.id == 1)).scalar_one_or_none()
+    if not row:
+        row = UserSettingsModel(id=1, league_size=scoring_engine.league_size, weights_json=scoring_engine.weights.model_dump_json())
+        db.add(row)
+    else:
+        row.weights_json = scoring_engine.weights.model_dump_json()
+    db.commit()
     return scoring_engine.weights
 
 
 @router.get("/settings", response_model=ScoringSettings)
-def get_settings() -> ScoringSettings:
+def get_settings(db: Session = Depends(get_db)) -> ScoringSettings:
     """Retrieve current Start/Sit scoring settings and league size calibration."""
+    row = db.execute(select(UserSettingsModel).where(UserSettingsModel.id == 1)).scalar_one_or_none()
+    if row:
+        scoring_engine.league_size = row.league_size
+        if row.weights:
+            scoring_engine.weights = ScoringWeights(**row.weights).normalize()
     return ScoringSettings(
         league_size=scoring_engine.league_size,
         weights=scoring_engine.weights,
@@ -143,10 +177,20 @@ def get_settings() -> ScoringSettings:
 
 
 @router.post("/settings", response_model=ScoringSettings)
-def update_settings(settings: ScoringSettings) -> ScoringSettings:
-    """Update Start/Sit scoring settings including league size calibration."""
+def update_settings(settings: ScoringSettings, db: Session = Depends(get_db)) -> ScoringSettings:
+    """Update Start/Sit scoring settings including league size calibration and persist to database."""
     scoring_engine.league_size = settings.league_size
     scoring_engine.weights = settings.weights.normalize()
+
+    row = db.execute(select(UserSettingsModel).where(UserSettingsModel.id == 1)).scalar_one_or_none()
+    if not row:
+        row = UserSettingsModel(id=1, league_size=settings.league_size, weights_json=settings.weights.model_dump_json())
+        db.add(row)
+    else:
+        row.league_size = settings.league_size
+        row.weights_json = settings.weights.model_dump_json()
+    db.commit()
+
     return ScoringSettings(
         league_size=scoring_engine.league_size,
         weights=scoring_engine.weights,

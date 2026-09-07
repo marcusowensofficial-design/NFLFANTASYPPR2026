@@ -224,3 +224,24 @@ class SyncLogModel(Base):
     synced_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
     status: Mapped[str] = mapped_column(String(20), nullable=False)  # SUCCESS, ERROR
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class UserSettingsModel(Base):
+    __tablename__ = "user_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    league_size: Mapped[int] = mapped_column(Integer, default=8)
+    weights_json: Mapped[str] = mapped_column(Text, default="{}")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
+
+    @property
+    def weights(self) -> dict[str, float]:
+        try:
+            return json.loads(self.weights_json)
+        except Exception:
+            return {}
+
+    @weights.setter
+    def weights(self, value: dict[str, float]) -> None:
+        self.weights_json = json.dumps(value)
+
