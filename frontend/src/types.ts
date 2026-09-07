@@ -477,3 +477,22 @@ export function isInjuryStatus(status?: string | null): boolean {
   return true
 }
 
+export interface InactiveAlertItem {
+  player_id: number
+  full_name: string
+  position: string
+  team_name: string
+  slot_name: string
+  injury_status: string
+  is_out: boolean
+  is_starter: boolean
+  alert_message: string
+}
+
+export interface InactiveAlertsResponse {
+  team_id: number
+  has_inactives: boolean
+  count: number
+  alerts: InactiveAlertItem[]
+}
+
