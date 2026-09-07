@@ -52,15 +52,14 @@ app.include_router(injury_router)
 app.include_router(fantasypros_router)
 
 
-# Allow local frontend during development
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
+
+# Allow local and deployed frontends (e.g. Render, Railway, localhost)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origin_regex=r"^https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -159,3 +158,30 @@ async def test_espn_connection_endpoint(payload: ConnectionTestRequest) -> Conne
         is_private_required=is_private_required,
         summary=summary,
     )
+
+
+# -----------------------------------------------------------------------------
+# Frontend Static Asset & Single-Page Application (SPA) Serving
+# -----------------------------------------------------------------------------
+frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+if (frontend_dist / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="assets")
+
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    """Serve built frontend SPA assets or fallback to index.html."""
+    if full_path.startswith("api/") or full_path in ("docs", "openapi.json", "redoc"):
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    file_path = frontend_dist / full_path
+    if full_path and file_path.is_file():
+        return FileResponse(file_path)
+
+    index_html = frontend_dist / "index.html"
+    if index_html.is_file():
+        return FileResponse(index_html)
+
+    return {"message": "Apex Fantasy Analytics API", "docs": "/docs"}
+
