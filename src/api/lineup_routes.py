@@ -1,0 +1,372 @@
+"""API routes for lineup optimization, starting lineup diffs, and close call detection."""
+
+import asyncio
+from typing import Any
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from src.adapters.espn.client import ESPNClient
+from src.adapters.espn.constants import RosterSlot, SLOT_NAME_MAP
+from src.adapters.nfl.injuries_client import nfl_injuries_client
+from src.adapters.nfl.schedule_client import nfl_schedule_client
+from src.adapters.weather.client import weather_client
+from src.core.config import settings
+from src.db.models import LeagueModel, MatchupModel, PlayerModel, RosterEntryModel, TeamModel
+from src.db.session import get_db
+from src.services.espn_sync import ESPNSyncService
+from src.services.optimizer.lineup_optimizer import (
+    CloseCallPair,
+    OptimizedLineupResult,
+    SlotAssignment,
+    lineup_optimizer,
+)
+from src.services.recommendation.scoring_engine import (
+    StartSitEvaluation,
+    scoring_engine,
+)
+
+router = APIRouter(prefix="/api/lineup", tags=["Lineup"])
+
+
+class LineupMoveItem(BaseModel):
+    player_id: int
+    player_name: str
+    position: str
+    from_slot_id: int
+    from_slot_name: str
+    to_slot_id: int
+    to_slot_name: str
+    net_gain: float
+    start_score: float
+
+
+class PreFlightPushPreview(BaseModel):
+    team_id: int
+    team_name: str
+    moves_count: int
+    moves: list[LineupMoveItem]
+    can_push_to_espn: bool
+    status_message: str
+
+
+class LineupPushRequest(BaseModel):
+    team_id: int
+    confirm: bool = False
+    selected_moves: list[dict[str, Any]] = Field(default_factory=list)
+    mode: str = "BALANCED"
+    projection_source: str = "MODEL"
+    custom_starter_ids: list[int] | None = None
+
+
+class LineupPushResponse(BaseModel):
+    success: bool
+    message: str
+    moves_executed: int
+    team_id: int
+    raw_payload: dict[str, Any] = Field(default_factory=dict)
+
+
+@router.get("/optimal", response_model=OptimizedLineupResult)
+async def get_optimal_lineup(
+    team_id: int | None = Query(default=None, description="Optional team ID (defaults to user team)"),
+    mode: str = Query(default="BALANCED", description="Strategy mode: BALANCED, CEILING, FLOOR, or AUTO"),
+    projection_source: str = Query(default="MODEL", description="Projection source: MODEL, FANTASYPROS, ESPN, or CONSENSUS"),
+    opponent_projected_points: float | None = Query(default=None, description="Optional opponent projected points (auto-retrieved from matchup if omitted)"),
+    db: Session = Depends(get_db),
+) -> OptimizedLineupResult:
+    """Run lineup optimizer for the target team and return starters, bench, and close calls."""
+    league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+    if not league:
+        raise HTTPException(status_code=404, detail="No league data found. Sync ESPN first.")
+
+    target_team_id = team_id or league.user_team_id or 1
+    league_size = league.size or 8
+    mode_val = str(getattr(mode, "default", mode) if hasattr(mode, "default") else (mode or "BALANCED"))
+    proj_source_val = str(getattr(projection_source, "default", projection_source) if hasattr(projection_source, "default") else (projection_source or "MODEL")).upper().strip()
+
+    # Auto-resolve opponent projected points from live weekly matchup if not provided
+    opp_proj: float | None = None
+    if isinstance(opponent_projected_points, (int, float)):
+        opp_proj = float(opponent_projected_points)
+    else:
+        matchup = db.execute(
+            select(MatchupModel).where(
+                MatchupModel.league_id == league.id,
+                MatchupModel.week == league.current_week,
+                (MatchupModel.home_team_id == target_team_id) | (MatchupModel.away_team_id == target_team_id),
+            )
+        ).scalars().first()
+        if matchup:
+            opp_team_id = matchup.away_team_id if matchup.home_team_id == target_team_id else matchup.home_team_id
+            opp_starter_projs = db.execute(
+                select(PlayerModel.projected_points)
+                .join(RosterEntryModel, RosterEntryModel.player_id == PlayerModel.id)
+                .where(
+                    RosterEntryModel.league_id == league.id,
+                    RosterEntryModel.team_id == opp_team_id,
+                    RosterEntryModel.is_starter == True,
+                )
+            ).scalars().all()
+            if opp_starter_projs:
+                opp_proj = round(sum(opp_starter_projs), 1)
+
+    team = db.execute(
+        select(TeamModel).where(TeamModel.id == target_team_id, TeamModel.league_id == league.id)
+    ).scalar_one_or_none()
+    if not team:
+        raise HTTPException(status_code=404, detail=f"Team {target_team_id} not found.")
+
+    # Retrieve all players currently on this team's roster
+    entries = db.execute(
+        select(RosterEntryModel, PlayerModel)
+        .join(PlayerModel, RosterEntryModel.player_id == PlayerModel.id)
+        .where(
+            RosterEntryModel.league_id == league.id,
+            RosterEntryModel.team_id == target_team_id,
+        )
+    ).all()
+
+    if not entries:
+        raise HTTPException(status_code=404, detail="No roster players found for this team.")
+
+    current_starter_ids = {re.player_id for re, _ in entries if re.is_starter}
+    current_ir_ids = {re.player_id for re, _ in entries if re.lineup_slot_id == RosterSlot.IR or re.slot_name == "IR"}
+    locked_player_ids = {re.player_id for re, _ in entries if re.lineup_locked}
+    locked_starter_slot_map = {re.player_id: re.lineup_slot_id for re, _ in entries if re.lineup_locked and re.is_starter}
+
+    # Fetch live NFL schedule and injuries concurrently in parallel
+    nfl_games, injuries_by_athlete = await asyncio.gather(
+        nfl_schedule_client.fetch_week_schedule(season=league.season, week=league.current_week),
+        nfl_injuries_client.fetch_injuries(),
+    )
+
+    # Pre-fetch weather for all outdoor home venues in parallel
+    home_teams = {g.home_team for g in nfl_games if g.home_team and g.home_team != "UNK"}
+    weather_reports = await asyncio.gather(*(weather_client.get_stadium_weather(ht) for ht in home_teams))
+    weather_by_home_team = dict(zip(home_teams, weather_reports))
+
+    # Pre-compute O(1) game and weather context matrix by team
+    games_by_team = {}
+    weather_by_team = {}
+    for g in nfl_games:
+        games_by_team[g.home_team] = g
+        games_by_team[g.away_team] = g
+        w = weather_by_home_team.get(g.home_team)
+        weather_by_team[g.home_team] = w
+        weather_by_team[g.away_team] = w
+
+    # Evaluate each player with StartSitScoringEngine using O(1) precomputed game context
+    evaluations: list[StartSitEvaluation] = []
+    for _, player in entries:
+        game = games_by_team.get(player.pro_team)
+        weather = weather_by_team.get(player.pro_team)
+        injury = injuries_by_athlete.get(player.id)
+        ev = scoring_engine.evaluate_player(
+            player,
+            nfl_game=game,
+            injury_report=injury,
+            weather=weather,
+            mode=mode_val,
+            league_size=league_size,
+            projection_source=proj_source_val,
+        )
+        evaluations.append(ev)
+
+    # Run optimizer
+    result = lineup_optimizer.optimize_lineup(
+        team_id=target_team_id,
+        roster_slots_config=league.roster_slots,
+        evaluations=evaluations,
+        current_starter_ids=current_starter_ids,
+        locked_player_ids=locked_player_ids,
+        locked_starter_slot_map=locked_starter_slot_map,
+        mode=mode_val,
+        opponent_projected_points=opp_proj,
+        current_ir_ids=current_ir_ids,
+        projection_source=proj_source_val,
+    )
+
+    return result
+
+
+
+@router.post("/push", response_model=LineupPushResponse | PreFlightPushPreview)
+async def push_lineup_to_espn(
+    request: LineupPushRequest,
+    db: Session = Depends(get_db),
+) -> Any:
+    """Pre-flight check or authenticated 1-click execution of optimal roster moves on ESPN."""
+    league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+    if not league:
+        raise HTTPException(status_code=404, detail="No active league found.")
+
+    team = db.execute(
+        select(TeamModel).where(TeamModel.id == request.team_id, TeamModel.league_id == league.id)
+    ).scalar_one_or_none()
+    if not team:
+        raise HTTPException(status_code=404, detail=f"Team {request.team_id} not found.")
+
+    # Calculate optimal lineup using the requested mode and projection source
+    optimal = await get_optimal_lineup(
+        team_id=request.team_id,
+        mode=request.mode,
+        projection_source=request.projection_source,
+        db=db,
+    )
+
+    # Get current roster entries to determine exact movements
+    roster_entries = db.execute(
+        select(RosterEntryModel, PlayerModel)
+        .join(PlayerModel, RosterEntryModel.player_id == PlayerModel.id)
+        .where(
+            RosterEntryModel.league_id == league.id,
+            RosterEntryModel.team_id == request.team_id,
+        )
+    ).all()
+
+    entry_map = {re.player_id: (re, p) for re, p in roster_entries}
+
+    target_slots = optimal.starters
+    if request.custom_starter_ids:
+        custom_id_set = set(request.custom_starter_ids)
+        all_evals = {s.recommended_player.player_id: s.recommended_player for s in optimal.starters}
+        all_evals.update({b.player_id: b for b in optimal.bench})
+        updated_slots = []
+        assigned_cids = set()
+        for slot in optimal.starters:
+            if slot.recommended_player.player_id in custom_id_set:
+                updated_slots.append(slot)
+                assigned_cids.add(slot.recommended_player.player_id)
+            else:
+                replacement = None
+                for cid in request.custom_starter_ids:
+                    if cid not in assigned_cids and cid in all_evals:
+                        cand = all_evals[cid]
+                        if (
+                            (slot.slot_name == "FLEX" and cand.position in ("RB", "WR", "TE"))
+                            or (cand.position == slot.slot_name)
+                            or (slot.slot_name == "KICKER" and cand.position in ("K", "PK"))
+                            or (slot.slot_name in ("DEFENSE", "DST", "D/ST") and cand.position in ("DST", "D/ST", "DEF"))
+                        ):
+                            replacement = cand
+                            assigned_cids.add(cid)
+                            break
+                if replacement:
+                    from copy import copy
+                    slot_copy = copy(slot)
+                    slot_copy.recommended_player = replacement
+                    curr_pts = slot.current_starter.projected_points if slot.current_starter else 0.0
+                    slot_copy.net_projected_delta = round(replacement.projected_points - curr_pts, 2)
+                    updated_slots.append(slot_copy)
+                else:
+                    updated_slots.append(slot)
+        target_slots = updated_slots
+
+    # Find differences between current starters and recommended starters
+    moves: list[LineupMoveItem] = []
+    for slot in target_slots:
+        rec_player = slot.recommended_player
+        curr_starter = slot.current_starter
+
+        # If the recommended player was on the bench, they must be promoted to starter
+        if curr_starter and rec_player.player_id != curr_starter.player_id:
+            curr_re, _ = entry_map[curr_starter.player_id]
+            rec_re, _ = entry_map[rec_player.player_id]
+
+            moves.append(
+                LineupMoveItem(
+                    player_id=rec_player.player_id,
+                    player_name=str(rec_player.full_name),
+                    position=rec_player.position,
+                    from_slot_id=rec_re.lineup_slot_id,
+                    from_slot_name=SLOT_NAME_MAP.get(rec_re.lineup_slot_id, "BENCH"),
+                    to_slot_id=slot.slot_id,
+                    to_slot_name=slot.slot_name,
+                    net_gain=slot.net_projected_delta,
+                    start_score=rec_player.start_score,
+                )
+            )
+            moves.append(
+                LineupMoveItem(
+                    player_id=curr_starter.player_id,
+                    player_name=str(curr_starter.full_name),
+                    position=curr_starter.position,
+                    from_slot_id=curr_re.lineup_slot_id,
+                    from_slot_name=slot.slot_name,
+                    to_slot_id=RosterSlot.BENCH,
+                    to_slot_name="Bench",
+                    net_gain=-slot.net_projected_delta,
+                    start_score=curr_starter.start_score,
+                )
+            )
+
+    can_push = bool(settings.espn_swid and settings.espn_s2)
+
+    # Mode 1: Pre-Flight Review Preview
+    if not request.confirm:
+        msg = f"Ready to submit {len(moves)} roster moves to ESPN." if moves else "Lineup is already 100% optimal!"
+        if not can_push:
+            msg = "ESPN authenticated credentials (SWID / espn_s2) are missing in .env."
+
+        return PreFlightPushPreview(
+            team_id=request.team_id,
+            team_name=team.name,
+            moves_count=len(moves),
+            moves=moves,
+            can_push_to_espn=can_push,
+            status_message=msg,
+        )
+
+    # Mode 2: Confirmed Execution
+    if not can_push:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot push lineup: ESPN_SWID and ESPN_S2 session cookies not configured in .env",
+        )
+
+    client = ESPNClient(
+        league_id=league.id,
+        season=league.season,
+        swid=settings.espn_swid,
+        espn_s2=settings.espn_s2,
+    )
+
+    # Use provided selected moves or all generated moves
+    moves_to_execute = request.selected_moves if request.selected_moves else [
+        {
+            "player_id": m.player_id,
+            "from_slot_id": m.from_slot_id,
+            "to_slot_id": m.to_slot_id,
+        }
+        for m in moves
+    ]
+
+    if not moves_to_execute:
+        return LineupPushResponse(
+            success=True,
+            message="No moves to execute; lineup is already optimal.",
+            moves_executed=0,
+            team_id=request.team_id,
+        )
+
+    success, message, payload = await client.execute_roster_transaction(
+        team_id=request.team_id,
+        moves=moves_to_execute,
+        scoring_period_id=league.current_week,
+        dry_run=False,
+    )
+
+    # Trigger background re-sync if successfully executed
+    if success:
+        sync_service = ESPNSyncService(db=db)
+        await sync_service.sync(league_id=league.id, force=True)
+
+    return LineupPushResponse(
+        success=success,
+        message=message,
+        moves_executed=len(moves_to_execute) if success else 0,
+        team_id=request.team_id,
+        raw_payload=payload,
+    )

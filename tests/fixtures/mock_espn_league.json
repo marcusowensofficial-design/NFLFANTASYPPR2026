@@ -1,0 +1,442 @@
+{
+  "id": 84920174,
+  "seasonId": 2026,
+  "scoringPeriodId": 1,
+  "firstScoringPeriod": 1,
+  "finalScoringPeriod": 17,
+  "currentMatchupPeriod": 1,
+  "settings": {
+    "name": "The Apex 2026 Invitational",
+    "size": 8,
+    "rosterSettings": {
+      "lineupSlotCounts": {
+        "0": 1,
+        "2": 2,
+        "4": 2,
+        "6": 1,
+        "23": 1,
+        "16": 1,
+        "17": 1,
+        "20": 7,
+        "21": 2
+      },
+      "positionLimits": {
+        "0": 4,
+        "2": 8,
+        "4": 8,
+        "6": 3,
+        "16": 3,
+        "17": 3
+      }
+    },
+    "scoringSettings": {
+      "scoringItems": [
+        {"statId": 53, "points": 1.0},
+        {"statId": 23, "points": 0.04},
+        {"statId": 24, "points": 4.0},
+        {"statId": 26, "points": -2.0},
+        {"statId": 42, "points": 0.1},
+        {"statId": 43, "points": 6.0},
+        {"statId": 41, "points": 0.1},
+        {"statId": 45, "points": 6.0},
+        {"statId": 72, "points": -2.0}
+      ]
+    }
+  },
+  "teams": [
+    {
+      "id": 1,
+      "location": "Gridiron",
+      "nickname": "Gurus",
+      "abbrev": "GURU",
+      "primaryOwner": "Marco",
+      "owners": ["{MARCO-USER-GUID}"],
+      "divisionId": 0,
+      "record": {
+        "overall": {
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "pointsFor": 0.0,
+          "pointsAgainst": 0.0
+        }
+      },
+      "roster": {
+        "appliedStatTotal": 0.0,
+        "entries": [
+          {
+            "playerId": 4426348,
+            "lineupSlotId": 0,
+            "injuryStatus": "ACTIVE",
+            "playerPoolEntry": {
+              "id": 4426348,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": 4426348,
+                "fullName": "Jayden Daniels",
+                "firstName": "Jayden",
+                "lastName": "Daniels",
+                "defaultPositionId": 1,
+                "proTeamId": 28,
+                "eligibleSlots": [0, 7, 20, 21],
+                "injuryStatus": "ACTIVE",
+                "injured": false,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 21.4, "stats": {}}
+                ]
+              }
+            }
+          },
+          {
+            "playerId": 4361579,
+            "lineupSlotId": 2,
+            "injuryStatus": "ACTIVE",
+            "playerPoolEntry": {
+              "id": 4361579,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": 4361579,
+                "fullName": "Bijan Robinson",
+                "firstName": "Bijan",
+                "lastName": "Robinson",
+                "defaultPositionId": 2,
+                "proTeamId": 1,
+                "eligibleSlots": [2, 3, 23, 7, 20, 21],
+                "injuryStatus": "ACTIVE",
+                "injured": false,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 19.8, "stats": {}}
+                ]
+              }
+            }
+          },
+          {
+            "playerId": 4241457,
+            "lineupSlotId": 2,
+            "injuryStatus": "ACTIVE",
+            "playerPoolEntry": {
+              "id": 4241457,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": 4241457,
+                "fullName": "Jahmyr Gibbs",
+                "firstName": "Jahmyr",
+                "lastName": "Gibbs",
+                "defaultPositionId": 2,
+                "proTeamId": 8,
+                "eligibleSlots": [2, 3, 23, 7, 20, 21],
+                "injuryStatus": "ACTIVE",
+                "injured": false,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 18.2, "stats": {}}
+                ]
+              }
+            }
+          },
+          {
+            "playerId": 4362628,
+            "lineupSlotId": 4,
+            "injuryStatus": "ACTIVE",
+            "playerPoolEntry": {
+              "id": 4362628,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": 4362628,
+                "fullName": "Amon-Ra St. Brown",
+                "firstName": "Amon-Ra",
+                "lastName": "St. Brown",
+                "defaultPositionId": 3,
+                "proTeamId": 8,
+                "eligibleSlots": [3, 4, 5, 23, 7, 20, 21],
+                "injuryStatus": "ACTIVE",
+                "injured": false,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 19.5, "stats": {}}
+                ]
+              }
+            }
+          },
+          {
+            "playerId": 4430878,
+            "lineupSlotId": 4,
+            "injuryStatus": "QUESTIONABLE",
+            "playerPoolEntry": {
+              "id": 4430878,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": 4430878,
+                "fullName": "Marvin Harrison Jr.",
+                "firstName": "Marvin",
+                "lastName": "Harrison Jr.",
+                "defaultPositionId": 3,
+                "proTeamId": 22,
+                "eligibleSlots": [3, 4, 5, 23, 7, 20, 21],
+                "injuryStatus": "QUESTIONABLE",
+                "injured": true,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 16.8, "stats": {}}
+                ]
+              }
+            }
+          },
+          {
+            "playerId": 4430027,
+            "lineupSlotId": 6,
+            "injuryStatus": "ACTIVE",
+            "playerPoolEntry": {
+              "id": 4430027,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": 4430027,
+                "fullName": "Brock Bowers",
+                "firstName": "Brock",
+                "lastName": "Bowers",
+                "defaultPositionId": 4,
+                "proTeamId": 13,
+                "eligibleSlots": [5, 6, 23, 7, 20, 21],
+                "injuryStatus": "ACTIVE",
+                "injured": false,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 14.5, "stats": {}}
+                ]
+              }
+            }
+          },
+          {
+            "playerId": 4426515,
+            "lineupSlotId": 23,
+            "injuryStatus": "ACTIVE",
+            "playerPoolEntry": {
+              "id": 4426515,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": 4426515,
+                "fullName": "Malik Nabers",
+                "firstName": "Malik",
+                "lastName": "Nabers",
+                "defaultPositionId": 3,
+                "proTeamId": 20,
+                "eligibleSlots": [3, 4, 5, 23, 7, 20, 21],
+                "injuryStatus": "ACTIVE",
+                "injured": false,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 16.2, "stats": {}}
+                ]
+              }
+            }
+          },
+          {
+            "playerId": -16008,
+            "lineupSlotId": 16,
+            "injuryStatus": "ACTIVE",
+            "playerPoolEntry": {
+              "id": -16008,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": -16008,
+                "fullName": "Detroit Lions D/ST",
+                "firstName": "Detroit",
+                "lastName": "Lions",
+                "defaultPositionId": 16,
+                "proTeamId": 8,
+                "eligibleSlots": [16, 20],
+                "injuryStatus": "ACTIVE",
+                "injured": false,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 8.5, "stats": {}}
+                ]
+              }
+            }
+          },
+          {
+            "playerId": 4242335,
+            "lineupSlotId": 17,
+            "injuryStatus": "ACTIVE",
+            "playerPoolEntry": {
+              "id": 4242335,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": 4242335,
+                "fullName": "Brandon Aubrey",
+                "firstName": "Brandon",
+                "lastName": "Aubrey",
+                "defaultPositionId": 5,
+                "proTeamId": 6,
+                "eligibleSlots": [17, 20],
+                "injuryStatus": "ACTIVE",
+                "injured": false,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 9.2, "stats": {}}
+                ]
+              }
+            }
+          },
+          {
+            "playerId": 4374302,
+            "lineupSlotId": 20,
+            "injuryStatus": "ACTIVE",
+            "playerPoolEntry": {
+              "id": 4374302,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": 4374302,
+                "fullName": "De'Von Achane",
+                "firstName": "De'Von",
+                "lastName": "Achane",
+                "defaultPositionId": 2,
+                "proTeamId": 15,
+                "eligibleSlots": [2, 3, 23, 7, 20, 21],
+                "injuryStatus": "ACTIVE",
+                "injured": false,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 15.6, "stats": {}}
+                ]
+              }
+            }
+          },
+          {
+            "playerId": 4258183,
+            "lineupSlotId": 20,
+            "injuryStatus": "ACTIVE",
+            "playerPoolEntry": {
+              "id": 4258183,
+              "status": "ONTEAM",
+              "lineupLocked": false,
+              "player": {
+                "id": 4258183,
+                "fullName": "Drake London",
+                "firstName": "Drake",
+                "lastName": "London",
+                "defaultPositionId": 3,
+                "proTeamId": 1,
+                "eligibleSlots": [3, 4, 5, 23, 7, 20, 21],
+                "injuryStatus": "ACTIVE",
+                "injured": false,
+                "stats": [
+                  {"statSourceId": 1, "scoringPeriodId": 1, "appliedTotal": 14.8, "stats": {}}
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "location": "Touchdown",
+      "nickname": "Titans",
+      "abbrev": "TTN",
+      "primaryOwner": "Alex",
+      "owners": ["{ALEX-GUID}"],
+      "divisionId": 0,
+      "record": {"overall": {"wins": 0, "losses": 0, "ties": 0, "pointsFor": 0.0, "pointsAgainst": 0.0}},
+      "roster": {"appliedStatTotal": 0.0, "entries": []}
+    },
+    {
+      "id": 3,
+      "location": "Endzone",
+      "nickname": "Enforcers",
+      "abbrev": "ENF",
+      "primaryOwner": "Chris",
+      "owners": ["{CHRIS-GUID}"],
+      "divisionId": 0,
+      "record": {"overall": {"wins": 0, "losses": 0, "ties": 0, "pointsFor": 0.0, "pointsAgainst": 0.0}},
+      "roster": {"appliedStatTotal": 0.0, "entries": []}
+    },
+    {
+      "id": 4,
+      "location": "RedZone",
+      "nickname": "Raiders",
+      "abbrev": "RZR",
+      "primaryOwner": "Jordan",
+      "owners": ["{JORDAN-GUID}"],
+      "divisionId": 0,
+      "record": {"overall": {"wins": 0, "losses": 0, "ties": 0, "pointsFor": 0.0, "pointsAgainst": 0.0}},
+      "roster": {"appliedStatTotal": 0.0, "entries": []}
+    },
+    {
+      "id": 5,
+      "location": "Sunday",
+      "nickname": "Savages",
+      "abbrev": "SVG",
+      "primaryOwner": "Taylor",
+      "owners": ["{TAYLOR-GUID}"],
+      "divisionId": 1,
+      "record": {"overall": {"wins": 0, "losses": 0, "ties": 0, "pointsFor": 0.0, "pointsAgainst": 0.0}},
+      "roster": {"appliedStatTotal": 0.0, "entries": []}
+    },
+    {
+      "id": 6,
+      "location": "Blitz",
+      "nickname": "Brigade",
+      "abbrev": "BLTZ",
+      "primaryOwner": "Morgan",
+      "owners": ["{MORGAN-GUID}"],
+      "divisionId": 1,
+      "record": {"overall": {"wins": 0, "losses": 0, "ties": 0, "pointsFor": 0.0, "pointsAgainst": 0.0}},
+      "roster": {"appliedStatTotal": 0.0, "entries": []}
+    },
+    {
+      "id": 7,
+      "location": "Hail Mary",
+      "nickname": "Heroes",
+      "abbrev": "HMH",
+      "primaryOwner": "Sam",
+      "owners": ["{SAM-GUID}"],
+      "divisionId": 1,
+      "record": {"overall": {"wins": 0, "losses": 0, "ties": 0, "pointsFor": 0.0, "pointsAgainst": 0.0}},
+      "roster": {"appliedStatTotal": 0.0, "entries": []}
+    },
+    {
+      "id": 8,
+      "location": "Pigskin",
+      "nickname": "Prophets",
+      "abbrev": "PROP",
+      "primaryOwner": "Casey",
+      "owners": ["{CASEY-GUID}"],
+      "divisionId": 1,
+      "record": {"overall": {"wins": 0, "losses": 0, "ties": 0, "pointsFor": 0.0, "pointsAgainst": 0.0}},
+      "roster": {"appliedStatTotal": 0.0, "entries": []}
+    }
+  ],
+  "schedule": [
+    {
+      "id": 1,
+      "matchupPeriodId": 1,
+      "home": {"teamId": 1, "totalPoints": 0.0, "totalPointsLive": 0.0},
+      "away": {"teamId": 2, "totalPoints": 0.0, "totalPointsLive": 0.0},
+      "winner": "UNDECIDED"
+    },
+    {
+      "id": 2,
+      "matchupPeriodId": 1,
+      "home": {"teamId": 3, "totalPoints": 0.0, "totalPointsLive": 0.0},
+      "away": {"teamId": 4, "totalPoints": 0.0, "totalPointsLive": 0.0},
+      "winner": "UNDECIDED"
+    },
+    {
+      "id": 3,
+      "matchupPeriodId": 1,
+      "home": {"teamId": 5, "totalPoints": 0.0, "totalPointsLive": 0.0},
+      "away": {"teamId": 6, "totalPoints": 0.0, "totalPointsLive": 0.0},
+      "winner": "UNDECIDED"
+    },
+    {
+      "id": 4,
+      "matchupPeriodId": 1,
+      "home": {"teamId": 7, "totalPoints": 0.0, "totalPointsLive": 0.0},
+      "away": {"teamId": 8, "totalPoints": 0.0, "totalPointsLive": 0.0},
+      "winner": "UNDECIDED"
+    }
+  ]
+}
