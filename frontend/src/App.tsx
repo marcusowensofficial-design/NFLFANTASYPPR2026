@@ -556,17 +556,26 @@ export function App() {
         try {
           localStorage.setItem('apex_league_summary', JSON.stringify(summaryData))
         } catch {}
-        const teamId = summaryData.user_team_id || (summaryData.teams.length > 0 ? summaryData.teams[0].id : 6)
-        setSelectedTeamId(teamId)
+
+        // Preserve the team the user intentionally selected; do not revert to Blind Horse
+        const storedTeam = localStorage.getItem('apex_selected_team_id')
+        const currentTargetId = (selectedTeamId && summaryData.teams.some(t => t.id === selectedTeamId))
+          ? selectedTeamId
+          : (storedTeam && summaryData.teams.some(t => t.id === Number(storedTeam)))
+            ? Number(storedTeam)
+            : (summaryData.user_team_id || (summaryData.teams.length > 0 ? summaryData.teams[0].id : 6))
+
+        setSelectedTeamId(currentTargetId)
+        setSelectedRosterTeamId(currentTargetId)
         try {
-          localStorage.setItem('apex_selected_team_id', String(teamId))
+          localStorage.setItem('apex_selected_team_id', String(currentTargetId))
         } catch {}
-        loadTeamLineup(teamId, strategyMode, projectionSource, true)
-        loadWaivers(teamId)
+        loadTeamLineup(currentTargetId, strategyMode, projectionSource, true)
+        loadWaivers(currentTargetId)
         loadAllPlayers()
         loadInjuries()
-        checkInactivesAlerts(teamId)
-        loadIntelData(teamId, true)
+        checkInactivesAlerts(currentTargetId)
+        loadIntelData(currentTargetId, true)
       }
     } catch (err: any) {
       if (err?.name === 'AbortError') {
@@ -853,9 +862,14 @@ export function App() {
                     const newId = Number(e.target.value)
                     setIsExplicitCompare(false)
                     setSelectedTeamId(newId)
+                    setSelectedRosterTeamId(newId)
                     try {
                       localStorage.setItem('apex_selected_team_id', String(newId))
                     } catch {}
+                    loadTeamLineup(newId, strategyMode, projectionSource, true)
+                    loadWaivers(newId)
+                    checkInactivesAlerts(newId)
+                    loadIntelData(newId, true)
                   }}
                 >
                   {league.teams.map((t: TeamSummary) => (
