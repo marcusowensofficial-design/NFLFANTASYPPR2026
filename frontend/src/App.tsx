@@ -113,6 +113,39 @@ export function App() {
       return 6
     }
   })
+  const [pendingTeamId, setPendingTeamId] = useState<number>(() => {
+    try {
+      const cachedTeam = localStorage.getItem('apex_selected_team_id')
+      if (cachedTeam) return Number(cachedTeam)
+      const cachedLeague = localStorage.getItem('apex_league_summary')
+      if (cachedLeague) {
+        const parsed = JSON.parse(cachedLeague)
+        return parsed.user_team_id || (parsed.teams?.length > 0 ? parsed.teams[0].id : 6)
+      }
+      return 6
+    } catch {
+      return 6
+    }
+  })
+  const [isLockedIn, setIsLockedIn] = useState<boolean>(false)
+
+  const handleLockInTeam = () => {
+    if (!pendingTeamId) return
+    setIsExplicitCompare(false)
+    setSelectedTeamId(pendingTeamId)
+    setSelectedRosterTeamId(pendingTeamId)
+    try {
+      localStorage.setItem('apex_selected_team_id', String(pendingTeamId))
+    } catch {}
+    loadTeamLineup(pendingTeamId, strategyMode, projectionSource, true)
+    loadWaivers(pendingTeamId)
+    loadConsolidationTrades(pendingTeamId)
+    loadBacktestReport(pendingTeamId)
+    checkInactivesAlerts(pendingTeamId)
+    loadIntelData(pendingTeamId, true)
+    setIsLockedIn(true)
+    setTimeout(() => setIsLockedIn(false), 2000)
+  }
   const [lineup, setLineup] = useState<OptimizedLineupResult | null>(null)
   const [allPlayers, setAllPlayers] = useState<PlayerDirectoryItem[]>([])
   const [inactivesAlerts, setInactivesAlerts] = useState<InactiveAlertItem[]>([])
@@ -221,6 +254,7 @@ export function App() {
           setIsExplicitCompare(false)
           setSelectedTeamId(targetTeam)
         }
+        setPendingTeamId(targetTeam)
         setSelectedRosterTeamId(targetTeam)
         loadTeamRoster(targetTeam)
         prefetchAllTeamRosters(data.teams)
@@ -559,13 +593,16 @@ export function App() {
 
         // Preserve the team the user intentionally selected; do not revert to Blind Horse
         const storedTeam = localStorage.getItem('apex_selected_team_id')
-        const currentTargetId = (selectedTeamId && summaryData.teams.some(t => t.id === selectedTeamId))
-          ? selectedTeamId
-          : (storedTeam && summaryData.teams.some(t => t.id === Number(storedTeam)))
-            ? Number(storedTeam)
-            : (summaryData.user_team_id || (summaryData.teams.length > 0 ? summaryData.teams[0].id : 6))
+        const currentTargetId = (pendingTeamId && summaryData.teams.some(t => t.id === pendingTeamId))
+          ? pendingTeamId
+          : (selectedTeamId && summaryData.teams.some(t => t.id === selectedTeamId))
+            ? selectedTeamId
+            : (storedTeam && summaryData.teams.some(t => t.id === Number(storedTeam)))
+              ? Number(storedTeam)
+              : (summaryData.user_team_id || (summaryData.teams.length > 0 ? summaryData.teams[0].id : 6))
 
         setSelectedTeamId(currentTargetId)
+        setPendingTeamId(currentTargetId)
         setSelectedRosterTeamId(currentTargetId)
         try {
           localStorage.setItem('apex_selected_team_id', String(currentTargetId))
@@ -842,9 +879,9 @@ export function App() {
         </div>
 
         <div className="header-controls-container">
-          {/* Header Tip Instruction */}
+          {/* Header Tip Instruction (2-step guide) */}
           <div className="header-tip-notice">
-            <span className="header-tip-badge">TIP:</span> Pick your {league?.name ? `${league.name}` : 'Mile High Fantasy'} team below to get started then click <strong>SYNC ESPN NOW!</strong> Once it's done loading you will see your team populated below. If a different team is chosen after, click sync espn now to refresh the page.
+            <span className="header-tip-badge">TIP:</span> <strong>1.</strong> Click <strong>LOAD ALL TEAMS</strong> first to fetch fresh ESPN data. <strong>2.</strong> Select your team from the dropdown and click <strong>LOCK IN TEAM</strong> to view your optimized lineup!
           </div>
 
           <div className="header-actions-row">
@@ -857,27 +894,22 @@ export function App() {
                 </div>
                 <select
                   className="header-team-select"
-                  value={selectedTeamId}
-                  onChange={(e) => {
-                    const newId = Number(e.target.value)
-                    setIsExplicitCompare(false)
-                    setSelectedTeamId(newId)
-                    setSelectedRosterTeamId(newId)
-                    try {
-                      localStorage.setItem('apex_selected_team_id', String(newId))
-                    } catch {}
-                    loadTeamLineup(newId, strategyMode, projectionSource, true)
-                    loadWaivers(newId)
-                    checkInactivesAlerts(newId)
-                    loadIntelData(newId, true)
-                  }}
+                  value={pendingTeamId}
+                  onChange={(e) => setPendingTeamId(Number(e.target.value))}
                 >
                   {league.teams.map((t: TeamSummary) => (
                     <option key={t.id} value={t.id}>
-                      {t.name}{t.primary_owner ? ` (${t.primary_owner})` : ''} • {t.record} {t.is_user_team ? '★ (My Team)' : ''}
+                      {t.name}{t.primary_owner ? ` (${t.primary_owner})` : ''} • {t.record} {t.id === selectedTeamId ? '★ (Active Focus)' : (t.is_user_team ? '★ (Host)' : '')}
                     </option>
                   ))}
                 </select>
+                <button
+                  className={`header-lock-team-btn ${isLockedIn ? 'locked' : ''}`}
+                  onClick={handleLockInTeam}
+                  title="Lock in this team and view optimized lineup"
+                >
+                  {isLockedIn ? '✓ Locked In!' : '🔒 Lock In Team'}
+                </button>
               </div>
             ) : (
               <div className="header-team-picker">
@@ -891,12 +923,12 @@ export function App() {
               </div>
             )}
 
-            {/* Dedicated Sync ESPN Button */}
+            {/* Dedicated Load All Teams Button */}
             <button
               className="header-sync-btn"
               onClick={() => handleSync(true)}
               disabled={isSyncing}
-              title="Sync latest live ESPN fantasy data and rosters"
+              title="Fetch fresh ESPN data for all teams across the league"
             >
               <div className="sync-btn-icon">
                 {isSyncing ? (
@@ -910,14 +942,14 @@ export function App() {
               <div className="sync-btn-text">
                 {isSyncing ? (
                   <>
-                    <span>Sync</span>
+                    <span>Load-</span>
                     <span>ing...</span>
                   </>
                 ) : (
                   <>
-                    <span>Sync</span>
-                    <span>ESPN</span>
-                    <span>Now</span>
+                    <span>Load</span>
+                    <span>All</span>
+                    <span>Teams</span>
                   </>
                 )}
               </div>
