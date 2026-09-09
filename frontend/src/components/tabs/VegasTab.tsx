@@ -7,6 +7,7 @@ import type {
   VegasPlayerPropsItem,
 } from '../../types'
 import { NFLTeamLogo } from '../shared/NFLTeamLogo'
+import { formatToMDT } from '../../utils/dateUtils'
 
 // NFL Team Metadata Directory
 const NFL_TEAMS_INFO: Record<string, { name: string; city: string; stadium: string; conference: 'AFC' | 'NFC' }> = {
@@ -261,7 +262,16 @@ export function VegasTab({
       })
     }
 
-    return list
+    return [...list].sort((a, b) => {
+      const timeA = a.game_date ? new Date(a.game_date).getTime() : Infinity
+      const timeB = b.game_date ? new Date(b.game_date).getTime() : Infinity
+      if (timeA !== timeB) {
+        return timeA - timeB
+      }
+      const totalA = a.over_under || (a.home_implied_total + a.away_implied_total) || 0
+      const totalB = b.over_under || (b.home_implied_total + b.away_implied_total) || 0
+      return totalB - totalA
+    })
   }, [vegasData, searchQuery, teamFilter, rosterPlayersByTeam])
 
   // Filtered Props
@@ -312,21 +322,9 @@ export function VegasTab({
     })
   }
 
-  // Format date helper
+  // Format date helper (Mountain Daylight Time MDT)
   const formatKickoff = (dateStr: string) => {
-    if (!dateStr) return 'TBD'
-    try {
-      const d = new Date(dateStr)
-      return d.toLocaleDateString(undefined, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      })
-    } catch {
-      return dateStr
-    }
+    return formatToMDT(dateStr)
   }
 
   // Render script badge helper

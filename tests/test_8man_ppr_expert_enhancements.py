@@ -294,3 +294,69 @@ def test_dynamic_live_vorp_computation():
     assert ev.live_vorp is not None
     # Projected ~24.4 - 20.5 (QB baseline in 8-team) = +3.9
     assert 3.8 <= ev.live_vorp <= 4.2
+
+
+def test_doubtful_injured_players_never_in_close_calls_or_optimal_over_healthy():
+    """Verify that players who are Doubtful, Out, IR, or injured with 0 pts are never offered in close calls."""
+    starter_te = StartSitEvaluation(
+        player_id=801,
+        full_name="Juwan Johnson",
+        position="TE",
+        pro_team="NO",
+        projected_points=10.5,
+        start_score=68.0,
+        confidence="HIGH",
+        recommendation="START",
+        matchup_grade="FAVORABLE",
+        opponent="CAR",
+        is_home=True,
+        implied_team_total=23.0,
+        injury_status="ACTIVE",
+    )
+    bench_doubtful = StartSitEvaluation(
+        player_id=802,
+        full_name="Brock Bowers",
+        position="TE",
+        pro_team="LV",
+        projected_points=0.0,
+        start_score=0.0,
+        confidence="HIGH",
+        recommendation="SIT",
+        matchup_grade="BRUTAL",
+        opponent="LAC",
+        is_home=False,
+        implied_team_total=18.0,
+        injury_status="OUT",
+    )
+    bench_healthy = StartSitEvaluation(
+        player_id=803,
+        full_name="Jake Ferguson",
+        position="TE",
+        pro_team="DAL",
+        projected_points=10.0,
+        start_score=67.0,
+        confidence="HIGH",
+        recommendation="START",
+        matchup_grade="NEUTRAL",
+        opponent="CLE",
+        is_home=False,
+        implied_team_total=21.0,
+        injury_status="ACTIVE",
+    )
+
+    roster_config = {"QB": 0, "RB": 0, "WR": 0, "TE": 1, "FLEX": 0, "D/ST": 0, "K": 0}
+    res = lineup_optimizer.optimize_lineup(
+        team_id=1,
+        roster_slots_config=roster_config,
+        evaluations=[starter_te, bench_doubtful, bench_healthy],
+        current_starter_ids={801},
+        mode="BALANCED",
+    )
+
+    # Starter must be Juwan Johnson, not Bowers
+    assert res.starters[0].recommended_player.player_id == 801
+
+    # Close calls must NOT pair Bowers (who is OUT / 0.0 pts)
+    for cc in res.close_calls:
+        assert cc.starter.player_id != 802
+        assert cc.bench_player.player_id != 802

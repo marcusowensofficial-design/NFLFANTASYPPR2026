@@ -3,6 +3,7 @@ import type { StartSitEvaluation } from '../../types'
 import { MatchupStarRating } from './MatchupStarRating'
 import { Tooltip } from './Tooltip'
 import { NFLTeamLogo } from './NFLTeamLogo'
+import { formatToMDT } from '../../utils/dateUtils'
 
 export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activeSource?: string }> = ({ player: p, activeSource = 'MODEL' }) => {
   const prov = p.model_provenance
@@ -111,7 +112,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
           </div>
           {p.game_date && (
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              ⏰ {new Date(p.game_date).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+              ⏰ {formatToMDT(p.game_date)}
             </span>
           )}
         </div>
@@ -243,6 +244,48 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
           <span className={`pill ${agreement === 'HIGH_AGREEMENT' ? 'emerald' : agreement === 'MODERATE' ? 'amber' : 'rose'}`} style={{ fontSize: '11px' }}>
             {agreement === 'HIGH_AGREEMENT' ? '🟢 High Expert Agreement' : agreement === 'MODERATE' ? '🟡 Moderate Consensus' : '🔴 Sharp Expert Divergence'}
           </span>
+        </div>
+      </div>
+
+      {/* Visual Volatility & Floor/Ceiling Range Spectrum */}
+      <div className="statcard-volatility-spectrum">
+        <div className="volatility-header">
+          <div className="volatility-title">
+            <span>📊</span>
+            <strong>VOLATILITY SPECTRUM & OUTCOME DISTRIBUTION</strong>
+          </div>
+          <div className="volatility-badge-row">
+            <span className="pill zinc" style={{ fontSize: '10.5px' }}>
+              Span: {(ceilingPts - floorPts).toFixed(1)} pts (±{((ceilingPts - floorPts) / 2).toFixed(1)})
+            </span>
+          </div>
+        </div>
+
+        <div className="volatility-bar-track">
+          <div className="volatility-gradient-fill" />
+          <div
+            className="volatility-marker-pin"
+            style={{ left: `${markerPct}%` }}
+            title={`Active Projection: ${p.projected_points.toFixed(1)} pts`}
+          >
+            <div className="marker-tooltip tabular-nums">{p.projected_points.toFixed(1)}</div>
+            <div className="marker-needle" />
+          </div>
+        </div>
+
+        <div className="volatility-labels-row">
+          <div className="volatility-bound floor">
+            <span className="bound-label">SAFE FLOOR</span>
+            <span className="bound-val tabular-nums">{floorPts.toFixed(1)} pts</span>
+          </div>
+          <div className="volatility-bound median">
+            <span className="bound-label">EXPECTED MEDIAN</span>
+            <span className="bound-val tabular-nums">{p.projected_points.toFixed(1)} pts</span>
+          </div>
+          <div className="volatility-bound ceiling">
+            <span className="bound-label">CEILING OUTCOME</span>
+            <span className="bound-val tabular-nums">{ceilingPts.toFixed(1)} pts</span>
+          </div>
         </div>
       </div>
 

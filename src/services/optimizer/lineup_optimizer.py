@@ -177,16 +177,22 @@ class LineupOptimizer:
                         f"Toss-up Matchup ({implied_spread:+.1f} pts): Balanced composite optimization recommended."
                     )
 
-        # Sort available players: Active players with points first, Bye-week players last
+        # Sort available players: Active players with points first, Bye-week and Inactive players last
         def sort_key(p: StartSitEvaluation) -> tuple[bool, float]:
-            is_bye = p.opponent == "BYE" or p.projected_points <= 0.0
+            inj_st = (p.injury_status or "").upper()
+            is_unplayable = (
+                p.opponent == "BYE"
+                or p.projected_points <= 0.0
+                or inj_st in ("OUT", "DOUBTFUL", "IR", "INACTIVE", "SUSPENDED")
+                or "IR" in inj_st
+            )
             if mode_upper == "CEILING":
                 metric = p.ceiling_score or p.start_score
             elif mode_upper == "FLOOR":
                 metric = p.floor_score or p.start_score
             else:
                 metric = p.start_score
-            return (not is_bye, metric)
+            return (not is_unplayable, metric)
 
         available = sorted(evaluations, key=sort_key, reverse=True)
         assigned_player_ids: set[int] = set()
@@ -285,7 +291,14 @@ class LineupOptimizer:
         )
 
         def skill_sort_key(p: StartSitEvaluation) -> tuple[bool, float]:
-            is_bye = p.opponent == "BYE" or p.projected_points <= 0.0
+            inj_st = (p.injury_status or "").strip().upper()
+            is_unplayable = (
+                p.opponent == "BYE"
+                or p.projected_points <= 0.0
+                or inj_st in ("OUT", "DOUBTFUL", "IR", "INACTIVE", "SUSPENDED", "PUP")
+                or "IR" in inj_st
+                or getattr(p, "injured", False)
+            )
             if mode_upper == "CEILING":
                 metric = p.ceiling_score or p.start_score
                 if starting_qb and p.pro_team == starting_qb.pro_team and p.position.upper() in ("WR", "TE"):
@@ -307,7 +320,7 @@ class LineupOptimizer:
                 if tgts >= 7.0:
                     metric += 1.0  # 1.0 PPR reception floor bonus for alpha target WRs in FLEX contention
 
-            return (not is_bye, metric)
+            return (not is_unplayable, metric)
 
         # Re-sort available for skill positions with correlation stacking awareness
         skill_available = sorted(available, key=skill_sort_key, reverse=True)
@@ -505,10 +518,25 @@ class LineupOptimizer:
                     s.net_projected_delta = round(rec_p.projected_points - matching_benched.projected_points, 1)
 
         # 7. Detect Close Calls (starter vs bench player delta <= 2.5)
+        # Skip any comparisons involving doubtful, out, IR, or injured players
+        def is_doubtful_or_injured(p: StartSitEvaluation) -> bool:
+            inj_st = (p.injury_status or "").strip().upper()
+            return (
+                p.opponent == "BYE"
+                or p.projected_points <= 0.0
+                or inj_st in ("OUT", "DOUBTFUL", "IR", "INACTIVE", "SUSPENDED", "PUP")
+                or "IR" in inj_st
+                or getattr(p, "injured", False)
+            )
+
         close_calls: list[CloseCallPair] = []
         for s in starters_assigned:
             starter = s.recommended_player
+            if is_doubtful_or_injured(starter):
+                continue
             for b in bench_players:
+                if is_doubtful_or_injured(b):
+                    continue
                 # Check eligibility
                 is_eligible = (
                     b.position.upper() == starter.position.upper()

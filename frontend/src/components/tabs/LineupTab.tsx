@@ -7,6 +7,7 @@ import type {
   InactiveAlertItem,
   PlayerMarketSentimentItem,
 } from '../../types'
+import { isPlayerDoubtfulOrInjured } from '../../types'
 import { MatchupStarRating } from '../shared/MatchupStarRating'
 import { InjuryStatusPill } from '../shared/InjuryStatusPill'
 import { MatchupRatingKey } from '../shared/MatchupRatingKey'
@@ -16,6 +17,7 @@ import { Tooltip } from '../shared/Tooltip'
 import { renderLineupVegasProps } from '../shared/VegasPropsHelper'
 import { getScoreColorClass } from './CompareTab'
 import { NFLTeamLogo } from '../shared/NFLTeamLogo'
+import { formatToMDT } from '../../utils/dateUtils'
 
 interface LineupTabProps {
   projectionSource: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'
@@ -37,6 +39,7 @@ interface LineupTabProps {
   activeSwapSlotIndex: number | null
   setActiveSwapSlotIndex: (idx: number | null) => void
   onOpenPushModal: () => void
+  onOpenShareModal?: () => void
   isPushing: boolean
   onCompareStarterWithBench: (p: StartSitEvaluation) => void
   onCompareBenchWithStarter: (b: StartSitEvaluation) => void
@@ -64,6 +67,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
   activeSwapSlotIndex,
   setActiveSwapSlotIndex,
   onOpenPushModal,
+  onOpenShareModal,
   isPushing,
   onCompareStarterWithBench,
   onCompareBenchWithStarter,
@@ -76,6 +80,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
     effectiveBench,
     customGainVsOptimal,
     hasCustomSwaps,
+    hasRevertibleSwaps,
     currentLineupProjectedTotal,
   } = useMemo(() => {
     if (!lineup) {
@@ -84,6 +89,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
         effectiveBench: [],
         customGainVsOptimal: 0,
         hasCustomSwaps: false,
+        hasRevertibleSwaps: false,
         currentLineupProjectedTotal: 0,
       }
     }
@@ -127,11 +133,16 @@ export const LineupTab: React.FC<LineupTabProps> = ({
     )
     const customGain = Math.round((currentTotal - optimalTotal) * 10) / 10
 
+    const hasRevertible = starters.some(
+      (s: any) => s.is_custom_swap && !isPlayerDoubtfulOrInjured(s.original_recommended)
+    )
+
     return {
       effectiveStarters: starters,
       effectiveBench: bench,
       customGainVsOptimal: customGain,
       hasCustomSwaps: Object.keys(customSubstitutions).length > 0,
+      hasRevertibleSwaps: hasRevertible,
       currentLineupProjectedTotal: Math.round(currentTotal * 10) / 10,
     }
   }, [lineup, customSubstitutions])
@@ -199,15 +210,17 @@ export const LineupTab: React.FC<LineupTabProps> = ({
   }, [effectiveStarters, marketSentimentMap])
 
   const getEligibleBenchForSlot = (slotName: string, benchList: StartSitEvaluation[]) => {
-    if (slotName === 'QB') return benchList.filter((b) => b.position === 'QB')
-    if (slotName === 'RB') return benchList.filter((b) => b.position === 'RB')
-    if (slotName === 'WR') return benchList.filter((b) => b.position === 'WR')
-    if (slotName === 'TE') return benchList.filter((b) => b.position === 'TE')
-    if (slotName === 'FLEX') return benchList.filter((b) => ['RB', 'WR', 'TE'].includes(b.position))
-    if (slotName === 'KICKER' || slotName === 'K') return benchList.filter((b) => ['K', 'PK'].includes(b.position))
+    // Exclude doubtful or injured players so managers aren't offered unplayable assets
+    const playableBench = benchList.filter((b) => !isPlayerDoubtfulOrInjured(b))
+    if (slotName === 'QB') return playableBench.filter((b) => b.position === 'QB')
+    if (slotName === 'RB') return playableBench.filter((b) => b.position === 'RB')
+    if (slotName === 'WR') return playableBench.filter((b) => b.position === 'WR')
+    if (slotName === 'TE') return playableBench.filter((b) => b.position === 'TE')
+    if (slotName === 'FLEX') return playableBench.filter((b) => ['RB', 'WR', 'TE'].includes(b.position))
+    if (slotName === 'KICKER' || slotName === 'K') return playableBench.filter((b) => ['K', 'PK'].includes(b.position))
     if (slotName === 'DEFENSE' || slotName === 'DST' || slotName === 'D/ST')
-      return benchList.filter((b) => ['DST', 'D/ST', 'DEF'].includes(b.position))
-    return benchList
+      return playableBench.filter((b) => ['DST', 'D/ST', 'DEF'].includes(b.position))
+    return playableBench
   }
 
   const handlePerformSwap = (slotIdx: number, benchPlayer: StartSitEvaluation) => {
@@ -227,7 +240,19 @@ export const LineupTab: React.FC<LineupTabProps> = ({
   }
 
   const handleResetToOptimal = () => {
-    setCustomSubstitutions({})
+    // Only reset substitutions where the original recommended player is NOT doubtful or injured
+    setCustomSubstitutions((prev) => {
+      const next: Record<number, StartSitEvaluation> = {}
+      for (const [slotIdxStr, benchPlayer] of Object.entries(prev)) {
+        const slotIdx = Number(slotIdxStr)
+        const original = lineup?.starters[slotIdx]?.recommended_player
+        if (original && isPlayerDoubtfulOrInjured(original)) {
+          // Preserve injury substitution
+          next[slotIdx] = benchPlayer
+        }
+      }
+      return next
+    })
     setActiveSwapSlotIndex(null)
   }
 
@@ -512,13 +537,15 @@ export const LineupTab: React.FC<LineupTabProps> = ({
             </div>
           </div>
           <div className="sandbox-banner-actions">
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={handleResetToOptimal}
-              title="Revert all custom substitutions back to the algorithmic optimal starters"
-            >
-              🔄 Reset to Optimal Lineup
-            </button>
+            {hasRevertibleSwaps && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={handleResetToOptimal}
+                title="Revert custom substitutions back to the algorithmic optimal starters (injury replacements are preserved)"
+              >
+                🔄 Reset to Optimal Lineup
+              </button>
+            )}
             <button
               className="btn btn-primary btn-sm"
               style={{ backgroundColor: '#10b981', borderColor: '#10b981', color: '#022c22', fontWeight: 700 }}
@@ -709,6 +736,22 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                 📋 Full Sheet (17 Slots)
               </button>
             </div>
+            {onOpenShareModal && (
+              <button
+                className="btn btn-secondary"
+                style={{
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+                onClick={onOpenShareModal}
+                title="Export and share lineup card for Discord or Sleeper"
+              >
+                <span>📤</span>
+                <span>Share Card</span>
+              </button>
+            )}
             <button
               className="btn btn-primary"
               style={{
@@ -864,7 +907,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                         </span>
                         {p.game_date && (
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                            {new Date(p.game_date).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+                            {formatToMDT(p.game_date)}
                           </div>
                         )}
                         {p.opponent && p.opponent !== 'BYE' && (
@@ -1024,14 +1067,31 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                             ⇄ {slot.is_custom_swap ? 'Substituted' : 'Swap'}
                           </button>
                           {slot.is_custom_swap && (
-                            <button
-                              className="btn-link"
-                              style={{ fontSize: '11px', color: 'var(--accent-rose)' }}
-                              onClick={() => handleRevertSlot(slotIdx)}
-                              title="Revert back to optimal starter"
-                            >
-                              ↺ Revert
-                            </button>
+                            !isPlayerDoubtfulOrInjured(slot.original_recommended) ? (
+                              <button
+                                className="btn-link"
+                                style={{ fontSize: '11px', color: 'var(--accent-rose)' }}
+                                onClick={() => handleRevertSlot(slotIdx)}
+                                title="Revert back to optimal starter"
+                              >
+                                ↺ Revert
+                              </button>
+                            ) : (
+                              <span
+                                className="pill amber"
+                                style={{
+                                  fontSize: '10px',
+                                  padding: '1px 6px',
+                                  fontWeight: 700,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px',
+                                }}
+                                title={`Revert disabled: ${slot.original_recommended?.full_name || 'Original starter'} is ${slot.original_recommended?.injury_status || 'Injured'}. There's no point reverting to an unplayable asset.`}
+                              >
+                                🔒 Injury Swap
+                              </span>
+                            )
                           )}
 
                           {/* Inline Slot Swap Popover */}

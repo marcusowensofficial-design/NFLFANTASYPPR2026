@@ -22,9 +22,29 @@ import type {
   VegasIntelligenceResponse,
   TeamRosterResponse,
 } from './types'
+import { isPlayerDoubtfulOrInjured } from './types'
 
 // Extracted Modals
 import { PreFlightPushModal } from './components/modals/PreFlightPushModal'
+import { CommandPaletteModal } from './components/modals/CommandPaletteModal'
+import { ShareLineupModal } from './components/modals/ShareLineupModal'
+
+// Shared Brand & Navigation Components
+import { ApexLogo } from './components/shared/ApexLogo'
+import { LiveMarketTicker } from './components/shared/LiveMarketTicker'
+import {
+  LineupIcon,
+  CompareIcon,
+  WaiverIcon,
+  TradeIcon,
+  LeagueIcon,
+  InjuryIcon,
+  FantasyProsIcon,
+  IntelIcon,
+  DfsIcon,
+  VegasIcon,
+  SettingsIcon,
+} from './components/shared/NavIcons'
 
 // Extracted Tabs
 import { LineupTab } from './components/tabs/LineupTab'
@@ -202,6 +222,29 @@ export function App() {
   const [isPushing, setIsPushing] = useState<boolean>(false)
   const [pushResult, setPushResult] = useState<LineupPushResponse | null>(null)
   const [selectedMoveIds, setSelectedMoveIds] = useState<number[]>([])
+
+  // Modal & HUD State
+  const [showCommandPalette, setShowCommandPalette] = useState<boolean>(false)
+  const [showShareModal, setShowShareModal] = useState<boolean>(false)
+  const [isTipDismissed, setIsTipDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('apex_tip_dismissed') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  // Global Ctrl+K / Cmd+K listener for Spotlight Search
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setShowCommandPalette((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
 
   // Global Sync & Loading State
   const [isSyncing, setIsSyncing] = useState<boolean>(false)
@@ -505,7 +548,7 @@ export function App() {
             setCompareIds(ids)
             runComparison(ids, activeMode, activeSource)
           } else if (data.starters.length > 0 && data.bench.length > 0) {
-            const benchCand = data.bench[0]
+            const benchCand = data.bench.find((b: StartSitEvaluation) => !isPlayerDoubtfulOrInjured(b)) || data.bench[0]
             const matchingStarter = data.starters.find(
               (s: SlotAssignment) =>
                 s.recommended_player.position === benchCand.position ||
@@ -749,7 +792,7 @@ export function App() {
       setCompareIds(ids)
       runComparison(ids, strategyMode, projectionSource)
     } else if (lineup.starters.length > 0 && lineup.bench.length > 0) {
-      const benchCand = lineup.bench[0]
+      const benchCand = lineup.bench.find((b: StartSitEvaluation) => !isPlayerDoubtfulOrInjured(b)) || lineup.bench[0]
       const matchingStarter = lineup.starters.find(
         (s: SlotAssignment) =>
           s.recommended_player.position === benchCand.position ||
@@ -857,12 +900,35 @@ export function App() {
 
   return (
     <div className="app-container">
+      {/* Live Vegas Market Ticker Ribbon */}
+      <LiveMarketTicker
+        games={vegasData?.games || []}
+        onSelectGame={() => setActiveTab('vegas')}
+      />
+
       {/* App Header */}
       <header className="app-header">
         <div className="brand-section">
-          <div className="brand-icon">🏈</div>
+          <ApexLogo size={46} />
           <div>
-            <h1 className="brand-title">Apex Fantasy Analytics</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <h1 className="brand-title">Apex Fantasy Analytics</h1>
+              <span className="telemetry-live-pill" title="Live quant telemetry and odds synced">
+                <span className="telemetry-pulse-dot" /> LIVE
+              </span>
+              <button
+                className="brand-search-btn"
+                onClick={() => setShowCommandPalette(true)}
+                title="Search players, matchups, and views (Ctrl+K)"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <span>Search</span>
+                <kbd className="header-search-kbd">⌘K</kbd>
+              </button>
+            </div>
             <div className="brand-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
               <span>{league ? `${league.name.toUpperCase()} • SEASON ${league.season} (WEEK ${league.current_week})` : '2026 SEASON'}</span>
               <span className="pill cyan" style={{ fontSize: '11px', padding: '2px 8px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
@@ -871,7 +937,7 @@ export function App() {
             </div>
             <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span className="pill gold" style={{ fontSize: '11px', padding: '3px 10px', fontWeight: 800, background: 'rgba(234, 179, 8, 0.15)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.35)', display: 'inline-flex', alignItems: 'center', gap: '6px', letterSpacing: '0.03em' }}>
-                🏈 KICKOFF TOMORROW: NE @ SEA (WED, SEP 9 • 8:20 PM ET)
+                🏈 KICKOFF TODAY: NE @ SEA (WED 9-9-26 6:20 P.M. MDT)
               </span>
               {inactivesAlerts.length > 0 && (
                 <span className="pill rose" style={{ fontSize: '11px', padding: '3px 10px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -883,10 +949,25 @@ export function App() {
         </div>
 
         <div className="header-controls-container">
-          {/* Header Tip Instruction (2-step guide) */}
-          <div className="header-tip-notice">
-            <span className="header-tip-badge">TIP:</span> <strong>1.</strong> Click <strong>LOAD ALL TEAMS</strong> first to fetch fresh ESPN data. <strong>2.</strong> Select your team from the dropdown and click <strong>LOCK IN TEAM</strong> to view your optimized lineup!
-          </div>
+          {/* Header Tip Instruction (dismissible) */}
+          {!isTipDismissed && (
+            <div className="header-tip-notice">
+              <span className="header-tip-badge">WORKFLOW:</span>
+              <span><strong>1.</strong> Click <strong>LOAD ALL TEAMS</strong>. <strong>2.</strong> Select your team & click <strong>LOCK IN</strong>.</span>
+              <button
+                className="header-tip-close"
+                onClick={() => {
+                  setIsTipDismissed(true)
+                  try {
+                    localStorage.setItem('apex_tip_dismissed', 'true')
+                  } catch {}
+                }}
+                title="Dismiss tip"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           <div className="header-actions-row">
             {/* Team Switcher */}
@@ -974,7 +1055,8 @@ export function App() {
           className={`tab-btn ${activeTab === 'lineup' ? 'active' : ''}`}
           onClick={() => setActiveTab('lineup')}
         >
-          🏈 Optimal Lineup
+          <LineupIcon size={16} />
+          <span>Optimal Lineup</span>
           {lineup && lineup.differences_count > 0 && (
             <span className="badge-count">{lineup.differences_count} Diffs</span>
           )}
@@ -984,70 +1066,80 @@ export function App() {
           className={`tab-btn ${activeTab === 'compare' ? 'active' : ''}`}
           onClick={() => setActiveTab('compare')}
         >
-          ⚖️ Start/Sit Comparator
+          <CompareIcon size={16} />
+          <span>Start/Sit Comparator</span>
         </button>
 
         <button
           className={`tab-btn ${activeTab === 'waivers' ? 'active' : ''}`}
           onClick={() => setActiveTab('waivers')}
         >
-          🔄 Waiver Upgrades
+          <WaiverIcon size={16} />
+          <span>Waiver Upgrades</span>
         </button>
 
         <button
           className={`tab-btn ${activeTab === 'trades' ? 'active' : ''}`}
           onClick={() => setActiveTab('trades')}
         >
-          🤝 2-for-1 Trades
+          <TradeIcon size={16} />
+          <span>2-for-1 Trades</span>
         </button>
 
         <button
           className={`tab-btn ${activeTab === 'league' ? 'active' : ''}`}
           onClick={() => setActiveTab('league')}
         >
-          👥 League Rosters
+          <LeagueIcon size={16} />
+          <span>League Rosters</span>
         </button>
 
         <button
           className={`tab-btn ${activeTab === 'injuries' ? 'active' : ''}`}
           onClick={() => setActiveTab('injuries')}
         >
-          🩺 Injury Wire
+          <InjuryIcon size={16} />
+          <span>Injury Wire</span>
         </button>
 
         <button
           className={`tab-btn ${activeTab === 'fantasypros' ? 'active' : ''}`}
           onClick={() => setActiveTab('fantasypros')}
         >
-          ⭐ FantasyPros ECR
+          <FantasyProsIcon size={16} />
+          <span>FantasyPros ECR</span>
         </button>
 
         <button
           className={`tab-btn ${activeTab === 'intel' ? 'active' : ''}`}
           onClick={() => setActiveTab('intel')}
         >
-          🧠 Matchup Intel
+          <IntelIcon size={16} />
+          <span>Matchup Intel</span>
         </button>
 
         <button
           className={`tab-btn ${activeTab === 'dfs' ? 'active' : ''}`}
           onClick={() => setActiveTab('dfs')}
         >
-          ⚡ DFS Optimizer
+          <DfsIcon size={16} />
+          <span>DFS Optimizer</span>
         </button>
 
         <button
           className={`tab-btn ${activeTab === 'vegas' ? 'active' : ''}`}
           onClick={() => setActiveTab('vegas')}
         >
-          🎲 Vegas Odds
+          <VegasIcon size={16} />
+          <span>Vegas Odds</span>
         </button>
 
         <button
           className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
         >
-          ⚙️ Settings & Weights
+          <SettingsIcon size={16} />
+          <span>Settings & Weights</span>
         </button>
       </nav>
 
@@ -1073,6 +1165,7 @@ export function App() {
           activeSwapSlotIndex={activeSwapSlotIndex}
           setActiveSwapSlotIndex={setActiveSwapSlotIndex}
           onOpenPushModal={handleOpenPushModal}
+          onOpenShareModal={() => setShowShareModal(true)}
           isPushing={isPushing}
           onCompareStarterWithBench={handleCompareStarterWithBench}
           onCompareBenchWithStarter={handleCompareBenchWithStarter}
@@ -1225,6 +1318,33 @@ export function App() {
           onExecutePush={handleExecutePush}
           isPushing={isPushing}
           currentWeek={league?.current_week || 1}
+        />
+      )}
+
+      {/* Global Spotlight Command Palette (Ctrl+K) */}
+      <CommandPaletteModal
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        allPlayers={allPlayers}
+        league={league}
+        lineup={lineup}
+        onNavigateTab={(tab) => setActiveTab(tab as any)}
+        onSelectPlayerForCompare={(playerId) => {
+          setIsExplicitCompare(true)
+          setCompareIds([playerId])
+          runComparison([playerId], strategyMode, projectionSource)
+        }}
+      />
+
+      {/* 1-Click Social Lineup Card Exporter */}
+      {lineup && (
+        <ShareLineupModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          lineup={lineup}
+          league={league}
+          strategyMode={strategyMode}
+          projectionSource={projectionSource}
         />
       )}
     </div>

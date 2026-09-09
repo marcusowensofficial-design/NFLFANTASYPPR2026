@@ -126,7 +126,7 @@ def test_player_comparator_close_calls():
     assert "TOSS-UP" in comp.headline
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_full_lineup_optimization_and_waivers(client, db_session):
     """Test end-to-end integration: Sync mock league, optimize lineup, and scan waivers."""
     service = ESPNSyncService(db=db_session)

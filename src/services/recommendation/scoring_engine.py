@@ -1067,11 +1067,12 @@ class StartSitScoringEngine:
         if injury_report:
             status = injury_report.status.upper()
 
-        if status == "ACTIVE":
+        is_ruled_out = status in ("DOUBTFUL", "OUT", "IR", "INACTIVE", "SUSPENDED") or bool(injury_report and injury_report.is_out)
+        if status == "ACTIVE" and not is_ruled_out:
             health_score = 100.0
             if not player.injured and (fp_inj_note is None or not fp_inj_note):
                 pos_reasons.append("[Health] ✅ Clean Bill of Health: Full active status with zero injury report restrictions")
-        elif status == "QUESTIONABLE":
+        elif status == "QUESTIONABLE" and not is_ruled_out:
             p_status = injury_report.practice_status if injury_report else None
             if p_status == "FULL":
                 health_score = 90.0
@@ -1090,9 +1091,11 @@ class StartSitScoringEngine:
                 detail = f": {injury_report.headline}" if (injury_report and injury_report.headline) else ""
                 neg_reasons.append(f"[Risk] ⚠️ Questionable injury designation{detail}")
                 floor_penalty += 15.0
-        elif status in ("DOUBTFUL", "OUT", "IR"):
+        elif is_ruled_out:
             health_score = 0.0
-            neg_reasons.append(f"[Risk] 🚨 Rule out: Listed as {status}")
+            proj = 0.0
+            proj_score = 0.0
+            neg_reasons.append(f"[Risk] 🚨 Rule out: Listed as {status} (0.0 proj pts)")
             floor_penalty += 50.0
 
         # 6. Weather Component
@@ -1168,6 +1171,11 @@ class StartSitScoringEngine:
             final_composite = (composite * 0.40) + (calc_floor * 0.60)
         else:
             final_composite = composite
+
+        if is_ruled_out:
+            final_composite = 0.0
+            calc_ceiling = 0.0
+            calc_floor = 0.0
 
         final_score = round(max(0.0, min(100.0, final_composite)), 1)
 
@@ -1361,11 +1369,18 @@ class StartSitScoringEngine:
         sorted_neg = sort_factor_reasons(dedupe(neg_reasons))
 
         # Resilient multi-source projection resolution
-        res_model_pts = q_proj.model_points if q_proj and q_proj.model_points > 0 else (getattr(player, "projected_points_model", 0.0) or proj)
-        res_fp_pts = q_proj.fp_points if q_proj and q_proj.fp_points > 0 else (getattr(player, "projected_points_fp", 0.0) or getattr(player, "fp_r2p_pts", 0.0) or 0.0)
-        res_sleeper_pts = q_proj.sleeper_points if q_proj and q_proj.sleeper_points > 0 else (getattr(player, "projected_points_sleeper", 0.0) or 0.0)
-        res_espn_pts = q_proj.espn_points if q_proj and q_proj.espn_points > 0 else (getattr(player, "projected_points_espn", 0.0) or 0.0)
-        res_consensus_pts = q_proj.consensus_points if q_proj and q_proj.consensus_points > 0 else (getattr(player, "projected_points_consensus", 0.0) or proj)
+        if is_ruled_out:
+            res_model_pts = 0.0
+            res_fp_pts = 0.0
+            res_sleeper_pts = 0.0
+            res_espn_pts = 0.0
+            res_consensus_pts = 0.0
+        else:
+            res_model_pts = q_proj.model_points if q_proj and q_proj.model_points > 0 else (getattr(player, "projected_points_model", 0.0) or proj)
+            res_fp_pts = q_proj.fp_points if q_proj and q_proj.fp_points > 0 else (getattr(player, "projected_points_fp", 0.0) or getattr(player, "fp_r2p_pts", 0.0) or 0.0)
+            res_sleeper_pts = q_proj.sleeper_points if q_proj and q_proj.sleeper_points > 0 else (getattr(player, "projected_points_sleeper", 0.0) or 0.0)
+            res_espn_pts = q_proj.espn_points if q_proj and q_proj.espn_points > 0 else (getattr(player, "projected_points_espn", 0.0) or 0.0)
+            res_consensus_pts = q_proj.consensus_points if q_proj and q_proj.consensus_points > 0 else (getattr(player, "projected_points_consensus", 0.0) or proj)
 
         return StartSitEvaluation(
             player_id=player.id,

@@ -23,11 +23,12 @@ class PlayerInjuryReport(BaseModel):
 
     @property
     def is_playable(self) -> bool:
-        return self.status.upper() in ("ACTIVE", "QUESTIONABLE")
+        return self.status.upper() in ("ACTIVE", "QUESTIONABLE") and not self.is_out
 
     @property
     def is_out(self) -> bool:
-        return self.status.upper() in ("OUT", "DOUBTFUL", "IR")
+        st = self.status.upper()
+        return st in ("OUT", "DOUBTFUL", "IR", "INACTIVE", "SUSPENDED") or "IR" in st
 
     @property
     def practice_status(self) -> str | None:
@@ -116,6 +117,20 @@ class NFLInjuriesClient:
                         headline = latest_note.get("headline")
                         text = latest_note.get("text")
                         date_str = latest_note.get("date")
+
+                    # Elevate status to OUT only if this athlete is the direct subject of surgery, meniscus trim, or being ruled out
+                    if headline:
+                        h_lower = headline.lower()
+                        last_name = full_name.split()[-1].lower() if full_name else ""
+                        if last_name and (
+                            f"{last_name} underwent" in h_lower
+                            or f"ruled out {last_name}" in h_lower
+                            or f"{last_name} has been ruled out" in h_lower
+                            or f"{last_name} is expected to miss" in h_lower
+                            or (status_name == "DOUBTFUL" and ("meniscus" in h_lower or "surgery" in h_lower))
+                        ):
+                            if "ir" not in status_name.lower():
+                                status_name = "OUT"
 
                     results[athlete_id] = PlayerInjuryReport(
                         athlete_id=athlete_id,

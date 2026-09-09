@@ -592,6 +592,40 @@ export function isInjuryStatus(status?: string | null): boolean {
   return true
 }
 
+/**
+ * Checks if a player is currently set to doubtful, out, IR, inactive, suspended, or injured unplayable.
+ */
+export function isPlayerDoubtfulOrInjured(player?: {
+  injury_status?: string | null
+  injured?: boolean
+  projected_points?: number
+} | null): boolean {
+  if (!player) return false
+  if (player.injured === true) return true
+  const s = (player.injury_status || '').trim().toUpperCase()
+  if (
+    s === 'DOUBTFUL' ||
+    s === 'D' ||
+    s === 'OUT' ||
+    s === 'O' ||
+    s === 'IR' ||
+    s === 'INACTIVE' ||
+    s === 'SUSPENDED' ||
+    s === 'PUP' ||
+    s.includes('IR') ||
+    s.includes('DOUBTFUL') ||
+    s.includes('OUT')
+  ) {
+    return true
+  }
+  if (player.projected_points !== undefined && player.projected_points <= 0) {
+    if (s && !['ACTIVE', 'HEALTHY', 'NORMAL', 'OK', 'NONE', 'N/A', ''].includes(s)) {
+      return true
+    }
+  }
+  return false
+}
+
 export interface InactiveAlertItem {
   starter_id: number
   starter_name: string

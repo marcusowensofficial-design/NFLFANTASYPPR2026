@@ -265,8 +265,8 @@ class QuantProjectionEngine:
         # Inactive / Out Player Protection
         inj_status = str(getattr(player, "injury_status", "") or "ACTIVE").upper().strip()
         is_out = (
-            inj_status in ("OUT", "IR", "INJURY_RESERVE", "PUP", "SUSPENDED")
-            or (getattr(player, "injured", False) and inj_status == "OUT")
+            inj_status in ("OUT", "IR", "INJURY_RESERVE", "PUP", "SUSPENDED", "DOUBTFUL")
+            or (getattr(player, "injured", False) and inj_status in ("OUT", "DOUBTFUL"))
         )
         if is_out:
             zero_stats = ItemizedStatLine()

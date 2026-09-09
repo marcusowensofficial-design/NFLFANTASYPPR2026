@@ -17,6 +17,7 @@ import { MatchupStarRating, getMatchupStars, getMatchupTierInfo } from '../share
 import { InjuryStatusPill } from '../shared/InjuryStatusPill'
 import { Tooltip } from '../shared/Tooltip'
 import { NFLTeamLogo } from '../shared/NFLTeamLogo'
+import { formatToMDT } from '../../utils/dateUtils'
 
 export interface IntelTabProps {
   lineup?: OptimizedLineupResult | null
@@ -775,7 +776,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
               <strong>{p.opponent}</strong>
               {p.game_date && (
                 <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginLeft: '4px' }}>
-                  • {new Date(p.game_date).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+                  • {formatToMDT(p.game_date)}
                 </span>
               )}
             </div>

@@ -184,9 +184,9 @@ class MarketSentimentService:
 
         if is_thursday:
             urgency = "CRITICAL_TNF"
-            headline_parts.append("THURSDAY KICKOFF ALERT")
+            headline_parts.append("KICKOFF ALERT")
             advice_parts.append(
-                "Kickoff is tomorrow. Never start in FLEX slot; lock into primary position to keep Sunday FLEX flexibility."
+                "Kickoff is today. Never start in FLEX slot; lock into primary position to keep Sunday FLEX flexibility."
             )
 
         if has_controversy:
