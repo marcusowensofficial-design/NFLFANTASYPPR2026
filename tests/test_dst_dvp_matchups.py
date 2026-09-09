@@ -32,15 +32,15 @@ def test_dst_dvp_rankings_calibrated_against_offenses():
 
 
 def test_dst_matchup_score_and_grades():
-    """Verify that DvP matchup score awards FAVORABLE for streaming vs weak offenses
-    and TOUGH for facing elite offenses."""
+    """Verify that DvP matchup score awards FAVORABLE/ELITE for streaming vs weak offenses
+    and TOUGH/BRUTAL for facing elite offenses."""
     car_score, car_grade = dvp_client.calculate_matchup_score("CAR", "D/ST")
     assert car_score >= 76.0
-    assert car_grade == "FAVORABLE"
+    assert car_grade in ("ELITE", "FAVORABLE")
 
     det_score, det_grade = dvp_client.calculate_matchup_score("DET", "D/ST")
     assert det_score <= 58.0
-    assert det_grade == "TOUGH"
+    assert det_grade in ("TOUGH", "BRUTAL")
 
 
 def test_dst_overall_off_rank_accessor():
@@ -82,11 +82,11 @@ def test_dst_scoring_engine_evaluation_reasons_and_off_rank():
     assert eval_result.opp_dvp_rank == 32
     assert eval_result.opp_off_rank == 32
     assert eval_result.matchup_stars == 5
-    assert eval_result.matchup_grade == "FAVORABLE"
+    assert eval_result.matchup_grade in ("ELITE", "FAVORABLE")
 
     # Check reason string explicitly mentions Opp Offense and D/ST
     all_reasons = " ".join(eval_result.reasons_positive)
-    assert "Favorable streaming matchup vs CAR" in all_reasons
+    assert "streaming matchup vs CAR" in all_reasons
     assert "Opp Offense #32" in all_reasons
     assert "Def rank #" not in all_reasons
 
@@ -122,7 +122,7 @@ def test_dst_tough_matchup_evaluation_reasons():
     assert eval_result.opp_dvp_rank == 1
     assert eval_result.opp_off_rank == 1
     assert eval_result.matchup_stars == 1
-    assert eval_result.matchup_grade == "TOUGH"
+    assert eval_result.matchup_grade in ("TOUGH", "BRUTAL")
 
     all_neg_reasons = " ".join(eval_result.reasons_negative)
     assert "Opp Offense #1" in all_neg_reasons

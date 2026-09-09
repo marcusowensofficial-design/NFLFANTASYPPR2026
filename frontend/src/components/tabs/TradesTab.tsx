@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import type { ConsolidationTradeAnalysisResult } from '../../types'
+import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 
 export interface TradesTabProps {
   consolidationTrades: ConsolidationTradeAnalysisResult | null
@@ -59,9 +60,12 @@ export const TradesTab: React.FC<TradesTabProps> = ({
                         🏆 Championship Target ({trade.target_playoff_grade} Playoff SoS)
                       </span>
                     )}
-                    <h4 style={{ fontSize: '18px', fontWeight: 800, marginTop: '6px', color: 'var(--text-primary)' }}>
-                      Target: {trade.target_alpha.full_name} ({trade.target_alpha.position} - {trade.target_alpha.pro_team})
-                    </h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
+                      <NFLTeamLogo team={trade.target_alpha.pro_team} size={28} />
+                      <h4 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                        Target: {trade.target_alpha.full_name} ({trade.target_alpha.position} - {trade.target_alpha.pro_team})
+                      </h4>
+                    </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       Rival Team: <strong style={{ color: 'var(--text-secondary)' }}>{trade.partner_team_name}</strong>
                       {trade.target_playoff_sos && (
@@ -102,8 +106,9 @@ export const TradesTab: React.FC<TradesTabProps> = ({
                       <span className="pill cyan" style={{ fontSize: '9px', padding: '1px 5px' }}>Package</span>
                     </div>
                     {trade.send_players.map((p) => (
-                      <div key={p.player_id} className="trade-player-pill">
-                        <div>
+                      <div key={p.player_id} className="trade-player-pill" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <NFLTeamLogo team={p.pro_team} size={22} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <strong style={{ fontSize: '13px' }}>{p.full_name}</strong>
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.position} • {p.pro_team}</div>
                         </div>
@@ -124,8 +129,9 @@ export const TradesTab: React.FC<TradesTabProps> = ({
                       <span>You Receive (Tier-1 Alpha)</span>
                       <span className="pill purple" style={{ fontSize: '9px', padding: '1px 5px' }}>👑 Alpha</span>
                     </div>
-                    <div className="trade-player-pill alpha">
-                      <div>
+                    <div className="trade-player-pill alpha" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <NFLTeamLogo team={trade.target_alpha.pro_team} size={24} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <strong style={{ fontSize: '14px', color: '#c084fc' }}>{trade.target_alpha.full_name}</strong>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{trade.target_alpha.position} • {trade.target_alpha.pro_team}</div>
                       </div>
@@ -146,8 +152,9 @@ export const TradesTab: React.FC<TradesTabProps> = ({
                       <span className="pill emerald" style={{ fontSize: '9px', padding: '1px 5px' }}>Free Pickup</span>
                     </div>
                     {trade.waiver_backfill ? (
-                      <div className="trade-player-pill backfill">
-                        <div>
+                      <div className="trade-player-pill backfill" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <NFLTeamLogo team={trade.waiver_backfill.pro_team} size={22} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <strong style={{ fontSize: '13px', color: '#34d399' }}>{trade.waiver_backfill.full_name}</strong>
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{trade.waiver_backfill.position} • {trade.waiver_backfill.pro_team}</div>
                         </div>

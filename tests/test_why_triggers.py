@@ -515,3 +515,72 @@ def test_thursday_kickoff_flex_rule_trigger():
     assert any(r.startswith("[Tactical]") for r in eval_thu.reasons_positive)
 
 
+def test_vegas_props_why_card_triggers():
+    """Verify position-aware Vegas props triggers generate actionable Why Card drivers."""
+    # 1. Elite WR with high receptions O/U and high anytime TD probability
+    game = NFLGame(
+        id="20",
+        name="GB at DET",
+        date="2026-09-13",
+        venue_name="Ford Field",
+        is_dome=True,
+        home_team="DET",
+        away_team="GB",
+        over_under=51.0,
+        spread=-3.5,
+        home_implied_total=27.25,
+        away_implied_total=23.75,
+    )
+    wr_stud = PlayerModel(
+        id=9926,
+        full_name="Amon-Ra St. Brown",
+        position="WR",
+        pro_team="DET",
+        projected_points=18.5,
+        projected_stats_json='{"targets": 10.0, "receptions": 7.5, "rec_yds": 88.0, "rec_td": 0.7}',
+    )
+    eval_wr = scoring_engine.evaluate_player(wr_stud, nfl_game=game)
+    wr_pos = eval_wr.reasons_positive
+    assert any("[Vegas Props]" in r and "High-Volume PPR Floor" in r for r in wr_pos)
+    assert any("[Vegas Props]" in r and "Red Zone TD Equity" in r for r in wr_pos)
+
+    # 2. Bellcow RB with heavy carry expectation
+    rb_bellcow = PlayerModel(
+        id=9927,
+        full_name="Jahmyr Gibbs",
+        position="RB",
+        pro_team="DET",
+        projected_points=19.0,
+        projected_stats_json='{"rush_att": 16.0, "rush_yds": 78.0, "targets": 5.0, "receptions": 4.0, "rec_yds": 32.0, "rush_td": 0.8, "rec_td": 0.3}',
+    )
+    eval_rb = scoring_engine.evaluate_player(rb_bellcow, nfl_game=game)
+    assert any("[Vegas Props]" in r and "Bellcow Carry Line" in r for r in eval_rb.reasons_positive)
+
+    # 3. Faded depth WR in defensive trench game
+    game_slug = NFLGame(
+        id="21",
+        name="NE at NYJ",
+        date="2026-09-13",
+        venue_name="MetLife Stadium",
+        is_dome=False,
+        home_team="NYJ",
+        away_team="NE",
+        over_under=37.0,
+        spread=-7.0,
+        home_implied_total=22.0,
+        away_implied_total=15.0,
+    )
+    wr_depth = PlayerModel(
+        id=9928,
+        full_name="Depth Receiver",
+        position="WR",
+        pro_team="NE",
+        projected_points=4.2,
+        projected_stats_json='{"targets": 2.5, "receptions": 1.5, "rec_yds": 18.0, "rec_td": 0.1}',
+    )
+    eval_depth = scoring_engine.evaluate_player(wr_depth, nfl_game=game_slug)
+    depth_neg = eval_depth.reasons_negative
+    assert any("[Vegas Props]" in r and ("Capped Reception Floor" in r or "FADE" in r or "Touchdown-Drought" in r) for r in depth_neg)
+
+
+

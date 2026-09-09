@@ -46,6 +46,7 @@ class PlayerProjectionResult(BaseModel):
     projected_points: float
     model_points: float = 0.0
     fp_points: float = 0.0
+    sleeper_points: float = 0.0
     espn_points: float = 0.0
     consensus_points: float = 0.0
     active_points: float = 0.0
@@ -69,12 +70,14 @@ class QuantProjectionEngine:
 
     def __init__(
         self,
-        model_weight: float = 0.40,
-        fantasypros_weight: float = 0.40,
-        espn_weight: float = 0.20,
+        model_weight: float = 0.35,
+        fantasypros_weight: float = 0.30,
+        sleeper_weight: float = 0.20,
+        espn_weight: float = 0.15,
     ):
         self.model_weight = model_weight
         self.fantasypros_weight = fantasypros_weight
+        self.sleeper_weight = sleeper_weight
         self.espn_weight = espn_weight
 
     def build_game_script_context(
@@ -389,9 +392,11 @@ class QuantProjectionEngine:
 
         fp_pts = round(fp_r2p, 2) if fp_r2p is not None and fp_r2p > 0.0 else (round(max(4.0, 24.0 - (fp_ecr * 0.28)), 2) if fp_ecr else 0.0)
         espn_pts = round(espn_proj, 2) if espn_proj > 0.0 else 0.0
+        sleeper_raw = getattr(player, "projected_points_sleeper", 0.0) or 0.0
+        sleeper_pts = round(float(sleeper_raw), 2) if sleeper_raw > 0.0 else 0.0
 
         # Collect valid non-zero signals
-        valid_signals = [p for p in (model_pts, fp_pts, espn_pts) if p > 0.0]
+        valid_signals = [p for p in (model_pts, fp_pts, sleeper_pts, espn_pts) if p > 0.0]
         if not valid_signals:
             consensus_pts = round(max(1.0, model_pts), 2)
             consensus_spread = 0.0
@@ -411,19 +416,34 @@ class QuantProjectionEngine:
             else:
                 consensus_agreement = "SHARP_DIVERGENCE"
 
-            # Outlier protection: clamp any source > 35% away from median
-            clamped_model = med + max(-0.35 * med, min(0.35 * med, model_pts - med)) if model_pts > 0 else med
-            clamped_fp = med + max(-0.35 * med, min(0.35 * med, fp_pts - med)) if fp_pts > 0 else med
-            clamped_espn = med + max(-0.35 * med, min(0.35 * med, espn_pts - med)) if espn_pts > 0 else med
+            # Outlier protection: clamp any source > 35% away from median and compute normalized weighted sum
+            source_weights: list[tuple[float, float]] = []
+            if model_pts > 0:
+                clamped_model = med + max(-0.35 * med, min(0.35 * med, model_pts - med))
+                source_weights.append((clamped_model, self.model_weight))
+            if fp_pts > 0:
+                clamped_fp = med + max(-0.35 * med, min(0.35 * med, fp_pts - med))
+                source_weights.append((clamped_fp, self.fantasypros_weight))
+            if sleeper_pts > 0:
+                clamped_sleeper = med + max(-0.35 * med, min(0.35 * med, sleeper_pts - med))
+                source_weights.append((clamped_sleeper, self.sleeper_weight))
+            if espn_pts > 0:
+                clamped_espn = med + max(-0.35 * med, min(0.35 * med, espn_pts - med))
+                source_weights.append((clamped_espn, self.espn_weight))
 
-            # Weighted sum: 40% Model, 40% FP, 20% ESPN
-            weighted_val = (clamped_model * self.model_weight) + (clamped_fp * self.fantasypros_weight) + (clamped_espn * self.espn_weight)
-            consensus_pts = round(weighted_val, 2)
+            total_w = sum(w for _, w in source_weights)
+            if total_w > 0:
+                weighted_val = sum(val * (w / total_w) for val, w in source_weights)
+                consensus_pts = round(weighted_val, 2)
+            else:
+                consensus_pts = round(med, 2)
 
         # 5. Resolve Active Projection by User Selection
         source_clean = (projection_source or "MODEL").upper().strip()
         if source_clean == "FANTASYPROS" and fp_pts > 0.0:
             active_points = fp_pts
+        elif source_clean == "SLEEPER" and sleeper_pts > 0.0:
+            active_points = sleeper_pts
         elif source_clean == "ESPN" and espn_pts > 0.0:
             active_points = espn_pts
         elif source_clean == "CONSENSUS":
@@ -459,6 +479,32 @@ class QuantProjectionEngine:
                 )
             else:
                 reconciled_stats = self._reconcile_itemized_to_points(quant_stats, active_points, pos)
+        elif source_clean == "SLEEPER" and getattr(player, "sleeper_projected_stats", None):
+            sl_raw = player.sleeper_projected_stats
+            if any(sl_raw.get(k, 0) > 0 for k in ("rush_att", "rec_rec", "receptions", "rec", "pass_att", "fg", "fgm", "def_sack", "sack")):
+                reconciled_stats = ItemizedStatLine(
+                    pass_att=sl_raw.get("pass_att", 0.0),
+                    pass_cmp=sl_raw.get("pass_cmp", 0.0),
+                    pass_yds=sl_raw.get("pass_yds", sl_raw.get("pass_yd", 0.0)),
+                    pass_td=sl_raw.get("pass_td", sl_raw.get("pass_tds", 0.0)),
+                    pass_int=sl_raw.get("pass_int", sl_raw.get("pass_ints", 0.0)),
+                    rush_att=sl_raw.get("rush_att", 0.0),
+                    rush_yds=sl_raw.get("rush_yds", sl_raw.get("rush_yd", 0.0)),
+                    rush_td=sl_raw.get("rush_td", sl_raw.get("rush_tds", 0.0)),
+                    targets=sl_raw.get("targets", sl_raw.get("rec_tgt", 0.0)),
+                    receptions=sl_raw.get("receptions", sl_raw.get("rec", 0.0)),
+                    rec_yds=sl_raw.get("rec_yds", sl_raw.get("rec_yd", 0.0)),
+                    rec_td=sl_raw.get("rec_td", sl_raw.get("rec_tds", 0.0)),
+                    fg_made=sl_raw.get("fg_made", sl_raw.get("fgm", 0.0)),
+                    pat_made=sl_raw.get("pat_made", sl_raw.get("xpm", 0.0)),
+                    sacks=sl_raw.get("sacks", sl_raw.get("def_sack", sl_raw.get("sack", 0.0))),
+                    turnovers=sl_raw.get("turnovers", (sl_raw.get("def_int", 0.0) + sl_raw.get("def_fr", 0.0))),
+                    def_td=sl_raw.get("def_td", 0.0),
+                    pts_allowed=sl_raw.get("pts_allowed", sl_raw.get("def_pa", 21.0)),
+                    calculated_ppr=active_points,
+                )
+            else:
+                reconciled_stats = self._reconcile_itemized_to_points(quant_stats, active_points, pos)
         else:
             reconciled_stats = self._reconcile_itemized_to_points(quant_stats, active_points, pos)
 
@@ -485,6 +531,7 @@ class QuantProjectionEngine:
             "efficiency_multiplier_pct": round(efficiency_mult * 100.0, 1),
             "raw_model_ppr": model_pts,
             "fantasypros_ppr": fp_pts if fp_pts > 0 else None,
+            "sleeper_ppr": sleeper_pts if sleeper_pts > 0 else None,
             "espn_ppr": espn_pts if espn_pts > 0 else None,
             "consensus_ppr": consensus_pts,
             "active_projection_source": source_clean,
@@ -494,6 +541,7 @@ class QuantProjectionEngine:
             "sources": {
                 "quant_model": model_pts,
                 "fantasypros": fp_pts if fp_pts > 0 else None,
+                "sleeper": sleeper_pts if sleeper_pts > 0 else None,
                 "espn": espn_pts if espn_pts > 0 else None,
                 "consensus": consensus_pts,
                 "active_source": source_clean,
@@ -507,6 +555,7 @@ class QuantProjectionEngine:
             projected_points=active_points,
             model_points=model_pts,
             fp_points=fp_pts,
+            sleeper_points=sleeper_pts,
             espn_points=espn_pts,
             consensus_points=consensus_pts,
             active_points=active_points,

@@ -23,11 +23,11 @@ from src.services.waiver.scanner import waiver_scanner
 def test_dvp_client_non_linear_curve():
     """Rank 1 (toughest) should NOT give a 3% score, but a calibrated ~36 score on S-curve."""
     score_toughest, grade_toughest = dvp_client.calculate_matchup_score("NYJ", "WR")
-    assert grade_toughest == "TOUGH"
+    assert grade_toughest in ("TOUGH", "BRUTAL")
     assert 30.0 <= score_toughest <= 58.0
 
     score_softest, grade_softest = dvp_client.calculate_matchup_score("CAR", "WR")
-    assert grade_softest == "FAVORABLE"
+    assert grade_softest in ("FAVORABLE", "ELITE")
     assert 85.0 <= score_softest <= 100.0
 
     # Neutral middle rank

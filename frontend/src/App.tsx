@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type {
   LeagueSummaryResponse,
   OptimizedLineupResult,
@@ -18,6 +18,9 @@ import type {
   MatchupResponseItem,
   TeamSummary,
   SlotAssignment,
+  WRCBMatchupAnalysis,
+  VegasIntelligenceResponse,
+  TeamRosterResponse,
 } from './types'
 
 // Extracted Modals
@@ -32,16 +35,60 @@ import { InjuriesTab } from './components/tabs/InjuriesTab'
 import { LeagueTab } from './components/tabs/LeagueTab'
 import { SettingsTab } from './components/tabs/SettingsTab'
 import { FantasyProsTab } from './components/tabs/FantasyProsTab'
+import { IntelTab } from './components/tabs/IntelTab'
+import { DfsTab } from './components/tabs/DfsTab'
+import { VegasTab } from './components/tabs/VegasTab'
 
 export function App() {
   // Navigation & View State
   const [activeTab, setActiveTab] = useState<
-    'lineup' | 'compare' | 'waivers' | 'trades' | 'injuries' | 'league' | 'settings' | 'fantasypros'
+    'lineup' | 'compare' | 'waivers' | 'trades' | 'injuries' | 'league' | 'settings' | 'fantasypros' | 'intel' | 'dfs' | 'vegas'
   >('lineup')
-  const [strategyMode, setStrategyMode] = useState<'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO'>('BALANCED')
-  const [projectionSource, setProjectionSource] = useState<'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'ESPN'>('MODEL')
-  const [lineupViewMode, setLineupViewMode] = useState<'split' | 'unified'>('split')
+  const [strategyMode, setStrategyMode] = useState<'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO'>(() => {
+    const saved = localStorage.getItem('agy_strategy_mode')
+    if (saved === 'BALANCED' || saved === 'CEILING' || saved === 'FLOOR' || saved === 'AUTO') return saved
+    return 'BALANCED'
+  })
+  const [projectionSource, setProjectionSource] = useState<'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'>(() => {
+    const saved = localStorage.getItem('agy_projection_source')
+    if (saved === 'MODEL' || saved === 'CONSENSUS' || saved === 'FANTASYPROS' || saved === 'SLEEPER' || saved === 'ESPN') return saved
+    return 'MODEL'
+  })
+  const [lineupViewMode, setLineupViewMode] = useState<'split' | 'unified'>(() => {
+    const saved = localStorage.getItem('agy_lineup_view_mode')
+    if (saved === 'split' || saved === 'unified') return saved
+    return 'split'
+  })
   const [showMatchupKey, setShowMatchupKey] = useState<boolean>(false)
+
+  // Client Tab Memoization Refs to prevent redundant roundtrips on instant navigation
+  const lastLoadedLineupKey = useRef<string>('')
+  const lastLoadedIntelTeamId = useRef<number | null>(null)
+
+  // Persist user view preferences across page reloads
+  useEffect(() => {
+    try {
+      localStorage.setItem('agy_strategy_mode', strategyMode)
+    } catch {
+      // Ignore in restricted environments
+    }
+  }, [strategyMode])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('agy_projection_source', projectionSource)
+    } catch {
+      // Ignore in restricted environments
+    }
+  }, [projectionSource])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('agy_lineup_view_mode', lineupViewMode)
+    } catch {
+      // Ignore in restricted environments
+    }
+  }, [lineupViewMode])
 
   // Primary Data State
   const [league, setLeague] = useState<LeagueSummaryResponse | null>(null)
@@ -59,9 +106,17 @@ export function App() {
   const [matchups, setMatchups] = useState<MatchupResponseItem[]>([])
   const [matchupWeek, setMatchupWeek] = useState<number>(1)
   const [selectedRosterTeamId, setSelectedRosterTeamId] = useState<number>(1)
-  const [teamRosterData, setTeamRosterData] = useState<any | null>(null)
+  const [teamRosterData, setTeamRosterData] = useState<TeamRosterResponse | null>(null)
+  const [teamRostersCache, setTeamRostersCache] = useState<Record<number, TeamRosterResponse>>({})
+  const [isLoadingRoster, setIsLoadingRoster] = useState<boolean>(false)
   const [backtest, setBacktest] = useState<BacktestReport | null>(null)
   const [tuningMessage, setTuningMessage] = useState<string | null>(null)
+
+  // Matchup & Market Intel State
+  const [wrcbData, setWrcbData] = useState<WRCBMatchupAnalysis[]>([])
+  const [vegasData, setVegasData] = useState<VegasIntelligenceResponse | null>(null)
+  const [isLoadingIntel, setIsLoadingIntel] = useState<boolean>(false)
+  const intelReqSeq = useRef<number>(0)
 
   // Model Weights & Settings
   const [weights, setWeights] = useState<ScoringWeights>({
@@ -83,6 +138,7 @@ export function App() {
   // Start/Sit Comparator State
   const [compareIds, setCompareIds] = useState<number[]>([])
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null)
+  const [isExplicitCompare, setIsExplicitCompare] = useState<boolean>(false)
 
   // Push to ESPN State
   const [showPushModal, setShowPushModal] = useState<boolean>(false)
@@ -111,6 +167,7 @@ export function App() {
       loadConsolidationTrades(selectedTeamId)
       loadBacktestReport(selectedTeamId)
       checkInactivesAlerts(selectedTeamId)
+      loadIntelData(selectedTeamId)
     }
   }, [selectedTeamId])
 
@@ -135,8 +192,13 @@ export function App() {
         const data: LeagueSummaryResponse = await res.json()
         setLeague(data)
         const userTeam = data.user_team_id || (data.teams.length > 0 ? data.teams[0].id : 1)
-        setSelectedTeamId(userTeam)
+        if (selectedTeamId !== userTeam) {
+          setIsExplicitCompare(false)
+          setSelectedTeamId(userTeam)
+        }
         setSelectedRosterTeamId(userTeam)
+        loadTeamRoster(userTeam)
+        prefetchAllTeamRosters(data.teams)
         const curWeek = data.current_week || 1
         setMatchupWeek(curWeek)
         loadMatchups(curWeek)
@@ -187,15 +249,74 @@ export function App() {
     }
   }
 
-  const loadTeamRoster = async (teamId: number) => {
+  const loadTeamRoster = async (teamId: number, forceRefresh = false) => {
+    // If cached in memory and not forcing a refresh, apply immediately with 0 latency
+    if (!forceRefresh && teamRostersCache[teamId]) {
+      setTeamRosterData(teamRostersCache[teamId])
+      return
+    }
+
+    setIsLoadingRoster(true)
     try {
-      const res = await fetch(`/api/league/roster?team_id=${teamId}`)
+      const res = await fetch(`/api/league/teams/${teamId}/roster`)
       if (res.ok) {
-        const data = await res.json()
+        const data: TeamRosterResponse = await res.json()
+        setTeamRostersCache((prev) => ({ ...prev, [teamId]: data }))
         setTeamRosterData(data)
+      } else {
+        const altRes = await fetch(`/api/league/roster?team_id=${teamId}`)
+        if (altRes.ok) {
+          const data: TeamRosterResponse = await altRes.json()
+          setTeamRostersCache((prev) => ({ ...prev, [teamId]: data }))
+          setTeamRosterData(data)
+        }
       }
     } catch (err) {
       console.error('Failed to load team roster:', err)
+    } finally {
+      setIsLoadingRoster(false)
+    }
+  }
+
+  // Pre-fetch all league member rosters in parallel so browsing any team is instant
+  const prefetchAllTeamRosters = async (teams: TeamSummary[]) => {
+    if (!teams || teams.length === 0) return
+    try {
+      const promises = teams.map(async (t) => {
+        try {
+          const res = await fetch(`/api/league/teams/${t.id}/roster`)
+          if (res.ok) {
+            const data: TeamRosterResponse = await res.json()
+            return { teamId: t.id, data }
+          }
+        } catch {
+          // Ignore background prefetch errors
+        }
+        return null
+      })
+      const results = await Promise.all(promises)
+      const newCache: Record<number, TeamRosterResponse> = {}
+      for (const r of results) {
+        if (r && r.data) {
+          newCache[r.teamId] = r.data
+        }
+      }
+      if (Object.keys(newCache).length > 0) {
+        setTeamRostersCache((prev) => ({ ...prev, ...newCache }))
+      }
+    } catch (err) {
+      console.error('Failed to prefetch all team rosters:', err)
+    }
+  }
+
+  // Seamless handler to switch inspected roster team with instant cache retrieval
+  const handleSelectRosterTeam = (teamId: number) => {
+    setSelectedRosterTeamId(teamId)
+    if (teamRostersCache[teamId]) {
+      setTeamRosterData(teamRostersCache[teamId])
+    } else {
+      setTeamRosterData(null)
+      loadTeamRoster(teamId)
     }
   }
 
@@ -267,7 +388,7 @@ export function App() {
         setWeights(updated.weights)
         setLeagueSizeSetting(updated.league_size)
         setTuningMessage('Settings saved successfully and persisted in database!')
-        loadTeamLineup(selectedTeamId, strategyMode, projectionSource)
+        loadTeamLineup(selectedTeamId, strategyMode, projectionSource, true)
       }
     } catch (err) {
       setTuningMessage(`Save failed: ${err}`)
@@ -281,7 +402,7 @@ export function App() {
         const data = await res.json()
         setWeights(data.optimized_weights)
         setTuningMessage(data.message)
-        loadTeamLineup(selectedTeamId, strategyMode, projectionSource)
+        loadTeamLineup(selectedTeamId, strategyMode, projectionSource, true)
         loadBacktestReport(selectedTeamId)
       }
     } catch (err) {
@@ -289,10 +410,15 @@ export function App() {
     }
   }
 
-  const loadTeamLineup = async (teamId: number, mode?: string, source?: string) => {
+  const loadTeamLineup = async (teamId: number, mode?: string, source?: string, force = false) => {
     try {
       const activeMode = mode || strategyMode
       const activeSource = source || projectionSource
+      const cacheKey = `${teamId}_${activeMode}_${activeSource}`
+      if (!force && lastLoadedLineupKey.current === cacheKey && lineup) {
+        return
+      }
+      lastLoadedLineupKey.current = cacheKey
       const res = await fetch(
         `/api/lineup/optimal?team_id=${teamId}&mode=${activeMode}&projection_source=${activeSource}`
       )
@@ -302,8 +428,15 @@ export function App() {
         setCustomSubstitutions({})
         setActiveSwapSlotIndex(null)
 
-        // Seed comparator defaults with close-call candidates if empty
-        if (compareIds.length === 0) {
+        // Check if current compareIds belong to this team's roster
+        const rosterPlayerIds = new Set<number>()
+        data.starters.forEach((s: SlotAssignment) => rosterPlayerIds.add(s.recommended_player.player_id))
+        data.bench.forEach((b: StartSitEvaluation) => rosterPlayerIds.add(b.player_id))
+
+        const hasForeignPlayers = compareIds.length > 0 && compareIds.some((id) => !rosterPlayerIds.has(id))
+
+        // Seed comparator defaults with close-call candidates if not explicit or if current candidates not in this team
+        if (!isExplicitCompare || hasForeignPlayers || compareIds.length === 0) {
           if (data.close_calls && data.close_calls.length > 0) {
             const cc = data.close_calls[0]
             const ids = [cc.starter.player_id, cc.bench_player.player_id]
@@ -322,6 +455,9 @@ export function App() {
             const ids = [starterId, benchCand.player_id]
             setCompareIds(ids)
             runComparison(ids, activeMode, activeSource)
+          } else {
+            setCompareIds([])
+            setComparisonResult(null)
           }
         }
       }
@@ -342,9 +478,41 @@ export function App() {
     }
   }
 
+  const loadIntelData = async (teamId: number, force = false) => {
+    if (!force && lastLoadedIntelTeamId.current === teamId && wrcbData.length > 0 && vegasData) {
+      return
+    }
+    lastLoadedIntelTeamId.current = teamId
+    const seq = ++intelReqSeq.current
+    try {
+      setIsLoadingIntel(true)
+      const [wrcbRes, vegasRes] = await Promise.all([
+        fetch(`/api/analysis/wrcb-matrix?team_id=${teamId}`),
+        fetch(`/api/analysis/vegas-environments?team_id=${teamId}`),
+      ])
+      if (seq !== intelReqSeq.current) return
+      if (wrcbRes.ok) {
+        const wdata: WRCBMatchupAnalysis[] = await wrcbRes.json()
+        setWrcbData(wdata)
+      }
+      if (vegasRes.ok) {
+        const vdata: VegasIntelligenceResponse = await vegasRes.json()
+        setVegasData(vdata)
+      }
+    } catch (err) {
+      console.error('Error loading matchup intel:', err)
+    } finally {
+      if (seq === intelReqSeq.current) {
+        setIsLoadingIntel(false)
+      }
+    }
+  }
+
   const handleSync = async (force = false) => {
     setIsSyncing(true)
     setSyncMessage(null)
+    lastLoadedLineupKey.current = ''
+    lastLoadedIntelTeamId.current = null
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 45000)
     try {
@@ -362,11 +530,12 @@ export function App() {
         setLeague(summaryData)
         const teamId = summaryData.user_team_id || (summaryData.teams.length > 0 ? summaryData.teams[0].id : 1)
         setSelectedTeamId(teamId)
-        loadTeamLineup(teamId, strategyMode, projectionSource)
+        loadTeamLineup(teamId, strategyMode, projectionSource, true)
         loadWaivers(teamId)
         loadAllPlayers()
         loadInjuries()
         checkInactivesAlerts(teamId)
+        loadIntelData(teamId, true)
       }
     } catch (err: any) {
       if (err?.name === 'AbortError') {
@@ -382,15 +551,15 @@ export function App() {
 
   const handleStrategyChange = (newMode: 'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO') => {
     setStrategyMode(newMode)
-    loadTeamLineup(selectedTeamId, newMode, projectionSource)
+    loadTeamLineup(selectedTeamId, newMode, projectionSource, true)
     if (compareIds.length >= 2) {
       runComparison(compareIds, newMode, projectionSource)
     }
   }
 
-  const handleProjectionSourceChange = (newSource: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'ESPN') => {
+  const handleProjectionSourceChange = (newSource: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN') => {
     setProjectionSource(newSource)
-    loadTeamLineup(selectedTeamId, strategyMode, newSource)
+    loadTeamLineup(selectedTeamId, strategyMode, newSource, true)
     if (compareIds.length >= 2) {
       runComparison(compareIds, strategyMode, newSource)
     }
@@ -428,6 +597,7 @@ export function App() {
     const targetBench = matchingBench.length > 0 ? matchingBench[0] : lineup.bench[0]
     if (targetBench) {
       const ids = [starterPlayer.player_id, targetBench.player_id]
+      setIsExplicitCompare(true)
       setCompareIds(ids)
       runComparison(ids, strategyMode, projectionSource)
       setActiveTab('compare')
@@ -460,6 +630,7 @@ export function App() {
 
     if (targetStarter) {
       const ids = [targetStarter.player_id, benchPlayer.player_id]
+      setIsExplicitCompare(true)
       setCompareIds(ids)
       runComparison(ids, strategyMode, projectionSource)
       setActiveTab('compare')
@@ -472,11 +643,43 @@ export function App() {
       (s: SlotAssignment) => s.recommended_player.position === player.position
     )
     const starterId = match ? match.recommended_player.player_id : lineup.starters[0]?.recommended_player.player_id
-    if (starterId && player.id) {
-      const ids = [starterId, player.id]
+    const targetPlayerId = player.player_id ?? player.id
+    if (starterId && targetPlayerId) {
+      const ids = [starterId, targetPlayerId]
+      setIsExplicitCompare(true)
       setCompareIds(ids)
       runComparison(ids, strategyMode, projectionSource)
       setActiveTab('compare')
+    }
+  }
+
+  const handleClearComparison = () => {
+    setCompareIds([])
+    setComparisonResult(null)
+    setIsExplicitCompare(true)
+  }
+
+  const handleAutoLoadRosterDilemma = () => {
+    if (!lineup) return
+    setIsExplicitCompare(true)
+    if (lineup.close_calls && lineup.close_calls.length > 0) {
+      const cc = lineup.close_calls[0]
+      const ids = [cc.starter.player_id, cc.bench_player.player_id]
+      setCompareIds(ids)
+      runComparison(ids, strategyMode, projectionSource)
+    } else if (lineup.starters.length > 0 && lineup.bench.length > 0) {
+      const benchCand = lineup.bench[0]
+      const matchingStarter = lineup.starters.find(
+        (s: SlotAssignment) =>
+          s.recommended_player.position === benchCand.position ||
+          ['RB', 'WR', 'TE'].includes(benchCand.position)
+      )
+      const starterId = matchingStarter
+        ? matchingStarter.recommended_player.player_id
+        : lineup.starters[0].recommended_player.player_id
+      const ids = [starterId, benchCand.player_id]
+      setCompareIds(ids)
+      runComparison(ids, strategyMode, projectionSource)
     }
   }
 
@@ -550,7 +753,7 @@ export function App() {
       const data: LineupPushResponse = await res.json()
       setPushResult(data)
       if (data.success) {
-        await loadTeamLineup(selectedTeamId, strategyMode, projectionSource)
+        await loadTeamLineup(selectedTeamId, strategyMode, projectionSource, true)
         await loadLeagueData()
       }
     } catch (err) {
@@ -584,6 +787,9 @@ export function App() {
               <span className="pill cyan" style={{ fontSize: '11px', padding: '2px 8px' }}>
                 ⚡ 8-Team PPR Calibrated
               </span>
+              <span className="pill gold" style={{ fontSize: '11px', padding: '2px 8px', fontWeight: 800, background: 'rgba(234, 179, 8, 0.15)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+                🏈 Kickoff Tomorrow: NE @ SEA (Wed, Sep 9 • 8:20 PM ET)
+              </span>
               {inactivesAlerts.length > 0 && (
                 <span className="pill rose" style={{ fontSize: '11px', padding: '2px 8px', fontWeight: 800 }}>
                   🚨 {inactivesAlerts.length} Starter Inactive Alert{inactivesAlerts.length > 1 ? 's' : ''}
@@ -601,7 +807,12 @@ export function App() {
               <select
                 className="select-dropdown"
                 value={selectedTeamId}
-                onChange={(e) => setSelectedTeamId(Number(e.target.value))}
+                onChange={(e) => {
+                  const newId = Number(e.target.value)
+                  setIsExplicitCompare(false)
+                  setSelectedTeamId(newId)
+                  // Intentionally do NOT overwrite selectedRosterTeamId so user can browse any roster on League tab independently
+                }}
               >
                 {league.teams.map((t: TeamSummary) => (
                   <option key={t.id} value={t.id}>
@@ -683,6 +894,27 @@ export function App() {
         </button>
 
         <button
+          className={`tab-btn ${activeTab === 'intel' ? 'active' : ''}`}
+          onClick={() => setActiveTab('intel')}
+        >
+          🧠 Matchup Intel
+        </button>
+
+        <button
+          className={`tab-btn ${activeTab === 'dfs' ? 'active' : ''}`}
+          onClick={() => setActiveTab('dfs')}
+        >
+          ⚡ DFS Optimizer
+        </button>
+
+        <button
+          className={`tab-btn ${activeTab === 'vegas' ? 'active' : ''}`}
+          onClick={() => setActiveTab('vegas')}
+        >
+          🎲 Vegas Odds
+        </button>
+
+        <button
           className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
         >
@@ -717,6 +949,7 @@ export function App() {
           onCompareBenchWithStarter={handleCompareBenchWithStarter}
           onReviewCloseCall={(starterId, benchId) => {
             const ids = [starterId, benchId]
+            setIsExplicitCompare(true)
             setCompareIds(ids)
             runComparison(ids, strategyMode, projectionSource)
             setActiveTab('compare')
@@ -738,6 +971,8 @@ export function App() {
           setCompareIds={setCompareIds}
           comparisonResult={comparisonResult}
           runComparison={runComparison}
+          onClearComparison={handleClearComparison}
+          onAutoLoadDilemma={handleAutoLoadRosterDilemma}
         />
       )}
 
@@ -771,8 +1006,10 @@ export function App() {
           matchupWeek={matchupWeek}
           setMatchupWeek={setMatchupWeek}
           selectedRosterTeamId={selectedRosterTeamId}
-          setSelectedRosterTeamId={setSelectedRosterTeamId}
+          setSelectedRosterTeamId={handleSelectRosterTeam}
           teamRosterData={teamRosterData}
+          isLoadingRoster={isLoadingRoster}
+          onRefreshRoster={() => loadTeamRoster(selectedRosterTeamId, true)}
           lineup={lineup}
           onCompareFromRoster={handleCompareFromRoster}
         />
@@ -797,8 +1034,53 @@ export function App() {
           currentWeek={league?.current_week || 1}
           onSyncSuccess={() => {
             loadLeagueData()
-            loadTeamLineup(selectedTeamId, strategyMode, projectionSource)
+            loadTeamLineup(selectedTeamId, strategyMode, projectionSource, true)
           }}
+        />
+      )}
+
+      {activeTab === 'intel' && (
+        <IntelTab
+          lineup={lineup}
+          league={league}
+          matchups={matchups}
+          wrcbData={wrcbData}
+          vegasData={vegasData}
+          isLoadingWrcb={isLoadingIntel}
+          isLoadingVegas={isLoadingIntel}
+          onRefresh={() => {
+            loadIntelData(selectedTeamId, true)
+            loadTeamLineup(selectedTeamId, strategyMode, projectionSource, true)
+            if (league?.current_week) {
+              loadMatchups(league.current_week)
+            }
+          }}
+          onCompareStarterWithBench={handleCompareStarterWithBench}
+          onCompareBenchWithStarter={handleCompareBenchWithStarter}
+          onSelectTab={(tab) => setActiveTab(tab as any)}
+          selectedTeamId={selectedTeamId}
+        />
+      )}
+
+      {activeTab === 'dfs' && (
+        <DfsTab
+          projectionSource={projectionSource}
+          onProjectionSourceChange={(source) => {
+            setProjectionSource(source)
+            try {
+              localStorage.setItem('agy_projection_source', source)
+            } catch {}
+          }}
+        />
+      )}
+
+      {activeTab === 'vegas' && (
+        <VegasTab
+          league={league}
+          selectedTeamId={selectedTeamId}
+          lineup={lineup}
+          onSelectTab={(tab) => setActiveTab(tab as any)}
+          onCompareStarterWithBench={handleCompareStarterWithBench}
         />
       )}
 

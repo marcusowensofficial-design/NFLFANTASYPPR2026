@@ -120,16 +120,80 @@ export interface StartSitEvaluation {
   efficiency_multiplier?: number | null
   proj_model?: number
   proj_fantasypros?: number
+  proj_sleeper?: number
   proj_espn?: number
   proj_consensus?: number
   active_projection_source?: string
   consensus_spread?: number
   consensus_agreement?: string
   fp_itemized_stats?: Record<string, number>
+  sleeper_itemized_stats?: Record<string, number>
   floor_points?: number | null
   ceiling_points?: number | null
   model_provenance?: Record<string, any>
   comparator_factors?: ComparatorFactorsBundle | null
+  wrcb_advantage_score?: number | null
+  wrcb_advantage_rating?: string | null
+  wrcb_primary_cb?: string | null
+  wrcb_is_shadow?: boolean
+  game_script?: string | null
+  game_script_label?: string | null
+  props_receptions_ou?: number | null
+  props_rec_yds_ou?: number | null
+  props_rush_yds_ou?: number | null
+  props_rush_att_ou?: number | null
+  props_pass_yds_ou?: number | null
+  props_pass_tds_ou?: number | null
+  props_anytime_td_odds?: number | null
+  props_anytime_td_prob?: number | null
+  props_implied_ppr_pts?: number | null
+  props_market_sentiment?: string | null
+  props_sharp_notes?: string[]
+  props_vegas_grade?: string | null
+  props_vegas_grade_label?: string | null
+  props_vegas_grade_color?: string | null
+  props_vegas_takeaway?: string | null
+  boris_chen_tier?: number | null
+  boris_chen_tier_label?: string | null
+  boris_chen_is_dropoff?: boolean
+  dvp_fpa?: DvPMatchupDetail | null
+}
+
+export interface PlayerPropsData {
+  player_id: number
+  player_name: string
+  position: string
+  team: string
+  opponent: string
+  receptions_ou?: number | null
+  receptions_over_juice?: number | null
+  receptions_under_juice?: number | null
+  rec_yards_ou?: number | null
+  rush_yards_ou?: number | null
+  rush_att_ou?: number | null
+  pass_yards_ou?: number | null
+  pass_tds_ou?: number | null
+  anytime_td_odds?: number | null
+  anytime_td_prob: number
+  implied_ppr_points: number
+  source: string
+  market_sentiment: string
+  sharp_notes: string[]
+  vegas_grade?: string | null
+  vegas_grade_label?: string | null
+  vegas_grade_color?: string | null
+  vegas_takeaway?: string | null
+}
+
+export interface BorisChenTierItem {
+  player_name: string
+  position: string
+  tier: number
+  rank?: number | null
+  team?: string | null
+  tier_label: string
+  is_tier_dropoff: boolean
+  confidence_spread?: number
 }
 
 export interface FactorScoreDetail {
@@ -197,6 +261,7 @@ export interface OptimizedLineupResult {
   projection_source?: string
   total_model_projected?: number
   total_fp_projected?: number
+  total_sleeper_projected?: number
   total_espn_projected?: number
   total_consensus_projected?: number
   opponent_projected_points?: number | null
@@ -265,6 +330,46 @@ export interface LeagueSummaryResponse {
   last_synced_at: string | null
   teams: TeamSummary[]
 }
+
+export interface RosterPlayerResponse {
+  entry_id: string
+  player_id: number
+  id?: number
+  full_name: string
+  position: string
+  pro_team: string
+  lineup_slot_id: number
+  slot_name: string
+  is_starter: boolean
+  injury_status: string
+  injured: boolean
+  projected_points: number
+  actual_points: number
+  lineup_locked: boolean
+  fp_injury_note?: string | null
+  fp_start_sit_grade?: string | null
+  fp_pos_rank?: string | null
+  fp_tier?: number | null
+  projected_points_espn?: number
+  projected_points_fp?: number
+  projected_points_sleeper?: number
+  projected_points_model?: number
+  projected_points_consensus?: number
+}
+
+export interface TeamRosterResponse {
+  team_id: number
+  team_name: string
+  abbrev: string
+  is_user_team: boolean
+  starters_count: number
+  bench_count: number
+  total_projected_points: number
+  roster: RosterPlayerResponse[]
+  bench_slots_count: number
+  ir_slots_count: number
+}
+
 
 
 export interface RosterArchitectureAudit {
@@ -437,6 +542,8 @@ export interface StreamerRecommendation {
   opponent?: string | null
   is_rostered: boolean
   rostered_by_team_name?: string | null
+  opp_dvp_rank?: number | null
+  matchup_stars?: number | null
 }
 
 export interface FantasyProsRankingsResponse {
@@ -478,21 +585,490 @@ export function isInjuryStatus(status?: string | null): boolean {
 }
 
 export interface InactiveAlertItem {
-  player_id: number
-  full_name: string
+  starter_id: number
+  starter_name: string
   position: string
-  team_name: string
-  slot_name: string
   injury_status: string
-  is_out: boolean
-  is_starter: boolean
+  pro_team: string
+  slot_name?: string
+  starter_proj?: number
+  recommended_bench_id?: number | null
+  recommended_bench_name?: string | null
+  recommended_bench_pos?: string | null
+  recommended_bench_proj?: number
+  top_waiver_id?: number | null
+  top_waiver_name?: string | null
+  top_waiver_pos?: string | null
+  top_waiver_proj?: number
+  net_projected_pts: number
   alert_message: string
+  player_id?: number
+  full_name?: string
+  team_name?: string
+  is_out?: boolean
+  is_starter?: boolean
 }
 
 export interface InactiveAlertsResponse {
   team_id: number
-  has_inactives: boolean
-  count: number
+  has_critical_inactives: boolean
+  alerts_count: number
   alerts: InactiveAlertItem[]
 }
+
+export interface EmergencyPivotRequest {
+  team_id: number
+  starter_id: number
+  bench_id: number
+}
+
+export interface EmergencyPivotResponse {
+  success: boolean
+  message: string
+  starter_name: string
+  bench_name: string
+  from_slot: string
+  to_slot: string
+  moves_executed: number
+}
+
+export interface OpponentVulnerabilityItem {
+  player_id: number
+  player_name: string
+  position: string
+  pro_team: string
+  slot_name: string
+  projected_points: number
+  injury_status: string
+  vulnerability_type: string
+  severity: string
+  description: string
+}
+
+export interface SharedGameCorrelation {
+  game_matchup: string
+  user_players: string[]
+  opp_players: string[]
+  correlation_type: string
+  strategic_takeaway: string
+}
+
+export interface TaleOfTheTapePlayer {
+  id?: number
+  player_id: number
+  name?: string
+  full_name: string
+  position: string
+  pro_team: string
+  opponent: string
+  projected_points: number
+  opp_dvp_rank: number
+  matchup_stars: number
+  matchup_grade: string
+  injury_status?: string
+  slot_id?: number
+}
+
+export interface TaleOfTheTapeSlot {
+  slot_name: string
+  position: string
+  user_player: TaleOfTheTapePlayer
+  opp_player: TaleOfTheTapePlayer
+  point_delta: number
+  advantage: 'USER' | 'OPPONENT' | 'EVEN'
+  leverage_label: string
+}
+
+export interface OpponentScoutingReport {
+  week: number
+  user_team_id: number
+  user_team_name: string
+  user_projected_total: number
+  opp_team_id: number
+  opp_team_name: string
+  opp_primary_owner?: string | null
+  opp_projected_total: number
+  spread: number
+  win_probability: number
+  recommended_stance: 'FLOOR' | 'CEILING' | 'BALANCED'
+  stance_headline: string
+  stance_rationale: string
+  vulnerabilities: OpponentVulnerabilityItem[]
+  correlations: SharedGameCorrelation[]
+  head_to_head_slots: TaleOfTheTapeSlot[]
+  key_action_items: string[]
+}
+
+
+export interface CornerbackProfile {
+  name: string
+  team: string
+  slot_role: string
+  coverage_grade: number
+  is_shadow: boolean
+  targets_per_route_allowed: number
+  fpts_per_route_allowed: number
+  catch_rate_allowed: number
+}
+
+export interface WRAlignmentProfile {
+  pct_slot: number
+  pct_wide: number
+  target_share: number
+  route_win_rate: number
+}
+
+export interface WRCBMatchupAnalysis {
+  player_id: number
+  full_name: string
+  position: string
+  pro_team: string
+  opponent: string
+  projected_points: number
+  alignment: WRAlignmentProfile
+  primary_cb: CornerbackProfile
+  secondary_cb?: CornerbackProfile | null
+  slot_cb?: CornerbackProfile | null
+  is_shadow_projected: boolean
+  advantage_score: number
+  advantage_rating: string
+  tactical_takeaway: string
+  is_user_rostered: boolean
+  is_user_starter: boolean
+}
+
+export interface GameRosterExposurePlayer {
+  player_id: number
+  full_name: string
+  position: string
+  pro_team: string
+  is_starter: boolean
+  projected_points: number
+}
+
+export interface VegasGameEnvironment {
+  game_id: string
+  game_name: string
+  game_date: string
+  venue_name: string
+  is_dome: boolean
+  over_under: number
+  spread: number
+  favorite_team: string
+  underdog_team: string
+  spread_magnitude: number
+  home_team: string
+  away_team: string
+  home_implied_total: number
+  away_implied_total: number
+  highest_implied_total: number
+  game_script: string
+  game_script_label: string
+  pace_index: string
+  expected_total_plays: number
+  tactical_advice: string
+  user_roster_exposure: GameRosterExposurePlayer[]
+}
+
+export interface TeamImpliedRanking {
+  rank: number
+  pro_team: string
+  implied_total: number
+  opponent: string
+  opponent_implied_total?: number
+  spread_diff?: number
+  is_home: boolean
+  is_favorite: boolean
+  over_under: number
+  game_script: string
+}
+
+export interface VegasIntelligenceResponse {
+  season: number
+  week: number
+  total_games: number
+  shootout_count: number
+  games: VegasGameEnvironment[]
+  team_rankings: TeamImpliedRanking[]
+  top_target_games: string[]
+}
+
+export interface VegasPlayerPropsItem {
+  player_id: number
+  player_name: string
+  position: string
+  team: string
+  opponent: string
+  receptions_ou?: number | null
+  receptions_over_juice?: number | null
+  receptions_under_juice?: number | null
+  rec_yards_ou?: number | null
+  rush_yards_ou?: number | null
+  rush_att_ou?: number | null
+  pass_yards_ou?: number | null
+  pass_tds_ou?: number | null
+  anytime_td_odds?: number | null
+  anytime_td_prob: number
+  implied_ppr_points: number
+  source: string
+  market_sentiment: string
+  sharp_notes: string[]
+  vegas_grade: string
+  vegas_grade_label: string
+  vegas_grade_color: string
+  vegas_takeaway: string
+}
+
+
+export interface H2HTaleOfTheTapeResponse {
+  week: number
+  user_team_name: string
+  user_team_id: number
+  user_projected_total: number
+  opp_team_name: string
+  opp_team_id: number
+  opp_projected_total: number
+  spread: number
+  posture: string
+  slots: TaleOfTheTapeSlot[]
+  key_leverage_summary: string
+}
+
+export interface DvPMatchupDetail {
+  season: number
+  week: number
+  defensive_team: string
+  team_name: string
+  position: string
+  rank_softness: number
+  rank_defense: number
+  tier: 'SMASH' | 'FAVORABLE' | 'NEUTRAL' | 'TOUGH' | 'LOCKDOWN' | string
+  tier_label: string
+  dk_fpa: number
+  fd_fpa?: number | null
+  vs_avg: number
+  prior_season_fpa: number
+  current_season_fpa?: number | null
+  last4_fpa?: number | null
+  trend: string
+  supporting_stats: Record<string, number>
+  is_baseline: boolean
+  sample_games_current: number
+  source: string
+  source_url?: string
+  updated_at?: string | null
+}
+
+export interface DvPRecordItem {
+  id: string
+  season: number
+  week: number
+  pro_team: string
+  team_name: string
+  position: string
+  rank_softness: number
+  rank_defense: number
+  tier: 'SMASH' | 'FAVORABLE' | 'NEUTRAL' | 'TOUGH' | 'LOCKDOWN' | string
+  tier_label: string
+  dk_fpa: number
+  fd_fpa?: number | null
+  vs_avg: number
+  prior_season_fpa: number
+  current_season_fpa?: number | null
+  last4_fpa?: number | null
+  trend: string
+  supporting_stats: Record<string, number>
+  is_baseline: boolean
+  sample_games_current: number
+  source: string
+  source_url: string
+  updated_at?: string | null
+}
+
+export interface DvPStatusResponse {
+  total_records: number
+  is_seeded: boolean
+  last_updated?: string | null
+  hours_since_sync: number
+  is_stale: boolean
+  is_baseline: boolean
+  sample_games_current?: number
+  baseline_context: string
+}
+
+// -----------------------------------------------------------------------------
+// Daily Fantasy Sports (DFS) Types
+// -----------------------------------------------------------------------------
+
+export interface DFSSlateInfo {
+  id: string
+  name: string
+  games_count: number
+  platform: string
+  is_available: boolean
+}
+
+export interface DFSGameStack {
+  game: string
+  game_ou: number
+  qb: string
+  target: string
+  bring_back: string
+  total_salary: number
+  total_proj: number
+  avg_value: number
+}
+
+export interface DFSRosterItem {
+  slot: string
+  player_id: string
+  name: string
+  position: string
+  team: string
+  opponent: string
+  salary: number
+  proj: number
+  ceiling: number
+  team_implied: number
+  opp_soft_rank: number
+  opp_tier?: string
+  opp_tier_label?: string
+  opp_fd_fpa?: number
+  value_ratio: number
+  proj_ownership: number
+  ownership_tier: string
+  leverage_score: number
+}
+
+export interface DFSWeatherAudit {
+  team: string
+  is_dome: boolean
+  temp: number
+  wind_mph: number
+  gusts_mph: number
+  precip_in: number
+  concern: string
+}
+
+export interface DFSInjuryAlert {
+  player: string
+  status: string
+  headline: string
+  practice: string
+}
+
+export interface DFSLineupAudit {
+  weather: DFSWeatherAudit[]
+  injury_alerts: DFSInjuryAlert[]
+}
+
+export interface DFSExposureItem {
+  player_id: string
+  name: string
+  position: string
+  team: string
+  count: number
+  total_lineups: number
+  pct: number
+}
+
+export interface DFSLineupResponse {
+  mode: string
+  slate_id: string
+  total_salary: number
+  salary_cap: number
+  salary_remaining: number
+  total_projected_points: number
+  total_ceiling_points: number
+  value_multiplier: number
+  full_ppr_projected_points: number
+  cumulative_ownership: number
+  ownership_rating: string
+  ownership_assessment: string
+  roster: DFSRosterItem[]
+  active_stack?: {
+    qb: string | null
+    team: string | null
+    opponent: string | null
+  } | null
+  audit?: DFSLineupAudit
+  lineups?: DFSLineupResponse[]
+  exposure?: Record<string, DFSExposureItem>
+  projection_source?: string
+}
+
+export interface DFSUploadResponse {
+  success: boolean
+  slate_id: string
+  filename: string
+  total_players: number
+  teams: string[]
+  games_count: number
+  salary_min: number
+  salary_max: number
+  top_stars: {
+    name: string
+    position: string
+    team: string
+    salary: number
+    proj: number
+  }[]
+}
+
+export interface DFSPlayerPoolItem {
+  player_id: string
+  name: string
+  position: string
+  team: string
+  opponent: string
+  salary: number
+  proj: number
+  ceiling_proj: number
+  floor_proj?: number
+  team_implied: number
+  opp_soft_rank: number
+  opp_tier?: string
+  opp_tier_label?: string
+  opp_fd_fpa?: number
+  value_ratio: number
+  proj_ownership: number
+  ownership_tier: string
+  leverage_score: number
+}
+
+export interface DFSSlateDataResponse {
+  slate_id: string
+  projection_source?: string
+  total_players: number
+  top_stacks: DFSGameStack[]
+  leverage_plays: DFSPlayerPoolItem[]
+  chalk_plays: DFSPlayerPoolItem[]
+  players: DFSPlayerPoolItem[]
+}
+
+export interface PlayerMarketSentimentItem {
+  player_id: number
+  player_name: string
+  position: string
+  pro_team: string
+  opponent: string
+  is_thursday_kickoff: boolean
+  game_date?: string | null
+  starter_confidence: number
+  starter_market_question?: string | null
+  has_starter_controversy: boolean
+  injury_status: string
+  practice_status?: string | null
+  decoy_risk: 'LOW' | 'MODERATE' | 'HIGH'
+  injury_headline?: string | null
+  is_rookie: boolean
+  rookie_tier?: string | null
+  oroy_implied_prob?: number | null
+  market_headline: string
+  tactical_advice: string
+  urgency_level: 'CRITICAL_TNF' | 'HIGH' | 'NORMAL'
+}
+
+
+
 

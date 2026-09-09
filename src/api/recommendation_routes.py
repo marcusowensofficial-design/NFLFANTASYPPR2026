@@ -17,6 +17,7 @@ from src.services.recommendation.scoring_engine import (
     ScoringWeights,
     StartSitEvaluation,
     scoring_engine,
+    sort_factor_reasons,
 )
 from src.services.trade.trade_analyzer import (
     ConsolidationTradeAnalysisResult,
@@ -29,7 +30,7 @@ router = APIRouter(prefix="/api/recommendation", tags=["Recommendation"])
 class CompareRequest(BaseModel):
     player_ids: list[int] = Field(min_length=2, max_length=4, description="List of 2 to 4 player IDs to compare")
     mode: str = Field(default="BALANCED", description="Strategy mode: BALANCED, CEILING, or FLOOR")
-    projection_source: str = Field(default="MODEL", description="Projection source: MODEL, FANTASYPROS, ESPN, or CONSENSUS")
+    projection_source: str = Field(default="MODEL", description="Projection source: MODEL, FANTASYPROS, SLEEPER, ESPN, or CONSENSUS")
 
 
 class ScoringSettings(BaseModel):
@@ -133,6 +134,18 @@ async def compare_players(payload: CompareRequest, db: Session = Depends(get_db)
                 else:
                     if fr not in ev.reasons_positive:
                         ev.reasons_positive.insert(0, fr)
+
+        def _dedupe_reasons(lst: list[str]) -> list[str]:
+            seen = set()
+            out = []
+            for item in lst:
+                if item not in seen:
+                    seen.add(item)
+                    out.append(item)
+            return out
+
+        ev.reasons_positive = sort_factor_reasons(_dedupe_reasons(ev.reasons_positive))
+        ev.reasons_negative = sort_factor_reasons(_dedupe_reasons(ev.reasons_negative))
 
         evaluations.append(ev)
 

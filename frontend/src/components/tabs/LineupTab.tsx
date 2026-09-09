@@ -1,21 +1,25 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import type {
   OptimizedLineupResult,
   LeagueSummaryResponse,
   StartSitEvaluation,
   SlotAssignment,
   InactiveAlertItem,
+  PlayerMarketSentimentItem,
 } from '../../types'
 import { MatchupStarRating } from '../shared/MatchupStarRating'
 import { InjuryStatusPill } from '../shared/InjuryStatusPill'
 import { MatchupRatingKey } from '../shared/MatchupRatingKey'
 import { InstitutionalStatCard } from '../shared/InstitutionalStatCard'
 import { renderWhyFactorItem } from '../shared/WhyHelpers'
+import { Tooltip } from '../shared/Tooltip'
+import { renderLineupVegasProps } from '../shared/VegasPropsHelper'
 import { getScoreColorClass } from './CompareTab'
+import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 
 interface LineupTabProps {
-  projectionSource: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'ESPN'
-  onProjectionSourceChange: (source: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'ESPN') => void
+  projectionSource: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'
+  onProjectionSourceChange: (source: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN') => void
   strategyMode: 'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO'
   onStrategyChange: (mode: 'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO') => void
   lineup: OptimizedLineupResult | null
@@ -132,6 +136,68 @@ export const LineupTab: React.FC<LineupTabProps> = ({
     }
   }, [lineup, customSubstitutions])
 
+  const [marketBuzz, setMarketBuzz] = useState<PlayerMarketSentimentItem[]>([])
+
+  useEffect(() => {
+    const fetchMarketBuzz = async () => {
+      try {
+        const week = league?.current_week || 1
+        const res = await fetch(`/api/analysis/market-sentiment/buzz?week=${week}`)
+        if (res.ok) {
+          setMarketBuzz(await res.json())
+        }
+      } catch (err) {
+        // Ignore fetch error
+      }
+    }
+    fetchMarketBuzz()
+  }, [league?.current_week])
+
+  const marketSentimentMap = useMemo(() => {
+    const map = new Map<number, PlayerMarketSentimentItem>()
+    for (const item of marketBuzz) {
+      map.set(item.player_id, item)
+    }
+    return map
+  }, [marketBuzz])
+
+  // Identify starters with critical market warnings (TNF Flex trap, low starter confidence, high decoy risk)
+  const marketAlerts = useMemo(() => {
+    if (!effectiveStarters.length) return []
+    const alerts: Array<{
+      player: StartSitEvaluation
+      slotName: string
+      isFlexTrap: boolean
+      isControversy: boolean
+      isHighDecoy: boolean
+      headline: string
+      advice: string
+    }> = []
+
+    for (const s of effectiveStarters) {
+      const p = s.recommended_player
+      const sent = marketSentimentMap.get(p.player_id)
+      if (!sent) continue
+
+      const isFlexTrap = s.slot_name === 'FLEX' && sent.is_thursday_kickoff
+      const isControversy = sent.has_starter_controversy && sent.starter_confidence < 0.75
+      const isHighDecoy = sent.decoy_risk === 'HIGH'
+
+      if (isFlexTrap || isControversy || isHighDecoy) {
+        alerts.push({
+          player: p,
+          slotName: s.slot_name,
+          isFlexTrap,
+          isControversy,
+          isHighDecoy,
+          headline: sent.market_headline,
+          advice: sent.tactical_advice,
+        })
+      }
+    }
+    return alerts
+  }, [effectiveStarters, marketSentimentMap])
+
   const getEligibleBenchForSlot = (slotName: string, benchList: StartSitEvaluation[]) => {
     if (slotName === 'QB') return benchList.filter((b) => b.position === 'QB')
     if (slotName === 'RB') return benchList.filter((b) => b.position === 'RB')
@@ -163,6 +229,64 @@ export const LineupTab: React.FC<LineupTabProps> = ({
   const handleResetToOptimal = () => {
     setCustomSubstitutions({})
     setActiveSwapSlotIndex(null)
+  }
+
+  const renderMatchupGradePill = (grade: string) => {
+    switch (grade) {
+      case 'ELITE':
+        return (
+          <span
+            className="pill emerald"
+            style={{
+              fontWeight: 800,
+              fontSize: '10.5px',
+              padding: '2px 8px',
+              background: 'rgba(16, 185, 129, 0.25)',
+              border: '1px solid rgba(16, 185, 129, 0.7)',
+              boxShadow: '0 0 10px rgba(16, 185, 129, 0.3)',
+              color: '#34d399',
+            }}
+          >
+            🚀 ELITE
+          </span>
+        )
+      case 'FAVORABLE':
+        return (
+          <span className="pill emerald" style={{ fontWeight: 700, fontSize: '10.5px' }}>
+            FAVORABLE
+          </span>
+        )
+      case 'NEUTRAL':
+        return (
+          <span className="pill cyan" style={{ fontWeight: 600, fontSize: '10.5px' }}>
+            NEUTRAL
+          </span>
+        )
+      case 'TOUGH':
+        return (
+          <span className="pill amber" style={{ fontWeight: 700, fontSize: '10.5px' }}>
+            TOUGH
+          </span>
+        )
+      case 'BRUTAL':
+        return (
+          <span
+            className="pill rose"
+            style={{
+              fontWeight: 800,
+              fontSize: '10.5px',
+              padding: '2px 8px',
+              background: 'rgba(244, 63, 94, 0.25)',
+              border: '1px solid rgba(244, 63, 94, 0.7)',
+              color: '#fb7185',
+            }}
+          >
+            🛑 BRUTAL
+          </span>
+        )
+      default:
+        return <span className="pill cyan" style={{ fontSize: '10.5px' }}>{grade}</span>
+    }
   }
 
   return (
@@ -206,6 +330,66 @@ export const LineupTab: React.FC<LineupTabProps> = ({
         </div>
       )}
 
+      {/* Week 1 Kickoff & Prediction Market Advisory Banner */}
+      {marketAlerts.length > 0 && (
+        <div
+          style={{
+            background: 'rgba(139, 92, 246, 0.12)',
+            border: '2px solid rgba(139, 92, 246, 0.6)',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '24px' }}>🏈</span>
+            <div>
+              <strong style={{ color: '#c084fc', fontSize: '15px' }}>
+                Week 1 Kickoff & Market Volatility Alert ({marketAlerts.length} Starter{marketAlerts.length > 1 ? 's' : ''} Flagged):
+              </strong>
+              <div style={{ fontSize: '12.5px', color: '#e9d5ff', marginTop: '2px' }}>
+                Polymarket prediction crowd odds detect volatile starting roles, decoy risks, or Thursday FLEX positioning.
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+            {marketAlerts.map((alt, idx) => (
+              <div
+                key={idx}
+                style={{
+                  background: 'rgba(0, 0, 0, 0.25)',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span
+                    className={`pill ${alt.isFlexTrap ? 'rose' : alt.isHighDecoy ? 'rose' : 'amber'}`}
+                    style={{ fontSize: '11px', fontWeight: 800 }}
+                  >
+                    {alt.isFlexTrap ? '🚨 TNF FLEX TRAP' : alt.isHighDecoy ? '🚨 HIGH DECOY' : '⚠️ STARTER VOLATILITY'}
+                  </span>
+                  <strong style={{ color: '#fff', fontSize: '13px' }}>
+                    {alt.player.full_name} ({alt.slotName} • {alt.player.pro_team})
+                  </strong>
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  {alt.advice}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Multi-Source Projection Selector Card */}
       <div className="projection-source-card">
         <div className="projection-source-header">
@@ -218,9 +402,11 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                   {projectionSource === 'MODEL'
                     ? 'Our Quant Model (Default)'
                     : projectionSource === 'CONSENSUS'
-                    ? '3-Way Consensus (Model + FP + ESPN)'
+                    ? 'Multi-Source Consensus (Model + FP + Sleeper + ESPN)'
                     : projectionSource === 'FANTASYPROS'
                     ? 'FantasyPros (PPR)'
+                    : projectionSource === 'SLEEPER'
+                    ? 'Sleeper / RotoWire (PPR)'
                     : 'ESPN Official'}
                 </span>
               </div>
@@ -240,9 +426,9 @@ export const LineupTab: React.FC<LineupTabProps> = ({
             <button
               className={`source-pill-btn ${projectionSource === 'CONSENSUS' ? 'active' : ''}`}
               onClick={() => onProjectionSourceChange('CONSENSUS')}
-              title="Outlier-Protected Trimmed Bayesian Consensus: 40% Model + 40% FantasyPros + 20% ESPN"
+              title="Outlier-Protected Bayesian Consensus (Model + FP + Sleeper + ESPN)"
             >
-              ⭐ 3-Way Consensus {lineup?.total_consensus_projected ? `(${lineup.total_consensus_projected.toFixed(1)})` : ''}
+              ⭐ Consensus {lineup?.total_consensus_projected ? `(${lineup.total_consensus_projected.toFixed(1)})` : ''}
             </button>
             <button
               className={`source-pill-btn ${projectionSource === 'FANTASYPROS' ? 'active' : ''}`}
@@ -250,6 +436,13 @@ export const LineupTab: React.FC<LineupTabProps> = ({
               title="FantasyPros Multi-Expert ECR Consensus PPR Projections"
             >
               🌐 FantasyPros {lineup?.total_fp_projected ? `(${lineup.total_fp_projected.toFixed(1)})` : ''}
+            </button>
+            <button
+              className={`source-pill-btn ${projectionSource === 'SLEEPER' ? 'active' : ''}`}
+              onClick={() => onProjectionSourceChange('SLEEPER')}
+              title="Sleeper / RotoWire Official Weekly PPR Projections"
+            >
+              📱 Sleeper {lineup?.total_sleeper_projected ? `(${lineup.total_sleeper_projected.toFixed(1)})` : ''}
             </button>
             <button
               className={`source-pill-btn ${projectionSource === 'ESPN' ? 'active' : ''}`}
@@ -424,7 +617,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
             <span className="metric-label">{hasCustomSwaps ? 'Custom Lineup Total' : 'Optimal Projected Total'}</span>
             <span className="metric-val">{hasCustomSwaps ? currentLineupProjectedTotal : lineup.total_projected_points} pts</span>
             <span className="metric-sub">
-              Engine: {projectionSource === 'MODEL' ? 'Quant Model' : projectionSource === 'CONSENSUS' ? '3-Way Consensus' : projectionSource === 'FANTASYPROS' ? 'FantasyPros PPR' : 'ESPN Official'}
+              Engine: {projectionSource === 'MODEL' ? 'Quant Model' : projectionSource === 'CONSENSUS' ? 'Multi-Source Consensus' : projectionSource === 'FANTASYPROS' ? 'FantasyPros PPR' : projectionSource === 'SLEEPER' ? 'Sleeper (RotoWire)' : 'ESPN Official'}
             </span>
           </div>
 
@@ -564,18 +757,20 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                         <span className="slot-badge">{slot.slot_name}</span>
                         {slot.slot_name === 'FLEX' && slot.is_flex_timing_optimal !== undefined && (
                           <div style={{ marginTop: '4px' }}>
-                            <span
-                              className={`pill ${slot.is_flex_timing_optimal ? 'emerald' : 'rose'}`}
-                              style={{ fontSize: '10px', padding: '2px 6px', display: 'inline-block' }}
-                              title={slot.flex_timing_note || (slot.is_flex_timing_optimal ? 'Optimal late kickoff slotting' : 'Early kickoff in FLEX warning')}
-                            >
-                              {slot.is_flex_timing_optimal ? '⏰ Late Lock' : '⚠️ Early Flex'}
-                            </span>
+                            <Tooltip term="FLEX_RISK" title={slot.flex_timing_note || (slot.is_flex_timing_optimal ? 'Optimal late kickoff slotting' : 'Early kickoff in FLEX warning')}>
+                              <span
+                                className={`pill ${slot.is_flex_timing_optimal ? 'emerald' : 'rose'}`}
+                                style={{ fontSize: '10px', padding: '2px 6px', display: 'inline-block', cursor: 'pointer' }}
+                              >
+                                {slot.is_flex_timing_optimal ? '⏰ Late Lock' : '⚠️ Early Flex'}
+                              </span>
+                            </Tooltip>
                           </div>
                         )}
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <NFLTeamLogo team={p.pro_team} size={24} />
                           <span style={{ fontWeight: 700 }}>{p.full_name}</span>
                           {slot.is_custom_swap && (
                             <span className="pill amber" style={{ fontSize: '10px', padding: '1px 6px', fontWeight: 700 }} title={`Custom Bench Swap replacing ${slot.original_recommended?.full_name}`}>
@@ -587,19 +782,21 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                           <span>{p.position} • {p.pro_team}</span>
                           {(p.fp_rank_ecr || p.fp_pos_rank) ? (
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <span
-                                style={{
-                                  color: '#38bdf8',
-                                  fontWeight: 700,
-                                  background: 'rgba(56, 189, 248, 0.15)',
-                                  padding: '1px 6px',
-                                  borderRadius: '4px',
-                                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                                }}
-                                title={`FantasyPros PPR Consensus: ${p.fp_pos_rank || '#' + p.fp_rank_ecr} (Avg: #${p.fp_rank_ave?.toFixed(1) || p.fp_rank_ecr}${p.fp_tier ? ` • Tier ${p.fp_tier}` : ''})`}
-                              >
-                                ⭐ FP {p.fp_pos_rank || `#${p.fp_rank_ecr}`} (PPR)
-                              </span>
+                              <Tooltip term="FP_RANK" title={`FantasyPros PPR Consensus: ${p.fp_pos_rank || '#' + p.fp_rank_ecr} (Avg: #${p.fp_rank_ave?.toFixed(1) || p.fp_rank_ecr})`}>
+                                <span
+                                  style={{
+                                    color: '#38bdf8',
+                                    fontWeight: 700,
+                                    background: 'rgba(56, 189, 248, 0.15)',
+                                    padding: '1px 6px',
+                                    borderRadius: '4px',
+                                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  ⭐ FP {p.fp_pos_rank || `#${p.fp_rank_ecr}`} (PPR)
+                                </span>
+                              </Tooltip>
                               {p.fp_start_sit_grade && (
                                 <span
                                   className={`grade-pill ${p.fp_start_sit_grade.startsWith('A') ? 'grade-a' : p.fp_start_sit_grade.startsWith('B') ? 'grade-b' : p.fp_start_sit_grade.startsWith('C') ? 'grade-c' : 'grade-d'}`}
@@ -638,21 +835,32 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                             </span>
                           ) : null}
                           {p.live_vorp !== undefined && p.live_vorp !== null && (
-                            <span
-                              className="vorp-badge"
-                              title="Live-Wire VORP: Projected value over top unowned replacement on waiver wire"
-                            >
-                              VORP: {p.live_vorp > 0 ? `+${p.live_vorp}` : p.live_vorp}
-                            </span>
+                            <Tooltip term="VORP" title={`Live VORP: ${p.live_vorp > 0 ? '+' : ''}${p.live_vorp}`}>
+                              <span
+                                className="vorp-badge"
+                              >
+                                VORP: {p.live_vorp > 0 ? `+${p.live_vorp}` : p.live_vorp}
+                              </span>
+                            </Tooltip>
+                          )}
+                          {p.boris_chen_tier && (
+                            <Tooltip term="BORIS_TIER" title={`Boris Chen GMM Tier ${p.boris_chen_tier}`}>
+                              <span className={`boris-tier-badge tier-${p.boris_chen_tier}`}>
+                                <span>💎</span> {p.boris_chen_tier_label || `T${p.boris_chen_tier}`}
+                              </span>
+                            </Tooltip>
                           )}
                           {slot.is_diff && (
                             <span className="diff-pill">DIFF vs ESPN</span>
                           )}
                         </div>
+                        {renderLineupVegasProps(p)}
                       </td>
                       <td>
-                        <span className="matchup-tag">
-                          {p.is_home ? 'vs' : '@'} {p.opponent}
+                        <span className="matchup-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                          <span>{p.is_home ? 'vs' : '@'}</span>
+                          <NFLTeamLogo team={p.opponent} size={16} />
+                          <span>{p.opponent}</span>
                         </span>
                         {p.game_date && (
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -663,13 +871,14 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '4px' }}>
                             {p.opp_dvp_rank !== undefined && p.opp_dvp_rank !== null && (
                               <div>
-                                <span
-                                  className={`pill ${p.opp_dvp_rank <= 10 ? 'rose' : p.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
-                                  style={{ fontSize: '10.5px', padding: '1px 6px', fontWeight: 700 }}
-                                  title={`FantasyPros Consensus DvP: Ranked #${p.opp_dvp_rank} vs ${p.position} (${p.opp_dvp_rank <= 10 ? 'Tough Matchup' : p.opp_dvp_rank >= 21 ? 'Generous Matchup' : 'Neutral'})`}
-                                >
-                                  🛡️ DvP #{p.opp_dvp_rank}
-                                </span>
+                                <Tooltip term="DVP" title={`DvP #${p.opp_dvp_rank} vs ${p.position}`}>
+                                  <span
+                                    className={`pill ${p.opp_dvp_rank <= 10 ? 'rose' : p.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
+                                    style={{ fontSize: '10.5px', padding: '1px 6px', fontWeight: 700 }}
+                                  >
+                                    🛡️ DvP #{p.opp_dvp_rank}
+                                  </span>
+                                </Tooltip>
                               </div>
                             )}
                             <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -689,25 +898,60 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                   position={p.position}
                                 />
                               )}
+                              {p.wrcb_is_shadow && (
+                                <span
+                                  className="pill rose"
+                                  style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 800 }}
+                                  title={`PFF Shadow Alert: Shadowed by ${p.wrcb_primary_cb || 'CB1'}`}
+                                >
+                                  🚨 Shadow ({p.wrcb_primary_cb})
+                                </span>
+                              )}
+                              {p.wrcb_advantage_rating === 'SLOT_MISMATCH' && (
+                                <Tooltip term="SLOT_MISMATCH" title="PFF Slot Mismatch Advantage">
+                                  <span
+                                    className="pill emerald"
+                                    style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 800, cursor: 'pointer' }}
+                                  >
+                                    🔥 Slot Adv
+                                  </span>
+                                </Tooltip>
+                              )}
+                              {p.game_script === 'SHOOTOUT' && (
+                                <Tooltip term="SHOOTOUT" title="Vegas Game Script: High-Ceiling Shootout (O/U ≥ 47.5)">
+                                  <span
+                                    className="pill amber"
+                                    style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 800, cursor: 'pointer' }}
+                                  >
+                                    ⚡ Shootout
+                                  </span>
+                                </Tooltip>
+                              )}
                             </div>
                           </div>
                         )}
                       </td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <span className={`score-badge ${getScoreColorClass(p.start_score)}`}>
-                            {p.start_score}
-                          </span>
+                          <Tooltip term="STARTSCORE" title={`StartScore: ${p.start_score}`}>
+                            <span className={`score-badge ${getScoreColorClass(p.start_score)}`} style={{ cursor: 'pointer' }}>
+                              {p.start_score}
+                            </span>
+                          </Tooltip>
                           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                             {p.ceiling_score !== undefined && p.ceiling_score > 0 && (
-                              <span className="ceiling-floor-tag ceiling" title="90th Percentile Ceiling">
-                                🚀 {p.ceiling_score}
-                              </span>
+                              <Tooltip term="CEILING_FLOOR" title={`90th Percentile Ceiling: ${p.ceiling_score}`}>
+                                <span className="ceiling-floor-tag ceiling" style={{ cursor: 'pointer' }}>
+                                  🚀 {p.ceiling_score}
+                                </span>
+                              </Tooltip>
                             )}
                             {p.floor_score !== undefined && p.floor_score > 0 && (
-                              <span className="ceiling-floor-tag floor" title="20th Percentile Floor">
-                                🛡️ {p.floor_score}
-                              </span>
+                              <Tooltip term="CEILING_FLOOR" title={`20th Percentile Floor: ${p.floor_score}`}>
+                                <span className="ceiling-floor-tag floor" style={{ cursor: 'pointer' }}>
+                                  🛡️ {p.floor_score}
+                                </span>
+                              </Tooltip>
                             )}
                           </div>
                         </div>
@@ -715,9 +959,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                       <td style={{ fontWeight: 600 }}>{p.projected_points} pts</td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-start' }}>
-                          <span className={`pill ${p.matchup_grade === 'FAVORABLE' ? 'emerald' : p.matchup_grade === 'TOUGH' ? 'rose' : 'cyan'}`}>
-                            {p.matchup_grade}
-                          </span>
+                          {renderMatchupGradePill(p.matchup_grade)}
                           {p.opp_dvp_rank !== undefined && p.opp_dvp_rank !== null && (
                             <span 
                               style={{ fontSize: '10px', color: 'var(--text-muted)' }} 
@@ -816,10 +1058,15 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                         className="swap-candidate-card"
                                         onClick={() => handlePerformSwap(slotIdx, cand)}
                                       >
-                                        <div>
-                                          <div className="swap-cand-name">{cand.full_name}</div>
-                                          <div className="swap-cand-sub">
-                                            {cand.position} • {cand.pro_team} ({cand.is_home ? 'vs' : '@'} {cand.opponent})
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                          <NFLTeamLogo team={cand.pro_team} size={22} />
+                                          <div>
+                                            <div className="swap-cand-name">{cand.full_name}</div>
+                                            <div className="swap-cand-sub" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                              <span>{cand.position} • {cand.pro_team} ({cand.is_home ? 'vs' : '@'}</span>
+                                              <NFLTeamLogo team={cand.opponent} size={14} />
+                                              <span>{cand.opponent})</span>
+                                            </div>
                                           </div>
                                         </div>
                                         <div className="swap-cand-right">
@@ -926,6 +1173,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <NFLTeamLogo team={b.pro_team} size={22} />
                           <span style={{ fontWeight: 600 }}>{b.full_name}</span>
                         </div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -934,7 +1182,11 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                         </div>
                       </td>
                       <td>
-                        <span className="matchup-tag">{b.is_home ? 'vs' : '@'} {b.opponent}</span>
+                        <span className="matchup-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                          <span>{b.is_home ? 'vs' : '@'}</span>
+                          <NFLTeamLogo team={b.opponent} size={16} />
+                          <span>{b.opponent}</span>
+                        </span>
                         {b.opp_dvp_rank && <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>DvP #{b.opp_dvp_rank}</div>}
                       </td>
                       <td>
@@ -942,7 +1194,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                       </td>
                       <td style={{ fontWeight: 600 }}>{b.projected_points} pts</td>
                       <td>
-                        <span className={`pill ${b.matchup_grade === 'FAVORABLE' ? 'emerald' : b.matchup_grade === 'TOUGH' ? 'rose' : 'cyan'}`}>{b.matchup_grade}</span>
+                        {renderMatchupGradePill(b.matchup_grade)}
                       </td>
                       <td>
                         <InjuryStatusPill
@@ -995,9 +1247,19 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                     lineup.ir.map((p: StartSitEvaluation) => (
                       <tr key={`unified-ir-${p.player_id}`}>
                         <td><span className="slot-badge rose">IR</span></td>
-                        <td><strong style={{ color: '#f87171' }}>{p.full_name}</strong></td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <NFLTeamLogo team={p.pro_team} size={22} />
+                            <strong style={{ color: '#f87171' }}>{p.full_name}</strong>
+                          </div>
+                        </td>
                         <td>{p.position} • {p.pro_team}</td>
-                        <td>{p.opponent}</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <NFLTeamLogo team={p.opponent} size={16} />
+                            <span>{p.opponent}</span>
+                          </div>
+                        </td>
                         <td><span className={`score-badge ${getScoreColorClass(p.start_score)}`}>{p.start_score}</span></td>
                         <td style={{ fontWeight: 600 }}>{p.projected_points} pts</td>
                         <td>
@@ -1081,19 +1343,21 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
                               {(b.fp_rank_ecr || b.fp_pos_rank) ? (
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  <span
-                                    style={{
-                                      color: '#38bdf8',
-                                      fontWeight: 700,
-                                      background: 'rgba(56, 189, 248, 0.15)',
-                                      padding: '1px 5px',
-                                      borderRadius: '4px',
-                                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                                    }}
-                                    title={`FantasyPros PPR Consensus: ${b.fp_pos_rank || '#' + b.fp_rank_ecr} (Avg: #${b.fp_rank_ave?.toFixed(1) || b.fp_rank_ecr}${b.fp_tier ? ` • Tier ${b.fp_tier}` : ''})`}
-                                  >
-                                    ⭐ FP {b.fp_pos_rank || `#${b.fp_rank_ecr}`} (PPR)
-                                  </span>
+                                  <Tooltip term="FP_RANK" title={`FantasyPros PPR Consensus: ${b.fp_pos_rank || '#' + b.fp_rank_ecr} (Avg: #${b.fp_rank_ave?.toFixed(1) || b.fp_rank_ecr})`}>
+                                    <span
+                                      style={{
+                                        color: '#38bdf8',
+                                        fontWeight: 700,
+                                        background: 'rgba(56, 189, 248, 0.15)',
+                                        padding: '1px 5px',
+                                        borderRadius: '4px',
+                                        border: '1px solid rgba(56, 189, 248, 0.3)',
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      ⭐ FP {b.fp_pos_rank || `#${b.fp_rank_ecr}`} (PPR)
+                                    </span>
+                                  </Tooltip>
                                   {b.fp_start_sit_grade && (
                                     <span
                                       className={`grade-pill ${b.fp_start_sit_grade.startsWith('A') ? 'grade-a' : b.fp_start_sit_grade.startsWith('B') ? 'grade-b' : b.fp_start_sit_grade.startsWith('C') ? 'grade-c' : 'grade-d'}`}
@@ -1129,24 +1393,40 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                               ) : b.consensus_rank ? (
                                 <span>Consensus: #{b.consensus_rank.toFixed(1)} PPR</span>
                               ) : null}
+                              {b.boris_chen_tier && (
+                                <Tooltip term="BORIS_TIER" title={`Boris Chen GMM Tier ${b.boris_chen_tier}`}>
+                                  <span className={`boris-tier-badge tier-${b.boris_chen_tier}`} style={{ fontSize: '9.5px', padding: '1px 5px' }}>
+                                    <span>💎</span> {b.boris_chen_tier_label || `T${b.boris_chen_tier}`}
+                                  </span>
+                                </Tooltip>
+                              )}
+                            </div>
+                            {renderLineupVegasProps(b, true)}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <NFLTeamLogo team={b.pro_team} size={18} />
+                              <span>{b.position} • {b.pro_team}</span>
                             </div>
                           </td>
-                          <td>{b.position} • {b.pro_team}</td>
                           <td>
-                            <span className="matchup-tag">
-                              {b.is_home ? 'vs' : '@'} {b.opponent}
+                            <span className="matchup-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                              <span>{b.is_home ? 'vs' : '@'}</span>
+                              <NFLTeamLogo team={b.opponent} size={16} />
+                              <span>{b.opponent}</span>
                             </span>
                             {b.opponent && b.opponent !== 'BYE' && (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '4px' }}>
                                 {b.opp_dvp_rank !== undefined && b.opp_dvp_rank !== null && (
                                   <div>
-                                    <span
-                                      className={`pill ${b.opp_dvp_rank <= 10 ? 'rose' : b.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
-                                      style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 700 }}
-                                      title={`FantasyPros Consensus DvP: #${b.opp_dvp_rank} vs ${b.position}`}
-                                    >
-                                      🛡️ DvP #{b.opp_dvp_rank}
-                                    </span>
+                                    <Tooltip term="DVP" title={`DvP #${b.opp_dvp_rank} vs ${b.position}`}>
+                                      <span
+                                        className={`pill ${b.opp_dvp_rank <= 10 ? 'rose' : b.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
+                                        style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 700 }}
+                                      >
+                                        🛡️ DvP #{b.opp_dvp_rank}
+                                      </span>
+                                    </Tooltip>
                                   </div>
                                 )}
                                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1178,30 +1458,68 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                       position={b.position}
                                     />
                                   )}
+                                  {b.wrcb_is_shadow && (
+                                    <Tooltip term="SHADOW_CB" title={`PFF Shadow Alert: Shadowed by ${b.wrcb_primary_cb || 'CB1'}`}>
+                                      <span
+                                        className="pill rose"
+                                        style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 800, cursor: 'pointer' }}
+                                      >
+                                        🚨 Shadow ({b.wrcb_primary_cb})
+                                      </span>
+                                    </Tooltip>
+                                  )}
+                                  {b.wrcb_advantage_rating === 'SLOT_MISMATCH' && (
+                                    <Tooltip term="SLOT_MISMATCH" title="PFF Slot Mismatch Advantage">
+                                      <span
+                                        className="pill emerald"
+                                        style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 800, cursor: 'pointer' }}
+                                      >
+                                        🔥 Slot Adv
+                                      </span>
+                                    </Tooltip>
+                                  )}
+                                  {b.game_script === 'SHOOTOUT' && (
+                                    <Tooltip term="SHOOTOUT" title="Vegas Game Script: High-Ceiling Shootout (O/U ≥ 47.5)">
+                                      <span
+                                        className="pill amber"
+                                        style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 800, cursor: 'pointer' }}
+                                      >
+                                        ⚡ Shootout
+                                      </span>
+                                    </Tooltip>
+                                  )}
                                 </div>
                               </div>
                             )}
                           </td>
                           <td>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <span className={`score-badge ${getScoreColorClass(b.start_score)}`}>
-                                {b.start_score}
-                              </span>
+                              <Tooltip term="STARTSCORE" title={`StartScore: ${b.start_score}`}>
+                                <span className={`score-badge ${getScoreColorClass(b.start_score)}`} style={{ cursor: 'pointer' }}>
+                                  {b.start_score}
+                                </span>
+                              </Tooltip>
                               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                                 {b.ceiling_score !== undefined && b.ceiling_score > 0 && (
-                                  <span className="ceiling-floor-tag ceiling" title="90th Percentile Ceiling">
-                                    🚀 {b.ceiling_score}
-                                  </span>
+                                  <Tooltip term="CEILING_FLOOR" title={`90th Percentile Ceiling: ${b.ceiling_score}`}>
+                                    <span className="ceiling-floor-tag ceiling" style={{ cursor: 'pointer' }}>
+                                      🚀 {b.ceiling_score}
+                                    </span>
+                                  </Tooltip>
                                 )}
                                 {b.floor_score !== undefined && b.floor_score > 0 && (
-                                  <span className="ceiling-floor-tag floor" title="20th Percentile Floor">
-                                    🛡️ {b.floor_score}
-                                  </span>
+                                  <Tooltip term="CEILING_FLOOR" title={`20th Percentile Floor: ${b.floor_score}`}>
+                                    <span className="ceiling-floor-tag floor" style={{ cursor: 'pointer' }}>
+                                      🛡️ {b.floor_score}
+                                    </span>
+                                  </Tooltip>
                                 )}
                                 {b.contingency_score !== undefined && b.contingency_score > 0 && (
-                                  <span className="ceiling-floor-tag contingent" title="Contingent Workhorse Upside">
-                                    ⚡ {b.contingency_score}
-                                  </span>
+                                  <Tooltip term="BELLCOW" title={`Contingent Workhorse Upside: ${b.contingency_score}`}>
+                                    <span className="ceiling-floor-tag contingent" style={{ cursor: 'pointer' }}>
+                                      ⚡ {b.contingency_score}
+                                    </span>
+                                  </Tooltip>
                                 )}
                               </div>
                             </div>
@@ -1367,10 +1685,18 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                           <span className="slot-badge rose">IR</span>
                         </td>
                         <td>
-                          <strong style={{ color: '#f87171' }}>{p.full_name}</strong>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <NFLTeamLogo team={p.pro_team} size={22} />
+                            <strong style={{ color: '#f87171' }}>{p.full_name}</strong>
+                          </div>
                         </td>
                         <td>{p.position} • {p.pro_team}</td>
-                        <td>{p.opponent}</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <NFLTeamLogo team={p.opponent} size={16} />
+                            <span>{p.opponent}</span>
+                          </div>
+                        </td>
                         <td>
                           <span className={`score-badge ${getScoreColorClass(p.start_score)}`}>
                             {p.start_score}

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { StreamerRecommendation } from '../../types'
+import { MatchupStarRating } from '../shared/MatchupStarRating'
+import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 
 interface FantasyProsTabProps {
   currentWeek?: number
@@ -269,8 +271,28 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                     <div style={{ fontWeight: 800, fontSize: '15px', color: '#f8fafc' }}>
                       {s.player_name}
                     </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {s.pro_team} • {s.opponent || 'TBD'}
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
+                      <NFLTeamLogo team={s.pro_team} size={16} />
+                      <span>{s.pro_team}</span>
+                      <span>•</span>
+                      {s.opponent && s.opponent !== 'TBD' && <NFLTeamLogo team={s.opponent} size={16} />}
+                      <span>{s.opponent || 'TBD'}</span>
+                      {s.opp_dvp_rank !== undefined && s.opp_dvp_rank !== null && (
+                        <>
+                          <MatchupStarRating
+                            stars={s.matchup_stars}
+                            oppDvpRank={s.opp_dvp_rank}
+                            position={s.position}
+                          />
+                          <span
+                            className={`pill ${s.opp_dvp_rank <= 10 ? 'rose' : s.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
+                            style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 700, lineHeight: 1.1 }}
+                            title={`Opponent ranks #${s.opp_dvp_rank} in fantasy points allowed to ${s.position}`}
+                          >
+                            DvP #{s.opp_dvp_rank}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -369,7 +391,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                           <th>Player</th>
                           <th>PPR Pos Rank</th>
                           <th>Team</th>
-                          <th>Opponent</th>
+                          <th>Opponent & Matchup (DvP)</th>
                           <th>Tier</th>
                           <th>Grade</th>
                           <th>Expert Avg</th>
@@ -398,7 +420,29 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                                 </span>
                               </td>
                               <td>{p.player_team_id || p.team_id || 'FA'}</td>
-                              <td>{p.player_opponent || '—'}</td>
+                              <td>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: '105px' }}>
+                                  <div style={{ fontWeight: 700, fontSize: '13px', color: '#f8fafc' }}>
+                                    {p.player_opponent || p.opponent || '—'}
+                                  </div>
+                                  {p.opp_dvp_rank !== undefined && p.opp_dvp_rank !== null && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                                      <MatchupStarRating
+                                        stars={p.matchup_stars}
+                                        oppDvpRank={p.opp_dvp_rank}
+                                        position={p.player_position_id || p.position}
+                                      />
+                                      <span
+                                        className={`pill ${p.opp_dvp_rank <= 10 ? 'rose' : p.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
+                                        style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 700, lineHeight: 1.1 }}
+                                        title={`Opponent ranks #${p.opp_dvp_rank} in fantasy points allowed to ${p.player_position_id || p.position || 'this position'} (1=toughest, 32=softest)`}
+                                      >
+                                        DvP #{p.opp_dvp_rank}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
                               <td>
                                 {p.tier ? (
                                   <span className="pill zinc" style={{ fontSize: '11px', padding: '1px 6px' }}>
@@ -452,7 +496,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                       <th>Player</th>
                       <th>PPR Pos Rank</th>
                       <th>Team</th>
-                      <th>Opponent</th>
+                      <th>Opponent & Matchup (DvP)</th>
                       <th>Tier</th>
                       <th>Grade</th>
                       <th>Expert Avg</th>
@@ -481,7 +525,29 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                             </span>
                           </td>
                           <td>{p.player_team_id || p.team_id || 'FA'}</td>
-                          <td>{p.player_opponent || '—'}</td>
+                          <td>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: '105px' }}>
+                              <div style={{ fontWeight: 700, fontSize: '13px', color: '#f8fafc' }}>
+                                {p.player_opponent || p.opponent || '—'}
+                              </div>
+                              {p.opp_dvp_rank !== undefined && p.opp_dvp_rank !== null && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                                  <MatchupStarRating
+                                    stars={p.matchup_stars}
+                                    oppDvpRank={p.opp_dvp_rank}
+                                    position={p.player_position_id || p.position}
+                                  />
+                                  <span
+                                    className={`pill ${p.opp_dvp_rank <= 10 ? 'rose' : p.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
+                                    style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 700, lineHeight: 1.1 }}
+                                    title={`Opponent ranks #${p.opp_dvp_rank} in fantasy points allowed to ${p.player_position_id || p.position || 'this position'} (1=toughest, 32=softest)`}
+                                  >
+                                    DvP #{p.opp_dvp_rank}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
                           <td>
                             {p.tier ? (
                               <span className="pill zinc" style={{ fontSize: '11px', padding: '1px 6px' }}>
@@ -600,7 +666,12 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                               <td style={{ fontWeight: 800, color: '#38bdf8' }}>#{idx + 1}</td>
                               <td style={{ fontWeight: 700 }}>{p.player_name}</td>
                               <td><span className="pill cyan">{p.position}</span></td>
-                              <td>{p.team || 'FA'}</td>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <NFLTeamLogo team={p.team} size={18} />
+                                  <span>{p.team || 'FA'}</span>
+                                </div>
+                              </td>
                               <td style={{ fontWeight: 800, color: '#facc15', fontSize: '14px' }}>
                                 {p.projected_points ? `${Number(p.projected_points).toFixed(1)} pts` : '—'}
                               </td>

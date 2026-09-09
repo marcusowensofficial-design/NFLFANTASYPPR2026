@@ -4,11 +4,16 @@ import logging
 from typing import Any
 from pydantic import BaseModel, Field
 
+from src.adapters.betting.props_client import vegas_props_client
+from src.adapters.borischen.client import boris_chen_client
 from src.adapters.nfl.dvp_client import dvp_client
 from src.adapters.nfl.injuries_client import PlayerInjuryReport
 from src.adapters.nfl.schedule_client import NFLGame
 from src.adapters.weather.client import WeatherReport, weather_client
 from src.db.models import PlayerModel
+from src.services.matchup.vegas_gamescript import vegas_gamescript_analyzer
+from src.services.matchup.wrcb_matrix import wrcb_analyzer
+from src.services.matchup.dvp_service import dvp_service
 from src.services.recommendation.projection_engine import quant_projection_engine
 
 logger = logging.getLogger(__name__)
@@ -104,15 +109,42 @@ class StartSitEvaluation(BaseModel):
     efficiency_multiplier: float | None = None       # Net % efficiency bump from DvP & weather
     proj_model: float = 0.0                          # Quant Model projection
     proj_fantasypros: float = 0.0                    # FantasyPros weekly PPR projection
+    proj_sleeper: float = 0.0                        # Sleeper / RotoWire weekly PPR projection
     proj_espn: float = 0.0                           # ESPN weekly PPR projection
-    proj_consensus: float = 0.0                      # Outlier-protected 3-way consensus
-    active_projection_source: str = "MODEL"          # Active source (MODEL, FANTASYPROS, ESPN, CONSENSUS)
+    proj_consensus: float = 0.0                      # Outlier-protected consensus
+    active_projection_source: str = "MODEL"          # Active source (MODEL, FANTASYPROS, SLEEPER, ESPN, CONSENSUS)
     consensus_spread: float = 0.0                    # Difference between max and min projection
     consensus_agreement: str = "HIGH_AGREEMENT"      # HIGH_AGREEMENT, MODERATE, SHARP_DIVERGENCE
     fp_itemized_stats: dict[str, float] = Field(default_factory=dict)  # Itemized stats from FantasyPros
+    sleeper_itemized_stats: dict[str, float] = Field(default_factory=dict)  # Itemized stats from Sleeper
     floor_points: float | None = None                # Projected fantasy points floor (20th percentile)
     model_provenance: dict[str, Any] = Field(default_factory=dict)  # Transparent breakdown of sources
     comparator_factors: dict[str, Any] | None = None  # Enriched factor transparency for Start/Sit Comparator
+    wrcb_advantage_score: float | None = None        # Advantage delta % vs primary CB (-30 to +30)
+    wrcb_advantage_rating: str | None = None       # SHADOW_LOCKDOWN, TOUGH_PERIMETER, NEUTRAL, FAVORABLE, SLOT_MISMATCH, MAJOR_ADVANTAGE
+    wrcb_primary_cb: str | None = None             # Name of projected primary CB
+    wrcb_is_shadow: bool = False                   # True if shadowed by CB1
+    game_script: str | None = None                 # SHOOTOUT, FAVORITE_RUN_FUNNEL, UNDERDOG_PASS_FUNNEL, DEFENSIVE_SLUGFEST, BALANCED
+    game_script_label: str | None = None           # Human readable game environment label
+    props_receptions_ou: float | None = None       # Sportsbook consensus receptions O/U
+    props_rec_yds_ou: float | None = None          # Sportsbook receiving yards O/U
+    props_rush_yds_ou: float | None = None         # Sportsbook rushing yards O/U
+    props_rush_att_ou: float | None = None         # Sportsbook rushing attempts O/U
+    props_pass_yds_ou: float | None = None         # Sportsbook passing yards O/U
+    props_pass_tds_ou: float | None = None         # Sportsbook passing TDs O/U
+    props_anytime_td_odds: int | None = None       # Sportsbook American odds (e.g. -115)
+    props_anytime_td_prob: float | None = None     # Market-implied touchdown probability
+    props_implied_ppr_pts: float | None = None     # Fantasy points implied by betting lines
+    props_market_sentiment: str | None = None      # HEAVY_OVER, SLIGHT_OVER, NEUTRAL, SLIGHT_UNDER
+    props_sharp_notes: list[str] = Field(default_factory=list)
+    props_vegas_grade: str | None = None           # VERY_ELITE, ELITE, GOOD, AVERAGE, FADE, VERY_BAD
+    props_vegas_grade_label: str | None = None     # 🔥 VERY ELITE, ✨ ELITE, 👍 GOOD, etc.
+    props_vegas_grade_color: str | None = None     # gold, emerald, cyan, zinc, amber, rose
+    props_vegas_takeaway: str | None = None        # Actionable 1-line summary for fantasy PPR
+    boris_chen_tier: int | None = None             # Boris Chen GMM tier (1 through 8)
+    boris_chen_tier_label: str | None = None       # "Tier 1", "Tier 2", etc.
+    boris_chen_is_dropoff: bool = False            # True if sitting right before significant tier gap
+    dvp_fpa: dict[str, Any] | None = None          # DraftEdge Defense-vs-Position Fantasy Points Allowed details
 
 
 
@@ -232,8 +264,10 @@ def sort_factor_reasons(reasons: list[str]) -> list[str]:
         "[Red Zone]": 4,
         "[Script]": 5,
         "[Game Script]": 5,
+        "[Vegas Props]": 5,
         "[Matchup]": 6,
         "[Defense]": 6,
+        "[Boris Chen]": 7,
         "[Projection]": 7,
         "[Efficiency]": 8,
         "[Floor/Ceiling]": 9,
@@ -293,6 +327,7 @@ class StartSitScoringEngine:
         pos_baseline = baselines.get(pos, 12.0)
         pos_reasons: list[str] = []
         neg_reasons: list[str] = []
+        dvp_info: dict[str, Any] | None = None
 
         # Game Script & Environment Context
         opponent = "BYE"
@@ -324,6 +359,7 @@ class StartSitScoringEngine:
         fp_grade = getattr(player, "fp_start_sit_grade", None)
         fp_r2p = getattr(player, "fp_r2p_pts", None)
         fp_inj_note = getattr(player, "fp_injury_note", None)
+        c_rank = getattr(player, "consensus_rank", 999.0) or 999.0
 
         if fp_ecr is not None:
             if fp_ecr <= 3:
@@ -342,7 +378,6 @@ class StartSitScoringEngine:
             if fp_r2p is not None and fp_r2p >= pos_baseline * 1.15:
                 pos_reasons.append(f"[Consensus] ⭐ FantasyPros expert projected output: {fp_r2p:.1f} pts")
         else:
-            c_rank = getattr(player, "consensus_rank", 999.0) or 999.0
             if c_rank <= 5.0:
                 proj_score = min(100.0, proj_score + 4.0)
                 pos_reasons.append(f"[Consensus] ⭐ Consensus Top-{int(c_rank)} weekly expert rank across national analysts")
@@ -691,9 +726,15 @@ class StartSitScoringEngine:
                 raw_matchup_score, matchup_grade, role_detail = dvp_client.calculate_role_matchup_score(
                     opponent, pos, is_receiving_back=True, team_spread=team_spread
                 )
-                if matchup_grade == "FAVORABLE":
+                if matchup_grade == "ELITE":
+                    pos_reasons.append(f"[Matchup] 🚀 {role_detail}")
+                    ceiling_boost += 6.0
+                elif matchup_grade == "FAVORABLE":
                     pos_reasons.append(f"[Matchup] 🎯 {role_detail}")
                     ceiling_boost += 4.0
+                elif matchup_grade == "BRUTAL":
+                    neg_reasons.append(f"[Matchup] 🛑 {role_detail}")
+                    floor_penalty += 6.0
                 elif matchup_grade == "TOUGH":
                     neg_reasons.append(f"[Matchup] ⚠️ {role_detail}")
                     floor_penalty += 4.0
@@ -703,9 +744,15 @@ class StartSitScoringEngine:
                 raw_matchup_score, matchup_grade, role_detail = dvp_client.calculate_role_matchup_score(
                     opponent, pos, is_slot=True, team_spread=team_spread
                 )
-                if matchup_grade == "FAVORABLE":
+                if matchup_grade == "ELITE":
+                    pos_reasons.append(f"[Matchup] 🚀 {role_detail}")
+                    ceiling_boost += 6.0
+                elif matchup_grade == "FAVORABLE":
                     pos_reasons.append(f"[Matchup] 🎯 {role_detail}")
                     ceiling_boost += 4.0
+                elif matchup_grade == "BRUTAL":
+                    neg_reasons.append(f"[Matchup] 🛑 {role_detail}")
+                    floor_penalty += 6.0
                 elif matchup_grade == "TOUGH":
                     neg_reasons.append(f"[Matchup] ⚠️ {role_detail}")
                     floor_penalty += 4.0
@@ -713,27 +760,36 @@ class StartSitScoringEngine:
                     pos_reasons.append(f"[Matchup] 🛡️ {role_detail}")
             elif is_dst:
                 raw_matchup_score, matchup_grade = dvp_client.calculate_matchup_score(opponent, pos)
-                if matchup_grade == "FAVORABLE":
+                if matchup_grade == "ELITE":
+                    pos_reasons.append(f"[Matchup] 🚀 Elite favorable streaming matchup vs {opponent} (DvP rank #{opp_dvp_rank} vs D/ST, Opp Offense #{opp_off_rank})")
+                    ceiling_boost += 6.0
+                elif matchup_grade == "FAVORABLE":
                     pos_reasons.append(f"[Matchup] 🛡️ Favorable streaming matchup vs {opponent} (DvP rank #{opp_dvp_rank} vs D/ST, Opp Offense #{opp_off_rank})")
                     ceiling_boost += 4.0
-                elif matchup_grade == "TOUGH":
+                elif matchup_grade in ("TOUGH", "BRUTAL"):
                     # Evaluated against stud resilience below
                     pass
                 else:
                     pos_reasons.append(f"[Matchup] 🛡️ Neutral matchup vs {opponent} (DvP rank #{opp_dvp_rank} vs D/ST, Opp Offense #{opp_off_rank})")
 
-                if opp_dvp_rank is not None and opp_dvp_rank >= 25:
-                    pos_reasons.append(f"[Defense] 💥 Generous Turnover Opponent: {opponent} offense ranks #{opp_dvp_rank} in fantasy points and sacks surrendered (elite D/ST ceiling)")
-                    ceiling_boost += 4.0
+                if opp_dvp_rank is not None and opp_dvp_rank >= 27:
+                    pos_reasons.append(f"[Defense] 💥 Elite Generous Turnover Opponent: {opponent} offense ranks #{opp_dvp_rank} in fantasy points and sacks surrendered (league-best D/ST ceiling)")
+                    ceiling_boost += 5.0
+                elif opp_dvp_rank is not None and opp_dvp_rank >= 21:
+                    pos_reasons.append(f"[Defense] 💥 Generous Turnover Opponent: {opponent} offense ranks #{opp_dvp_rank} in fantasy points and sacks surrendered")
+                    ceiling_boost += 3.0
                 elif opp_dvp_rank is not None and opp_dvp_rank <= 6:
                     neg_reasons.append(f"[Defense] ⚠️ Disciplined Ball-Control Offense: {opponent} rarely gives away sacks or turnovers (rank #{opp_dvp_rank} in D/ST points conceded)")
                     floor_penalty += 5.0
             else:
                 raw_matchup_score, matchup_grade = dvp_client.calculate_matchup_score(opponent, pos)
-                if matchup_grade == "FAVORABLE":
+                if matchup_grade == "ELITE":
+                    pos_reasons.append(f"[Matchup] 🚀 Elite smash matchup vs {opponent} (DvP rank #{opp_dvp_rank} vs {pos}, Def rank #{opp_def_rank} - Prime Target Spot)")
+                    ceiling_boost += 6.0
+                elif matchup_grade == "FAVORABLE":
                     pos_reasons.append(f"[Matchup] 🛡️ Favorable matchup vs {opponent} (DvP rank #{opp_dvp_rank} vs {pos}, Def rank #{opp_def_rank})")
                     ceiling_boost += 4.0
-                elif matchup_grade == "TOUGH":
+                elif matchup_grade in ("TOUGH", "BRUTAL"):
                     # Evaluated against stud resilience below
                     pass
                 else:
@@ -768,28 +824,34 @@ class StartSitScoringEngine:
                 pos_reasons.append("[Matchup] 🛡️ Alpha volume insulation: High target/touch share makes player matchup-resilient")
                 if is_pos_stud:
                     pos_reasons.append(f"[Matchup] 🛡️ 8-Man Locked Stud: Elite {fp_pos or pos} alpha role overrides tough defense")
-                if matchup_grade == "TOUGH" and not (is_receiving_back or is_slot_wr):
+                if matchup_grade in ("TOUGH", "BRUTAL") and not (is_receiving_back or is_slot_wr):
                     if is_dst:
                         pos_reasons.append(f"[Matchup] 🛡️ Elite defense resilience: High turnover/sack floor overrides potent {opponent} offense")
                     else:
-                        pos_reasons.append(f"[Matchup] 🛡️ Stud matchup resilience: Elite role overrides tough #{opp_dvp_rank} defense vs {pos}")
+                        pos_reasons.append(f"[Matchup] 🛡️ Stud matchup resilience: Elite role overrides {matchup_grade.lower()} #{opp_dvp_rank} defense vs {pos}")
             elif proj >= 12.0 or (fp_ecr is not None and fp_ecr <= 18) or (pos_rank_num is not None and pos_rank_num <= 24):
                 elasticity = 0.65  # Moderate swing +/- 16 pts
                 matchup_resilience = "MODERATE_ELASTICITY"
-                if matchup_grade == "TOUGH" and not (is_receiving_back or is_slot_wr):
+                if matchup_grade == "BRUTAL" and not (is_receiving_back or is_slot_wr):
+                    neg_reasons.append(f"[Matchup] 🛑 Brutal lockdown matchup vs {opponent} (DvP rank #{opp_dvp_rank} vs {pos}, {opp_unit_label})")
+                    floor_penalty += 6.0
+                elif matchup_grade == "TOUGH" and not (is_receiving_back or is_slot_wr):
                     neg_reasons.append(f"[Matchup] ⚠️ Tough matchup vs {opponent} (DvP rank #{opp_dvp_rank} vs {pos}, {opp_unit_label})")
                     floor_penalty += 4.0
             else:
                 elasticity = 1.00  # Full sensitivity for streamers
                 matchup_resilience = "MATCHUP_SENSITIVE_STREAMER"
-                if matchup_grade == "TOUGH" and not (is_receiving_back or is_slot_wr):
+                if matchup_grade == "BRUTAL" and not (is_receiving_back or is_slot_wr):
+                    neg_reasons.append(f"[Matchup] 🛑 Brutal lockdown matchup vs {opponent} (DvP rank #{opp_dvp_rank} vs {pos}, {opp_unit_label})")
+                    floor_penalty += 6.0
+                elif matchup_grade == "TOUGH" and not (is_receiving_back or is_slot_wr):
                     neg_reasons.append(f"[Matchup] ⚠️ Tough matchup vs {opponent} (DvP rank #{opp_dvp_rank} vs {pos}, {opp_unit_label})")
                     floor_penalty += 4.0
-                if raw_matchup_score <= 58.0:
+                if raw_matchup_score <= 50.0:
                     if is_dst:
-                        neg_reasons.append(f"[Risk] ⚠️ Dangerous matchup vs high-powered offense: {opponent} rarely turns over the ball or concedes sacks")
+                        neg_reasons.append(f"[Risk] 🛑 Dangerous matchup vs high-powered offense: {opponent} rarely turns over the ball or concedes sacks")
                     else:
-                        neg_reasons.append(f"[Risk] ⚠️ High matchup sensitivity: Low baseline volume leaves {player.full_name} vulnerable to tough defense")
+                        neg_reasons.append(f"[Risk] 🛑 High matchup sensitivity: Low baseline volume leaves {player.full_name} vulnerable to brutal defense")
 
             # 5-Star Smash & 1-Star Lockdown Triggers
             matchup_stars = dvp_client.get_matchup_stars(opp_dvp_rank)
@@ -812,6 +874,64 @@ class StartSitScoringEngine:
                     f"[Defense] ⚠️ Ballhawk Pressure Risk: {opponent} secondary ranks #{opp_dvp_rank} vs QBs, elevating sack and interception volatility"
                 )
                 floor_penalty += 3.0
+
+            # 3b. High-Signal DraftEdge Defense vs Position (DvP / FPA) Intelligence
+            dvp_info = None
+            if not is_dst and opponent != "BYE":
+                try:
+                    dvp_info = dvp_service.get_matchup_for_player(opponent, pos)
+                    if dvp_info:
+                        fpa = dvp_info.get("dk_fpa", 0.0)
+                        vs_avg = dvp_info.get("vs_avg", 0.0)
+                        softness = dvp_info.get("rank_softness", 16)
+                        def_rank = dvp_info.get("rank_defense", 16)
+                        supp = dvp_info.get("supporting_stats", {})
+                        trend = dvp_info.get("trend", "")
+                        tier_code = dvp_info.get("tier", "NEUTRAL")
+                        base_ctx = " (2025-26 weighted baseline)" if dvp_info.get("is_baseline") else ""
+
+                        if tier_code in ("SMASH", "FAVORABLE") or vs_avg >= 2.0:
+                            vs_sign = f"+{vs_avg:.1f}" if vs_avg > 0 else f"{vs_avg:.1f}"
+                            pos_reasons.append(
+                                f"[Matchup] 🎯 Soft {pos} Matchup: {opponent} allows {fpa:.1f} DK pts/G to {pos}s ({vs_sign} vs avg, #{softness} softest){base_ctx}"
+                            )
+                            if pos == "QB" and supp.get("pass_yds", 0) >= 235.0:
+                                pos_reasons.append(
+                                    f"[Matchup] 🚀 Secondary Funnel: {opponent} concedes {supp['pass_yds']:.1f} pass yds and {supp.get('pass_td', 0):.2f} pass TDs/G"
+                                )
+                            elif pos in ("RB", "FB") and supp.get("rush_yds", 0) >= 105.0:
+                                pos_reasons.append(
+                                    f"[Matchup] 🚀 Generous Ground Defense: {opponent} yields {supp['rush_yds']:.1f} rush yds/G to running backs"
+                                )
+                            elif pos == "WR" and supp.get("rec_yds", 0) >= 145.0:
+                                pos_reasons.append(
+                                    f"[Matchup] 🚀 Wideout Mismatch: {opponent} surrenders {supp['rec_yds']:.1f} rec yds and {supp.get('rec_td', 0):.2f} TDs/G to WRs"
+                                )
+                            elif pos == "TE" and supp.get("targets", 0) >= 6.5:
+                                pos_reasons.append(
+                                    f"[Matchup] 🚀 Seam Vulnerability: {opponent} allows {supp['targets']:.1f} targets and {supp.get('rec_yds', 0):.1f} rec yds/G to TEs"
+                                )
+                        elif tier_code in ("TOUGH", "LOCKDOWN") or vs_avg <= -2.0:
+                            vs_sign = f"{vs_avg:.1f}"
+                            if not is_pos_stud and matchup_resilience != "MATCHUP_RESILIENT_STUD":
+                                neg_reasons.append(
+                                    f"[Matchup] 🛑 Stifling Defense vs {pos}: {opponent} holds {pos}s to {fpa:.1f} DK pts/G ({vs_sign} vs avg, #{def_rank} toughest in NFL){base_ctx}"
+                                )
+                                if pos == "QB" and supp.get("sacks", 0) >= 2.4:
+                                    neg_reasons.append(
+                                        f"[Defense] ⚠️ Trench Pressure Alert: {opponent} defense averages {supp['sacks']:.1f} sacks per game"
+                                    )
+                                elif pos in ("RB", "FB") and supp.get("rush_yds", 0) <= 85.0:
+                                    neg_reasons.append(
+                                        f"[Matchup] ⚠️ Brick-Wall Run Defense: {opponent} surrenders just {supp['rush_yds']:.1f} rush yds/G"
+                                    )
+
+                        if "Allowing more" in trend:
+                            pos_reasons.append(f"[Matchup] 📈 Surging Generosity: {opponent} defensive trend: {trend}")
+                        elif "Tightening up" in trend and softness >= 17 and not is_pos_stud:
+                            neg_reasons.append(f"[Matchup] 📉 Stiffening Trend: {opponent} defensive trend: {trend}")
+                except Exception as ex:
+                    logger.debug("DvP enrichment skipped for %s vs %s: %s", player.full_name, opponent, ex)
 
             matchup_delta = raw_matchup_score - 70.0
             matchup_score = round(70.0 + (matchup_delta * elasticity), 1)
@@ -857,6 +977,65 @@ class StartSitScoringEngine:
                 f"[Red Zone] ⚠️ Touchdown Desert: Vegas projects only ~{implied_total / 7.0:.1f} team TDs ({implied_total:.1f} implied total), severely suppressing multi-touchdown ceiling"
             )
             floor_penalty += 3.0
+
+        # WR vs CB Secondary Coverage Intelligence (PFF Model)
+        wrcb_adv_score = None
+        wrcb_adv_rating = None
+        wrcb_primary_cb = None
+        wrcb_is_shadow = False
+
+        if pos == "WR" and opponent != "BYE":
+            wrcb_res = wrcb_analyzer.analyze_matchup(
+                player_id=player.id,
+                full_name=player.full_name,
+                pro_team=player.pro_team,
+                opponent=opponent,
+                projected_points=proj,
+            )
+            wrcb_adv_score = wrcb_res.advantage_score
+            wrcb_adv_rating = wrcb_res.advantage_rating
+            wrcb_primary_cb = wrcb_res.primary_cb.name
+            wrcb_is_shadow = wrcb_res.is_shadow_projected
+
+            if wrcb_is_shadow:
+                neg_reasons.append(
+                    f"[Matchup Intel] ⚠️ SHADOW ALERT: Projected shadow coverage by {wrcb_res.primary_cb.name} "
+                    f"({wrcb_res.primary_cb.coverage_grade:.1f} Grade). Severe efficiency and ceiling suppression expected."
+                )
+                floor_penalty += 4.0
+            elif wrcb_res.advantage_rating == "SLOT_MISMATCH":
+                pos_reasons.append(
+                    f"[Matchup Intel] 🔥 SLOT MISMATCH: {player.full_name} ({wrcb_res.alignment.pct_slot*100:.0f}% slot rate) vs "
+                    f"{wrcb_res.slot_cb.name if wrcb_res.slot_cb else 'Nickel CB'} ({wrcb_res.slot_cb.coverage_grade if wrcb_res.slot_cb else 65.0:.1f} Grade). Prime full-PPR target funnel."
+                )
+                ceiling_boost += 3.0
+            elif wrcb_res.advantage_rating in ("MAJOR_ADVANTAGE", "FAVORABLE"):
+                pos_reasons.append(
+                    f"[Matchup Intel] ⭐ WR/CB Advantage: +{wrcb_res.advantage_score:.1f}% matchup edge over {wrcb_res.primary_cb.name} ({wrcb_res.primary_cb.coverage_grade:.1f} Grade)."
+                )
+
+        # Vegas Game Script Intelligence (Action Network / ETR Model)
+        game_script_code = None
+        game_script_label = None
+        if nfl_game:
+            g_script, g_label, g_pace, g_plays, g_advice = vegas_gamescript_analyzer.classify_game(nfl_game)
+            game_script_code = g_script
+            game_script_label = g_label
+
+            if g_script == "SHOOTOUT":
+                pos_reasons.append(
+                    f"[Vegas Game Script] 🔥 High-Ceiling Shootout ({nfl_game.over_under:.1f} O/U, ±{abs(nfl_game.spread):.1f} spread): Fast tempo ({g_plays} plays) elevates multi-TD upside."
+                )
+                ceiling_boost += 3.0
+            elif g_script == "FAVORITE_RUN_FUNNEL" and pos in ("RB", "FB") and team_spread <= -6.5:
+                pos_reasons.append(
+                    f"[Vegas Game Script] 🏃 Positive Run Script: Large {abs(team_spread):.1f}-pt favorite projects heavy 2nd-half rushing volume and clock-killing touches."
+                )
+                ceiling_boost += 2.0
+            elif g_script == "UNDERDOG_PASS_FUNNEL" and (pos in ("WR", "TE") or (pos in ("RB", "FB") and targets >= 2.5)):
+                pos_reasons.append(
+                    f"[Vegas Game Script] 📈 Trailing Pass Script: Underdog script elevates hurry-up aerial volume."
+                )
 
         # Tactical Lineup Construction: Thursday Kickoff FLEX Rule
         if nfl_game and nfl_game.date and pos in ("WR", "RB", "FB", "TE"):
@@ -1032,6 +1211,138 @@ class StartSitScoringEngine:
         elif playoff_grade in ("BRUTAL", "TOUGH") and eff_size <= 8 and final_score < 68.0:
             neg_reasons.append(f"[Schedule] ⚠️ Tough Playoff Outlook: Weeks 15–17 fantasy playoff stretch rated {playoff_grade} (score {playoff_score:.1f})")
 
+        # 7. Vegas Sportsbook Player Proposition Markets & Implied PPR Points
+        props_data = vegas_props_client._synthesize_props_from_vegas(
+            player_id=player.id,
+            player_name=player.full_name,
+            position=pos,
+            team=player.pro_team,
+            opponent=opponent,
+            implied_team_total=implied_total,
+            spread=team_spread,
+            over_under=game_over_under,
+            projected_points=proj,
+        )
+        vegas_props_client._calculate_implied_ppr(props_data, implied_team_total=implied_total)
+
+        # 7a. Core Vegas Grade Consensus Outlook
+        if props_data.vegas_grade in ("VERY_ELITE", "ELITE"):
+            pos_reasons.append(
+                f"[Vegas Props] {props_data.vegas_grade_label}: {props_data.vegas_takeaway}"
+            )
+        elif props_data.vegas_grade in ("FADE", "VERY_BAD"):
+            neg_reasons.append(
+                f"[Vegas Props] {props_data.vegas_grade_label}: {props_data.vegas_takeaway}"
+            )
+
+        # 7b. Reception Floor Anchor (WR / TE / RB)
+        if props_data.receptions_ou and props_data.receptions_ou >= 5.5:
+            pos_reasons.append(
+                f"[Vegas Props] 🎯 High-Volume PPR Floor: Sportsbooks price {props_data.receptions_ou} Receptions O/U, confirming script-proof target volume"
+            )
+        elif pos == "TE" and props_data.receptions_ou and props_data.receptions_ou >= 4.5:
+            pos_reasons.append(
+                f"[Vegas Props] 🎯 Elite TE Target Share: Sportsbooks price {props_data.receptions_ou} Receptions O/U as focal seam weapon"
+            )
+        elif pos in ("WR", "TE") and props_data.receptions_ou and props_data.receptions_ou <= 2.5 and final_score < 72.0:
+            neg_reasons.append(
+                f"[Vegas Props] ⚠️ Capped Reception Floor: Low {props_data.receptions_ou} Receptions O/U warns of heavy reliance on low-probability chunk plays"
+            )
+
+        # 7c. Anytime Touchdown (ATD) Probability & Red Zone Equity
+        if props_data.anytime_td_prob >= 0.48:
+            odds_str = f" ({props_data.anytime_td_odds:+d})" if props_data.anytime_td_odds else ""
+            pos_reasons.append(
+                f"[Vegas Props] 💰 Red Zone TD Equity: Heavy {int(props_data.anytime_td_prob * 100)}% anytime TD probability{odds_str} establishes premier scoring ceiling"
+            )
+        elif pos in ("WR", "TE", "RB") and props_data.anytime_td_prob <= 0.20 and final_score < 70.0:
+            odds_str = f" ({props_data.anytime_td_odds:+d})" if props_data.anytime_td_odds else ""
+            neg_reasons.append(
+                f"[Vegas Props] ⚠️ Touchdown-Drought Risk: Only {int(props_data.anytime_td_prob * 100)}% anytime TD odds{odds_str} severely suppresses non-yardage ceiling"
+            )
+
+        # 7d. RB Workhorse Carry Line vs Committee Warning
+        if pos == "RB":
+            if props_data.rush_att_ou and props_data.rush_att_ou >= 15.5:
+                pos_reasons.append(
+                    f"[Vegas Props] 🏃 Bellcow Carry Line: {props_data.rush_att_ou} Carries O/U signals heavy 2nd-half clock-killing volume in favorable game script"
+                )
+            elif props_data.rush_att_ou and props_data.rush_att_ou <= 9.5 and final_score < 70.0:
+                neg_reasons.append(
+                    f"[Vegas Props] ⚠️ Limited Rushing Volume: Under {props_data.rush_att_ou} Carries O/U warns of a timeshare or pass-heavy deficit"
+                )
+
+        # 7e. QB Passing Line Script
+        if pos == "QB":
+            if props_data.pass_yards_ou and props_data.pass_yards_ou >= 250.0 and implied_total >= 22.5:
+                pos_reasons.append(
+                    f"[Vegas Props] 🚀 High-Volume Passing Line: {props_data.pass_yards_ou} Pass Yds O/U with 1.5 Pass TDs O/U validates a pass-funnel shootout script"
+                )
+            elif props_data.pass_yards_ou and props_data.pass_yards_ou <= 195.0 and final_score < 72.0:
+                neg_reasons.append(
+                    f"[Vegas Props] ⚠️ Low Passing Expectations: Sub-{props_data.pass_yards_ou} Pass Yds O/U caps upside in a run-heavy or defensive slugfest"
+                )
+
+        # 7f. Market-Implied Fantasy Discrepancy (Sharp Edge)
+        if props_data.implied_ppr_points > 0 and proj > 0:
+            market_diff = round(props_data.implied_ppr_points - proj, 1)
+            if market_diff >= 2.5:
+                pos_reasons.append(
+                    f"[Vegas Props] 📈 Sharp Market Discrepancy: Sportsbooks imply {props_data.implied_ppr_points:.1f} PPR pts (+{market_diff:.1f} over projection) — betting markets strongly favor the over"
+                )
+            elif market_diff <= -2.5 and final_score < 72.0:
+                neg_reasons.append(
+                    f"[Vegas Props] 📉 Sharp Market Skepticism: Sportsbooks imply only {props_data.implied_ppr_points:.1f} PPR pts ({market_diff:.1f} below projection) — volume expectations are tempered"
+                )
+
+        # 7g. Kicker & D/ST Vegas Factor Symmetry
+        if pos == "K":
+            if implied_total >= 25.0:
+                pos_reasons.append(
+                    f"[Vegas Props] ⚡ High-Scoring Kicking Script: {implied_total:.1f} team implied total projects frequent red-zone drives and multi-FG opportunities"
+                )
+            elif implied_total <= 18.0 and final_score < 70.0:
+                neg_reasons.append(
+                    f"[Vegas Props] ⚠️ Low Scoring Ceiling: Sub-{implied_total:.1f} team implied total severely limits kicking volume and scoring opportunities"
+                )
+        elif pos in ("D/ST", "DST"):
+            opp_implied = round(max(10.0, game_over_under - implied_total), 1)
+            if game_over_under <= 41.0 or opp_implied <= 18.5:
+                pos_reasons.append(
+                    f"[Vegas Props] 🛡️ Defensive Slugfest Environment: Low {game_over_under:.1f} game total (opponent implied {opp_implied:.1f} pts) projects heavy punting and turnover equity"
+                )
+            elif game_over_under >= 48.0 or opp_implied >= 26.0:
+                neg_reasons.append(
+                    f"[Vegas Props] ⚠️ High-Scoring Shootout Threat: High {game_over_under:.1f} game total (opponent implied {opp_implied:.1f} pts) threatens points-allowed penalties"
+                )
+
+        # 8. Boris Chen GMM Tier Clustering
+        boris_tier_num = fp_tier
+        if boris_tier_num is None:
+            if fp_ecr:
+                if fp_ecr <= 6:
+                    boris_tier_num = 1
+                elif fp_ecr <= 14:
+                    boris_tier_num = 2
+                elif fp_ecr <= 24:
+                    boris_tier_num = 3
+                elif fp_ecr <= 36:
+                    boris_tier_num = 4
+                elif fp_ecr <= 50:
+                    boris_tier_num = 5
+                else:
+                    boris_tier_num = 6
+            else:
+                boris_tier_num = 1 if proj >= 18.0 else (2 if proj >= 14.5 else (3 if proj >= 11.5 else 4))
+
+        boris_tier_label = f"Tier {boris_tier_num}" if boris_tier_num else None
+        boris_is_dropoff = bool(fp_std and fp_std >= 1.8)
+
+        if boris_tier_num == 1:
+            pos_reasons.append("[Boris Chen] 💎 Tier 1 Undisputed Stud: Top statistical cluster of weekly fantasy starters")
+        elif boris_tier_num == 2:
+            pos_reasons.append("[Boris Chen] 🥈 Tier 2 Anchor: Locked into high-end starter tier with safe weekly touch expectation")
+
         def dedupe(lst: list[str]) -> list[str]:
             seen = set()
             out = []
@@ -1102,6 +1413,7 @@ class StartSitScoringEngine:
             efficiency_multiplier=q_proj.efficiency_multiplier if q_proj else None,
             proj_model=q_proj.model_points if q_proj else 0.0,
             proj_fantasypros=q_proj.fp_points if q_proj else 0.0,
+            proj_sleeper=q_proj.sleeper_points if q_proj else 0.0,
             proj_espn=q_proj.espn_points if q_proj else 0.0,
             proj_consensus=q_proj.consensus_points if q_proj else 0.0,
             active_projection_source=q_proj.active_source if q_proj else projection_source,
@@ -1110,10 +1422,35 @@ class StartSitScoringEngine:
             floor_points=q_proj.floor_points if q_proj else round(max(0.0, proj * 0.65), 1),
             ceiling_points=q_proj.ceiling_points if q_proj else round(proj * 1.45, 1),
             fp_itemized_stats=getattr(player, "fp_projected_stats", {}) or {},
+            sleeper_itemized_stats=getattr(player, "sleeper_projected_stats", {}) or {},
             model_provenance=q_proj.model_provenance if q_proj else {},
+            wrcb_advantage_score=wrcb_adv_score,
+            wrcb_advantage_rating=wrcb_adv_rating,
+            wrcb_primary_cb=wrcb_primary_cb,
+            wrcb_is_shadow=wrcb_is_shadow,
+            game_script=game_script_code,
+            game_script_label=game_script_label,
+            props_receptions_ou=props_data.receptions_ou,
+            props_rec_yds_ou=props_data.rec_yards_ou,
+            props_rush_yds_ou=props_data.rush_yards_ou,
+            props_rush_att_ou=props_data.rush_att_ou,
+            props_pass_yds_ou=props_data.pass_yards_ou,
+            props_pass_tds_ou=props_data.pass_tds_ou,
+            props_anytime_td_odds=props_data.anytime_td_odds,
+            props_anytime_td_prob=props_data.anytime_td_prob,
+            props_implied_ppr_pts=props_data.implied_ppr_points,
+            props_market_sentiment=props_data.market_sentiment,
+            props_sharp_notes=props_data.sharp_notes,
+            props_vegas_grade=props_data.vegas_grade,
+            props_vegas_grade_label=props_data.vegas_grade_label,
+            props_vegas_grade_color=props_data.vegas_grade_color,
+            props_vegas_takeaway=props_data.vegas_takeaway,
+            boris_chen_tier=boris_tier_num,
+            boris_chen_tier_label=boris_tier_label,
+            boris_chen_is_dropoff=boris_is_dropoff,
+            dvp_fpa=dvp_info,
         )
 
 
 
 scoring_engine = StartSitScoringEngine()
-

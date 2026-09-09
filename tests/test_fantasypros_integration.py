@@ -240,6 +240,10 @@ def test_api_fantasypros_top_100_and_projections(client):
         assert data["players"][0]["player_name"] == "Ja'Marr Chase"
         assert data["players"][0]["rank_ecr"] == 1
         assert data["players"][0]["start_sit_grade"] == "A+"
+        assert data["players"][0]["opp_dvp_rank"] == 23
+        assert data["players"][0]["matchup_stars"] == 4
+        assert data["players"][1]["opp_dvp_rank"] == 10
+        assert data["players"][1]["matchup_stars"] == 2
 
     with patch("src.adapters.fantasypros.client.fantasypros_client.fetch_projections", new=AsyncMock(return_value=mock_projections)):
         resp_proj = client.get("/api/fantasypros/projections?position=RB&week=1&scoring=PPR")

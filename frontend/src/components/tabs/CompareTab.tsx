@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type {
   PlayerDirectoryItem,
   LeagueSummaryResponse,
@@ -9,9 +9,13 @@ import type {
   SlotAssignment,
   StartSitEvaluation,
   TeamSummary,
+  PlayerMarketSentimentItem,
 } from '../../types'
 import { MatchupStarRating } from '../shared/MatchupStarRating'
 import { renderWhyFactorItem } from '../shared/WhyHelpers'
+import { Tooltip } from '../shared/Tooltip'
+import { renderLineupVegasProps } from '../shared/VegasPropsHelper'
+import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 
 export const getScoreColorClass = (score: number) => {
   if (score >= 80) return 'emerald'
@@ -99,7 +103,7 @@ export const renderFactorDetailBox = (
 interface CompareTabProps {
   strategyMode: 'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO'
   onStrategyChange: (mode: 'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO') => void
-  projectionSource: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'ESPN'
+  projectionSource: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'
   selectedTeamId: number
   league: LeagueSummaryResponse | null
   allPlayers: PlayerDirectoryItem[]
@@ -108,6 +112,8 @@ interface CompareTabProps {
   setCompareIds: React.Dispatch<React.SetStateAction<number[]>>
   comparisonResult: ComparisonResult | null
   runComparison: (ids: number[], mode?: string, source?: string) => Promise<void>
+  onClearComparison?: () => void
+  onAutoLoadDilemma?: () => void
 }
 
 export const CompareTab: React.FC<CompareTabProps> = ({
@@ -122,12 +128,36 @@ export const CompareTab: React.FC<CompareTabProps> = ({
   setCompareIds,
   comparisonResult,
   runComparison,
+  onClearComparison,
+  onAutoLoadDilemma,
 }) => {
   const [comparePosFilter, setComparePosFilter] = useState<string>('ALL')
   const [compareScope, setCompareScope] = useState<'roster' | 'all'>('roster')
   const [expandedCardFormula, setExpandedCardFormula] = useState<{
     [playerId: number]: 'projection' | 'opportunity' | 'matchup' | 'environment' | 'all' | null
   }>({})
+  const [marketSentiments, setMarketSentiments] = useState<Record<number, PlayerMarketSentimentItem>>({})
+
+  useEffect(() => {
+    if (!comparisonResult?.players?.length) return
+    const fetchSentiments = async () => {
+      const results: Record<number, PlayerMarketSentimentItem> = {}
+      await Promise.all(
+        comparisonResult.players.map(async (p) => {
+          try {
+            const res = await fetch(`/api/analysis/market-sentiment/player/${p.player_id}`)
+            if (res.ok) {
+              results[p.player_id] = await res.json()
+            }
+          } catch (err) {
+            // Ignore fetch error
+          }
+        })
+      )
+      setMarketSentiments(results)
+    }
+    fetchSentiments()
+  }, [comparisonResult])
 
   const toggleFactorFormula = (
     playerId: number,
@@ -162,6 +192,10 @@ export const CompareTab: React.FC<CompareTabProps> = ({
   const otherTeams = filteredPlayersForDropdown.filter(
     (p: PlayerDirectoryItem) => p.team_id !== selectedTeamId && !p.is_free_agent
   )
+
+  // Candidate Player Lookups
+  const cand1 = compareIds[0] ? allPlayers.find((p) => p.id === compareIds[0]) : null
+  const cand2 = compareIds[1] ? allPlayers.find((p) => p.id === compareIds[1]) : null
 
   // Roster Dilemmas for 1-Click shortcuts
   const rosterDilemmas = useMemo(() => {
@@ -241,10 +275,38 @@ export const CompareTab: React.FC<CompareTabProps> = ({
   }
 
   const handlePlayerSelect = (index: number, newId: number) => {
+    if (!newId) return
     const next = [...compareIds]
     next[index] = newId
     setCompareIds(next)
-    runComparison(next, strategyMode, projectionSource)
+    const valid = next.filter(Boolean)
+    if (valid.length >= 2) {
+      runComparison(valid, strategyMode, projectionSource)
+    }
+  }
+
+  const handleClearSlot = (index: number) => {
+    const next = compareIds.filter((_, i) => i !== index)
+    setCompareIds(next)
+    if (next.length >= 2) {
+      runComparison(next, strategyMode, projectionSource)
+    }
+  }
+
+  const handleResetMatchup = () => {
+    if (onClearComparison) {
+      onClearComparison()
+    } else {
+      setCompareIds([])
+    }
+  }
+
+  const handleAutoLoad = () => {
+    if (onAutoLoadDilemma) {
+      onAutoLoadDilemma()
+    } else if (rosterDilemmas.length > 0) {
+      handleSelectDilemma(rosterDilemmas[0].starterId, rosterDilemmas[0].benchId)
+    }
   }
 
   const handleSwapPlayers = () => {
@@ -280,7 +342,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <span className="pill cyan">Transparent Formula</span>
           <span className="pill emerald" style={{ fontSize: '11px' }}>
-            {projectionSource === 'MODEL' ? '🤖 Model Projections' : projectionSource === 'FANTASYPROS' ? '⭐ FP Consensus' : '🏈 ESPN Direct'}
+            {projectionSource === 'MODEL' ? '🤖 Model Projections' : projectionSource === 'CONSENSUS' ? '⭐ Consensus' : projectionSource === 'FANTASYPROS' ? '🌐 FP Consensus' : projectionSource === 'SLEEPER' ? '📱 Sleeper (RotoWire)' : '🏈 ESPN Direct'}
           </span>
         </div>
       </div>
@@ -312,35 +374,353 @@ export const CompareTab: React.FC<CompareTabProps> = ({
         </div>
       </div>
 
-      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px' }}>
-        Select players from your roster or available pool to inspect factor-by-factor score differences.
+      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>
+        Select two candidates from your roster to inspect deep statistical calibrations, sportsbook prop markets, Boris Chen tiers, and factor-by-factor score drivers.
       </p>
 
-      {/* Scope Mode Toggle Bar */}
-      <div className="comparator-scope-bar">
-        <div className="scope-toggle-group">
+      {/* Top Action & Control Bar */}
+      <div className="duel-action-bar">
+        <div className="duel-action-group">
           <button
-            className={`scope-toggle-btn ${compareScope === 'roster' ? 'active' : ''}`}
-            onClick={() => handleScopeChange('roster')}
+            className="btn btn-sm btn-primary"
+            onClick={handleAutoLoad}
+            title="Auto-load your team's closest starter vs bench battle"
           >
-            🏠 Team Roster (Compact Mode)
+            ⚡ Auto-Load Closest Dilemma
           </button>
           <button
-            className={`scope-toggle-btn ${compareScope === 'all' ? 'active' : ''}`}
-            onClick={() => handleScopeChange('all')}
+            className="btn btn-sm btn-secondary"
+            onClick={handleResetMatchup}
+            title="Clear current selection and choose fresh players"
           >
-            🌐 League & Free Agents (Full Pool)
+            ↺ Reset / Pick New Matchup
           </button>
         </div>
 
-        <div className="scope-team-indicator">
-          <span style={{ color: 'var(--text-muted)' }}>Focus Team:</span>
-          <strong style={{ color: 'var(--text-primary)' }}>{focusedTeamName}</strong>
-          <span className="pill cyan" style={{ padding: '2px 8px', fontSize: '11px' }}>
-            {compareScope === 'roster' ? `${currentTeamPlayers.length} Roster Players` : `${allPlayers.length} Total Pool`}
-          </span>
+        {/* Scope Mode Toggle Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div className="scope-toggle-group">
+            <button
+              className={`scope-toggle-btn ${compareScope === 'roster' ? 'active' : ''}`}
+              onClick={() => handleScopeChange('roster')}
+            >
+              🏠 Team Roster
+            </button>
+            <button
+              className={`scope-toggle-btn ${compareScope === 'all' ? 'active' : ''}`}
+              onClick={() => handleScopeChange('all')}
+            >
+              🌐 League Pool
+            </button>
+          </div>
+
+          <div className="scope-team-indicator">
+            <span style={{ color: 'var(--text-muted)' }}>Focus:</span>
+            <strong style={{ color: 'var(--text-primary)' }}>{focusedTeamName}</strong>
+            <span className="pill cyan" style={{ padding: '2px 8px', fontSize: '11px' }}>
+              {compareScope === 'roster' ? `${currentTeamPlayers.length} Roster` : `${allPlayers.length} Pool`}
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* Position Filter Tabs */}
+      <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Filter Position:
+        </span>
+        {['ALL', 'QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'D/ST'].map((pos) => (
+          <button
+            key={pos}
+            className={`btn btn-sm ${comparePosFilter === pos ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ padding: '4px 12px', fontSize: '12px' }}
+            onClick={() => setComparePosFilter(pos)}
+          >
+            {pos}
+          </button>
+        ))}
+      </div>
+
+      {/* Head-to-Head Duel Arena */}
+      <div className="duel-arena">
+        {/* Candidate #1 Card */}
+        <div className={`duel-card candidate-1 ${!cand1 ? 'empty' : ''}`}>
+          <div className="duel-card-header">
+            <span className="duel-candidate-label">
+              👤 Candidate #1 {cand1?.is_starter ? '(Starter)' : '(Primary)'}
+            </span>
+            {cand1 && (
+              <button
+                className="duel-change-btn"
+                onClick={() => handleClearSlot(0)}
+                title="Clear Candidate #1"
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
+
+          {cand1 ? (
+            <div className="duel-player-info">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <NFLTeamLogo team={cand1.pro_team} size={34} />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="duel-player-name">{cand1.full_name}</div>
+                  <div className="duel-meta-row" style={{ marginTop: '3px' }}>
+                    <span className="pill cyan" style={{ fontSize: '11px', padding: '2px 7px' }}>
+                      {cand1.position}
+                    </span>
+                    <span className="pill zinc" style={{ fontSize: '11px', padding: '2px 7px' }}>
+                      {cand1.pro_team}
+                    </span>
+                    <span className={`pill ${cand1.is_starter ? 'emerald' : 'amber'}`} style={{ fontSize: '11px', padding: '2px 7px' }}>
+                      {cand1.is_starter ? '⭐ Starter' : '🔄 Bench'}
+                    </span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginLeft: 'auto' }}>
+                      {cand1.projected_points} pts
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '16px 8px' }}>
+              <div style={{ fontSize: '28px', marginBottom: '6px' }}>👤</div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                Select Player 1
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>
+                Pick a starter or key candidate from {focusedTeamName}
+              </div>
+            </div>
+          )}
+
+          {/* Candidate 1 Select Dropdown */}
+          <select
+            className="select-dropdown"
+            style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+            value={compareIds[0] || ''}
+            onChange={(e) => handlePlayerSelect(0, Number(e.target.value))}
+          >
+            <option value="">{cand1 ? '⇄ Switch Player 1...' : '👉 Pick Player 1 to Compare...'}</option>
+            {myStarters.length > 0 && (
+              <optgroup label={`⭐ ${focusedTeamName} Starters (${myStarters.length})`}>
+                {myStarters.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Starter]
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {myBench.length > 0 && (
+              <optgroup label={`🔄 ${focusedTeamName} Bench (${myBench.length})`}>
+                {myBench.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Bench]
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {compareScope === 'all' && freeAgents.length > 0 && (
+              <optgroup label={`🟢 Available Free Agents (${freeAgents.length})`}>
+                {freeAgents.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Free Agent]
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {compareScope === 'all' && otherTeams.length > 0 && (
+              <optgroup label={`👥 Other League Rosters (${otherTeams.length})`}>
+                {otherTeams.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts ({p.team_abbrev || 'League'})
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </div>
+
+        {/* Center VS Column */}
+        <div className="duel-vs-col">
+          <div className="duel-vs-circle">VS</div>
+          <button
+            className="duel-swap-btn"
+            onClick={handleSwapPlayers}
+            disabled={compareIds.length < 2}
+            title="Swap Player 1 and Player 2"
+          >
+            ⇄ Swap
+          </button>
+        </div>
+
+        {/* Candidate #2 Card */}
+        <div className={`duel-card candidate-2 ${!cand2 ? 'empty' : ''}`}>
+          <div className="duel-card-header">
+            <span className="duel-candidate-label">
+              ⚔️ Candidate #2 {cand2?.is_starter ? '(Starter)' : '(Challenger)'}
+            </span>
+            {cand2 && (
+              <button
+                className="duel-change-btn"
+                onClick={() => handleClearSlot(1)}
+                title="Clear Candidate #2"
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
+
+          {cand2 ? (
+            <div className="duel-player-info">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <NFLTeamLogo team={cand2.pro_team} size={34} />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="duel-player-name">{cand2.full_name}</div>
+                  <div className="duel-meta-row" style={{ marginTop: '3px' }}>
+                    <span className="pill purple" style={{ fontSize: '11px', padding: '2px 7px' }}>
+                      {cand2.position}
+                    </span>
+                    <span className="pill zinc" style={{ fontSize: '11px', padding: '2px 7px' }}>
+                      {cand2.pro_team}
+                    </span>
+                    <span className={`pill ${cand2.is_starter ? 'emerald' : 'amber'}`} style={{ fontSize: '11px', padding: '2px 7px' }}>
+                      {cand2.is_starter ? '⭐ Starter' : '🔄 Bench'}
+                    </span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginLeft: 'auto' }}>
+                      {cand2.projected_points} pts
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '16px 8px' }}>
+              <div style={{ fontSize: '28px', marginBottom: '6px' }}>⚔️</div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                Select Player 2
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>
+                {cand1 ? `Pick a challenger to compare against ${cand1.full_name}` : 'Pick a bench player or challenger'}
+              </div>
+            </div>
+          )}
+
+          {/* Candidate 2 Select Dropdown */}
+          <select
+            className="select-dropdown"
+            style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+            value={compareIds[1] || ''}
+            onChange={(e) => handlePlayerSelect(1, Number(e.target.value))}
+          >
+            <option value="">{cand2 ? '⇄ Switch Player 2...' : '👉 Pick Player 2 to Compare...'}</option>
+            {/* Smart Prioritization: matching position or flex challengers from bench */}
+            {cand1 && myBench.filter((p) => p.id !== cand1.id && (p.position === cand1.position || (['RB', 'WR', 'TE'].includes(cand1.position) && ['RB', 'WR', 'TE'].includes(p.position)))).length > 0 && (
+              <optgroup label={`🎯 Recommended Bench Challengers (${myBench.filter((p) => p.id !== cand1.id && (p.position === cand1.position || (['RB', 'WR', 'TE'].includes(cand1.position) && ['RB', 'WR', 'TE'].includes(p.position)))).length})`}>
+                {myBench.filter((p) => p.id !== cand1.id && (p.position === cand1.position || (['RB', 'WR', 'TE'].includes(cand1.position) && ['RB', 'WR', 'TE'].includes(p.position)))).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Bench]
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {myStarters.filter((p) => p.id !== cand1?.id).length > 0 && (
+              <optgroup label={`⭐ ${focusedTeamName} Starters`}>
+                {myStarters.filter((p) => p.id !== cand1?.id).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Starter]
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {myBench.filter((p) => p.id !== cand1?.id).length > 0 && (
+              <optgroup label={`🔄 ${focusedTeamName} Bench`}>
+                {myBench.filter((p) => p.id !== cand1?.id).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Bench]
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {compareScope === 'all' && freeAgents.length > 0 && (
+              <optgroup label={`🟢 Available Free Agents (${freeAgents.length})`}>
+                {freeAgents.filter((p) => p.id !== cand1?.id).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Free Agent]
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {compareScope === 'all' && otherTeams.length > 0 && (
+              <optgroup label={`👥 Other League Rosters (${otherTeams.length})`}>
+                {otherTeams.filter((p) => p.id !== cand1?.id).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts ({p.team_abbrev || 'League'})
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </div>
+      </div>
+
+      {/* 3rd/4th Candidate Expanders if active */}
+      {compareIds.length >= 3 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+          {compareIds.slice(2).map((pid, offsetIdx) => {
+            const idx = offsetIdx + 2
+            const p = allPlayers.find((item) => item.id === pid)
+            return (
+              <div key={idx} className="duel-card" style={{ borderColor: 'rgba(255, 255, 255, 0.12)' }}>
+                <div className="duel-card-header">
+                  <span className="duel-candidate-label" style={{ color: 'var(--accent-amber)' }}>
+                    Candidate #{idx + 1}
+                  </span>
+                  <button className="duel-change-btn" onClick={() => handleRemoveComparePlayer(idx)}>
+                    ✕ Remove
+                  </button>
+                </div>
+                {p && (
+                  <div className="duel-player-info">
+                    <div className="duel-player-name" style={{ fontSize: '16px' }}>{p.full_name}</div>
+                    <div className="duel-meta-row">
+                      <span className="pill cyan" style={{ fontSize: '10px', padding: '1px 6px' }}>{p.position}</span>
+                      <span className="pill zinc" style={{ fontSize: '10px', padding: '1px 6px' }}>{p.pro_team}</span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, marginLeft: 'auto' }}>{p.projected_points} pts</span>
+                    </div>
+                  </div>
+                )}
+                <select
+                  className="select-dropdown"
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px' }}
+                  value={pid}
+                  onChange={(e) => handlePlayerSelect(idx, Number(e.target.value))}
+                >
+                  {currentTeamPlayers.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.full_name} ({item.position}) • {item.projected_points} pts
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Multi-Candidate Expand Button */}
+      {compareIds.length >= 2 && compareIds.length < 4 && (
+        <div style={{ marginBottom: '18px' }}>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={handleAddComparePlayer}
+            style={{ borderColor: 'var(--accent-purple)' }}
+          >
+            ➕ Add Another Candidate to Compare ({compareIds.length + 1} of 4)
+          </button>
+        </div>
+      )}
 
       {/* 1-Click Lineup Dilemmas Tray */}
       {rosterDilemmas.length > 0 && (
@@ -363,117 +743,42 @@ export const CompareTab: React.FC<CompareTabProps> = ({
         </div>
       )}
 
-      {/* Position Filter Tabs */}
-      <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Filter By Position:
-        </span>
-        {['ALL', 'QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'D/ST'].map((pos) => (
-          <button
-            key={pos}
-            className={`btn btn-sm ${comparePosFilter === pos ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '4px 12px', fontSize: '12px' }}
-            onClick={() => setComparePosFilter(pos)}
-          >
-            {pos}
-          </button>
-        ))}
-      </div>
+      {/* Guidance Box when fewer than 2 players are selected */}
+      {compareIds.length < 2 && (
+        <div className="duel-guide-box">
+          <div className="duel-guide-icon">⚖️</div>
+          <div className="duel-guide-title">
+            {compareIds.length === 0
+              ? 'Start/Sit Algorithmic Comparison Arena'
+              : `Candidate #1 (${cand1?.full_name || 'Player 1'}) Ready!`}
+          </div>
+          <div className="duel-guide-desc">
+            {compareIds.length === 0
+              ? `Select two players from ${focusedTeamName} above, or click any 1-Click Roster Dilemma to run a full institutional comparison.`
+              : `Now pick Candidate #2 (Challenger) above or click one of the 1-Click Roster Dilemmas to compare against ${cand1?.full_name}.`}
+          </div>
 
-      {/* Interactive Player Dropdown Pickers */}
-      <div style={{
-        background: 'rgba(15, 23, 42, 0.65)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-md)',
-        padding: '18px',
-        marginBottom: '24px',
-      }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', alignItems: 'flex-end' }}>
-          {compareIds.map((pid, idx) => (
-            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label style={{ fontSize: '12px', fontWeight: 700, color: idx === 0 ? 'var(--accent-cyan)' : idx === 1 ? 'var(--accent-purple)' : 'var(--text-secondary)' }}>
-                  {idx === 0 ? '👤 Candidate #1 (Primary)' : idx === 1 ? '⚔️ Candidate #2 (Challenger)' : `Candidate #${idx + 1}`}
-                </label>
-                {idx >= 2 && (
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    style={{ padding: '2px 8px', fontSize: '11px', color: 'var(--accent-rose)' }}
-                    onClick={() => handleRemoveComparePlayer(idx)}
-                  >
-                    ✕ Remove
-                  </button>
-                )}
-              </div>
-              <select
-                className="select-dropdown"
-                style={{ width: '100%', padding: '10px 14px', fontSize: '13px' }}
-                value={pid}
-                onChange={(e) => handlePlayerSelect(idx, Number(e.target.value))}
-              >
-                <option value="" disabled>Select Player...</option>
-                {myStarters.length > 0 && (
-                  <optgroup label={`⭐ ${focusedTeamName} Starters (${myStarters.length})`}>
-                    {myStarters.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.full_name} ({p.position} - {p.pro_team}) • {p.slot_name ? `${p.slot_name} • ` : ''}{p.projected_points} pts [Starter]
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-                {myBench.length > 0 && (
-                  <optgroup label={`🔄 ${focusedTeamName} Bench (${myBench.length})`}>
-                    {myBench.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Bench]
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-                {compareScope === 'all' && freeAgents.length > 0 && (
-                  <optgroup label={`🟢 Top Available Free Agents (${freeAgents.length})`}>
-                    {freeAgents.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Free Agent]
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-                {compareScope === 'all' && otherTeams.length > 0 && (
-                  <optgroup label={`👥 Other League Rosters (${otherTeams.length})`}>
-                    {otherTeams.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts ({p.team_abbrev || 'League'})
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
+          <div className="duel-guide-features">
+            <div className="duel-guide-feature-item">
+              <div className="duel-guide-feature-title">🎯 Algorithmic Projections</div>
+              <div className="duel-guide-feature-text">Model calibrations blended with FantasyPros, Sleeper, and ESPN consensus.</div>
             </div>
-          ))}
+            <div className="duel-guide-feature-item">
+              <div className="duel-guide-feature-title">🚜 Opportunity Volume</div>
+              <div className="duel-guide-feature-text">Snap share, target shares, red-zone touches, and route participation indexes.</div>
+            </div>
+            <div className="duel-guide-feature-item">
+              <div className="duel-guide-feature-title">🛡️ Defense-vs-Position</div>
+              <div className="duel-guide-feature-text">Full DvP star ratings & positional defensive rankings for Week 1.</div>
+            </div>
+            <div className="duel-guide-feature-item">
+              <div className="duel-guide-feature-title">🎲 Vegas Sharp Props</div>
+              <div className="duel-guide-feature-text">Sportsbook reception lines, anytime touchdown probabilities, and implied team totals.</div>
+            </div>
+          </div>
         </div>
+      )}
 
-        {/* Action Bar: Swap and Add 3rd/4th Candidate */}
-        <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={handleSwapPlayers}
-            disabled={compareIds.length < 2}
-          >
-            ⇄ Swap Candidates #1 & #2
-          </button>
-
-          {compareIds.length < 4 && (
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={handleAddComparePlayer}
-              style={{ borderColor: 'var(--accent-purple)' }}
-            >
-              + Add Player to Compare ({compareIds.length + 1} of 4)
-            </button>
-          )}
-        </div>
-      </div>
 
       {/* Comparison Outcome Banner */}
       {comparisonResult && (
@@ -489,9 +794,16 @@ export const CompareTab: React.FC<CompareTabProps> = ({
           {comparisonResult.players.map((p, idx) => (
             <div key={p.player_id} className={`comp-card ${idx === 0 ? 'winner' : ''}`}>
               {idx === 0 && <div className="winner-tag">RECOMMENDED START ✓</div>}
-              <div className="comp-player-name">{p.full_name}</div>
-              <div className="comp-player-meta" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '3px' }}>
-                <span>{p.position} • {p.pro_team} • {p.is_home ? 'vs' : '@'} {p.opponent}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <NFLTeamLogo team={p.pro_team} size={32} />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="comp-player-name">{p.full_name}</div>
+                  <div className="comp-player-meta" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '3px' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <span>{p.position} • {p.pro_team} • {p.is_home ? 'vs' : '@'}</span>
+                      <NFLTeamLogo team={p.opponent} size={16} />
+                      <span>{p.opponent}</span>
+                    </span>
                 {p.opp_dvp_rank !== undefined && p.opp_dvp_rank !== null && (
                   <span
                     className={`pill ${p.opp_dvp_rank <= 10 ? 'rose' : p.opp_dvp_rank >= 21 ? 'emerald' : 'cyan'}`}
@@ -518,10 +830,14 @@ export const CompareTab: React.FC<CompareTabProps> = ({
                   />
                 )}
               </div>
+            </div>
+          </div>
 
               <div className="comp-score-row">
                 <div>
-                  <div className="metric-label">StartScore</div>
+                  <Tooltip term="CEILING_FLOOR" title="StartScore (Composite)">
+                    <div className="metric-label">StartScore</div>
+                  </Tooltip>
                   <div className={`metric-val ${getScoreColorClass(p.start_score)}`}>
                     {p.start_score}
                   </div>
@@ -537,6 +853,96 @@ export const CompareTab: React.FC<CompareTabProps> = ({
                   </span>
                 </div>
               </div>
+
+              {/* Vegas Props & Boris Chen Tier Section */}
+              <div style={{
+                margin: '10px 0 14px 0',
+                padding: '9px 12px',
+                background: 'rgba(15, 23, 42, 0.75)',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+                borderRadius: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Tooltip term="VEGAS_PROPS" title="Vegas Sportsbook Consensus">
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      🎲 Vegas Sharp Lines
+                    </span>
+                  </Tooltip>
+                  {p.boris_chen_tier && (
+                    <Tooltip term="BORIS_TIER" title={`Boris Chen GMM Tier ${p.boris_chen_tier}`}>
+                      <span className={`boris-tier-badge tier-${p.boris_chen_tier}`} style={{ fontSize: '10px' }}>
+                        <span>💎</span> {p.boris_chen_tier_label || `Tier ${p.boris_chen_tier}`}
+                      </span>
+                    </Tooltip>
+                  )}
+                </div>
+                {renderLineupVegasProps(p)}
+              </div>
+
+              {/* Prediction Market Intelligence Strip (Polymarket) */}
+              {marketSentiments[p.player_id] && (
+                <div
+                  style={{
+                    margin: '10px 0 14px 0',
+                    padding: '10px 12px',
+                    background: 'rgba(139, 92, 246, 0.08)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        color: 'var(--accent-purple, #a855f7)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      <span>📊</span> Polymarket Prediction Odds
+                    </span>
+                    <span
+                      className={`pill ${
+                        marketSentiments[p.player_id].starter_confidence >= 0.75
+                          ? 'emerald'
+                          : marketSentiments[p.player_id].starter_confidence >= 0.5
+                          ? 'amber'
+                          : 'rose'
+                      }`}
+                      style={{ fontSize: '10px', fontWeight: 800 }}
+                    >
+                      {Math.round(marketSentiments[p.player_id].starter_confidence * 100)}% Starter Confidence
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {marketSentiments[p.player_id].market_headline}
+                  </div>
+
+                  {marketSentiments[p.player_id].tactical_advice && (
+                    <div
+                      style={{
+                        fontSize: '11.5px',
+                        color: 'var(--text-secondary)',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                        paddingTop: '6px',
+                      }}
+                    >
+                      💡 <strong>PPR Tactical Tip:</strong> {marketSentiments[p.player_id].tactical_advice}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Factor Breakdown Bars with Interactive Transparency */}
               <div className="factor-breakdown">

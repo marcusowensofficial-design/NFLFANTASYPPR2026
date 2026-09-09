@@ -1,7 +1,7 @@
 """Defense vs Position (DvP) rating and matchup grade calculator with non-linear scaling and role splits."""
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 
 @dataclass
@@ -62,6 +62,25 @@ class DvPClient:
 
     def __init__(self, profiles: dict[str, DvPProfile] | None = None):
         self.profiles = dict(profiles or DEFAULT_DVP_PROFILES)
+
+    def hydrate_from_draftedge(self) -> None:
+        """Hydrate team DvP ranks with DraftEdge calibrated baseline rankings."""
+        try:
+            import json
+            from pathlib import Path
+            seed_path = Path(__file__).resolve().parent.parent.parent.parent / "data" / "draftedge_dvp_seed.json"
+            if seed_path.exists():
+                with open(seed_path, "r", encoding="utf-8") as f:
+                    seed_data = json.load(f)
+                pos_attr_map = {"QB": "qb_rank", "RB": "rb_rank", "WR": "wr_rank", "TE": "te_rank"}
+                for pos, attr in pos_attr_map.items():
+                    for item in seed_data.get(pos, []):
+                        team = item.get("pro_team")
+                        softness = item.get("rank_softness")
+                        if team and softness and team in self.profiles:
+                            setattr(self.profiles[team], attr, 33 - softness)
+        except Exception:
+            pass
 
     def update_team_profile(self, pro_team: str, **kwargs) -> None:
         """Dynamically update a team's defensive or offensive metrics from live 2026 data."""
@@ -132,7 +151,7 @@ class DvPClient:
         """Calculates 0-100 MatchupScore using non-linear calibrated curve centered at 70 (neutral).
         
         Returns:
-            tuple[float, str]: (matchup_score, grade: FAVORABLE | NEUTRAL | TOUGH)
+            tuple[float, str]: (matchup_score, grade: ELITE | FAVORABLE | NEUTRAL | TOUGH | BRUTAL)
         """
         pos = position.upper().strip()
         pos_rank = self.get_position_rank(opponent_team, pos)
@@ -143,8 +162,8 @@ class DvPClient:
 
         # Non-linear S-curve centering around 70.0:
         # Rank 16.5 is neutral (score = 70.0).
-        # Rank 1 (toughest) produces ~36.0 (tough, but not a 3.1 linear zero).
-        # Rank 32 (softest) produces ~95.0.
+        # Rank 1 (toughest) produces ~36.0 (stifling / brutal).
+        # Rank 32 (softest) produces ~95.0 (smash / elite).
         pos_delta = (pos_rank - 16.5) / 15.5
         overall_delta = (overall_rank - 16.5) / 15.5
 
@@ -152,12 +171,22 @@ class DvPClient:
         score = round(70.0 + (blended_delta * 26.0), 1)
         score = max(20.0, min(100.0, score))
 
-        if score >= 76.0:
-            grade: Literal["FAVORABLE", "NEUTRAL", "TOUGH"] = "FAVORABLE"
-        elif score <= 58.0:
+        # 5-Tier Industry-Standard Calibration:
+        # Rank 27-32 / Score >= 86.0: ELITE (Smash matchup vs bottom defenses)
+        # Rank 21-26 / Score 74.0 - 85.9: FAVORABLE (Above-average efficiency)
+        # Rank 13-20 / Score 62.0 - 73.9: NEUTRAL (Average middle tier)
+        # Rank 7-12 / Score 50.0 - 61.9: TOUGH (Stiff defense, capped ceiling)
+        # Rank 1-6 / Score < 50.0: BRUTAL (Lockdown unit, high risk of bust)
+        if score >= 86.0 or (pos_rank >= 27 and score >= 80.0):
+            grade: Literal["ELITE", "FAVORABLE", "NEUTRAL", "TOUGH", "BRUTAL"] = "ELITE"
+        elif score >= 74.0:
+            grade = "FAVORABLE"
+        elif score >= 62.0:
+            grade = "NEUTRAL"
+        elif score >= 50.0:
             grade = "TOUGH"
         else:
-            grade = "NEUTRAL"
+            grade = "BRUTAL"
 
         return score, grade
 
@@ -172,7 +201,7 @@ class DvPClient:
         """Calculates role-specific DvP score taking into account PPR receiving volume and slot alignment.
         
         Returns:
-            tuple[float, str, str]: (score, grade, tactical_detail)
+            tuple[float, str, str]: (score, grade: ELITE | FAVORABLE | NEUTRAL | TOUGH | BRUTAL, tactical_detail)
         """
         opp = opponent_team.upper().strip()
         profile = self.profiles.get(opp)
@@ -194,17 +223,24 @@ class DvPClient:
             if team_spread >= 4.0:
                 score = min(100.0, score + 4.0)
 
-            if score >= 76.0:
+            score = max(20.0, min(100.0, score))
+            if score >= 86.0 or rec_rank >= 27:
+                grade = "ELITE"
+                detail = f"PPR Smash Funnel vs {opp}: Defense concedes league-worst #{rec_rank} receiving volume to RBs"
+            elif score >= 74.0:
                 grade = "FAVORABLE"
                 detail = f"PPR Receiving Funnel vs {opp}: Defense yields #{rec_rank} targets/rec to RBs"
-            elif score <= 58.0:
-                grade = "TOUGH"
-                detail = f"Stifling pass-coverage vs RBs: {opp} allows minimal checkdowns (#{rec_rank})"
-            else:
+            elif score >= 62.0:
                 grade = "NEUTRAL"
                 detail = f"Moderate checkdown volume expected vs {opp} (DvP rank #{rec_rank})"
+            elif score >= 50.0:
+                grade = "TOUGH"
+                detail = f"Stiff pass-coverage vs RBs: {opp} allows minimal checkdowns (#{rec_rank})"
+            else:
+                grade = "BRUTAL"
+                detail = f"Lockdown coverage vs RBs: {opp} completely erases checkdown volume (#{rec_rank})"
 
-            return max(20.0, min(100.0, score)), grade, detail
+            return score, grade, detail
 
         if pos == "WR" and is_slot:
             slot_rank = profile.wr_slot_rank
@@ -214,17 +250,25 @@ class DvPClient:
             blended_delta = (0.80 * pos_delta) + (0.20 * overall_delta)
 
             score = round(70.0 + (blended_delta * 26.0), 1)
-            if score >= 76.0:
+            score = max(20.0, min(100.0, score))
+
+            if score >= 86.0 or slot_rank >= 27:
+                grade = "ELITE"
+                detail = f"Elite Slot Mismatch: {opp} ranks #{slot_rank} (bottom 6) defending the middle of the field"
+            elif score >= 74.0:
                 grade = "FAVORABLE"
                 detail = f"Slot Matchup Advantage: {opp} ranks #{slot_rank} vs slot receivers over the middle"
-            elif score <= 58.0:
+            elif score >= 62.0:
+                grade = "NEUTRAL"
+                detail = f"Neutral slot coverage vs {opp} (#{slot_rank})"
+            elif score >= 50.0:
                 grade = "TOUGH"
                 detail = f"Tough slot/nickel coverage vs {opp} (#{slot_rank} vs slot)"
             else:
-                grade = "NEUTRAL"
-                detail = f"Neutral slot coverage vs {opp} (#{slot_rank})"
+                grade = "BRUTAL"
+                detail = f"Elite nickel lockdown vs {opp} (#{slot_rank} vs slot)"
 
-            return max(20.0, min(100.0, score)), grade, detail
+            return score, grade, detail
 
         # Default standard matchup
         score, grade = self.calculate_matchup_score(opp, pos)

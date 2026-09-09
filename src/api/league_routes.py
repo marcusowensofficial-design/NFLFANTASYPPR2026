@@ -67,6 +67,7 @@ class MatchupResponseItem(BaseModel):
 class RosterPlayerResponse(BaseModel):
     entry_id: str
     player_id: int
+    id: int | None = None
     full_name: str
     position: str
     pro_team: str
@@ -78,6 +79,16 @@ class RosterPlayerResponse(BaseModel):
     projected_points: float
     actual_points: float
     lineup_locked: bool
+    fp_injury_note: str | None = None
+    fp_start_sit_grade: str | None = None
+    fp_pos_rank: str | None = None
+    fp_tier: int | None = None
+    projected_points_espn: float = 0.0
+    projected_points_fp: float = 0.0
+    projected_points_sleeper: float = 0.0
+    projected_points_model: float = 0.0
+    projected_points_consensus: float = 0.0
+
 
 
 class PlayerDirectoryItem(BaseModel):
@@ -148,9 +159,17 @@ async def sync_league_data(
             teams_count=0,
         )
 
-    # Automatically enrich with FantasyPros intelligence in background so ESPN sync returns immediately
-    if settings.fantasypros_api_key:
-        async def _enrich_task(lid: int, s: int, w: int):
+    # Automatically enrich with Sleeper & FantasyPros intelligence in background so ESPN sync returns immediately
+    async def _enrich_task(lid: int, s: int, w: int):
+        try:
+            from src.services.sleeper_sync import sleeper_sync_service
+            await sleeper_sync_service.sync_sleeper_projections(
+                season=s,
+                week=w,
+            )
+        except Exception:
+            pass
+        if settings.fantasypros_api_key:
             try:
                 from src.services.fantasypros_sync import fantasypros_sync_service
                 await fantasypros_sync_service.sync_league_intelligence(
@@ -161,12 +180,25 @@ async def sync_league_data(
             except Exception:
                 pass
 
-        background_tasks.add_task(
-            _enrich_task,
-            league.id,
-            league.season,
-            league.current_week,
-        )
+    background_tasks.add_task(
+        _enrich_task,
+        league.id,
+        league.season,
+        league.current_week,
+    )
+
+    # Flush in-memory caches to guarantee 100% fresh evaluations immediately after sync
+    try:
+        from src.adapters.betting.props_client import vegas_props_client
+        from src.adapters.nfl.injuries_client import nfl_injuries_client
+        from src.adapters.nfl.schedule_client import nfl_schedule_client
+        from src.adapters.weather.client import weather_client
+        vegas_props_client.clear_cache()
+        nfl_injuries_client.clear_cache()
+        nfl_schedule_client.clear_cache()
+        weather_client.clear_cache()
+    except Exception:
+        pass
 
     return SyncResponse(
         success=True,
@@ -352,6 +384,7 @@ def get_team_roster(team_id: int, db: Session = Depends(get_db)) -> TeamRosterRe
             RosterPlayerResponse(
                 entry_id=roster_entry.id,
                 player_id=player.id,
+                id=player.id,
                 full_name=player.full_name,
                 position=player.position,
                 pro_team=player.pro_team,
@@ -363,6 +396,15 @@ def get_team_roster(team_id: int, db: Session = Depends(get_db)) -> TeamRosterRe
                 projected_points=player.projected_points,
                 actual_points=player.actual_points,
                 lineup_locked=roster_entry.lineup_locked,
+                fp_injury_note=player.fp_injury_note,
+                fp_start_sit_grade=player.fp_start_sit_grade,
+                fp_pos_rank=player.fp_pos_rank,
+                fp_tier=player.fp_tier,
+                projected_points_espn=player.projected_points_espn,
+                projected_points_fp=player.projected_points_fp,
+                projected_points_sleeper=player.projected_points_sleeper,
+                projected_points_model=player.projected_points_model,
+                projected_points_consensus=player.projected_points_consensus,
             )
         )
 
@@ -387,6 +429,15 @@ def get_team_roster(team_id: int, db: Session = Depends(get_db)) -> TeamRosterRe
         bench_slots_count=bench_slots_count,
         ir_slots_count=ir_slots_count,
     )
+
+
+@router.get("/roster", response_model=TeamRosterResponse)
+def get_roster_by_query(
+    team_id: int = Query(..., description="Team ID to retrieve roster for"),
+    db: Session = Depends(get_db),
+) -> TeamRosterResponse:
+    """Query parameter alias for /teams/{team_id}/roster."""
+    return get_team_roster(team_id=team_id, db=db)
 
 
 @router.get("/players", response_model=list[PlayerDirectoryItem])

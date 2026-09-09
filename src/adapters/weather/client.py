@@ -1,5 +1,6 @@
 """Weather client querying Open-Meteo API for NFL stadiums."""
 
+import asyncio
 import logging
 from typing import Any
 import httpx
@@ -61,6 +62,17 @@ class WeatherClient:
     def __init__(self, timeout: float = 8.0):
         self.timeout = timeout
         self._cache: dict[tuple[str, str | None], WeatherReport] = {}
+        self._sem: asyncio.Semaphore | None = None
+
+    @property
+    def semaphore(self) -> asyncio.Semaphore:
+        if self._sem is None:
+            self._sem = asyncio.Semaphore(8)
+        return self._sem
+
+    def clear_cache(self) -> None:
+        """Clear the in-memory stadium weather cache."""
+        self._cache.clear()
 
     async def get_stadium_weather(self, home_team: str, game_time_iso: str | None = None) -> WeatherReport:
         """Fetch game-time weather for a game hosted by home_team.
@@ -99,10 +111,11 @@ class WeatherClient:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
-                res_data = response.json()
+            async with self.semaphore:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.get(url, params=params)
+                    response.raise_for_status()
+                    res_data = response.json()
 
             current_data = res_data.get("current", {})
             temp_f = float(current_data.get("temperature_2m", 70.0))

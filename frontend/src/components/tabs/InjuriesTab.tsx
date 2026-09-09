@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import type { InjuryFeedResponse } from '../../types'
 import { InjuryStatusPill } from '../shared/InjuryStatusPill'
+import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 
 export interface InjuriesTabProps {
   injuriesFeed: InjuryFeedResponse | null
@@ -109,7 +110,12 @@ export const InjuriesTab: React.FC<InjuriesTabProps> = ({
           <tbody>
             {filteredInjuries.map((inj) => (
               <tr key={inj.athlete_id}>
-                <td style={{ fontWeight: 700 }}>{inj.name}</td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <NFLTeamLogo team={inj.team} size={22} />
+                    <span style={{ fontWeight: 700 }}>{inj.name}</span>
+                  </div>
+                </td>
                 <td>{inj.team} ({inj.position})</td>
                 <td>
                   <InjuryStatusPill

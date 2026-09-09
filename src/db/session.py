@@ -55,7 +55,21 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
+from sqlalchemy import text
+
+
 def init_db() -> None:
-    """Initialize all tables defined in models."""
+    """Initialize all tables defined in models and apply lightweight SQLite column migrations."""
     import src.db.models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    with engine.connect() as conn:
+        for col_name, col_type in [
+            ("projected_points_sleeper", "FLOAT DEFAULT 0.0"),
+            ("sleeper_projected_stats_json", "TEXT DEFAULT '{}'"),
+        ]:
+            try:
+                conn.execute(text(f"ALTER TABLE players ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+            except Exception:
+                pass
+

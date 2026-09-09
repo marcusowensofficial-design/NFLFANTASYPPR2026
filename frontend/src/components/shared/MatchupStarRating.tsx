@@ -19,8 +19,8 @@ export function getMatchupTierInfo(stars: number, position?: string): { label: s
   switch (stars) {
     case 1:
       return { 
-        label: 'Bad Matchup', 
-        desc: isDst ? 'Stifling offense rarely concedes sacks or turnovers' : 'Stingy defense allows minimal fantasy points', 
+        label: 'Brutal Matchup', 
+        desc: isDst ? 'Stifling offense rarely concedes sacks or turnovers' : 'Lockdown defense; stingy unit allows minimal fantasy production', 
         dvpRange: 'DvP #1–6' 
       }
     case 2:
@@ -37,14 +37,14 @@ export function getMatchupTierInfo(stars: number, position?: string): { label: s
       }
     case 4:
       return { 
-        label: 'Good Matchup', 
-        desc: isDst ? 'Vulnerable offense prone to sacks and stalled drives' : 'Above average matchup; favorable defensive leaks', 
+        label: 'Favorable Matchup', 
+        desc: isDst ? 'Vulnerable offense prone to sacks and stalled drives' : 'Above average matchup; favorable defensive leaks and scoring upside', 
         dvpRange: 'DvP #21–26' 
       }
     case 5:
       return { 
-        label: 'Amazing Matchup', 
-        desc: isDst ? 'Prime streaming smash: High turnover/sack rate & low implied total' : 'Prime smash matchup; porous defense allows high ceiling', 
+        label: 'Elite Matchup', 
+        desc: isDst ? 'Prime streaming smash: High turnover/sack rate & low implied total' : 'Prime smash matchup; porous bottom-6 defense allows league-high ceiling', 
         dvpRange: 'DvP #27–32' 
       }
     default:

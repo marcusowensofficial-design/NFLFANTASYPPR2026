@@ -1,5 +1,7 @@
 import React from 'react'
 import type { WaiverAnalysisResult } from '../../types'
+import { Tooltip } from '../shared/Tooltip'
+import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 
 export interface WaiversTabProps {
   waivers: WaiverAnalysisResult | null
@@ -168,13 +170,18 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
                 {waivers?.lookahead_streaming_dst?.map((item) => (
                   <div key={item.player_id} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '10px 12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{item.full_name} ({item.pro_team})</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <NFLTeamLogo team={item.pro_team} size={24} />
+                        <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{item.full_name} ({item.pro_team})</strong>
+                      </div>
                       <span className={`pill ${item.matchup_grade === 'FAVORABLE' ? 'emerald' : 'cyan'}`}>
                         {item.matchup_grade} ({item.matchup_score} pts)
                       </span>
                     </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                      vs {item.next_opponent} in Week {item.next_week}
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span>vs</span>
+                      <NFLTeamLogo team={item.next_opponent} size={16} />
+                      <span>{item.next_opponent} in Week {item.next_week}</span>
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--accent-cyan)', marginTop: '4px' }}>
                       {item.tactical_reason}
@@ -193,13 +200,18 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
                 {waivers?.lookahead_streaming_k?.map((item) => (
                   <div key={item.player_id} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '10px 12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{item.full_name} ({item.pro_team})</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <NFLTeamLogo team={item.pro_team} size={24} />
+                        <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{item.full_name} ({item.pro_team})</strong>
+                      </div>
                       <span className={`pill ${item.matchup_grade === 'FAVORABLE' ? 'emerald' : 'cyan'}`}>
                         {item.matchup_grade} ({item.matchup_score} pts)
                       </span>
                     </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                      vs {item.next_opponent} in Week {item.next_week}
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span>vs</span>
+                      <NFLTeamLogo team={item.next_opponent} size={16} />
+                      <span>{item.next_opponent} in Week {item.next_week}</span>
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--accent-emerald)', marginTop: '4px' }}>
                       {item.tactical_reason}
@@ -237,13 +249,18 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
                     </span>
                   )}
                   {upg.pickup_player.live_vorp !== undefined && upg.pickup_player.live_vorp !== null && (
-                    <span className="vorp-badge" style={{ marginLeft: '8px' }} title="Live-Wire VORP">
-                      VORP: {upg.pickup_player.live_vorp > 0 ? `+${upg.pickup_player.live_vorp}` : upg.pickup_player.live_vorp}
-                    </span>
+                    <Tooltip term="VORP" title={`Live-Wire VORP: ${upg.pickup_player.live_vorp > 0 ? '+' : ''}${upg.pickup_player.live_vorp}`}>
+                      <span className="vorp-badge" style={{ marginLeft: '8px' }}>
+                        VORP: {upg.pickup_player.live_vorp > 0 ? `+${upg.pickup_player.live_vorp}` : upg.pickup_player.live_vorp}
+                      </span>
+                    </Tooltip>
                   )}
-                  <h4 style={{ fontSize: '18px', fontWeight: 800, marginTop: '6px' }}>
-                    Pickup: {upg.pickup_player.full_name} ({upg.pickup_player.position} - {upg.pickup_player.pro_team})
-                  </h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
+                    <NFLTeamLogo team={upg.pickup_player.pro_team} size={28} />
+                    <h4 style={{ fontSize: '18px', fontWeight: 800, margin: 0 }}>
+                      Pickup: {upg.pickup_player.full_name} ({upg.pickup_player.position} - {upg.pickup_player.pro_team})
+                    </h4>
+                  </div>
                 </div>
 
                 <div className="upgrade-delta">
@@ -258,8 +275,9 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
                 <div>
                   <strong>Recommended Drop:</strong>{' '}
                   {upg.drop_player ? (
-                    <span style={{ color: 'var(--accent-rose)' }}>
-                      {upg.drop_player.full_name} ({upg.drop_player.position} - StartScore: {upg.drop_player.start_score})
+                    <span style={{ color: 'var(--accent-rose)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <NFLTeamLogo team={upg.drop_player.pro_team} size={16} />
+                      <span>{upg.drop_player.full_name} ({upg.drop_player.position} - StartScore: {upg.drop_player.start_score})</span>
                     </span>
                   ) : (
                     'Empty Roster Slot'
@@ -280,7 +298,10 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
           <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>🛡️ Top D/ST Streamers</h4>
           {waivers?.streaming_dst.map((d) => (
             <div key={d.player_id} className="streamer-item">
-              <span>{d.full_name}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <NFLTeamLogo team={d.pro_team || d.full_name} size={20} />
+                <span>{d.full_name}</span>
+              </div>
               <span className="score-badge cyan">{d.start_score}</span>
             </div>
           ))}
@@ -290,7 +311,10 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
           <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>🎯 Top TE Streamers</h4>
           {waivers?.streaming_te.map((t) => (
             <div key={t.player_id} className="streamer-item">
-              <span>{t.full_name} ({t.pro_team})</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <NFLTeamLogo team={t.pro_team} size={20} />
+                <span>{t.full_name} ({t.pro_team})</span>
+              </div>
               <span className="score-badge cyan">{t.start_score}</span>
             </div>
           ))}

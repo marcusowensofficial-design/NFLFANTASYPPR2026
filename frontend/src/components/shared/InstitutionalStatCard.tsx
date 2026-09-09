@@ -1,25 +1,34 @@
 import React, { useMemo } from 'react'
 import type { StartSitEvaluation } from '../../types'
 import { MatchupStarRating } from './MatchupStarRating'
+import { Tooltip } from './Tooltip'
+import { NFLTeamLogo } from './NFLTeamLogo'
 
 export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activeSource?: string }> = ({ player: p, activeSource = 'MODEL' }) => {
   const prov = p.model_provenance
   const currentActive = p.active_projection_source || activeSource || 'MODEL'
   const modelPts = p.proj_model ?? prov?.raw_model_ppr ?? p.projected_points
   const fpPts = p.proj_fantasypros ?? p.fp_r2p_pts ?? prov?.fantasypros_ppr
+  const sleeperPts = p.proj_sleeper ?? prov?.sleeper_ppr
   const espnPts = p.proj_espn ?? prov?.espn_ppr
   const consensusPts = p.proj_consensus ?? prov?.consensus_ppr ?? p.projected_points
   
-  // Real itemized stats from FantasyPros or Quant Model
+  // Real itemized stats from Sleeper, FantasyPros, or Quant Model
   const stats: Record<string, any> = useMemo(() => {
+    if (currentActive === 'SLEEPER' && p.sleeper_itemized_stats && Object.keys(p.sleeper_itemized_stats).length > 0) {
+      const hasSleeperVolume = Object.entries(p.sleeper_itemized_stats).some(([k, v]) =>
+        ['rush_att', 'rush_yds', 'rec_rec', 'receptions', 'rec', 'pass_att', 'fg', 'fgm', 'def_sack', 'sack'].includes(k) && Number(v) > 0
+      )
+      if (hasSleeperVolume) return p.sleeper_itemized_stats
+    }
     if (currentActive === 'FANTASYPROS' && p.fp_itemized_stats && Object.keys(p.fp_itemized_stats).length > 0) {
       const hasFpVolume = Object.entries(p.fp_itemized_stats).some(([k, v]) =>
         ['rush_att', 'rush_yds', 'rec_rec', 'receptions', 'pass_att', 'fg', 'def_sack'].includes(k) && Number(v) > 0
       )
       if (hasFpVolume) return p.fp_itemized_stats
     }
-    return p.itemized_stats || p.fp_itemized_stats || {}
-  }, [currentActive, p.fp_itemized_stats, p.itemized_stats])
+    return p.itemized_stats || p.sleeper_itemized_stats || p.fp_itemized_stats || {}
+  }, [currentActive, p.sleeper_itemized_stats, p.fp_itemized_stats, p.itemized_stats])
 
   // Volatility calculations: realistic fantasy points floor and ceiling
   const floorPts = (p.floor_points && p.floor_points > 0 && p.floor_points < p.projected_points)
@@ -37,9 +46,10 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
   const rangeSpan = Math.max(1, ceilingPts - floorPts)
   const markerPct = Math.min(100, Math.max(0, ((p.projected_points - floorPts) / rangeSpan) * 100))
 
-  // Agreement indicator
+  // Agreement indicator across all active independent sources
+  const validSources = [modelPts, fpPts, sleeperPts, espnPts].filter((v): v is number => typeof v === 'number' && v > 0)
   const spread = p.consensus_spread ?? (
-    Math.max(modelPts || 0, fpPts || 0, espnPts || 0) - Math.min(modelPts || 999, fpPts || 999, espnPts || 999)
+    validSources.length > 1 ? (Math.max(...validSources) - Math.min(...validSources)) : 0
   )
   const agreement = p.consensus_agreement || (spread <= 2.2 ? 'HIGH_AGREEMENT' : spread <= 4.5 ? 'MODERATE' : 'SHARP_DIVERGENCE')
 
@@ -48,12 +58,17 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
       {/* Header Bar */}
       <div className="statcard-header">
         <div className="statcard-title-group">
-          <span className="statcard-player-title">
-            📊 {p.full_name} ({p.position} • {p.pro_team})
-          </span>
-          <span className="matchup-tag" style={{ fontSize: '11px' }}>
-            {p.is_home ? 'vs' : '@'} {p.opponent}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <NFLTeamLogo team={p.pro_team} size={24} />
+            <span className="statcard-player-title">
+              {p.full_name} ({p.position} • {p.pro_team})
+            </span>
+            <span className="matchup-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <span>{p.is_home ? 'vs' : '@'}</span>
+              <NFLTeamLogo team={p.opponent} size={15} />
+              <span>{p.opponent}</span>
+            </span>
+          </div>
           {p.game_date && (
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
               ⏰ {new Date(p.game_date).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
@@ -61,25 +76,39 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
           )}
         </div>
         <div className="statcard-pills-row">
+          {p.dvp_fpa ? (
+            <Tooltip term="DVP_FPA">
+              <span
+                className={`pill ${p.dvp_fpa.tier === 'SMASH' ? 'emerald' : p.dvp_fpa.tier === 'FAVORABLE' ? 'cyan' : p.dvp_fpa.tier === 'TOUGH' ? 'amber' : p.dvp_fpa.tier === 'LOCKDOWN' ? 'rose' : 'zinc'}`}
+                style={{ fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                🛡️ {p.dvp_fpa.dk_fpa.toFixed(1)} DK FPA ({p.dvp_fpa.vs_avg > 0 ? '+' : ''}{p.dvp_fpa.vs_avg.toFixed(1)}) • #{p.dvp_fpa.rank_softness} Softest
+              </span>
+            </Tooltip>
+          ) : p.opp_dvp_rank ? (
+            <Tooltip term="DVP" title={`FantasyPros Consensus: Defense DvP #${p.opp_dvp_rank} vs ${p.position}`}>
+              <span
+                className={`pill ${p.opp_dvp_rank <= 10 ? 'rose' : p.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
+                style={{ fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                🛡️ DvP #{p.opp_dvp_rank}
+              </span>
+            </Tooltip>
+          ) : null}
           {p.opp_dvp_rank && (
-            <span
-              className={`pill ${p.opp_dvp_rank <= 10 ? 'rose' : p.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
-              style={{ fontSize: '11px', fontWeight: 700 }}
-              title={`FantasyPros Consensus: Defense DvP #${p.opp_dvp_rank} vs ${p.position}`}
-            >
-              🛡️ DvP #{p.opp_dvp_rank}
-            </span>
-          )}
-          {p.opp_dvp_rank && (
-            <MatchupStarRating stars={p.matchup_stars} oppDvpRank={p.opp_dvp_rank} position={p.position} />
+            <Tooltip term="MATCHUP_STARS" title={`${p.matchup_stars || 3}-Star Matchup Rating vs ${p.opponent}`}>
+              <MatchupStarRating stars={p.matchup_stars} oppDvpRank={p.opp_dvp_rank} position={p.position} />
+            </Tooltip>
           )}
           {(p.fp_pos_rank || p.fp_rank_ecr) && (
-            <span
-              className="consensus-pill"
-              title={`FantasyPros Consensus: ${p.fp_pos_rank || '#' + p.fp_rank_ecr} PPR`}
-            >
-              ⭐ FP {p.fp_pos_rank || `#${p.fp_rank_ecr}`}
-            </span>
+            <Tooltip term="FP_RANK" title={`FantasyPros Consensus: ${p.fp_pos_rank || '#' + p.fp_rank_ecr} PPR`}>
+              <span
+                className="consensus-pill"
+                style={{ cursor: 'pointer' }}
+              >
+                ⭐ FP {p.fp_pos_rank || `#${p.fp_rank_ecr}`}
+              </span>
+            </Tooltip>
           )}
           {p.fp_tier && (
             <span className="pill zinc" style={{ fontSize: '11px' }}>
@@ -89,7 +118,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
         </div>
       </div>
 
-      {/* 4-Way Multi-Source Projections Matrix */}
+      {/* 5-Way Multi-Source Projections Matrix */}
       <div className="multi-source-matrix">
         {/* Source 1: Quant Model */}
         <div className={`source-matrix-card ${currentActive === 'MODEL' ? 'active' : ''}`}>
@@ -119,7 +148,21 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
           </div>
         </div>
 
-        {/* Source 3: ESPN Official */}
+        {/* Source 3: Sleeper / RotoWire */}
+        <div className={`source-matrix-card ${currentActive === 'SLEEPER' ? 'active' : ''}`}>
+          {currentActive === 'SLEEPER' && <span className="source-card-badge">ACTIVE CHOICE</span>}
+          <div className="source-card-header">
+            <span>📱</span> Sleeper (RotoWire)
+          </div>
+          <div className="source-card-pts" style={{ color: currentActive === 'SLEEPER' ? '#38bdf8' : undefined }}>
+            {sleeperPts ? `${sleeperPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>pts</span>
+          </div>
+          <div className="source-card-sub">
+            RotoWire Official PPR
+          </div>
+        </div>
+
+        {/* Source 4: ESPN Official */}
         <div className={`source-matrix-card ${currentActive === 'ESPN' ? 'active' : ''}`}>
           {currentActive === 'ESPN' && <span className="source-card-badge">ACTIVE CHOICE</span>}
           <div className="source-card-header">
@@ -133,11 +176,11 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
           </div>
         </div>
 
-        {/* Source 4: 3-Way Consensus */}
+        {/* Source 5: Multi-Source Consensus */}
         <div className={`source-matrix-card ${currentActive === 'CONSENSUS' ? 'active' : ''}`}>
           {currentActive === 'CONSENSUS' && <span className="source-card-badge">ACTIVE CHOICE</span>}
           <div className="source-card-header">
-            <span>⭐</span> 3-Way Consensus
+            <span>⭐</span> Multi-Source Blend
           </div>
           <div className="source-card-pts" style={{ color: currentActive === 'CONSENSUS' ? '#38bdf8' : '#facc15' }}>
             {consensusPts ? `${consensusPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>pts</span>
@@ -393,6 +436,222 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
           </div>
         </div>
       </div>
+
+      {/* Position-Specific Defensive Matchup Strength (DraftEdge DvP / FPA) */}
+      {p.dvp_fpa && (
+        <div
+          className="dvp-matchup-panel"
+          style={{
+            marginTop: '12px',
+            background: 'rgba(15, 23, 42, 0.65)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '10px',
+            padding: '12px 14px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '8px',
+              flexWrap: 'wrap',
+              gap: '6px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '13px' }}>🛡️</span>
+              <strong style={{ fontSize: '12px', color: '#f8fafc' }}>
+                Defensive Matchup vs {p.position}: {p.opponent}
+              </strong>
+              <span
+                className={`pill ${
+                  p.dvp_fpa.tier === 'SMASH'
+                    ? 'emerald'
+                    : p.dvp_fpa.tier === 'FAVORABLE'
+                    ? 'cyan'
+                    : p.dvp_fpa.tier === 'TOUGH'
+                    ? 'amber'
+                    : p.dvp_fpa.tier === 'LOCKDOWN'
+                    ? 'rose'
+                    : 'zinc'
+                }`}
+                style={{ fontSize: '10px', fontWeight: 800 }}
+              >
+                {p.dvp_fpa.tier_label}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                #{p.dvp_fpa.rank_softness} Softest in NFL
+              </span>
+              {p.dvp_fpa.is_baseline && (
+                <Tooltip term="DVP_BASELINE">
+                  <span
+                    className="pill purple"
+                    style={{ fontSize: '9.5px', padding: '1px 6px', cursor: 'help' }}
+                  >
+                    ℹ️ 2025-26 Weighted Baseline
+                  </span>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+              gap: '8px',
+              marginTop: '6px',
+            }}
+          >
+            <div className="statcard-box">
+              <span className="statcard-box-val emerald" style={{ fontSize: '15px' }}>
+                {p.dvp_fpa.dk_fpa.toFixed(1)}{' '}
+                <span style={{ fontSize: '11px', fontWeight: 600 }}>DK pts/G</span>
+              </span>
+              <span className="statcard-box-lbl">DK Fantasy Points Allowed</span>
+            </div>
+
+            <div className="statcard-box">
+              <span
+                className="statcard-box-val"
+                style={{
+                  fontSize: '15px',
+                  color:
+                    p.dvp_fpa.vs_avg > 0
+                      ? 'var(--accent-emerald)'
+                      : p.dvp_fpa.vs_avg < 0
+                      ? 'var(--accent-rose)'
+                      : 'var(--text-secondary)',
+                }}
+              >
+                {p.dvp_fpa.vs_avg > 0 ? `+${p.dvp_fpa.vs_avg.toFixed(1)}` : p.dvp_fpa.vs_avg.toFixed(1)}
+              </span>
+              <span className="statcard-box-lbl">vs Positional League Avg</span>
+            </div>
+
+            <div className="statcard-box">
+              <span className="statcard-box-val" style={{ fontSize: '12.5px', color: '#38bdf8' }}>
+                {p.dvp_fpa.trend}
+              </span>
+              <span className="statcard-box-lbl">Recent Trajectory (L4)</span>
+            </div>
+
+            {/* Position-Specific Key Allowed Stats */}
+            {p.position === 'QB' && (
+              <>
+                <div className="statcard-box">
+                  <span className="statcard-box-val" style={{ fontSize: '13px' }}>
+                    {p.dvp_fpa.supporting_stats.pass_yds
+                      ? `${p.dvp_fpa.supporting_stats.pass_yds.toFixed(1)} yds / ${
+                          p.dvp_fpa.supporting_stats.pass_td
+                            ? p.dvp_fpa.supporting_stats.pass_td.toFixed(2)
+                            : 0
+                        } TD`
+                      : '—'}
+                  </span>
+                  <span className="statcard-box-lbl">Pass Allowed / G</span>
+                </div>
+                <div className="statcard-box">
+                  <span className="statcard-box-val" style={{ fontSize: '13px' }}>
+                    {p.dvp_fpa.supporting_stats.sacks
+                      ? `${p.dvp_fpa.supporting_stats.sacks.toFixed(1)} sacks / ${
+                          p.dvp_fpa.supporting_stats.int
+                            ? p.dvp_fpa.supporting_stats.int.toFixed(2)
+                            : 0
+                        } INT`
+                      : '—'}
+                  </span>
+                  <span className="statcard-box-lbl">Pressure / Takeaways</span>
+                </div>
+              </>
+            )}
+
+            {['RB', 'FB'].includes(p.position) && (
+              <>
+                <div className="statcard-box">
+                  <span className="statcard-box-val" style={{ fontSize: '13px' }}>
+                    {p.dvp_fpa.supporting_stats.rush_yds
+                      ? `${p.dvp_fpa.supporting_stats.rush_yds.toFixed(1)} rush yds / ${
+                          p.dvp_fpa.supporting_stats.rush_td
+                            ? p.dvp_fpa.supporting_stats.rush_td.toFixed(2)
+                            : 0
+                        } TD`
+                      : '—'}
+                  </span>
+                  <span className="statcard-box-lbl">Ground Allowed / G</span>
+                </div>
+                <div className="statcard-box">
+                  <span className="statcard-box-val" style={{ fontSize: '13px' }}>
+                    {p.dvp_fpa.supporting_stats.targets
+                      ? `${p.dvp_fpa.supporting_stats.targets.toFixed(1)} tgt / ${
+                          p.dvp_fpa.supporting_stats.rec_yds
+                            ? p.dvp_fpa.supporting_stats.rec_yds.toFixed(1)
+                            : 0
+                        } rec yds`
+                      : '—'}
+                  </span>
+                  <span className="statcard-box-lbl">RB Receiving Conceded</span>
+                </div>
+              </>
+            )}
+
+            {p.position === 'WR' && (
+              <>
+                <div className="statcard-box">
+                  <span className="statcard-box-val" style={{ fontSize: '13px' }}>
+                    {p.dvp_fpa.supporting_stats.rec_yds
+                      ? `${p.dvp_fpa.supporting_stats.rec_yds.toFixed(1)} rec yds / ${
+                          p.dvp_fpa.supporting_stats.rec_td
+                            ? p.dvp_fpa.supporting_stats.rec_td.toFixed(2)
+                            : 0
+                        } TD`
+                      : '—'}
+                  </span>
+                  <span className="statcard-box-lbl">WR Conceded / G</span>
+                </div>
+                <div className="statcard-box">
+                  <span className="statcard-box-val" style={{ fontSize: '13px' }}>
+                    {p.dvp_fpa.supporting_stats.targets
+                      ? `${p.dvp_fpa.supporting_stats.targets.toFixed(1)} targets (${
+                          p.dvp_fpa.supporting_stats.rec ? p.dvp_fpa.supporting_stats.rec.toFixed(1) : 0
+                        } rec)`
+                      : '—'}
+                  </span>
+                  <span className="statcard-box-lbl">WR Target Funnel</span>
+                </div>
+              </>
+            )}
+
+            {p.position === 'TE' && (
+              <>
+                <div className="statcard-box">
+                  <span className="statcard-box-val" style={{ fontSize: '13px' }}>
+                    {p.dvp_fpa.supporting_stats.rec_yds
+                      ? `${p.dvp_fpa.supporting_stats.rec_yds.toFixed(1)} yds (${
+                          p.dvp_fpa.supporting_stats.targets
+                            ? p.dvp_fpa.supporting_stats.targets.toFixed(1)
+                            : 0
+                        } tgt)`
+                      : '—'}
+                  </span>
+                  <span className="statcard-box-lbl">TE Conceded / G</span>
+                </div>
+                <div className="statcard-box">
+                  <span className="statcard-box-val" style={{ fontSize: '13px' }}>
+                    {p.dvp_fpa.supporting_stats.rec_td
+                      ? `${p.dvp_fpa.supporting_stats.rec_td.toFixed(2)} TDs / G`
+                      : '0.00 TDs'}
+                  </span>
+                  <span className="statcard-box-lbl">TE Endzone Allowance</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

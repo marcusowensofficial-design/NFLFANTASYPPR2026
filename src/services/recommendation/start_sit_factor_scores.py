@@ -468,14 +468,13 @@ def calculate_start_sit_opportunity_score(
 
 # ============================================================================
 # 3. DEFENSIVE MATCHUP FORMULA
-# ============================================================================
-
 def calculate_start_sit_matchup_score(
     position: str,
     opponent_team: str,
     dvp: DvPClient | None = None,
     is_receiving_back: bool = False,
     is_slot_wr: bool = False,
+    dvp_fpa: dict[str, Any] | None = None,
 ) -> FactorScoreDetail:
     """Calculates objective opponent defensive favorability.
     
@@ -566,6 +565,14 @@ def calculate_start_sit_matchup_score(
         reasons.append(f"[Role Matchup] 🎯 Receiving Role Divergence: {opp} ranks #{role_rank} vs pass-catching RBs ({role_note})")
     elif is_slot_wr and role_rank != pos_rank:
         reasons.append(f"[Role Matchup] 🎯 Slot Alignment Divergence: {opp} ranks #{role_rank} against slot receivers")
+
+    if dvp_fpa:
+        fpa = dvp_fpa.get("dk_fpa")
+        vs_avg = dvp_fpa.get("vs_avg")
+        softness = dvp_fpa.get("rank_softness")
+        if fpa is not None and vs_avg is not None and softness is not None:
+            vs_str = f"+{vs_avg:.1f}" if vs_avg > 0 else f"{vs_avg:.1f}"
+            reasons.append(f"[Matchup] 📊 Opponent DK FPA: {fpa:.1f} pts/G ({vs_str} vs avg, #{softness} softest in NFL)")
 
     raw_inputs = {
         "opponent": opp,
@@ -799,6 +806,7 @@ def calculate_comparator_factors_for_evaluation(
         opponent_team=opp,
         is_receiving_back=is_receiving_back,
         is_slot_wr=is_slot_wr,
+        dvp_fpa=getattr(evaluation, "dvp_fpa", None),
     )
 
     env_factor = calculate_start_sit_environment_score(

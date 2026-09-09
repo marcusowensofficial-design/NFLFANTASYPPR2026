@@ -178,7 +178,7 @@ def test_opponent_dvp_and_def_rank_in_optimal_lineup(client):
             assert p.get("opp_def_rank") is not None
             assert 1 <= p["opp_def_rank"] <= 32
             assert p.get("dvp_source") == "FantasyPros Consensus"
-            assert p.get("opp_dvp_grade") in ("FAVORABLE", "NEUTRAL", "TOUGH")
+            assert p.get("opp_dvp_grade") in ("ELITE", "FAVORABLE", "NEUTRAL", "TOUGH", "BRUTAL")
             assert p.get("matchup_stars") is not None
             assert 1 <= p["matchup_stars"] <= 5
 

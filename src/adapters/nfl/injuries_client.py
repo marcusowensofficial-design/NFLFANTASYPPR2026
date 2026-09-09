@@ -53,6 +53,11 @@ class NFLInjuriesClient:
         self._cache: dict[int, PlayerInjuryReport] = {}
         self._cache_time: float = 0.0
 
+    def clear_cache(self) -> None:
+        """Clear the in-memory injury reports cache."""
+        self._cache.clear()
+        self._cache_time = 0.0
+
     async def fetch_injuries(self, force: bool = False) -> dict[int, PlayerInjuryReport]:
         """Fetch all official NFL injury updates indexed by athlete ID with 5-min TTL cache."""
         import time

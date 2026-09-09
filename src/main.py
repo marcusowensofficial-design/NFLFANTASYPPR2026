@@ -10,12 +10,15 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from src.adapters.espn.client import ESPNClient
 from src.adapters.espn.schemas import LeagueSummary
+from src.api.analysis_routes import router as analysis_router
 from src.api.backtest_routes import router as backtest_router
+from src.api.dfs_routes import router as dfs_router
 from src.api.fantasypros_routes import router as fantasypros_router
 from src.api.injury_routes import router as injury_router
 from src.api.league_routes import router as league_router
 from src.api.lineup_routes import router as lineup_router
 from src.api.recommendation_routes import router as recommendation_router
+from src.api.sleeper_routes import router as sleeper_router
 from src.api.waiver_routes import router as waiver_router
 
 from src.core.config import settings
@@ -50,6 +53,10 @@ app.include_router(waiver_router)
 app.include_router(backtest_router)
 app.include_router(injury_router)
 app.include_router(fantasypros_router)
+app.include_router(sleeper_router)
+app.include_router(analysis_router)
+app.include_router(dfs_router)
+# Vegas Odds & Props registered
 
 
 from pathlib import Path

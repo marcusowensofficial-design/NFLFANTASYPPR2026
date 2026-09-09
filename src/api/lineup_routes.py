@@ -72,7 +72,7 @@ class LineupPushResponse(BaseModel):
 async def get_optimal_lineup(
     team_id: int | None = Query(default=None, description="Optional team ID (defaults to user team)"),
     mode: str = Query(default="BALANCED", description="Strategy mode: BALANCED, CEILING, FLOOR, or AUTO"),
-    projection_source: str = Query(default="MODEL", description="Projection source: MODEL, FANTASYPROS, ESPN, or CONSENSUS"),
+    projection_source: str = Query(default="MODEL", description="Projection source: MODEL, FANTASYPROS, SLEEPER, ESPN, or CONSENSUS"),
     opponent_projected_points: float | None = Query(default=None, description="Optional opponent projected points (auto-retrieved from matchup if omitted)"),
     db: Session = Depends(get_db),
 ) -> OptimizedLineupResult:
@@ -378,9 +378,16 @@ class InactiveAlertItem(BaseModel):
     position: str
     injury_status: str
     pro_team: str
+    slot_name: str = "STARTER"
+    starter_proj: float = 0.0
     recommended_bench_id: int | None = None
     recommended_bench_name: str | None = None
     recommended_bench_pos: str | None = None
+    recommended_bench_proj: float = 0.0
+    top_waiver_id: int | None = None
+    top_waiver_name: str | None = None
+    top_waiver_pos: str | None = None
+    top_waiver_proj: float = 0.0
     net_projected_pts: float = 0.0
     alert_message: str
 
@@ -390,6 +397,22 @@ class InactiveAlertsResponse(BaseModel):
     has_critical_inactives: bool
     alerts_count: int
     alerts: list[InactiveAlertItem]
+
+
+class EmergencyPivotRequest(BaseModel):
+    team_id: int
+    starter_id: int
+    bench_id: int
+
+
+class EmergencyPivotResponse(BaseModel):
+    success: bool
+    message: str
+    starter_name: str
+    bench_name: str
+    from_slot: str
+    to_slot: str
+    moves_executed: int = 1
 
 
 @router.get("/inactives-alert", response_model=InactiveAlertsResponse)
@@ -435,9 +458,21 @@ async def check_inactives_alert(
             eligible_bench.sort(key=lambda b: b.projected_points, reverse=True)
             top_sub = eligible_bench[0] if eligible_bench else None
 
+            # Look up waiver alternative if bench has no backup
+            top_waiver = None
+            if not top_sub:
+                all_waiver_players = db.execute(
+                    select(PlayerModel)
+                    .where(PlayerModel.position == player.position)
+                    .order_by(PlayerModel.projected_points.desc())
+                ).scalars().all()
+                rostered_ids = {e.player_id for e, _ in entries}
+                healthy_fa = [p for p in all_waiver_players if p.id not in rostered_ids and (p.injury_status or "ACTIVE").upper() not in ("OUT", "INACTIVE", "IR", "DOUBTFUL")]
+                top_waiver = healthy_fa[0] if healthy_fa else None
+
             msg = (
                 f"🚨 CRITICAL: Starter {player.full_name} ({player.position}) is {raw_status}."
-                + (f" Replace with bench {top_sub.full_name} ({top_sub.position}, {top_sub.projected_points:.1f} pts)." if top_sub else " No healthy bench backup found; check waiver wire.")
+                + (f" Replace with bench {top_sub.full_name} ({top_sub.position}, {top_sub.projected_points:.1f} pts)." if top_sub else (f" No bench backup; top waiver target is {top_waiver.full_name} ({top_waiver.projected_points:.1f} pts)." if top_waiver else " No healthy replacement found."))
             )
 
             critical_inactives.append(
@@ -447,9 +482,16 @@ async def check_inactives_alert(
                     position=player.position,
                     injury_status=raw_status,
                     pro_team=player.pro_team,
+                    slot_name=re.slot_name,
+                    starter_proj=player.projected_points,
                     recommended_bench_id=top_sub.id if top_sub else None,
                     recommended_bench_name=top_sub.full_name if top_sub else None,
                     recommended_bench_pos=top_sub.position if top_sub else None,
+                    recommended_bench_proj=round(top_sub.projected_points, 1) if top_sub else 0.0,
+                    top_waiver_id=top_waiver.id if top_waiver else None,
+                    top_waiver_name=top_waiver.full_name if top_waiver else None,
+                    top_waiver_pos=top_waiver.position if top_waiver else None,
+                    top_waiver_proj=round(top_waiver.projected_points, 1) if top_waiver else 0.0,
                     net_projected_pts=round(top_sub.projected_points - player.projected_points, 1) if top_sub else 0.0,
                     alert_message=msg,
                 )
@@ -461,3 +503,67 @@ async def check_inactives_alert(
         alerts_count=len(critical_inactives),
         alerts=critical_inactives,
     )
+
+
+@router.post("/emergency-pivot", response_model=EmergencyPivotResponse)
+async def execute_emergency_pivot(
+    req: EmergencyPivotRequest,
+    db: Session = Depends(get_db),
+) -> EmergencyPivotResponse:
+    """Execute immediate emergency bench-to-starter swap in local database."""
+    league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+    if not league:
+        raise HTTPException(status_code=404, detail="No active league found.")
+
+    target_team_id = req.team_id or league.user_team_id or 1
+
+    starter_res = db.execute(
+        select(RosterEntryModel, PlayerModel)
+        .join(PlayerModel, RosterEntryModel.player_id == PlayerModel.id)
+        .where(
+            RosterEntryModel.league_id == league.id,
+            RosterEntryModel.team_id == target_team_id,
+            RosterEntryModel.player_id == req.starter_id,
+        )
+    ).first()
+
+    bench_res = db.execute(
+        select(RosterEntryModel, PlayerModel)
+        .join(PlayerModel, RosterEntryModel.player_id == PlayerModel.id)
+        .where(
+            RosterEntryModel.league_id == league.id,
+            RosterEntryModel.team_id == target_team_id,
+            RosterEntryModel.player_id == req.bench_id,
+        )
+    ).first()
+
+    if not starter_res or not bench_res:
+        raise HTTPException(status_code=404, detail="Starter or bench player entry not found for this team.")
+
+    starter_entry, starter_player = starter_res
+    bench_entry, bench_player = bench_res
+
+    # Swap slots atomically
+    orig_starter_slot_id = starter_entry.lineup_slot_id
+    orig_starter_slot_name = starter_entry.slot_name
+
+    starter_entry.lineup_slot_id = bench_entry.lineup_slot_id
+    starter_entry.slot_name = bench_entry.slot_name
+    starter_entry.is_starter = False
+
+    bench_entry.lineup_slot_id = orig_starter_slot_id
+    bench_entry.slot_name = orig_starter_slot_name
+    bench_entry.is_starter = True
+
+    db.commit()
+
+    return EmergencyPivotResponse(
+        success=True,
+        message=f"Emergency pivot executed: Started {bench_player.full_name} in {orig_starter_slot_name} slot. {starter_player.full_name} moved to bench.",
+        starter_name=starter_player.full_name,
+        bench_name=bench_player.full_name,
+        from_slot=orig_starter_slot_name,
+        to_slot=starter_entry.slot_name,
+        moves_executed=1,
+    )
+

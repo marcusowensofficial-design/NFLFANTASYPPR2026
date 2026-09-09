@@ -72,6 +72,7 @@ class OptimizedLineupResult(BaseModel):
     projection_source: str = "MODEL"
     total_model_projected: float = 0.0
     total_fp_projected: float = 0.0
+    total_sleeper_projected: float = 0.0
     total_espn_projected: float = 0.0
     total_consensus_projected: float = 0.0
     opponent_projected_points: float | None = None
@@ -570,6 +571,7 @@ class LineupOptimizer:
 
         total_model_pts = sum(s.recommended_player.proj_model for s in starters_assigned)
         total_fp_pts = sum(s.recommended_player.proj_fantasypros for s in starters_assigned)
+        total_sleeper_pts = sum(s.recommended_player.proj_sleeper for s in starters_assigned)
         total_espn_pts = sum(s.recommended_player.proj_espn for s in starters_assigned)
         total_consensus_pts = sum(s.recommended_player.proj_consensus for s in starters_assigned)
 
@@ -590,6 +592,7 @@ class LineupOptimizer:
             projection_source=projection_source,
             total_model_projected=round(total_model_pts, 2),
             total_fp_projected=round(total_fp_pts, 2),
+            total_sleeper_projected=round(total_sleeper_pts, 2),
             total_espn_projected=round(total_espn_pts, 2),
             total_consensus_projected=round(total_consensus_pts, 2),
             opponent_projected_points=opponent_projected_points,

@@ -59,6 +59,10 @@ class NFLScheduleClient:
         self.timeout = timeout
         self._cache: dict[tuple[int, int], list[NFLGame]] = {}
 
+    def clear_cache(self) -> None:
+        """Clear the in-memory NFL schedule cache."""
+        self._cache.clear()
+
     async def fetch_week_schedule(self, season: int = 2026, week: int = 1) -> list[NFLGame]:
         """Fetch all games for a specific NFL week with dome status and betting lines."""
         cache_key = (season, week)
