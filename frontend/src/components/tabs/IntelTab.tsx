@@ -70,6 +70,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
   const [taleData, setTaleData] = useState<H2HTaleOfTheTapeResponse | null>(null)
   const [isLoadingTale, setIsLoadingTale] = useState<boolean>(false)
   const [showTaleOfTheTape, setShowTaleOfTheTape] = useState<boolean>(true)
+  const [taleRefreshKey, setTaleRefreshKey] = useState<number>(0)
 
   // Dedicated current week matchups state ensuring weekly matchup opponent is always available
   const [currentWeekMatchups, setCurrentWeekMatchups] = useState<MatchupResponseItem[]>([])
@@ -97,25 +98,29 @@ export const IntelTab: React.FC<IntelTabProps> = ({
     fetchMarketBuzz()
   }, [league?.current_week])
 
-  useEffect(() => {
-    const fetchTale = async () => {
-      setIsLoadingTale(true)
-      try {
-        const week = league?.current_week || 1
-        const teamParam = selectedTeamId ? `&team_id=${selectedTeamId}` : ''
-        const res = await fetch(`/api/analysis/h2h-tale-of-the-tape?week=${week}${teamParam}`)
-        if (res.ok) {
-          const data: H2HTaleOfTheTapeResponse = await res.json()
-          setTaleData(data)
-        }
-      } catch (err) {
-        console.error('Failed to load H2H Tale of the Tape:', err)
-      } finally {
-        setIsLoadingTale(false)
+  const fetchTale = async () => {
+    setIsLoadingTale(true)
+    try {
+      const week = league?.current_week || 1
+      const effectiveTeamId = selectedTeamId ?? league?.user_team_id
+      const teamParam = effectiveTeamId ? `&team_id=${effectiveTeamId}` : ''
+      const res = await fetch(`/api/analysis/h2h-tale-of-the-tape?week=${week}${teamParam}`)
+      if (res.ok) {
+        const data: H2HTaleOfTheTapeResponse = await res.json()
+        setTaleData(data)
+      } else {
+        console.warn(`H2H Tale of the Tape returned ${res.status}`)
       }
+    } catch (err) {
+      console.error('Failed to load H2H Tale of the Tape:', err)
+    } finally {
+      setIsLoadingTale(false)
     }
+  }
+
+  useEffect(() => {
     fetchTale()
-  }, [league?.current_week, selectedTeamId])
+  }, [league?.current_week, selectedTeamId, taleRefreshKey])
 
   // Fetch current week matchups if not provided or to guarantee fresh week matchups
   useEffect(() => {
@@ -1209,7 +1214,10 @@ export const IntelTab: React.FC<IntelTabProps> = ({
             </span>
             <button
               type="button"
-              onClick={onRefresh}
+              onClick={() => {
+                setTaleRefreshKey((prev) => prev + 1)
+                onRefresh()
+              }}
               className="btn btn-secondary btn-sm"
               style={{ padding: '6px 12px' }}
             >
@@ -1282,8 +1290,24 @@ export const IntelTab: React.FC<IntelTabProps> = ({
 
           {/* Positional Tale of the Tape: Slot-by-Slot Breakdown */}
           {isLoadingTale && !taleData && (
-            <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
-              ⏳ Loading slot-by-slot Tale of the Tape...
+            <div style={{ padding: '14px', textAlign: 'center', color: 'var(--accent-cyan)', fontSize: '12px', background: 'rgba(56, 189, 248, 0.05)', borderRadius: 'var(--radius-sm)', marginTop: '12px', border: '1px solid rgba(56, 189, 248, 0.15)' }}>
+              ⏳ Loading slot-by-slot Tale of the Tape against {h2hMatchup.oppTeamName}...
+            </div>
+          )}
+
+          {!isLoadingTale && !taleData && (
+            <div style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-sm)', marginTop: '12px', border: '1px dashed var(--border-subtle)' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                ⚔️ Slot-by-Slot H2H Lineup breakdown for {h2hMatchup.userTeamName} vs {h2hMatchup.oppTeamName}
+              </span>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={fetchTale}
+                style={{ fontSize: '11px', padding: '3px 10px' }}
+              >
+                🔄 Load H2H Lineups
+              </button>
             </div>
           )}
 

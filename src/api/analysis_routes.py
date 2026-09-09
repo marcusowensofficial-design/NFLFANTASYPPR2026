@@ -658,7 +658,7 @@ async def get_h2h_tale_of_the_tape(
     effective_league_id = eff_lid or (league.id if league else settings.espn_league_id)
     user_team_id = eff_tid or (league.user_team_id if league else 6)
 
-    # Find the H2H matchup for this week
+    # Find the H2H matchup for this week with fallbacks
     match = db.execute(
         select(MatchupModel).where(
             MatchupModel.league_id == effective_league_id,
@@ -668,13 +668,32 @@ async def get_h2h_tale_of_the_tape(
     ).scalars().first()
 
     if not match:
-        raise HTTPException(status_code=404, detail=f"No matchup found for team {user_team_id} in week {week}")
+        # Fallback 1: Match for this week without league_id constraint
+        match = db.execute(
+            select(MatchupModel).where(
+                MatchupModel.week == week,
+                (MatchupModel.home_team_id == user_team_id) | (MatchupModel.away_team_id == user_team_id),
+            )
+        ).scalars().first()
 
-    is_user_home = match.home_team_id == user_team_id
-    opp_team_id = match.away_team_id if is_user_home else match.home_team_id
+    if not match:
+        # Fallback 2: Any matchup recorded for this team
+        match = db.execute(
+            select(MatchupModel).where(
+                (MatchupModel.home_team_id == user_team_id) | (MatchupModel.away_team_id == user_team_id)
+            )
+        ).scalars().first()
 
-    teams = db.execute(select(TeamModel).where(TeamModel.league_id == effective_league_id)).scalars().all()
+    teams = db.execute(select(TeamModel)).scalars().all()
     team_name_map = {t.id: t.name for t in teams}
+
+    if match:
+        is_user_home = match.home_team_id == user_team_id
+        opp_team_id = match.away_team_id if is_user_home else match.home_team_id
+    else:
+        other_team = next((t for t in teams if t.id != user_team_id), None)
+        opp_team_id = other_team.id if other_team else 3
+        is_user_home = True
 
     user_team_name = team_name_map.get(user_team_id, "My Team")
     opp_team_name = team_name_map.get(opp_team_id, "Opponent Team")
@@ -688,6 +707,14 @@ async def get_h2h_tale_of_the_tape(
         )
     ).scalars().all()
 
+    if not user_entries:
+        # Fallback to any roster entries for user team if is_starter is unflagged
+        user_entries = db.execute(
+            select(RosterEntryModel).where(
+                RosterEntryModel.team_id == user_team_id
+            )
+        ).scalars().all()
+
     opp_entries = db.execute(
         select(RosterEntryModel).where(
             RosterEntryModel.league_id == effective_league_id,
@@ -696,18 +723,29 @@ async def get_h2h_tale_of_the_tape(
         )
     ).scalars().all()
 
+    if not opp_entries:
+        # Fallback to any roster entries for opponent team if is_starter is unflagged
+        opp_entries = db.execute(
+            select(RosterEntryModel).where(
+                RosterEntryModel.team_id == opp_team_id
+            )
+        ).scalars().all()
+
     all_pids = [e.player_id for e in user_entries] + [e.player_id for e in opp_entries]
     players_by_id: dict[int, PlayerModel] = {}
     if all_pids:
         players = db.execute(select(PlayerModel).where(PlayerModel.id.in_(all_pids))).scalars().all()
         players_by_id = {p.id: p for p in players}
 
-    # Fetch weekly schedule to map opponents
-    schedule_games = await nfl_schedule_client.fetch_week_schedule(season=settings.espn_season, week=week)
+    # Fetch weekly schedule to map opponents safely
     team_opp_map: dict[str, str] = {}
-    for g in schedule_games:
-        team_opp_map[g.home_team] = g.away_team
-        team_opp_map[g.away_team] = g.home_team
+    try:
+        schedule_games = await nfl_schedule_client.fetch_week_schedule(season=settings.espn_season, week=week)
+        for g in schedule_games:
+            team_opp_map[g.home_team] = g.away_team
+            team_opp_map[g.away_team] = g.home_team
+    except Exception as e:
+        logger.warning(f"Error fetching weekly schedule for Tale of the Tape: {e}")
 
     # Group players by slot/position
     def categorize_starters(entries: list[RosterEntryModel]) -> dict[str, list[dict[str, Any]]]:
