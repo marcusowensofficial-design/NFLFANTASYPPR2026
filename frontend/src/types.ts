@@ -265,6 +265,9 @@ export interface OptimizedLineupResult {
   total_espn_projected?: number
   total_consensus_projected?: number
   opponent_projected_points?: number | null
+  opponent_team_id?: number | null
+  opponent_team_name?: string | null
+  opponent_team_abbrev?: string | null
   implied_matchup_spread?: number | null
   game_theory_posture?: string | null
   game_theory_recommendation?: string | null

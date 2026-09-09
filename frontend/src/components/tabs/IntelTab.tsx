@@ -71,6 +71,9 @@ export const IntelTab: React.FC<IntelTabProps> = ({
   const [isLoadingTale, setIsLoadingTale] = useState<boolean>(false)
   const [showTaleOfTheTape, setShowTaleOfTheTape] = useState<boolean>(true)
 
+  // Dedicated current week matchups state ensuring weekly matchup opponent is always available
+  const [currentWeekMatchups, setCurrentWeekMatchups] = useState<MatchupResponseItem[]>([])
+
   // Prediction Market Buzz & Starter Battles state
   const [marketBuzz, setMarketBuzz] = useState<PlayerMarketSentimentItem[]>([])
   const [isLoadingMarket, setIsLoadingMarket] = useState<boolean>(false)
@@ -113,6 +116,23 @@ export const IntelTab: React.FC<IntelTabProps> = ({
     }
     fetchTale()
   }, [league?.current_week, selectedTeamId])
+
+  // Fetch current week matchups if not provided or to guarantee fresh week matchups
+  useEffect(() => {
+    const fetchCurrentMatchups = async () => {
+      try {
+        const week = league?.current_week || 1
+        const res = await fetch(`/api/league/matchups?week=${week}`)
+        if (res.ok) {
+          const data: MatchupResponseItem[] = await res.json()
+          setCurrentWeekMatchups(data)
+        }
+      } catch (err) {
+        console.error('Failed to load current week matchups in IntelTab:', err)
+      }
+    }
+    fetchCurrentMatchups()
+  }, [league?.current_week])
 
   // Fetch DvP Fantasy Points Allowed ratings and sync status
   useEffect(() => {
@@ -208,56 +228,111 @@ export const IntelTab: React.FC<IntelTabProps> = ({
   // Extract weekly head-to-head matchup for user's team
   const h2hMatchup = useMemo(() => {
     const userTeamId = selectedTeamId ?? league?.user_team_id
-    if (!userTeamId || !matchups.length) {
-      if (lineup) {
-        return {
-          userTeamName: league?.teams.find((t) => t.id === userTeamId)?.name || 'My Team',
-          userAbbrev: league?.teams.find((t) => t.id === userTeamId)?.abbrev || 'MY',
-          oppTeamName: 'Week Opponent',
-          oppAbbrev: 'OPP',
-          userProjected: lineup.total_projected_points || 0,
-          oppProjected: lineup.opponent_projected_points || 0,
-          spread: lineup.implied_matchup_spread ?? 0,
-          posture: lineup.game_theory_posture || 'BALANCED',
-          recommendation:
-            lineup.game_theory_recommendation ||
-            'Maintain standard balance between floor consistency and high ceiling upside.',
-          isCompleted: false,
-        }
-      }
+    if (!userTeamId) return null
+
+    // Determine user's team info
+    const userTeam = league?.teams.find((t) => t.id === userTeamId)
+    const userTeamName = userTeam?.name || taleData?.user_team_name || 'My Team'
+    const userAbbrev = userTeam?.abbrev || 'MY'
+
+    // Combine provided matchups prop and local currentWeekMatchups
+    const effectiveMatchups = (matchups && matchups.length > 0) ? matchups : currentWeekMatchups
+    const match = effectiveMatchups.find((m) => m.home_team_id === userTeamId || m.away_team_id === userTeamId)
+
+    // Check taleData (authoritative H2H endpoint matching userTeamId)
+    const hasTaleMatch = taleData && (taleData.user_team_id === userTeamId || !taleData.user_team_id)
+
+    // Check lineup's opponent resolution
+    const hasLineupOpponent = lineup && (lineup.opponent_team_name || lineup.opponent_team_id)
+
+    // Resolve Opponent Team ID
+    let oppTeamId: number | null = null
+    if (match) {
+      oppTeamId = match.home_team_id === userTeamId ? match.away_team_id : match.home_team_id
+    } else if (hasTaleMatch && taleData?.opp_team_id) {
+      oppTeamId = taleData.opp_team_id
+    } else if (hasLineupOpponent && lineup?.opponent_team_id) {
+      oppTeamId = lineup.opponent_team_id
+    }
+
+    const oppTeam = oppTeamId ? league?.teams.find((t) => t.id === oppTeamId) : null
+
+    // Resolve Opponent Team Name
+    let oppTeamName = ''
+    if (match) {
+      oppTeamName = match.home_team_id === userTeamId ? match.away_team_name : match.home_team_name
+    } else if (hasTaleMatch && taleData?.opp_team_name) {
+      oppTeamName = taleData.opp_team_name
+    } else if (oppTeam?.name) {
+      oppTeamName = oppTeam.name
+    } else if (lineup?.opponent_team_name) {
+      oppTeamName = lineup.opponent_team_name
+    }
+
+    // Resolve Opponent Abbrev
+    let oppAbbrev = ''
+    if (match) {
+      oppAbbrev = match.home_team_id === userTeamId ? match.away_team_abbrev : match.home_team_abbrev
+    } else if (oppTeam?.abbrev) {
+      oppAbbrev = oppTeam.abbrev
+    } else if (lineup?.opponent_team_abbrev) {
+      oppAbbrev = lineup.opponent_team_abbrev
+    } else if (oppTeamName && oppTeamName.length >= 3) {
+      oppAbbrev = oppTeamName.slice(0, 3).toUpperCase()
+    } else {
+      oppAbbrev = 'OPP'
+    }
+
+    // If no opponent found at all and no lineup/tale data yet, don't show an invalid banner
+    if (!match && !hasTaleMatch && !lineup) {
       return null
     }
 
-    const match = matchups.find((m) => m.home_team_id === userTeamId || m.away_team_id === userTeamId)
-    if (!match) return null
+    // Projections & Scores
+    const isHome = match ? match.home_team_id === userTeamId : true
+    const isCompleted = match ? (match.winner !== null && match.winner !== 'UNDECIDED' && match.winner !== 'NONE') : false
 
-    const isHome = match.home_team_id === userTeamId
-    const userProjected = isHome ? match.home_projected : match.away_projected
-    const oppProjected = isHome ? match.away_projected : match.home_projected
-    const spread = Math.round((userProjected - oppProjected) * 10) / 10
-    const isCompleted = match.winner !== null && match.winner !== 'UNDECIDED' && match.winner !== 'NONE'
+    const userScore = match ? (isHome ? match.home_score : match.away_score) : undefined
+    const oppScore = match ? (isHome ? match.away_score : match.home_score) : undefined
+
+    const userProjected = match
+      ? (isHome ? match.home_projected : match.away_projected)
+      : (taleData?.user_projected_total ?? (lineup?.total_projected_points || 0))
+
+    const oppProjected = match
+      ? (isHome ? match.away_projected : match.home_projected)
+      : (taleData?.opp_projected_total ?? (lineup?.opponent_projected_points || 0))
+
+    const spread = (userProjected !== undefined && oppProjected !== undefined)
+      ? Math.round((userProjected - oppProjected) * 10) / 10
+      : (taleData?.spread ?? (lineup?.implied_matchup_spread ?? 0))
+
+    const posture = lineup?.game_theory_posture || taleData?.posture || (spread >= 8 ? 'HIGH_FLOOR' : spread <= -8 ? 'AGGRESSIVE_CEILING' : 'BALANCED')
+
+    const recommendation =
+      lineup?.game_theory_recommendation ||
+      taleData?.key_leverage_summary ||
+      (spread >= 5
+        ? `Favored by +${spread.toFixed(1)} pts. Protect lead with high-floor starters and secure volume.`
+        : spread <= -5
+        ? `Underdog by ${Math.abs(spread).toFixed(1)} pts. Target shootout environments and ceiling wideouts.`
+        : 'Close projected matchup. Matchup edges and red zone opportunities will decide the week.')
 
     return {
-      userTeamName: isHome ? match.home_team_name : match.away_team_name,
-      userAbbrev: isHome ? match.home_team_abbrev : match.away_team_abbrev,
-      oppTeamName: isHome ? match.away_team_name : match.home_team_name,
-      oppAbbrev: isHome ? match.away_team_abbrev : match.home_team_abbrev,
-      userScore: isHome ? match.home_score : match.away_score,
-      oppScore: isHome ? match.away_score : match.home_score,
+      userTeamName,
+      userAbbrev,
+      oppTeamName: oppTeamName || 'Scheduled Opponent',
+      oppAbbrev,
+      userScore,
+      oppScore,
       userProjected,
       oppProjected,
       spread,
-      posture: lineup?.game_theory_posture || (spread >= 8 ? 'HIGH_FLOOR' : spread <= -8 ? 'AGGRESSIVE_CEILING' : 'BALANCED'),
-      recommendation:
-        lineup?.game_theory_recommendation ||
-        (spread >= 5
-          ? `Favored by ${spread.toFixed(1)} pts. Protect lead with high-floor starters and secure volume.`
-          : spread <= -5
-          ? `Underdog by ${Math.abs(spread).toFixed(1)} pts. Target shootout environments and ceiling wideouts.`
-          : 'Close projected matchup. Matchup edges and red zone opportunities will decide the week.'),
+      posture,
+      recommendation,
       isCompleted,
     }
-  }, [league, matchups, lineup])
+  }, [league, matchups, currentWeekMatchups, lineup, selectedTeamId, taleData])
 
   // Extract Starters and Bench lists with enriched matchup indicators
   const { startersList, benchList } = useMemo(() => {

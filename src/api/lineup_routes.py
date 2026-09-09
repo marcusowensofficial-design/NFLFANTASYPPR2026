@@ -86,20 +86,32 @@ async def get_optimal_lineup(
     mode_val = str(getattr(mode, "default", mode) if hasattr(mode, "default") else (mode or "BALANCED"))
     proj_source_val = str(getattr(projection_source, "default", projection_source) if hasattr(projection_source, "default") else (projection_source or "MODEL")).upper().strip()
 
-    # Auto-resolve opponent projected points from live weekly matchup if not provided
+    # Auto-resolve opponent projected points & team info from live weekly matchup if not provided
     opp_proj: float | None = None
-    if isinstance(opponent_projected_points, (int, float)):
-        opp_proj = float(opponent_projected_points)
-    else:
-        matchup = db.execute(
-            select(MatchupModel).where(
-                MatchupModel.league_id == league.id,
-                MatchupModel.week == league.current_week,
-                (MatchupModel.home_team_id == target_team_id) | (MatchupModel.away_team_id == target_team_id),
-            )
-        ).scalars().first()
-        if matchup:
-            opp_team_id = matchup.away_team_id if matchup.home_team_id == target_team_id else matchup.home_team_id
+    opp_team_id: int | None = None
+    opp_team_name: str | None = None
+    opp_team_abbrev: str | None = None
+
+    matchup = db.execute(
+        select(MatchupModel).where(
+            MatchupModel.league_id == league.id,
+            MatchupModel.week == league.current_week,
+            (MatchupModel.home_team_id == target_team_id) | (MatchupModel.away_team_id == target_team_id),
+        )
+    ).scalars().first()
+
+    if matchup:
+        opp_team_id = matchup.away_team_id if matchup.home_team_id == target_team_id else matchup.home_team_id
+        opp_team = db.execute(
+            select(TeamModel).where(TeamModel.id == opp_team_id, TeamModel.league_id == league.id)
+        ).scalar_one_or_none()
+        if opp_team:
+            opp_team_name = opp_team.name
+            opp_team_abbrev = opp_team.abbrev
+
+        if isinstance(opponent_projected_points, (int, float)):
+            opp_proj = float(opponent_projected_points)
+        else:
             opp_starter_projs = db.execute(
                 select(PlayerModel.projected_points)
                 .join(RosterEntryModel, RosterEntryModel.player_id == PlayerModel.id)
@@ -111,6 +123,8 @@ async def get_optimal_lineup(
             ).scalars().all()
             if opp_starter_projs:
                 opp_proj = round(sum(opp_starter_projs), 1)
+    elif isinstance(opponent_projected_points, (int, float)):
+        opp_proj = float(opponent_projected_points)
 
     team = db.execute(
         select(TeamModel).where(TeamModel.id == target_team_id, TeamModel.league_id == league.id)
@@ -184,6 +198,9 @@ async def get_optimal_lineup(
         locked_starter_slot_map=locked_starter_slot_map,
         mode=mode_val,
         opponent_projected_points=opp_proj,
+        opponent_team_id=opp_team_id,
+        opponent_team_name=opp_team_name,
+        opponent_team_abbrev=opp_team_abbrev,
         current_ir_ids=current_ir_ids,
         projection_source=proj_source_val,
     )

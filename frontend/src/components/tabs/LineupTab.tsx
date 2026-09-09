@@ -569,7 +569,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                     style={{ marginLeft: '10px' }}
                   >
                     Spread: {lineup.implied_matchup_spread > 0 ? `+${lineup.implied_matchup_spread}` : lineup.implied_matchup_spread} pts
-                    {lineup.opponent_projected_points ? ` vs Opponent (${lineup.opponent_projected_points} pts)` : ''}
+                    {lineup.opponent_projected_points ? ` vs ${lineup.opponent_team_name || 'Opponent'} (${lineup.opponent_projected_points} pts)` : ''}
                   </span>
                 )}
               </div>

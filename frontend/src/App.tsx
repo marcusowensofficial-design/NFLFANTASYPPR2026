@@ -143,6 +143,9 @@ export function App() {
     loadBacktestReport(pendingTeamId)
     checkInactivesAlerts(pendingTeamId)
     loadIntelData(pendingTeamId, true)
+    if (league?.current_week) {
+      loadMatchups(league.current_week)
+    }
     setIsLockedIn(true)
     setTimeout(() => setIsLockedIn(false), 2000)
   }
@@ -613,6 +616,7 @@ export function App() {
         loadInjuries()
         checkInactivesAlerts(currentTargetId)
         loadIntelData(currentTargetId, true)
+        loadMatchups(summaryData.current_week || 1)
       }
     } catch (err: any) {
       if (err?.name === 'AbortError') {

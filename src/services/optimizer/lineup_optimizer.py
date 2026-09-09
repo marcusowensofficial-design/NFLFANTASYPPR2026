@@ -76,6 +76,9 @@ class OptimizedLineupResult(BaseModel):
     total_espn_projected: float = 0.0
     total_consensus_projected: float = 0.0
     opponent_projected_points: float | None = None
+    opponent_team_id: int | None = None
+    opponent_team_name: str | None = None
+    opponent_team_abbrev: str | None = None
     implied_matchup_spread: float | None = None
     game_theory_posture: str | None = None
     game_theory_recommendation: str | None = None
@@ -105,6 +108,9 @@ class LineupOptimizer:
         locked_starter_slot_map: dict[int, int] | None = None,
         mode: str = "BALANCED",
         opponent_projected_points: float | None = None,
+        opponent_team_id: int | None = None,
+        opponent_team_name: str | None = None,
+        opponent_team_abbrev: str | None = None,
         current_ir_ids: set[int] | None = None,
         projection_source: str = "MODEL",
     ) -> OptimizedLineupResult:
@@ -596,6 +602,9 @@ class LineupOptimizer:
             total_espn_projected=round(total_espn_pts, 2),
             total_consensus_projected=round(total_consensus_pts, 2),
             opponent_projected_points=opponent_projected_points,
+            opponent_team_id=opponent_team_id,
+            opponent_team_name=opponent_team_name,
+            opponent_team_abbrev=opponent_team_abbrev,
             implied_matchup_spread=implied_spread,
             game_theory_posture=game_theory_posture,
             game_theory_recommendation=game_theory_rec,
