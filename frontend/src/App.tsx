@@ -90,9 +90,29 @@ export function App() {
     }
   }, [lineupViewMode])
 
-  // Primary Data State
-  const [league, setLeague] = useState<LeagueSummaryResponse | null>(null)
-  const [selectedTeamId, setSelectedTeamId] = useState<number>(1)
+  // Primary Data State (hydrated immediately from localStorage for 0ms latency)
+  const [league, setLeague] = useState<LeagueSummaryResponse | null>(() => {
+    try {
+      const cached = localStorage.getItem('apex_league_summary')
+      return cached ? JSON.parse(cached) : null
+    } catch {
+      return null
+    }
+  })
+  const [selectedTeamId, setSelectedTeamId] = useState<number>(() => {
+    try {
+      const cachedTeam = localStorage.getItem('apex_selected_team_id')
+      if (cachedTeam) return Number(cachedTeam)
+      const cachedLeague = localStorage.getItem('apex_league_summary')
+      if (cachedLeague) {
+        const parsed = JSON.parse(cachedLeague)
+        return parsed.user_team_id || (parsed.teams?.length > 0 ? parsed.teams[0].id : 6)
+      }
+      return 6
+    } catch {
+      return 6
+    }
+  })
   const [lineup, setLineup] = useState<OptimizedLineupResult | null>(null)
   const [allPlayers, setAllPlayers] = useState<PlayerDirectoryItem[]>([])
   const [inactivesAlerts, setInactivesAlerts] = useState<InactiveAlertItem[]>([])
@@ -191,13 +211,18 @@ export function App() {
       if (res.ok) {
         const data: LeagueSummaryResponse = await res.json()
         setLeague(data)
-        const userTeam = data.user_team_id || (data.teams.length > 0 ? data.teams[0].id : 1)
-        if (selectedTeamId !== userTeam) {
+        try {
+          localStorage.setItem('apex_league_summary', JSON.stringify(data))
+        } catch {}
+
+        const storedTeam = localStorage.getItem('apex_selected_team_id')
+        const targetTeam = storedTeam ? Number(storedTeam) : (data.user_team_id || (data.teams.length > 0 ? data.teams[0].id : 6))
+        if (selectedTeamId !== targetTeam) {
           setIsExplicitCompare(false)
-          setSelectedTeamId(userTeam)
+          setSelectedTeamId(targetTeam)
         }
-        setSelectedRosterTeamId(userTeam)
-        loadTeamRoster(userTeam)
+        setSelectedRosterTeamId(targetTeam)
+        loadTeamRoster(targetTeam)
         prefetchAllTeamRosters(data.teams)
         const curWeek = data.current_week || 1
         setMatchupWeek(curWeek)
@@ -528,8 +553,14 @@ export function App() {
       if (summaryRes.ok) {
         const summaryData: LeagueSummaryResponse = await summaryRes.json()
         setLeague(summaryData)
-        const teamId = summaryData.user_team_id || (summaryData.teams.length > 0 ? summaryData.teams[0].id : 1)
+        try {
+          localStorage.setItem('apex_league_summary', JSON.stringify(summaryData))
+        } catch {}
+        const teamId = summaryData.user_team_id || (summaryData.teams.length > 0 ? summaryData.teams[0].id : 6)
         setSelectedTeamId(teamId)
+        try {
+          localStorage.setItem('apex_selected_team_id', String(teamId))
+        } catch {}
         loadTeamLineup(teamId, strategyMode, projectionSource, true)
         loadWaivers(teamId)
         loadAllPlayers()
@@ -809,7 +840,7 @@ export function App() {
 
           <div className="header-actions-row">
             {/* Team Switcher */}
-            {league && (
+            {league ? (
               <div className="header-team-picker">
                 <div className="header-focus-label">
                   <span>Focus</span>
@@ -822,6 +853,9 @@ export function App() {
                     const newId = Number(e.target.value)
                     setIsExplicitCompare(false)
                     setSelectedTeamId(newId)
+                    try {
+                      localStorage.setItem('apex_selected_team_id', String(newId))
+                    } catch {}
                   }}
                 >
                   {league.teams.map((t: TeamSummary) => (
@@ -830,6 +864,16 @@ export function App() {
                     </option>
                   ))}
                 </select>
+              </div>
+            ) : (
+              <div className="header-team-picker">
+                <div className="header-focus-label">
+                  <span>Focus</span>
+                  <span>Team:</span>
+                </div>
+                <div className="header-team-select-skeleton">
+                  <span>Loading Mile High teams...</span>
+                </div>
               </div>
             )}
 

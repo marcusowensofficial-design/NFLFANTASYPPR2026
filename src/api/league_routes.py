@@ -1,5 +1,6 @@
 """FastAPI route handlers for League, Teams, Rosters, and Sync operations."""
 
+from collections import defaultdict
 from datetime import datetime
 from typing import Any
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
@@ -224,15 +225,17 @@ def get_league_summary(db: Session = Depends(get_db)) -> LeagueSummaryResponse:
         select(TeamModel).where(TeamModel.league_id == league.id).order_by(TeamModel.id)
     ).scalars().all()
 
+    # Batch query all roster entries in a single fast round-trip
+    all_entries = db.execute(
+        select(RosterEntryModel).where(RosterEntryModel.league_id == league.id)
+    ).scalars().all()
+    entries_by_team: dict[int, list[RosterEntryModel]] = defaultdict(list)
+    for e in all_entries:
+        entries_by_team[e.team_id].append(e)
+
     team_responses: list[TeamResponse] = []
     for t in teams_db:
-        entries = db.execute(
-            select(RosterEntryModel).where(
-                RosterEntryModel.league_id == league.id,
-                RosterEntryModel.team_id == t.id,
-            )
-        ).scalars().all()
-
+        entries = entries_by_team[t.id]
         starters = sum(1 for e in entries if e.is_starter)
         bench = sum(1 for e in entries if not e.is_starter)
         total_games = t.wins + t.losses + t.ties
