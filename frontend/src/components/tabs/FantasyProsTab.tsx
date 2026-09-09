@@ -212,136 +212,6 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
         </div>
       </div>
 
-      {/* 8-MAN STREAMING CHEAT SHEET */}
-      <div className="card" style={{ border: '1px solid rgba(16, 185, 129, 0.35)', background: 'rgba(6, 78, 59, 0.12)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-          <div>
-            <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>🎯 8-Team Streaming Cheat Sheet (Week {selectedFpWeek})</span>
-              <span className="pill emerald" style={{ fontSize: '11px', padding: '2px 8px' }}>High Leverage</span>
-            </h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
-              Cross-referencing real-time FantasyPros Expert Consensus with your league waiver wire to identify immediate streaming upgrades for Week {selectedFpWeek}.
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              className={`btn btn-sm ${fpStreamerPos === 'DST' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => {
-                setFpStreamerPos('DST')
-                loadFantasyProsStreamers('DST', selectedFpWeek)
-              }}
-            >
-              🛡️ D/ST Streamers
-            </button>
-            <button
-              className={`btn btn-sm ${fpStreamerPos === 'K' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => {
-                setFpStreamerPos('K')
-                loadFantasyProsStreamers('K', selectedFpWeek)
-              }}
-            >
-              🎯 Kicker Streamers
-            </button>
-          </div>
-        </div>
-
-        {fpStreamers.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
-            Loading top streaming candidates...
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-            {fpStreamers.map((s, idx) => (
-              <div
-                key={idx}
-                style={{
-                  background: s.is_rostered ? 'rgba(15, 23, 42, 0.6)' : 'rgba(16, 185, 129, 0.1)',
-                  border: s.is_rostered ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(16, 185, 129, 0.4)',
-                  borderRadius: '10px',
-                  padding: '14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: '15px', color: '#f8fafc' }}>
-                      {s.player_name}
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
-                      <NFLTeamLogo team={s.pro_team} size={16} />
-                      <span>{s.pro_team}</span>
-                      <span>•</span>
-                      {s.opponent && s.opponent !== 'TBD' && <NFLTeamLogo team={s.opponent} size={16} />}
-                      <span>{s.opponent || 'TBD'}</span>
-                      {s.opp_dvp_rank !== undefined && s.opp_dvp_rank !== null && (
-                        <>
-                          <MatchupStarRating
-                            stars={s.matchup_stars}
-                            oppDvpRank={s.opp_dvp_rank}
-                            position={s.position}
-                          />
-                          <span
-                            className={`pill ${s.opp_dvp_rank <= 10 ? 'rose' : s.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
-                            style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 700, lineHeight: 1.1 }}
-                            title={`Opponent ranks #${s.opp_dvp_rank} in fantasy points allowed to ${s.position}`}
-                          >
-                            DvP #{s.opp_dvp_rank}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: '#38bdf8' }}>
-                      #{s.rank_ecr} {s.pos_rank}
-                    </span>
-                    {s.grade && (
-                      <span style={{ marginLeft: '6px', fontSize: '11px', fontWeight: 800, background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', padding: '1px 5px', borderRadius: '4px' }}>
-                        {s.grade}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '4px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div>
-                    {s.r2p_pts ? (
-                      <span style={{ color: '#facc15', fontWeight: 700 }}>
-                        {s.r2p_pts.toFixed(1)} proj pts
-                      </span>
-                    ) : (
-                      <span style={{ color: 'var(--text-muted)' }}>No stat proj</span>
-                    )}
-                    {s.rank_std !== null && s.rank_std !== undefined && (
-                      <span style={{ marginLeft: '6px', color: 'var(--text-muted)', fontSize: '11px' }}>
-                        (±{s.rank_std.toFixed(1)})
-                      </span>
-                    )}
-                  </div>
-
-                  <div>
-                    {!s.is_rostered ? (
-                      <span style={{ background: '#059669', color: '#ecfdf5', fontWeight: 800, fontSize: '10px', padding: '2px 8px', borderRadius: '12px' }}>
-                        ✨ WAIVER TARGET
-                      </span>
-                    ) : (
-                      <span style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--text-muted)', fontSize: '10px', padding: '2px 6px', borderRadius: '12px' }}>
-                        {s.rostered_by_team_name || 'Rostered'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* VIEW 1: POSITIONAL CONSENSUS RANKINGS EXPLORER */}
       {fpViewMode === 'rankings' && (
         <div className="card">
@@ -820,6 +690,136 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
           )}
         </div>
       )}
+
+      {/* 8-MAN STREAMING CHEAT SHEET */}
+      <div className="card" style={{ border: '1px solid rgba(16, 185, 129, 0.35)', background: 'rgba(6, 78, 59, 0.12)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+          <div>
+            <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>🎯 8-Team Streaming Cheat Sheet (Week {selectedFpWeek})</span>
+              <span className="pill emerald" style={{ fontSize: '11px', padding: '2px 8px' }}>High Leverage</span>
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
+              Cross-referencing real-time FantasyPros Expert Consensus with your league waiver wire to identify immediate streaming upgrades for Week {selectedFpWeek}.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              className={`btn btn-sm ${fpStreamerPos === 'DST' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => {
+                setFpStreamerPos('DST')
+                loadFantasyProsStreamers('DST', selectedFpWeek)
+              }}
+            >
+              🛡️ D/ST Streamers
+            </button>
+            <button
+              className={`btn btn-sm ${fpStreamerPos === 'K' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => {
+                setFpStreamerPos('K')
+                loadFantasyProsStreamers('K', selectedFpWeek)
+              }}
+            >
+              🎯 Kicker Streamers
+            </button>
+          </div>
+        </div>
+
+        {fpStreamers.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+            Loading top streaming candidates...
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+            {fpStreamers.map((s, idx) => (
+              <div
+                key={idx}
+                style={{
+                  background: s.is_rostered ? 'rgba(15, 23, 42, 0.6)' : 'rgba(16, 185, 129, 0.1)',
+                  border: s.is_rostered ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(16, 185, 129, 0.4)',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '15px', color: '#f8fafc' }}>
+                      {s.player_name}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
+                      <NFLTeamLogo team={s.pro_team} size={16} />
+                      <span>{s.pro_team}</span>
+                      <span>•</span>
+                      {s.opponent && s.opponent !== 'TBD' && <NFLTeamLogo team={s.opponent} size={16} />}
+                      <span>{s.opponent || 'TBD'}</span>
+                      {s.opp_dvp_rank !== undefined && s.opp_dvp_rank !== null && (
+                        <>
+                          <MatchupStarRating
+                            stars={s.matchup_stars}
+                            oppDvpRank={s.opp_dvp_rank}
+                            position={s.position}
+                          />
+                          <span
+                            className={`pill ${s.opp_dvp_rank <= 10 ? 'rose' : s.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
+                            style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 700, lineHeight: 1.1 }}
+                            title={`Opponent ranks #${s.opp_dvp_rank} in fantasy points allowed to ${s.position}`}
+                          >
+                            DvP #{s.opp_dvp_rank}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 800, color: '#38bdf8' }}>
+                      #{s.rank_ecr} {s.pos_rank}
+                    </span>
+                    {s.grade && (
+                      <span style={{ marginLeft: '6px', fontSize: '11px', fontWeight: 800, background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', padding: '1px 5px', borderRadius: '4px' }}>
+                        {s.grade}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '4px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div>
+                    {s.r2p_pts ? (
+                      <span style={{ color: '#facc15', fontWeight: 700 }}>
+                        {s.r2p_pts.toFixed(1)} proj pts
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)' }}>No stat proj</span>
+                    )}
+                    {s.rank_std !== null && s.rank_std !== undefined && (
+                      <span style={{ marginLeft: '6px', color: 'var(--text-muted)', fontSize: '11px' }}>
+                        (±{s.rank_std.toFixed(1)})
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    {!s.is_rostered ? (
+                      <span style={{ background: '#059669', color: '#ecfdf5', fontWeight: 800, fontSize: '10px', padding: '2px 8px', borderRadius: '12px' }}>
+                        ✨ WAIVER TARGET
+                      </span>
+                    ) : (
+                      <span style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--text-muted)', fontSize: '10px', padding: '2px 6px', borderRadius: '12px' }}>
+                        {s.rostered_by_team_name || 'Rostered'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
