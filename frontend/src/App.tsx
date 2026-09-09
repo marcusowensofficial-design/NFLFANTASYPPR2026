@@ -782,16 +782,18 @@ export function App() {
           <div className="brand-icon">🏈</div>
           <div>
             <h1 className="brand-title">Apex Fantasy Analytics</h1>
-            <div className="brand-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span>{league ? `${league.name} • Season ${league.season} (Week ${league.current_week})` : '2026 Season'}</span>
-              <span className="pill cyan" style={{ fontSize: '11px', padding: '2px 8px' }}>
+            <div className="brand-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
+              <span>{league ? `${league.name.toUpperCase()} • SEASON ${league.season} (WEEK ${league.current_week})` : '2026 SEASON'}</span>
+              <span className="pill cyan" style={{ fontSize: '11px', padding: '2px 8px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                 ⚡ 8-Team PPR Calibrated
               </span>
-              <span className="pill gold" style={{ fontSize: '11px', padding: '2px 8px', fontWeight: 800, background: 'rgba(234, 179, 8, 0.15)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
-                🏈 Kickoff Tomorrow: NE @ SEA (Wed, Sep 9 • 8:20 PM ET)
+            </div>
+            <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span className="pill gold" style={{ fontSize: '11px', padding: '3px 10px', fontWeight: 800, background: 'rgba(234, 179, 8, 0.15)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.35)', display: 'inline-flex', alignItems: 'center', gap: '6px', letterSpacing: '0.03em' }}>
+                🏈 KICKOFF TOMORROW: NE @ SEA (WED, SEP 9 • 8:20 PM ET)
               </span>
               {inactivesAlerts.length > 0 && (
-                <span className="pill rose" style={{ fontSize: '11px', padding: '2px 8px', fontWeight: 800 }}>
+                <span className="pill rose" style={{ fontSize: '11px', padding: '3px 10px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   🚨 {inactivesAlerts.length} Starter Inactive Alert{inactivesAlerts.length > 1 ? 's' : ''}
                 </span>
               )}
@@ -799,37 +801,70 @@ export function App() {
           </div>
         </div>
 
-        <div className="header-status">
-          {/* Team Switcher */}
-          {league && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Focus Team:</span>
-              <select
-                className="select-dropdown"
-                value={selectedTeamId}
-                onChange={(e) => {
-                  const newId = Number(e.target.value)
-                  setIsExplicitCompare(false)
-                  setSelectedTeamId(newId)
-                  // Intentionally do NOT overwrite selectedRosterTeamId so user can browse any roster on League tab independently
-                }}
-              >
-                {league.teams.map((t: TeamSummary) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}{t.primary_owner ? ` (${t.primary_owner})` : ''} • {t.record} {t.is_user_team ? '★ (My Team)' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+        <div className="header-controls-container">
+          {/* Header Tip Instruction */}
+          <div className="header-tip-notice">
+            <span className="header-tip-badge">TIP:</span> Pick your {league?.name ? `${league.name}` : 'Mile High Fantasy'} team below to get started then click <strong>SYNC ESPN NOW!</strong> Once it's done loading you will see your team populated below. If a different team is chosen after, click sync espn now to refresh the page.
+          </div>
 
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => handleSync(true)}
-            disabled={isSyncing}
-          >
-            {isSyncing ? '⏳ Syncing...' : '🔄 Sync ESPN Now'}
-          </button>
+          <div className="header-actions-row">
+            {/* Team Switcher */}
+            {league && (
+              <div className="header-team-picker">
+                <div className="header-focus-label">
+                  <span>Focus</span>
+                  <span>Team:</span>
+                </div>
+                <select
+                  className="header-team-select"
+                  value={selectedTeamId}
+                  onChange={(e) => {
+                    const newId = Number(e.target.value)
+                    setIsExplicitCompare(false)
+                    setSelectedTeamId(newId)
+                  }}
+                >
+                  {league.teams.map((t: TeamSummary) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}{t.primary_owner ? ` (${t.primary_owner})` : ''} • {t.record} {t.is_user_team ? '★ (My Team)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Dedicated Sync ESPN Button */}
+            <button
+              className="header-sync-btn"
+              onClick={() => handleSync(true)}
+              disabled={isSyncing}
+              title="Sync latest live ESPN fantasy data and rosters"
+            >
+              <div className="sync-btn-icon">
+                {isSyncing ? (
+                  <span className="sync-icon-spin">⏳</span>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                  </svg>
+                )}
+              </div>
+              <div className="sync-btn-text">
+                {isSyncing ? (
+                  <>
+                    <span>Sync</span>
+                    <span>ing...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sync</span>
+                    <span>ESPN</span>
+                    <span>Now</span>
+                  </>
+                )}
+              </div>
+            </button>
+          </div>
         </div>
       </header>
 

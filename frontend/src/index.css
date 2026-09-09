@@ -111,6 +111,137 @@ body {
   gap: 12px;
 }
 
+/* Header Right Controls & Institutional Sync Button */
+.header-controls-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 620px;
+}
+
+.header-tip-notice {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.35;
+  text-align: right;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.header-tip-badge {
+  color: #ffffff;
+  font-weight: 800;
+  margin-right: 4px;
+}
+
+.header-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: flex-end;
+}
+
+.header-team-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-focus-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  line-height: 1.15;
+  text-align: right;
+}
+
+.header-team-select {
+  background: #09131e;
+  border: 1px solid #0284c7;
+  border-radius: 10px;
+  color: #f8fafc;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 10px 16px;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.2);
+  transition: all 0.2s ease;
+  min-width: 320px;
+  max-width: 440px;
+}
+
+.header-team-select:hover,
+.header-team-select:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.4);
+}
+
+.header-sync-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid #38bdf8;
+  border-radius: 12px;
+  color: #ffffff;
+  padding: 6px 14px;
+  min-width: 72px;
+  height: 60px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.4);
+  flex-shrink: 0;
+}
+
+.header-sync-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+  box-shadow: 0 6px 22px rgba(14, 165, 233, 0.6);
+  transform: translateY(-1px);
+}
+
+.header-sync-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.header-sync-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  filter: grayscale(0.2);
+}
+
+.sync-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+  color: #e0f2fe;
+}
+
+.sync-btn-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.sync-icon-spin {
+  animation: spin 1.2s infinite linear;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
