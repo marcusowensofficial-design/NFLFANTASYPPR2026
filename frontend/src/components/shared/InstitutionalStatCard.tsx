@@ -7,11 +7,51 @@ import { NFLTeamLogo } from './NFLTeamLogo'
 export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activeSource?: string }> = ({ player: p, activeSource = 'MODEL' }) => {
   const prov = p.model_provenance
   const currentActive = p.active_projection_source || activeSource || 'MODEL'
-  const modelPts = p.proj_model ?? prov?.raw_model_ppr ?? p.projected_points
-  const fpPts = p.proj_fantasypros ?? p.fp_r2p_pts ?? prov?.fantasypros_ppr
-  const sleeperPts = p.proj_sleeper ?? prov?.sleeper_ppr
-  const espnPts = p.proj_espn ?? prov?.espn_ppr
-  const consensusPts = p.proj_consensus ?? prov?.consensus_ppr ?? p.projected_points
+
+  // Resilient source resolution avoiding nullish coalescing traps on 0.0
+  const modelPts: number = [
+    p.proj_model,
+    p.projected_points_model,
+    prov?.raw_model_ppr,
+    prov?.sources?.quant_model,
+    p.projected_points,
+  ].find((v): v is number => typeof v === 'number' && v > 0) ?? p.projected_points
+
+  const fpPts: number | undefined = [
+    p.proj_fantasypros,
+    p.projected_points_fp,
+    p.fp_r2p_pts,
+    prov?.fantasypros_ppr,
+    prov?.sources?.fantasypros,
+    p.fp_itemized_stats?.points_ppr,
+    p.fp_itemized_stats?.r2p_pts,
+    p.fp_itemized_stats?.calculated_ppr,
+  ].find((v): v is number => typeof v === 'number' && v > 0)
+
+  const sleeperPts: number | undefined = [
+    p.proj_sleeper,
+    p.projected_points_sleeper,
+    prov?.sleeper_ppr,
+    prov?.sources?.sleeper,
+    p.sleeper_itemized_stats?.points_ppr,
+    p.sleeper_itemized_stats?.pts_ppr,
+    p.sleeper_itemized_stats?.calculated_ppr,
+  ].find((v): v is number => typeof v === 'number' && v > 0)
+
+  const espnPts: number | undefined = [
+    p.proj_espn,
+    p.projected_points_espn,
+    prov?.espn_ppr,
+    prov?.sources?.espn,
+  ].find((v): v is number => typeof v === 'number' && v > 0)
+
+  const consensusPts: number = [
+    p.proj_consensus,
+    p.projected_points_consensus,
+    prov?.consensus_ppr,
+    prov?.sources?.consensus,
+    p.projected_points,
+  ].find((v): v is number => typeof v === 'number' && v > 0) ?? p.projected_points
   
   // Real itemized stats from Sleeper, FantasyPros, or Quant Model
   const stats: Record<string, any> = useMemo(() => {
@@ -48,10 +88,10 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
 
   // Agreement indicator across all active independent sources
   const validSources = [modelPts, fpPts, sleeperPts, espnPts].filter((v): v is number => typeof v === 'number' && v > 0)
-  const spread = p.consensus_spread ?? (
-    validSources.length > 1 ? (Math.max(...validSources) - Math.min(...validSources)) : 0
-  )
-  const agreement = p.consensus_agreement || (spread <= 2.2 ? 'HIGH_AGREEMENT' : spread <= 4.5 ? 'MODERATE' : 'SHARP_DIVERGENCE')
+  const spread = validSources.length > 1
+    ? Math.round((Math.max(...validSources) - Math.min(...validSources)) * 10) / 10
+    : (p.consensus_spread ?? 0)
+  const agreement = spread <= 2.2 ? 'HIGH_AGREEMENT' : spread <= 4.5 ? 'MODERATE' : 'SHARP_DIVERGENCE'
 
   return (
     <div className="institutional-stat-card">

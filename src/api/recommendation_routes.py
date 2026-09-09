@@ -261,3 +261,16 @@ async def get_consolidation_trades(
         user_roster_evaluations=user_evals,
         league_size=eff_league_size,
     )
+
+
+@router.post("/calibrate")
+async def calibrate_projections(
+    week: int = 1,
+    season: int = 2026,
+    projection_source: str = "MODEL",
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Calibrate and persist institutional quant projections across all players in the database."""
+    from src.services.recommendation.bulk_projection_service import bulk_projection_service
+    return await bulk_projection_service.calibrate_all_players(season=season, week=week, projection_source=projection_source)
+

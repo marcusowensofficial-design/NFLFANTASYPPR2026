@@ -112,6 +112,11 @@ class StartSitEvaluation(BaseModel):
     proj_sleeper: float = 0.0                        # Sleeper / RotoWire weekly PPR projection
     proj_espn: float = 0.0                           # ESPN weekly PPR projection
     proj_consensus: float = 0.0                      # Outlier-protected consensus
+    projected_points_model: float = 0.0              # Direct alias for Quant Model projection
+    projected_points_fp: float = 0.0                 # Direct alias for FantasyPros PPR projection
+    projected_points_sleeper: float = 0.0            # Direct alias for Sleeper / RotoWire PPR projection
+    projected_points_espn: float = 0.0               # Direct alias for ESPN PPR projection
+    projected_points_consensus: float = 0.0          # Direct alias for Consensus projection
     active_projection_source: str = "MODEL"          # Active source (MODEL, FANTASYPROS, SLEEPER, ESPN, CONSENSUS)
     consensus_spread: float = 0.0                    # Difference between max and min projection
     consensus_agreement: str = "HIGH_AGREEMENT"      # HIGH_AGREEMENT, MODERATE, SHARP_DIVERGENCE
@@ -1355,6 +1360,13 @@ class StartSitScoringEngine:
         sorted_pos = sort_factor_reasons(dedupe(pos_reasons))
         sorted_neg = sort_factor_reasons(dedupe(neg_reasons))
 
+        # Resilient multi-source projection resolution
+        res_model_pts = q_proj.model_points if q_proj and q_proj.model_points > 0 else (getattr(player, "projected_points_model", 0.0) or proj)
+        res_fp_pts = q_proj.fp_points if q_proj and q_proj.fp_points > 0 else (getattr(player, "projected_points_fp", 0.0) or getattr(player, "fp_r2p_pts", 0.0) or 0.0)
+        res_sleeper_pts = q_proj.sleeper_points if q_proj and q_proj.sleeper_points > 0 else (getattr(player, "projected_points_sleeper", 0.0) or 0.0)
+        res_espn_pts = q_proj.espn_points if q_proj and q_proj.espn_points > 0 else (getattr(player, "projected_points_espn", 0.0) or 0.0)
+        res_consensus_pts = q_proj.consensus_points if q_proj and q_proj.consensus_points > 0 else (getattr(player, "projected_points_consensus", 0.0) or proj)
+
         return StartSitEvaluation(
             player_id=player.id,
             full_name=player.full_name,
@@ -1411,11 +1423,16 @@ class StartSitScoringEngine:
             team_pass_att=q_proj.team_pass_att if q_proj else None,
             team_rush_att=q_proj.team_rush_att if q_proj else None,
             efficiency_multiplier=q_proj.efficiency_multiplier if q_proj else None,
-            proj_model=q_proj.model_points if q_proj else 0.0,
-            proj_fantasypros=q_proj.fp_points if q_proj else 0.0,
-            proj_sleeper=q_proj.sleeper_points if q_proj else 0.0,
-            proj_espn=q_proj.espn_points if q_proj else 0.0,
-            proj_consensus=q_proj.consensus_points if q_proj else 0.0,
+            proj_model=round(res_model_pts, 2),
+            proj_fantasypros=round(res_fp_pts, 2),
+            proj_sleeper=round(res_sleeper_pts, 2),
+            proj_espn=round(res_espn_pts, 2),
+            proj_consensus=round(res_consensus_pts, 2),
+            projected_points_model=round(res_model_pts, 2),
+            projected_points_fp=round(res_fp_pts, 2),
+            projected_points_sleeper=round(res_sleeper_pts, 2),
+            projected_points_espn=round(res_espn_pts, 2),
+            projected_points_consensus=round(res_consensus_pts, 2),
             active_projection_source=q_proj.active_source if q_proj else projection_source,
             consensus_spread=q_proj.consensus_spread if q_proj else 0.0,
             consensus_agreement=q_proj.consensus_agreement if q_proj else "HIGH_AGREEMENT",

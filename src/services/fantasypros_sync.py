@@ -215,10 +215,21 @@ class FantasyProsSyncService:
 
             db.commit()
             logger.info("Enriched %d players with FantasyPros intelligence.", enriched_count)
+
+            # 4. Automatically trigger bulk quant projection calibration across all players
+            calib_res = {}
+            try:
+                from src.services.recommendation.bulk_projection_service import bulk_projection_service
+                calib_res = await bulk_projection_service.calibrate_all_players(season=season, week=week)
+                logger.info("Bulk quant projections calibrated: %s", calib_res.get("calibrated_count", 0))
+            except Exception as ex:
+                logger.warning("Post-sync bulk quant calibration skipped or failed: %s", ex)
+
             return {
                 "success": True,
-                "message": f"Successfully enriched {enriched_count} players with FantasyPros ECR and injury intelligence.",
+                "message": f"Successfully enriched {enriched_count} players with FantasyPros ECR and calibrated quant projections.",
                 "enriched_count": enriched_count,
+                "calibrated_count": calib_res.get("calibrated_count", 0),
             }
         except Exception as e:
             db.rollback()

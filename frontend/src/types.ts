@@ -123,6 +123,11 @@ export interface StartSitEvaluation {
   proj_sleeper?: number
   proj_espn?: number
   proj_consensus?: number
+  projected_points_model?: number
+  projected_points_fp?: number
+  projected_points_sleeper?: number
+  projected_points_espn?: number
+  projected_points_consensus?: number
   active_projection_source?: string
   consensus_spread?: number
   consensus_agreement?: string

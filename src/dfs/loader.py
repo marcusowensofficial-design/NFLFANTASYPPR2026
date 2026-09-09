@@ -289,30 +289,29 @@ class DFSSlateLoader:
 
             # Algorithm Adjusted Fantasy Projection
             if pos == "D":
-                # Defense scoring formula: low opp total, favorite margin, sack upside
-                opp_imp = v.get("opp_implied", 22.0)
-                is_fav = v.get("is_fav", False)
-                margin = v.get("fav_margin", 0.0)
-                dst_score = (25.0 - opp_imp) * 0.4 + (3.0 if is_fav else 0.0) + (margin * 0.2) + (fppg * 0.4)
-                if source_clean != "MODEL" and base_proj > 0 and base_proj not in (4.0, 5.0):
+                if base_proj > 0 and base_proj not in (4.0, 5.0):
                     final_proj = round(max(3.0, base_proj), 2)
                 else:
+                    opp_imp = v.get("opp_implied", 22.0)
+                    is_fav = v.get("is_fav", False)
+                    margin = v.get("fav_margin", 0.0)
+                    dst_score = (25.0 - opp_imp) * 0.4 + (3.0 if is_fav else 0.0) + (margin * 0.2) + (fppg * 0.4)
                     final_proj = round(max(3.0, dst_score), 2)
             else:
                 if source_clean == "MODEL":
-                    # Offensive adjustments:
-                    # 1. Matchup softness impact: soft_rank 1 = +2.25 pts, soft_rank 32 = -2.25 pts
-                    matchup_adj = (16.5 - soft_rank) * 0.14
-                    # 2. Implied team total impact: high-scoring offenses produce more touchdowns
-                    implied_adj = (v.get("team_implied", 22.0) - 22.0) * 0.25
-                    # 3. Game script impact for RBs
-                    script_adj = 0.0
-                    if pos == "RB":
-                        if v.get("is_fav") and v.get("fav_margin", 0) >= 3.0:
-                            script_adj = 1.2
-                        elif not v.get("is_fav") and abs(v.get("spread", 0)) >= 6.0:
-                            script_adj = -0.8
-                    final_proj = round(max(1.0, base_proj + matchup_adj + implied_adj + script_adj), 2)
+                    # If base_proj came from our calibrated Quant Model, it already has macro Vegas + DvP applied
+                    if db_info.get("proj_model") and float(db_info["proj_model"]) > 0:
+                        final_proj = round(max(1.0, base_proj), 2)
+                    else:
+                        matchup_adj = (16.5 - soft_rank) * 0.14
+                        implied_adj = (v.get("team_implied", 22.0) - 22.0) * 0.25
+                        script_adj = 0.0
+                        if pos == "RB":
+                            if v.get("is_fav") and v.get("fav_margin", 0) >= 3.0:
+                                script_adj = 1.2
+                            elif not v.get("is_fav") and abs(v.get("spread", 0)) >= 6.0:
+                                script_adj = -0.8
+                        final_proj = round(max(1.0, base_proj + matchup_adj + implied_adj + script_adj), 2)
                 else:
                     # Provider direct projections
                     final_proj = round(max(1.0, base_proj), 2)
