@@ -95,9 +95,13 @@ class H2HTaleOfTheTapeResponse(BaseModel):
     user_team_name: str
     user_team_id: int
     user_projected_total: float
+    user_actual_total: float = 0.0
+    user_effective_total: float = 0.0
     opp_team_name: str
     opp_team_id: int
     opp_projected_total: float
+    opp_actual_total: float = 0.0
+    opp_effective_total: float = 0.0
     spread: float
     posture: str
     slots: list[TaleOfTheTapeSlot]
@@ -821,13 +825,35 @@ async def get_h2h_tale_of_the_tape(
             stars = dvp_client.get_matchup_stars(rank)
             score, grade = dvp_client.calculate_matchup_score(opp, p.position)
 
+            act_pts = float(p.actual_points or 0.0)
+            proj_pts = float(p.projected_points or 0.0)
+            is_locked = bool(e.lineup_locked)
+
+            if is_locked and act_pts > 0:
+                g_status = "FINAL"
+                eff_pts = act_pts
+            elif is_locked:
+                g_status = "LIVE"
+                eff_pts = act_pts if act_pts > 0 else proj_pts
+            elif act_pts > 0:
+                g_status = "FINAL"
+                eff_pts = act_pts
+            else:
+                g_status = "UPCOMING"
+                eff_pts = proj_pts
+
             p_data = {
                 "player_id": p.id,
                 "full_name": p.full_name,
                 "position": p.position,
                 "pro_team": p.pro_team,
                 "opponent": opp,
-                "projected_points": round(p.projected_points or 0.0, 1),
+                "projected_points": round(proj_pts, 1),
+                "actual_points": round(act_pts, 1),
+                "effective_points": round(eff_pts, 1),
+                "game_status": g_status,
+                "is_final": (g_status == "FINAL"),
+                "lineup_locked": is_locked,
                 "opp_dvp_rank": rank,
                 "matchup_stars": stars,
                 "matchup_grade": grade,
@@ -844,6 +870,20 @@ async def get_h2h_tale_of_the_tape(
         # Sort within position groups by projected points descending
         for k in categorized:
             categorized[k].sort(key=lambda x: -x["projected_points"])
+
+        # If FLEX is empty, check for extra RB, WR, or TE
+        if not categorized["FLEX"]:
+            extras = []
+            if len(categorized["RB"]) > 2:
+                extras.extend(categorized["RB"][2:])
+            if len(categorized["WR"]) > 2:
+                extras.extend(categorized["WR"][2:])
+            if len(categorized["TE"]) > 1:
+                extras.extend(categorized["TE"][1:])
+            if extras:
+                extras.sort(key=lambda x: -x["effective_points"])
+                categorized["FLEX"].append(extras[0])
+
         return categorized
 
     user_roster = categorize_starters(user_entries)
@@ -863,8 +903,12 @@ async def get_h2h_tale_of_the_tape(
     ]
 
     slots_output: list[TaleOfTheTapeSlot] = []
-    user_tot = 0.0
-    opp_tot = 0.0
+    user_proj_tot = 0.0
+    user_act_tot = 0.0
+    user_eff_tot = 0.0
+    opp_proj_tot = 0.0
+    opp_act_tot = 0.0
+    opp_eff_tot = 0.0
 
     for slot_name, pos_key, idx in slot_specs:
         user_list = user_roster.get(pos_key, [])
@@ -872,17 +916,29 @@ async def get_h2h_tale_of_the_tape(
 
         u_p = user_list[idx] if idx < len(user_list) else {
             "player_id": 0, "full_name": "Empty Slot", "position": pos_key, "pro_team": "FA",
-            "opponent": "-", "projected_points": 0.0, "opp_dvp_rank": 16, "matchup_stars": 3, "matchup_grade": "NEUTRAL"
+            "opponent": "-", "projected_points": 0.0, "actual_points": 0.0, "effective_points": 0.0,
+            "game_status": "UPCOMING", "is_final": False, "lineup_locked": False,
+            "opp_dvp_rank": 16, "matchup_stars": 3, "matchup_grade": "NEUTRAL"
         }
         o_p = opp_list[idx] if idx < len(opp_list) else {
             "player_id": 0, "full_name": "Empty Slot", "position": pos_key, "pro_team": "FA",
-            "opponent": "-", "projected_points": 0.0, "opp_dvp_rank": 16, "matchup_stars": 3, "matchup_grade": "NEUTRAL"
+            "opponent": "-", "projected_points": 0.0, "actual_points": 0.0, "effective_points": 0.0,
+            "game_status": "UPCOMING", "is_final": False, "lineup_locked": False,
+            "opp_dvp_rank": 16, "matchup_stars": 3, "matchup_grade": "NEUTRAL"
         }
 
-        user_tot += u_p["projected_points"]
-        opp_tot += o_p["projected_points"]
+        user_proj_tot += u_p["projected_points"]
+        user_act_tot += u_p.get("actual_points", 0.0)
+        user_eff_tot += u_p.get("effective_points", u_p["projected_points"])
 
-        diff = round(u_p["projected_points"] - o_p["projected_points"], 1)
+        opp_proj_tot += o_p["projected_points"]
+        opp_act_tot += o_p.get("actual_points", 0.0)
+        opp_eff_tot += o_p.get("effective_points", o_p["projected_points"])
+
+        # Delta based on effective points (actual if final/live, proj if upcoming)
+        u_eff = u_p.get("effective_points", u_p["projected_points"])
+        o_eff = o_p.get("effective_points", o_p["projected_points"])
+        diff = round(u_eff - o_eff, 1)
         if diff >= 1.5:
             adv = "USER"
             label = f"+{diff:.1f} pt Edge"
@@ -905,7 +961,23 @@ async def get_h2h_tale_of_the_tape(
             )
         )
 
-    spread = round(user_tot - opp_tot, 1)
+    # Check if matchup model has recorded actuals
+    if match:
+        m_u_score = match.home_score if is_user_home else match.away_score
+        m_o_score = match.away_score if is_user_home else match.home_score
+        if m_u_score and m_u_score > user_act_tot:
+            user_act_tot = m_u_score
+        if m_o_score and m_o_score > opp_act_tot:
+            opp_act_tot = m_o_score
+
+    user_eff_tot = max(user_act_tot, round(user_eff_tot, 1))
+    opp_eff_tot = max(opp_act_tot, round(opp_eff_tot, 1))
+    user_act_tot = round(user_act_tot, 1)
+    opp_act_tot = round(opp_act_tot, 1)
+    user_proj_tot = round(user_proj_tot, 1)
+    opp_proj_tot = round(opp_proj_tot, 1)
+
+    spread = round(user_eff_tot - opp_eff_tot, 1)
     posture = "HIGH_FLOOR" if spread >= 8.0 else ("AGGRESSIVE_CEILING" if spread <= -8.0 else "BALANCED")
 
     # Generate strategic summary
@@ -920,10 +992,14 @@ async def get_h2h_tale_of_the_tape(
         week=week,
         user_team_name=user_team_name,
         user_team_id=user_team_id,
-        user_projected_total=round(user_tot, 1),
+        user_projected_total=user_proj_tot,
+        user_actual_total=user_act_tot,
+        user_effective_total=user_eff_tot,
         opp_team_name=opp_team_name,
         opp_team_id=opp_team_id,
-        opp_projected_total=round(opp_tot, 1),
+        opp_projected_total=opp_proj_tot,
+        opp_actual_total=opp_act_tot,
+        opp_effective_total=opp_eff_tot,
         spread=spread,
         posture=posture,
         slots=slots_output,

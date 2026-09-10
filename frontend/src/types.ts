@@ -335,6 +335,8 @@ export interface MatchupResponseItem {
   away_actual?: number
   home_projected: number
   away_projected: number
+  home_effective?: number
+  away_effective?: number
   winner: string | null
   is_completed?: boolean
 }
@@ -729,6 +731,11 @@ export interface TaleOfTheTapePlayer {
   pro_team: string
   opponent: string
   projected_points: number
+  actual_points?: number
+  effective_points?: number
+  game_status?: 'UPCOMING' | 'LIVE' | 'FINAL' | string
+  is_final?: boolean
+  lineup_locked?: boolean
   opp_dvp_rank: number
   matchup_stars: number
   matchup_grade: string
@@ -931,9 +938,13 @@ export interface H2HTaleOfTheTapeResponse {
   user_team_name: string
   user_team_id: number
   user_projected_total: number
+  user_actual_total?: number
+  user_effective_total?: number
   opp_team_name: string
   opp_team_id: number
   opp_projected_total: number
+  opp_actual_total?: number
+  opp_effective_total?: number
   spread: number
   posture: string
   slots: TaleOfTheTapeSlot[]

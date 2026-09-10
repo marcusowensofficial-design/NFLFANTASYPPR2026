@@ -335,19 +335,27 @@ export const IntelTab: React.FC<IntelTabProps> = ({
     const isHome = match ? match.home_team_id === userTeamId : true
     const isCompleted = match ? (match.winner !== null && match.winner !== 'UNDECIDED' && match.winner !== 'NONE') : false
 
-    const userScore = match ? (isHome ? match.home_score : match.away_score) : undefined
-    const oppScore = match ? (isHome ? match.away_score : match.home_score) : undefined
+    const matchUserScore = match ? (isHome ? (match.home_actual ?? match.home_score) : (match.away_actual ?? match.away_score)) : undefined
+    const matchOppScore = match ? (isHome ? (match.away_actual ?? match.away_score) : (match.home_actual ?? match.home_score)) : undefined
 
-    const userProjected = match
-      ? (isHome ? match.home_projected : match.away_projected)
-      : (taleData?.user_projected_total ?? (lineup?.total_projected_points || 0))
+    const userActual = taleData?.user_actual_total !== undefined 
+      ? taleData.user_actual_total 
+      : (matchUserScore ?? 0)
 
-    const oppProjected = match
-      ? (isHome ? match.away_projected : match.home_projected)
-      : (taleData?.opp_projected_total ?? (lineup?.opponent_projected_points || 0))
+    const oppActual = taleData?.opp_actual_total !== undefined 
+      ? taleData.opp_actual_total 
+      : (matchOppScore ?? 0)
 
-    const spread = (userProjected !== undefined && oppProjected !== undefined)
-      ? Math.round((userProjected - oppProjected) * 10) / 10
+    const userProjected = taleData?.user_projected_total ?? (match ? (isHome ? match.home_projected : match.away_projected) : (lineup?.total_projected_points || 0))
+    const oppProjected = taleData?.opp_projected_total ?? (match ? (isHome ? match.away_projected : match.home_projected) : (lineup?.opponent_projected_points || 0))
+
+    const userEffective = taleData?.user_effective_total ?? (match ? (isHome ? (match.home_effective ?? match.home_projected) : (match.away_effective ?? match.away_projected)) : userProjected)
+    const oppEffective = taleData?.opp_effective_total ?? (match ? (isHome ? (match.away_effective ?? match.away_projected) : (match.home_effective ?? match.home_projected)) : oppProjected)
+
+    const hasLiveOrFinal = userActual > 0 || oppActual > 0 || (taleData ? taleData.slots.some(s => s.user_player.is_final || s.opp_player.is_final || s.user_player.game_status === 'FINAL' || s.opp_player.game_status === 'FINAL' || s.user_player.lineup_locked || s.opp_player.lineup_locked) : false)
+
+    const spread = (userEffective !== undefined && oppEffective !== undefined)
+      ? Math.round((userEffective - oppEffective) * 10) / 10
       : (taleData?.spread ?? (lineup?.implied_matchup_spread ?? 0))
 
     const posture = lineup?.game_theory_posture || taleData?.posture || (spread >= 8 ? 'HIGH_FLOOR' : spread <= -8 ? 'AGGRESSIVE_CEILING' : 'BALANCED')
@@ -366,10 +374,15 @@ export const IntelTab: React.FC<IntelTabProps> = ({
       userAbbrev,
       oppTeamName: oppTeamName || 'Scheduled Opponent',
       oppAbbrev,
-      userScore,
-      oppScore,
+      userScore: userActual,
+      oppScore: oppActual,
+      userActual,
+      oppActual,
       userProjected,
       oppProjected,
+      userEffective,
+      oppEffective,
+      hasLiveOrFinal,
       spread,
       posture,
       recommendation,
@@ -1319,13 +1332,33 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                 <span>{h2hMatchup.userTeamName}</span>
                 <span className="pill cyan" style={{ fontSize: '10px', padding: '1px 6px' }}>My Team</span>
               </div>
-              <div className="intel-h2h-score">
-                {h2hMatchup.isCompleted && h2hMatchup.userScore !== undefined
-                  ? h2hMatchup.userScore.toFixed(1)
-                  : h2hMatchup.userProjected.toFixed(1)}{' '}
-                <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)' }}>
-                  {h2hMatchup.isCompleted ? 'Final' : 'Proj Pts'}
-                </span>
+              <div className="intel-h2h-score" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                  <span style={{ fontSize: '32px', fontWeight: 800, color: (h2hMatchup.userActual > 0 || h2hMatchup.isCompleted) ? '#34d399' : 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>
+                    {h2hMatchup.userActual.toFixed(1)}
+                  </span>
+                  <span className="pill" style={{ 
+                    fontSize: '10px', 
+                    fontWeight: 800, 
+                    padding: '2px 7px',
+                    background: (h2hMatchup.userActual > 0 || h2hMatchup.isCompleted) ? 'rgba(52, 211, 153, 0.15)' : 'rgba(56, 189, 248, 0.12)',
+                    color: (h2hMatchup.userActual > 0 || h2hMatchup.isCompleted) ? '#34d399' : 'var(--accent-cyan)',
+                    border: (h2hMatchup.userActual > 0 || h2hMatchup.isCompleted) ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid rgba(56, 189, 248, 0.3)',
+                    letterSpacing: '0.5px'
+                  }}>
+                    {h2hMatchup.isCompleted ? 'FINAL SCORE' : 'CURRENT SCORE'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                  <span>
+                    Projected: <strong style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>{h2hMatchup.userProjected.toFixed(1)}</strong>
+                  </span>
+                  {h2hMatchup.userEffective !== undefined && Math.abs(h2hMatchup.userEffective - h2hMatchup.userProjected) > 0.1 && (
+                    <span style={{ color: 'var(--accent-cyan)', fontSize: '11px', fontWeight: 600 }}>
+                      (Live Proj: {h2hMatchup.userEffective.toFixed(1)})
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="intel-h2h-meta">
                 Posture: <strong style={{ color: 'var(--accent-cyan)' }}>{h2hMatchup.posture}</strong>
@@ -1334,8 +1367,20 @@ export const IntelTab: React.FC<IntelTabProps> = ({
 
             {/* Center VS & Spread */}
             <div className="intel-h2h-vs-center">
-              <span className="intel-h2h-vs-badge">
-                {h2hMatchup.isCompleted ? 'FINAL' : 'WEEKLY H2H'}
+              <span
+                className={`intel-h2h-vs-badge ${h2hMatchup.isCompleted ? 'final' : h2hMatchup.hasLiveOrFinal ? 'live' : ''}`}
+                style={h2hMatchup.hasLiveOrFinal && !h2hMatchup.isCompleted ? { display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(56, 189, 248, 0.15)', color: 'var(--accent-cyan)', border: '1px solid rgba(56, 189, 248, 0.4)' } : undefined}
+              >
+                {h2hMatchup.isCompleted ? (
+                  'FINAL'
+                ) : h2hMatchup.hasLiveOrFinal ? (
+                  <>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8', display: 'inline-block', boxShadow: '0 0 8px #38bdf8' }} />
+                    LIVE H2H
+                  </>
+                ) : (
+                  'WEEKLY H2H'
+                )}
               </span>
               <span
                 className={`intel-h2h-spread ${h2hMatchup.spread >= 0 ? 'favored' : 'underdog'}`}
@@ -1352,13 +1397,33 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                 <span className="pill zinc" style={{ fontSize: '10px', padding: '1px 6px' }}>Opponent</span>
                 <span>{h2hMatchup.oppTeamName}</span>
               </div>
-              <div className="intel-h2h-score">
-                {h2hMatchup.isCompleted && h2hMatchup.oppScore !== undefined
-                  ? h2hMatchup.oppScore.toFixed(1)
-                  : h2hMatchup.oppProjected.toFixed(1)}{' '}
-                <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)' }}>
-                  {h2hMatchup.isCompleted ? 'Final' : 'Proj Pts'}
-                </span>
+              <div className="intel-h2h-score" style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-end' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                  <span className="pill" style={{ 
+                    fontSize: '10px', 
+                    fontWeight: 800, 
+                    padding: '2px 7px',
+                    background: (h2hMatchup.oppActual > 0 || h2hMatchup.isCompleted) ? 'rgba(52, 211, 153, 0.15)' : 'rgba(148, 163, 184, 0.12)',
+                    color: (h2hMatchup.oppActual > 0 || h2hMatchup.isCompleted) ? '#34d399' : 'var(--text-secondary)',
+                    border: (h2hMatchup.oppActual > 0 || h2hMatchup.isCompleted) ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid rgba(148, 163, 184, 0.3)',
+                    letterSpacing: '0.5px'
+                  }}>
+                    {h2hMatchup.isCompleted ? 'FINAL SCORE' : 'CURRENT SCORE'}
+                  </span>
+                  <span style={{ fontSize: '32px', fontWeight: 800, color: (h2hMatchup.oppActual > 0 || h2hMatchup.isCompleted) ? '#34d399' : 'var(--text-primary)', fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>
+                    {h2hMatchup.oppActual.toFixed(1)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                  {h2hMatchup.oppEffective !== undefined && Math.abs(h2hMatchup.oppEffective - h2hMatchup.oppProjected) > 0.1 && (
+                    <span style={{ color: 'var(--accent-cyan)', fontSize: '11px', fontWeight: 600 }}>
+                      (Live Proj: {h2hMatchup.oppEffective.toFixed(1)})
+                    </span>
+                  )}
+                  <span>
+                    Projected: <strong style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>{h2hMatchup.oppProjected.toFixed(1)}</strong>
+                  </span>
+                </div>
               </div>
               <div className="intel-h2h-meta">
                 Matchup Target: <strong style={{ color: 'var(--text-secondary)' }}>{h2hMatchup.oppAbbrev}</strong>
@@ -1447,7 +1512,42 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                         {/* User Player Card */}
                         <div className="intel-tale-col-user">
                           <div className="intel-tale-player-info">
-                            <span className="intel-tale-player-name">{slot.user_player.full_name}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span className="intel-tale-player-name">{slot.user_player.full_name}</span>
+                              {slot.user_player.is_final ? (
+                                <span
+                                  className="pill emerald"
+                                  style={{
+                                    fontSize: '9px',
+                                    padding: '1px 6px',
+                                    fontWeight: 800,
+                                    background: 'rgba(16, 185, 129, 0.25)',
+                                    border: '1px solid #10b981',
+                                    color: '#34d399',
+                                    letterSpacing: '0.4px',
+                                  }}
+                                  title="Game completed: Final score recorded"
+                                >
+                                  ✓ FINAL
+                                </span>
+                              ) : slot.user_player.game_status === 'LIVE' || (slot.user_player.lineup_locked && !slot.user_player.is_final) ? (
+                                <span
+                                  className="pill cyan"
+                                  style={{
+                                    fontSize: '9px',
+                                    padding: '1px 6px',
+                                    fontWeight: 800,
+                                    background: 'rgba(56, 189, 248, 0.2)',
+                                    border: '1px solid #38bdf8',
+                                    color: '#38bdf8',
+                                    letterSpacing: '0.4px',
+                                  }}
+                                  title="Game in progress"
+                                >
+                                  🔴 LIVE
+                                </span>
+                              ) : null}
+                            </div>
                             <span className="intel-tale-player-sub" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               <NFLTeamLogo team={slot.user_player.pro_team} size={15} />
                               <span>{slot.user_player.pro_team} vs</span>
@@ -1456,7 +1556,24 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                             </span>
                           </div>
                           <div className="intel-tale-player-scoring">
-                            <span className="intel-tale-pts">{slot.user_player.projected_points.toFixed(1)} <small>pts</small></span>
+                            {slot.user_player.is_final || (slot.user_player.actual_points !== undefined && slot.user_player.actual_points > 0) ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px', minWidth: '70px' }}>
+                                <span className="intel-tale-pts" style={{ color: '#34d399', fontWeight: 800, fontSize: '14.5px' }}>
+                                  {(slot.user_player.actual_points ?? 0).toFixed(1)}{' '}
+                                  <small style={{ color: '#34d399', fontWeight: 700, fontSize: '9.5px', textTransform: 'uppercase' }}>
+                                    {slot.user_player.is_final ? 'final' : 'act'}
+                                  </small>
+                                </span>
+                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                  Proj: {slot.user_player.projected_points.toFixed(1)}
+                                </span>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px', minWidth: '70px' }}>
+                                <span className="intel-tale-pts">{slot.user_player.projected_points.toFixed(1)} <small>pts</small></span>
+                                <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Proj</span>
+                              </div>
+                            )}
                             {slot.user_player.matchup_grade === 'ELITE' && (
                               <span className="pill purple" style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 800 }}>🚀 ELITE</span>
                             )}
@@ -1503,10 +1620,62 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                             {slot.opp_player.matchup_grade === 'BRUTAL' && (
                               <span className="pill rose" style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 800 }}>🛑 BRUTAL</span>
                             )}
-                            <span className="intel-tale-pts opp">{slot.opp_player.projected_points.toFixed(1)} <small>pts</small></span>
+                            {slot.opp_player.is_final || (slot.opp_player.actual_points !== undefined && slot.opp_player.actual_points > 0) ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1px', minWidth: '70px' }}>
+                                <span className="intel-tale-pts opp" style={{ color: '#34d399', fontWeight: 800, fontSize: '14.5px' }}>
+                                  {(slot.opp_player.actual_points ?? 0).toFixed(1)}{' '}
+                                  <small style={{ color: '#34d399', fontWeight: 700, fontSize: '9.5px', textTransform: 'uppercase' }}>
+                                    {slot.opp_player.is_final ? 'final' : 'act'}
+                                  </small>
+                                </span>
+                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                  Proj: {slot.opp_player.projected_points.toFixed(1)}
+                                </span>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1px', minWidth: '70px' }}>
+                                <span className="intel-tale-pts opp">{slot.opp_player.projected_points.toFixed(1)} <small>pts</small></span>
+                                <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Proj</span>
+                              </div>
+                            )}
                           </div>
                           <div className="intel-tale-player-info opp">
-                            <span className="intel-tale-player-name">{slot.opp_player.full_name}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                              {slot.opp_player.is_final ? (
+                                <span
+                                  className="pill emerald"
+                                  style={{
+                                    fontSize: '9px',
+                                    padding: '1px 6px',
+                                    fontWeight: 800,
+                                    background: 'rgba(16, 185, 129, 0.25)',
+                                    border: '1px solid #10b981',
+                                    color: '#34d399',
+                                    letterSpacing: '0.4px',
+                                  }}
+                                  title="Game completed: Final score recorded"
+                                >
+                                  ✓ FINAL
+                                </span>
+                              ) : slot.opp_player.game_status === 'LIVE' || (slot.opp_player.lineup_locked && !slot.opp_player.is_final) ? (
+                                <span
+                                  className="pill cyan"
+                                  style={{
+                                    fontSize: '9px',
+                                    padding: '1px 6px',
+                                    fontWeight: 800,
+                                    background: 'rgba(56, 189, 248, 0.2)',
+                                    border: '1px solid #38bdf8',
+                                    color: '#38bdf8',
+                                    letterSpacing: '0.4px',
+                                  }}
+                                  title="Game in progress"
+                                >
+                                  🔴 LIVE
+                                </span>
+                              ) : null}
+                              <span className="intel-tale-player-name">{slot.opp_player.full_name}</span>
+                            </div>
                             <span className="intel-tale-player-sub" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               <NFLTeamLogo team={slot.opp_player.pro_team} size={15} />
                               <span>{slot.opp_player.pro_team} vs</span>
