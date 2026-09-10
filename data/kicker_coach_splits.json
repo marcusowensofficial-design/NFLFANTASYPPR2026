@@ -1,0 +1,40 @@
+{
+  "season": 2026,
+  "description": "Head coach 4th down go-for-it aggressiveness and kicker distance conversion splits.",
+  "coaches": {
+    "Sean McVay": {
+      "team": "LAR",
+      "fourth_down_aggressiveness_rank": 21,
+      "fourth_down_go_rate_opponent_territory_pct": 18.5,
+      "settles_for_fg_tendency": "HIGH",
+      "red_zone_trust_kicker": true
+    },
+    "Kyle Shanahan": {
+      "team": "SF",
+      "fourth_down_aggressiveness_rank": 17,
+      "fourth_down_go_rate_opponent_territory_pct": 22.0,
+      "settles_for_fg_tendency": "MODERATE",
+      "red_zone_trust_kicker": true
+    }
+  },
+  "kickers": {
+    "Harrison Mevis": {
+      "team": "LAR",
+      "preseason_accuracy": "6/6 FGs, 8/8 PATs (100%)",
+      "accuracy_0_39": 0.95,
+      "accuracy_40_49": 0.88,
+      "accuracy_50_plus": 0.78,
+      "career_long": 61,
+      "leg_strength_tier": "ELITE_DEEP"
+    },
+    "Eddy Pineiro": {
+      "team": "SF",
+      "preseason_accuracy": "4/5 FGs, 6/6 PATs",
+      "accuracy_0_39": 0.94,
+      "accuracy_40_49": 0.84,
+      "accuracy_50_plus": 0.65,
+      "career_long": 56,
+      "leg_strength_tier": "AVERAGE"
+    }
+  }
+}

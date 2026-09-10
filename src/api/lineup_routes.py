@@ -112,17 +112,20 @@ async def get_optimal_lineup(
         if isinstance(opponent_projected_points, (int, float)):
             opp_proj = float(opponent_projected_points)
         else:
-            opp_starter_projs = db.execute(
-                select(PlayerModel.projected_points)
+            opp_starters = db.execute(
+                select(PlayerModel, RosterEntryModel)
                 .join(RosterEntryModel, RosterEntryModel.player_id == PlayerModel.id)
                 .where(
                     RosterEntryModel.league_id == league.id,
                     RosterEntryModel.team_id == opp_team_id,
                     RosterEntryModel.is_starter == True,
                 )
-            ).scalars().all()
-            if opp_starter_projs:
-                opp_proj = round(sum(opp_starter_projs), 1)
+            ).all()
+            if opp_starters:
+                opp_proj = round(sum(
+                    p.actual_points if (re.lineup_locked or p.actual_points > 0) else p.projected_points
+                    for p, re in opp_starters
+                ), 1)
     elif isinstance(opponent_projected_points, (int, float)):
         opp_proj = float(opponent_projected_points)
 
@@ -173,7 +176,7 @@ async def get_optimal_lineup(
 
     # Evaluate each player with StartSitScoringEngine using O(1) precomputed game context
     evaluations: list[StartSitEvaluation] = []
-    for _, player in entries:
+    for re, player in entries:
         game = games_by_team.get(player.pro_team)
         weather = weather_by_team.get(player.pro_team)
         injury = injuries_by_athlete.get(player.id)
@@ -185,6 +188,8 @@ async def get_optimal_lineup(
             mode=mode_val,
             league_size=league_size,
             projection_source=proj_source_val,
+            actual_points=player.actual_points,
+            lineup_locked=re.lineup_locked,
         )
         evaluations.append(ev)
 

@@ -11,6 +11,60 @@ logger = logging.getLogger(__name__)
 ESPN_INJURIES_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries"
 
 
+TEAM_NAME_TO_ABBR: dict[str, str] = {
+    "ARIZONA CARDINALS": "ARI", "CARDINALS": "ARI", "ARI": "ARI",
+    "ATLANTA FALCONS": "ATL", "FALCONS": "ATL", "ATL": "ATL",
+    "BALTIMORE RAVENS": "BAL", "RAVENS": "BAL", "BAL": "BAL",
+    "BUFFALO BILLS": "BUF", "BILLS": "BUF", "BUF": "BUF",
+    "CAROLINA PANTHERS": "CAR", "PANTHERS": "CAR", "CAR": "CAR",
+    "CHICAGO BEARS": "CHI", "BEARS": "CHI", "CHI": "CHI",
+    "CINCINNATI BENGALS": "CIN", "BENGALS": "CIN", "CIN": "CIN",
+    "CLEVELAND BROWNS": "CLE", "BROWNS": "CLE", "CLE": "CLE",
+    "DALLAS COWBOYS": "DAL", "COWBOYS": "DAL", "DAL": "DAL",
+    "DENVER BRONCOS": "DEN", "BRONCOS": "DEN", "DEN": "DEN",
+    "DETROIT LIONS": "DET", "LIONS": "DET", "DET": "DET",
+    "GREEN BAY PACKERS": "GB", "PACKERS": "GB", "GB": "GB",
+    "HOUSTON TEXANS": "HOU", "TEXANS": "HOU", "HOU": "HOU",
+    "INDIANAPOLIS COLTS": "IND", "COLTS": "IND", "IND": "IND",
+    "JACKSONVILLE JAGUARS": "JAX", "JAGUARS": "JAX", "JAX": "JAX", "JAC": "JAX",
+    "KANSAS CITY CHIEFS": "KC", "CHIEFS": "KC", "KC": "KC",
+    "LAS VEGAS RAIDERS": "LV", "RAIDERS": "LV", "LV": "LV", "OAK": "LV",
+    "LOS ANGELES CHARGERS": "LAC", "CHARGERS": "LAC", "LAC": "LAC", "SD": "LAC",
+    "LOS ANGELES RAMS": "LAR", "RAMS": "LAR", "LAR": "LAR", "LA": "LAR", "STL": "LAR",
+    "MIAMI DOLPHINS": "MIA", "DOLPHINS": "MIA", "MIA": "MIA",
+    "MINNESOTA VIKINGS": "MIN", "VIKINGS": "MIN", "MIN": "MIN",
+    "NEW ENGLAND PATRIOTS": "NE", "PATRIOTS": "NE", "NE": "NE",
+    "NEW ORLEANS SAINTS": "NO", "SAINTS": "NO", "NO": "NO",
+    "NEW YORK GIANTS": "NYG", "GIANTS": "NYG", "NYG": "NYG",
+    "NEW YORK JETS": "NYJ", "JETS": "NYJ", "NYJ": "NYJ",
+    "PHILADELPHIA EAGLES": "PHI", "EAGLES": "PHI", "PHI": "PHI",
+    "PITTSBURGH STEELERS": "PIT", "STEELERS": "PIT", "PIT": "PIT",
+    "SAN FRANCISCO 49ERS": "SF", "49ERS": "SF", "SF": "SF",
+    "SEATTLE SEAHAWKS": "SEA", "SEAHAWKS": "SEA", "SEA": "SEA",
+    "TAMPA BAY BUCCANEERS": "TB", "BUCCANEERS": "TB", "TB": "TB",
+    "TENNESSEE TITANS": "TEN", "TITANS": "TEN", "TEN": "TEN",
+    "WASHINGTON COMMANDERS": "WAS", "COMMANDERS": "WAS", "WAS": "WAS", "WSH": "WAS",
+}
+
+
+def resolve_team_abbrev(team_str: str) -> str:
+    cleaned = (team_str or "").strip().upper()
+    return TEAM_NAME_TO_ABBR.get(cleaned, cleaned[:3])
+
+
+def generate_vacated_opportunity_note(position: str, backup_name: str, rank: int) -> str:
+    pos = position.upper().strip()
+    if pos == "RB":
+        return f"Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
+    elif pos in ("WR", "WR1", "WR2", "WR3", "SLOT_WR"):
+        return f"Expands to high-volume target progression and 2-WR/3-WR set route participation."
+    elif pos == "TE":
+        return f"Assumes inline snaps and high-leverage red-zone target share."
+    elif pos == "QB":
+        return f"Takes over first-team reps under center with full pass-funnel responsibility."
+    return f"Next designated athlete on official team depth chart hierarchy."
+
+
 class PlayerInjuryReport(BaseModel):
     athlete_id: int
     name: str
@@ -20,6 +74,10 @@ class PlayerInjuryReport(BaseModel):
     headline: str | None = None
     notes: str | None = None
     date: str | None = None
+    backup_athlete_name: str | None = None
+    backup_athlete_id: int | None = None
+    backup_slot: str | None = None
+    vacated_opportunity_note: str | None = None
 
     @property
     def is_playable(self) -> bool:
@@ -44,6 +102,53 @@ class PlayerInjuryReport(BaseModel):
             return "DNP"
         return None
 
+    @property
+    def practice_trend(self) -> str | None:
+        """Determines practice trajectory (e.g., Upward, Setback, Consecutive DNP, Full)."""
+        text = f"{self.headline or ''} {self.notes or ''}".lower()
+        if not text.strip():
+            return None
+        if "setback" in text or "downgrade" in text or ("dnp" in text and "after" in text and ("limited" in text or "full" in text)):
+            return "SETBACK (DNP)"
+        if "did not practice friday" in text or "missed friday" in text or "held out friday" in text:
+            return "FRIDAY DNP"
+        if "upgraded" in text or ("full" in text and "after" in text and ("limited" in text or "dnp" in text)):
+            return "UPWARD (➔ FP)"
+        if "progressed" in text or "trending up" in text:
+            return "PROGRESSING (LP ➔ FP)"
+        if "all week" in text:
+            if "full" in text or "practiced" in text:
+                return "FULL ALL WEEK"
+            if "missed" in text or "did not" in text or "held out" in text:
+                return "CONSECUTIVE DNP"
+        ps = self.practice_status
+        if ps == "FULL":
+            return "FULL PARTICIPANT"
+        elif ps == "LIMITED":
+            return "LIMITED PARTICIPANT"
+        elif ps == "DNP":
+            return "DNP (DID NOT PRACTICE)"
+        return None
+
+    @property
+    def decoy_risk(self) -> str | None:
+        """Flags high decoy risk for soft-tissue injuries with non-full practice participation."""
+        st = self.status.upper()
+        if st not in ("QUESTIONABLE", "ACTIVE"):
+            return None
+        text = f"{self.headline or ''} {self.notes or ''}".lower()
+        soft_tissue = ["hamstring", "groin", "calf", "quad", "oblique", "turf toe", "ankle sprain"]
+        if not any(k in text for k in soft_tissue):
+            return None
+        ps = self.practice_status
+        if ps == "DNP" or "setback" in text or "friday dnp" in text:
+            return "HIGH"
+        if ps == "LIMITED" or ps is None:
+            return "MODERATE"
+        if ps == "FULL":
+            return "LOW"
+        return None
+
 
 class NFLInjuriesClient:
     """Client for retrieving official NFL injury reports and practice notes."""
@@ -58,6 +163,33 @@ class NFLInjuriesClient:
         """Clear the in-memory injury reports cache."""
         self._cache.clear()
         self._cache_time = 0.0
+
+    async def enrich_beneficiaries(
+        self,
+        injuries: list[PlayerInjuryReport],
+    ) -> list[PlayerInjuryReport]:
+        """Resolves depth chart direct backups/beneficiaries for injured starters."""
+        from src.adapters.nfl.depthchart_client import nfl_depthchart_client
+
+        for inj in injuries:
+            if inj.position.upper() in ("QB", "RB", "WR", "TE") and (inj.is_out or "QUESTIONABLE" in inj.status.upper()):
+                team_abbr = resolve_team_abbrev(inj.team)
+                try:
+                    chart = await nfl_depthchart_client.fetch_team_depth_chart(team_abbr)
+                    if chart:
+                        next_up = chart.get_next_man_up(inj.name, inj.position)
+                        if next_up:
+                            inj.backup_athlete_name = next_up.get("display_name")
+                            inj.backup_athlete_id = next_up.get("athlete_id")
+                            inj.backup_slot = next_up.get("slot")
+                            inj.vacated_opportunity_note = generate_vacated_opportunity_note(
+                                inj.position,
+                                inj.backup_athlete_name or "Backup",
+                                next_up.get("rank", 2),
+                            )
+                except Exception as e:
+                    logger.debug(f"Failed to resolve next man up for {inj.name}: {e}")
+        return injuries
 
     async def fetch_injuries(self, force: bool = False) -> dict[int, PlayerInjuryReport]:
         """Fetch all official NFL injury updates indexed by athlete ID with 5-min TTL cache."""

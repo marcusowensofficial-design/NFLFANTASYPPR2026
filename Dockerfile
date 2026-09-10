@@ -30,6 +30,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend source code, reference data, and tests
 COPY src/ ./src/
 COPY data/ ./data/
+COPY scripts/ ./scripts/
 COPY tests/ ./tests/
 COPY pyproject.toml .
 

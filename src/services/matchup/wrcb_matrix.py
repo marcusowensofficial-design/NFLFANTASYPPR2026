@@ -20,6 +20,9 @@ class CornerbackProfile(BaseModel):
     targets_per_route_allowed: float = 0.18
     fpts_per_route_allowed: float = 0.28
     catch_rate_allowed: float = 0.62
+    is_backup_replacement: bool = False
+    original_starter_name: str | None = None
+    injury_note: str | None = None
 
 
 class WRAlignmentProfile(BaseModel):
@@ -193,11 +196,34 @@ KNOWN_WR_ALIGNMENTS: dict[str, WRAlignmentProfile] = {
 }
 
 
+from src.services.matchup.pff_service import pff_scouting_service
+
+
 class WRCBAnalyzer:
     """Evaluates WR route alignments vs opposing CB personnel to detect shadow lockdown & slot mismatches."""
 
-    def get_cb_room(self, opp_team: str) -> dict[str, CornerbackProfile]:
+    def get_cb_room(
+        self, opp_team: str, inactive_player_names: set[str] | None = None
+    ) -> dict[str, CornerbackProfile]:
         team = opp_team.upper().strip()
+        pff_room = pff_scouting_service.get_active_cb_room(team, inactive_player_names=inactive_player_names)
+        if pff_room:
+            result: dict[str, CornerbackProfile] = {}
+            for k, v in pff_room.items():
+                result[k] = CornerbackProfile(
+                    name=v.name,
+                    team=team,
+                    slot_role=v.role,
+                    coverage_grade=v.grade,
+                    is_shadow=v.is_shadow,
+                    targets_per_route_allowed=v.targets_per_route,
+                    fpts_per_route_allowed=v.fpts_per_route,
+                    catch_rate_allowed=v.catch_rate,
+                    is_backup_replacement=v.is_backup_replacement,
+                    original_starter_name=v.original_starter_name,
+                    injury_note=v.injury_note,
+                )
+            return result
         return NFL_CB_DEPTH_CHARTS.get(team, DEFAULT_FALLBACK_CB_ROOM)
 
     def get_wr_alignment(self, player_name: str) -> WRAlignmentProfile:
@@ -219,8 +245,9 @@ class WRCBAnalyzer:
         projected_points: float,
         is_user_rostered: bool = False,
         is_user_starter: bool = False,
+        inactive_player_names: set[str] | None = None,
     ) -> WRCBMatchupAnalysis:
-        cb_room = self.get_cb_room(opponent)
+        cb_room = self.get_cb_room(opponent, inactive_player_names=inactive_player_names)
         alignment = self.get_wr_alignment(full_name)
 
         outside1 = cb_room.get("outside1", DEFAULT_FALLBACK_CB_ROOM["outside1"])
@@ -292,6 +319,12 @@ class WRCBAnalyzer:
             advantage_rating = "FAVORABLE"
             tactical_takeaway = (
                 f"Favorable individual matchup against {primary_cb.name}. Route win rate favors {full_name} for above-average target efficiency."
+            )
+        elif primary_cb.is_backup_replacement:
+            advantage_rating = "MAJOR_ADVANTAGE" if advantage_score >= 5.0 else "FAVORABLE"
+            tactical_takeaway = (
+                f"🎯 BACKUP CB TARGET: {full_name} draws backup corner {primary_cb.name} (PFF Grade: {primary_cb.coverage_grade:.1f}) "
+                f"after starter {primary_cb.original_starter_name} was ruled OUT. High-value target funnel!"
             )
         else:
             advantage_rating = "NEUTRAL"

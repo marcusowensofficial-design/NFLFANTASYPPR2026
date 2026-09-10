@@ -31,12 +31,34 @@ logging.basicConfig(
 logger = logging.getLogger("fantasy_assistant")
 
 
+import asyncio
+import time
+from pathlib import Path
+
+
+async def _auto_sync_intelligence_if_stale():
+    """Runs master NFL intelligence sync in background if data is older than 12 hours."""
+    try:
+        depth_file = Path("data/nfl_depth_charts_2026.json")
+        now = time.time()
+        if not depth_file.exists() or (now - depth_file.stat().st_mtime > 43200):
+            logger.info("Local NFL intelligence is stale (>12h) or missing. Auto-syncing in background...")
+            from scripts.sync_nfl_intelligence import sync_depth_charts, sync_injuries, sync_vegas_odds
+            await asyncio.gather(sync_depth_charts(), sync_injuries(), sync_vegas_odds())
+            logger.info("Background NFL intelligence auto-sync completed successfully.")
+    except Exception as e:
+        logger.warning(f"Background NFL intelligence sync encountered an issue: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize SQLite database and tables
     logger.info("Initializing SQLite database tables...")
     init_db()
+    # Trigger non-blocking intelligence auto-sync
+    asyncio.create_task(_auto_sync_intelligence_if_stale())
     yield
+
 
 
 app = FastAPI(

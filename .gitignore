@@ -65,3 +65,7 @@ yarn-error.log*
 *.sublime-workspace
 .DS_Store
 Thumbs.db
+
+# Scratch Analysis
+scratch/
+

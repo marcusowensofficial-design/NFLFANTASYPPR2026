@@ -16,11 +16,17 @@ class InjuryResponseItem(BaseModel):
     team: str
     status: str
     practice_status: str | None = None
+    practice_trend: str | None = None
+    decoy_risk: str | None = None
     headline: str | None = None
     notes: str | None = None
     date: str | None = None
     is_playable: bool
     is_out: bool
+    backup_player_name: str | None = None
+    backup_player_id: int | None = None
+    backup_slot: str | None = None
+    vacated_opportunity_note: str | None = None
 
 
 class InjuryFeedResponse(BaseModel):
@@ -36,9 +42,12 @@ async def get_injuries(
     status: str | None = Query(default=None, description="Filter by status (QUESTIONABLE, OUT, IR, ACTIVE)"),
     search: str | None = Query(default=None, description="Search by player name"),
     limit: int = Query(default=100, ge=1, le=800, description="Max items to return"),
+    force: bool = Query(default=False, description="Bypass cache and fetch live updates"),
 ) -> InjuryFeedResponse:
     """Retrieve live official NFL injury reports with beat reporter notes and practice progression."""
-    all_injuries = await nfl_injuries_client.fetch_injuries()
+    if force:
+        nfl_injuries_client.clear_cache()
+    all_injuries = await nfl_injuries_client.fetch_injuries(force=force)
     results = list(all_injuries.values())
 
     # Sort priority: OUT / IR / DOUBTFUL first, then QUESTIONABLE, then ACTIVE
@@ -64,6 +73,9 @@ async def get_injuries(
             continue
         filtered.append(inj)
 
+    slice_to_enrich = filtered[:limit]
+    enriched = await nfl_injuries_client.enrich_beneficiaries(slice_to_enrich)
+
     items = [
         InjuryResponseItem(
             athlete_id=inj.athlete_id,
@@ -72,13 +84,19 @@ async def get_injuries(
             team=inj.team,
             status=inj.status,
             practice_status=inj.practice_status,
+            practice_trend=inj.practice_trend,
+            decoy_risk=inj.decoy_risk,
             headline=inj.headline,
             notes=inj.notes,
             date=inj.date,
             is_playable=inj.is_playable,
             is_out=inj.is_out,
+            backup_player_name=inj.backup_athlete_name,
+            backup_player_id=inj.backup_athlete_id,
+            backup_slot=inj.backup_slot,
+            vacated_opportunity_note=inj.vacated_opportunity_note,
         )
-        for inj in filtered[:limit]
+        for inj in enriched
     ]
 
     return InjuryFeedResponse(

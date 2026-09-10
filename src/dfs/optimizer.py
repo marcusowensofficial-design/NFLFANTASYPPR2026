@@ -409,5 +409,162 @@ class DFSLineupOptimizer:
 
         return "\n".join(lines)
 
+    def optimize_single_game(
+        self,
+        df_slate: pd.DataFrame,
+        mode: str = "GPP",
+        lock_mvp: str | None = None,
+        force_zero_qb: bool = False,
+        force_qb_stack: bool = False,
+        exclude_players: list[str] | None = None,
+        min_salary: int = 59100,
+        max_salary: int = 59800,
+        top_n: int = 3,
+    ) -> list[dict[str, Any]]:
+        """Solves the optimal 6-slot FanDuel Single Game (Showdown) lineup.
+        
+        Enforces:
+        - 1 MVP (1.5x Salary & 1.5x Scoring) + 5 AnyFLEX (1.0x Salary & Scoring)
+        - $60,000 Salary Cap leaving $200 to $900 on table (default $59,100 - $59,800)
+        - Both teams represented (min 1 player per team)
+        - Pro Correlation Rules:
+          * Negative Correlation Leakage: Max 2 pass-catchers from Team A if Team A QB is NOT rostered.
+          * QB Rule of 3: If 3+ pass-catchers from Team A are rostered, Team A QB MUST be in lineup.
+          * QB Stacking: If QB is rostered, paired with at least 1 pass-catcher.
+          * D/ST Anti-Cannibalization: Never pair D/ST with opposing RB1 or 3+ opposing players.
+        """
+        import itertools
+
+        df = df_slate.copy()
+        excludes = set(p.strip().lower() for p in (exclude_players or []))
+
+        # Filter active players
+        clean_rows = []
+        for _, r in df.iterrows():
+            name = str(r.get("Nickname") or r.get("name") or "").strip()
+            if not name or name.lower() in excludes:
+                continue
+            inj = str(r.get("Injury Indicator") or r.get("injury") or "").upper()
+            if inj in ["IR", "O", "OUT"]:
+                continue
+
+            pos = str(r.get("Position") or r.get("position") or "").strip()
+            team = str(r.get("Team") or r.get("team") or "").strip()
+            base_sal = int(r.get("Salary") or r.get("salary") or 0)
+            mvp_sal = int(r.get("MVP 1.5x Salary") or int(base_sal * 1.5))
+            proj = float(r.get("proj") or r.get("projected_points") or r.get("FPPG") or 0.0)
+            ceiling = float(r.get("ceiling") or r.get("ceiling_proj") or (proj * 1.45))
+
+            if proj < 1.0 or base_sal <= 0:
+                continue
+
+            clean_rows.append({
+                "name": name,
+                "position": pos,
+                "team": team,
+                "base_sal": base_sal,
+                "mvp_sal": mvp_sal,
+                "proj": proj,
+                "ceiling": ceiling,
+            })
+
+        if len(clean_rows) < 6:
+            return []
+
+        # Identify pass-catchers and QBs
+        qbs = set(p["name"] for p in clean_rows if p["position"] == "QB")
+        pass_catchers = set(p["name"] for p in clean_rows if p["position"] in ["WR", "TE"])
+        rbs = set(p["name"] for p in clean_rows if p["position"] == "RB")
+        dsts = set(p["name"] for p in clean_rows if p["position"] in ["D", "D/ST"])
+
+        candidates = []
+
+        # Loop through all possible MVPs
+        for mvp in clean_rows:
+            if lock_mvp and mvp["name"].lower() != lock_mvp.lower().strip():
+                continue
+
+            mvp_cost = mvp["mvp_sal"]
+            mvp_pts = mvp["proj"] * 1.5
+            mvp_ceil = mvp["ceiling"] * 1.5
+
+            rem_pool = [p for p in clean_rows if p["name"] != mvp["name"]]
+
+            for flex_combo in itertools.combinations(rem_pool, 5):
+                tot_sal = mvp_cost + sum(p["base_sal"] for p in flex_combo)
+                if not (min_salary <= tot_sal <= max_salary):
+                    continue
+
+                all_players = [mvp] + list(flex_combo)
+                teams = set(p["team"] for p in all_players)
+                if len(teams) < 2:
+                    continue
+
+                names = set(p["name"] for p in all_players)
+                rostered_qbs = names.intersection(qbs)
+
+                if force_zero_qb and len(rostered_qbs) > 0:
+                    continue
+                if force_qb_stack and len(rostered_qbs) == 0:
+                    continue
+
+                # Correlation Rule 1: QB stacking (paired with >= 1 pass-catcher)
+                invalid_stack = False
+                for qb_name in rostered_qbs:
+                    qb_item = next(p for p in all_players if p["name"] == qb_name)
+                    team_pcs = [p["name"] for p in all_players if p["team"] == qb_item["team"] and p["name"] in pass_catchers]
+                    if len(team_pcs) == 0:
+                        invalid_stack = True
+                        break
+                if invalid_stack:
+                    continue
+
+                # Correlation Rule 2: Negative Correlation Leakage (Max 2 pass-catchers if QB is NOT in lineup)
+                leakage = False
+                for t in teams:
+                    has_team_qb = any(p["team"] == t and p["name"] in qbs for p in all_players)
+                    t_pcs = [p["name"] for p in all_players if p["team"] == t and p["name"] in pass_catchers]
+                    if not has_team_qb and len(t_pcs) > 2:
+                        leakage = True
+                        break
+                if leakage:
+                    continue
+
+                # Correlation Rule 3: D/ST anti-cannibalization
+                conflict = False
+                for dst_name in names.intersection(dsts):
+                    dst_team = next(p["team"] for p in all_players if p["name"] == dst_name)
+                    opp_offensive = [p for p in all_players if p["team"] != dst_team and p["position"] in ["QB", "RB", "WR", "TE"]]
+                    if len(opp_offensive) >= 3:
+                        conflict = True
+                        break
+                    opp_rbs = [p for p in opp_offensive if p["position"] == "RB"]
+                    if len(opp_rbs) > 0:
+                        conflict = True
+                        break
+                if conflict:
+                    continue
+
+                tot_proj = mvp_pts + sum(p["proj"] for p in flex_combo)
+                tot_ceil = mvp_ceil + sum(p["ceiling"] for p in flex_combo)
+                score_val = tot_ceil if mode == "GPP" else tot_proj
+
+                candidates.append({
+                    "mvp": mvp,
+                    "flex": list(flex_combo),
+                    "total_salary": tot_sal,
+                    "salary_remaining": 60000 - tot_sal,
+                    "total_projected_points": round(tot_proj, 2),
+                    "total_ceiling_points": round(tot_ceil, 2),
+                    "is_zero_qb": len(rostered_qbs) == 0,
+                    "rostered_qbs": list(rostered_qbs),
+                    "team_split": f"{sum(1 for p in all_players if p['team'] == list(teams)[0])}-{sum(1 for p in all_players if p['team'] == list(teams)[1])}",
+                    "_sort_score": score_val,
+                })
+
+        candidates.sort(key=lambda x: x["_sort_score"], reverse=True)
+        return candidates[:top_n]
+
 
 dfs_optimizer = DFSLineupOptimizer()
+

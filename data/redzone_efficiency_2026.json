@@ -1,0 +1,36 @@
+{
+  "season": 2026,
+  "description": "Red-zone trip rate, touchdown conversion efficiency, and defensive red-zone stop rate for kicker & TD modeling.",
+  "teams": {
+    "SF": {
+      "offense": {
+        "rz_trips_per_game": 3.8,
+        "rz_td_conversion_pct": 64.5,
+        "rz_fg_attempt_rate_pct": 28.0,
+        "inside_5_run_pct": 68.0,
+        "cmc_goal_line_share_pct": 82.0
+      },
+      "defense": {
+        "rz_trips_allowed_per_game": 3.1,
+        "rz_td_allowed_pct": 51.5,
+        "rz_stop_rate_pct": 48.5,
+        "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK"
+      }
+    },
+    "LAR": {
+      "offense": {
+        "rz_trips_per_game": 4.1,
+        "rz_td_conversion_pct": 58.0,
+        "rz_fg_attempt_rate_pct": 34.5,
+        "inside_5_run_pct": 54.0,
+        "kyren_goal_line_share_pct": 78.0
+      },
+      "defense": {
+        "rz_trips_allowed_per_game": 3.4,
+        "rz_td_allowed_pct": 61.0,
+        "rz_stop_rate_pct": 39.0,
+        "defensive_stiff_rating": "AVERAGE"
+      }
+    }
+  }
+}

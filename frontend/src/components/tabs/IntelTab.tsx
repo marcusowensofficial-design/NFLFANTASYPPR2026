@@ -12,6 +12,8 @@ import type {
   DvPRecordItem,
   DvPStatusResponse,
   PlayerMarketSentimentItem,
+  PFFCompositeDefenseRecord,
+  PFFTrenchMatchup,
 } from '../../types'
 import { MatchupStarRating, getMatchupStars, getMatchupTierInfo } from '../shared/MatchupStarRating'
 import { InjuryStatusPill } from '../shared/InjuryStatusPill'
@@ -80,6 +82,13 @@ export const IntelTab: React.FC<IntelTabProps> = ({
   const [marketBuzz, setMarketBuzz] = useState<PlayerMarketSentimentItem[]>([])
   const [isLoadingMarket, setIsLoadingMarket] = useState<boolean>(false)
 
+  // PFF Film Scouting & Trench Warfare state
+  const [pffSubMode, setPffSubMode] = useState<'wrcb' | 'trenches' | 'composite'>('wrcb')
+  const [compositeDefenses, setCompositeDefenses] = useState<PFFCompositeDefenseRecord[]>([])
+  const [trenchMatchups, setTrenchMatchups] = useState<PFFTrenchMatchup[]>([])
+  const [isLoadingComposite, setIsLoadingComposite] = useState<boolean>(false)
+  const [isLoadingTrenches, setIsLoadingTrenches] = useState<boolean>(false)
+
   useEffect(() => {
     const fetchMarketBuzz = async () => {
       setIsLoadingMarket(true)
@@ -97,6 +106,34 @@ export const IntelTab: React.FC<IntelTabProps> = ({
       }
     }
     fetchMarketBuzz()
+  }, [league?.current_week])
+
+  useEffect(() => {
+    const fetchPffScoutingData = async () => {
+      setIsLoadingComposite(true)
+      setIsLoadingTrenches(true)
+      try {
+        const week = league?.current_week || 1
+        const [compRes, trenchRes] = await Promise.all([
+          fetch('/api/analysis/pff/composite-defense'),
+          fetch(`/api/analysis/pff/trenches?week=${week}`)
+        ])
+        if (compRes.ok) {
+          const compData: PFFCompositeDefenseRecord[] = await compRes.json()
+          setCompositeDefenses(compData)
+        }
+        if (trenchRes.ok) {
+          const trenchData: PFFTrenchMatchup[] = await trenchRes.json()
+          setTrenchMatchups(trenchData)
+        }
+      } catch (err) {
+        console.error('Failed to load PFF scouting data:', err)
+      } finally {
+        setIsLoadingComposite(false)
+        setIsLoadingTrenches(false)
+      }
+    }
+    fetchPffScoutingData()
   }, [league?.current_week])
 
   const fetchTale = async () => {
@@ -720,6 +757,50 @@ export const IntelTab: React.FC<IntelTabProps> = ({
       return <span className="pill amber" style={{ fontSize: '10.5px' }}>{grade.toFixed(1)} Neutral</span>
     }
     return <span className="pill rose" style={{ fontSize: '10.5px' }}>{grade.toFixed(1)} Burnable</span>
+  }
+
+  // Helper for Trench Pass Pro Edge badge
+  const renderPassProBadge = (tier: string, edge: number) => {
+    switch (tier) {
+      case 'CLEAN_POCKET':
+        return <span className="pill emerald" style={{ fontSize: '10.5px', fontWeight: 800 }}>✨ CLEAN POCKET ({edge > 0 ? `+${edge}` : edge})</span>
+      case 'HEAVY_COLLAPSE':
+        return <span className="pill rose" style={{ fontSize: '10.5px', fontWeight: 800 }}>🚨 POCKET COLLAPSE ({edge})</span>
+      default:
+        return <span className="pill zinc" style={{ fontSize: '10.5px', fontWeight: 600 }}>⚖️ NEUTRAL PRO ({edge > 0 ? `+${edge}` : edge})</span>
+    }
+  }
+
+  // Helper for Trench Run Push Edge badge
+  const renderRunPushBadge = (tier: string, edge: number) => {
+    switch (tier) {
+      case 'POWER_LANES':
+        return <span className="pill emerald" style={{ fontSize: '10.5px', fontWeight: 800 }}>🚜 ROAD GRADER ({edge > 0 ? `+${edge}` : edge})</span>
+      case 'STUFFED_FRONT':
+        return <span className="pill rose" style={{ fontSize: '10.5px', fontWeight: 800 }}>⛔ STUFFED BOX ({edge})</span>
+      default:
+        return <span className="pill zinc" style={{ fontSize: '10.5px', fontWeight: 600 }}>⚖️ NEUTRAL PUSH ({edge > 0 ? `+${edge}` : edge})</span>
+    }
+  }
+
+  // Helper for Composite Defense Tier badge
+  const renderDefTierBadge = (tier: string) => {
+    switch (tier) {
+      case 'SHUTDOWN':
+      case 'BRICK_WALL':
+        return <span className="pill rose" style={{ fontSize: '10.5px', fontWeight: 800 }}>🛡️ {tier.replace('_', ' ')}</span>
+      case 'TOUGH':
+      case 'STOUT':
+        return <span className="pill amber" style={{ fontSize: '10.5px', fontWeight: 700 }}>⚠️ {tier.replace('_', ' ')}</span>
+      case 'VULNERABLE':
+      case 'SOFT':
+        return <span className="pill cyan" style={{ fontSize: '10.5px', fontWeight: 700 }}>👍 {tier.replace('_', ' ')}</span>
+      case 'BURNABLE':
+      case 'FUNNEL':
+        return <span className="pill emerald" style={{ fontSize: '10.5px', fontWeight: 800 }}>🔥 {tier.replace(/_/g, ' ')}</span>
+      default:
+        return <span className="pill zinc" style={{ fontSize: '10.5px', fontWeight: 600 }}>⚖️ NEUTRAL</span>
+    }
   }
 
   // Helper for Game Script badge
@@ -1583,7 +1664,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
             )}
 
             {/* WR/CB Tag Filter */}
-            {subView === 'wrcb' && (
+            {subView === 'wrcb' && pffSubMode === 'wrcb' && (
               <div style={{ display: 'flex', gap: '4px' }}>
                 {[
                   { id: 'ALL', label: 'All Wideouts' },
@@ -2002,93 +2083,416 @@ export const IntelTab: React.FC<IntelTabProps> = ({
 
 
       {/* ===================================================================== */}
-      {/* VIEW 4: WR vs CB SECONDARY MATRIX (ALL NFL SCOUTING)                  */}
+      {/* ===================================================================== */}
+      {/* VIEW 4: PFF FILM SCOUTING & SECONDARY / TRENCH INTELLIGENCE           */}
       {/* ===================================================================== */}
       {subView === 'wrcb' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {isLoadingWrcb ? (
-            <div className="card" style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
-              Loading NFL WR vs CB matrix...
-            </div>
-          ) : filteredWrcbList.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-              No wide receivers match your current search or filter criteria.
-            </div>
-          ) : (
-            <div className="intel-grid">
-              {filteredWrcbList.map((item) => {
-                const isUserStarter = lineup ? starterWRPids.has(item.player_id) : item.is_user_starter
-                const isUserRostered = lineup ? rosteredWRPids.has(item.player_id) : item.is_user_rostered
+          {/* Sub-Mode Switcher */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setPffSubMode('wrcb')}
+              className={`btn btn-sm ${pffSubMode === 'wrcb' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700 }}
+            >
+              🎯 WR vs CB Coverage Matrix ({filteredWrcbList.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setPffSubMode('trenches')}
+              className={`btn btn-sm ${pffSubMode === 'trenches' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700 }}
+            >
+              🛡️ Trench Warfare (O-Line vs D-Line) ({trenchMatchups.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setPffSubMode('composite')}
+              className={`btn btn-sm ${pffSubMode === 'composite' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700 }}
+            >
+              ⚖️ 32-Team Composite Defense Matrix (PFF + DvP)
+            </button>
+          </div>
 
-                return (
-                <div
-                  key={item.player_id}
-                  className={`intel-player-card ${isUserStarter ? 'starter' : isUserRostered ? 'bench' : ''}`}
-                >
-                  <div className="intel-card-header">
-                    <div className="intel-player-identity">
-                      <div className="intel-player-name-row">
-                        <span className="intel-player-name">{item.full_name}</span>
-                        {isUserStarter && (
-                          <span className="pill emerald" style={{ fontSize: '9px', fontWeight: 800 }}>
-                            MY STARTER
-                          </span>
-                        )}
-                        {isUserRostered && !isUserStarter && (
-                          <span className="pill zinc" style={{ fontSize: '9px', fontWeight: 700 }}>
-                            MY BENCH
-                          </span>
-                        )}
-                      </div>
-                      <div className="intel-team-opp-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                        <NFLTeamLogo team={item.pro_team} size={18} />
-                        <strong>{item.pro_team}</strong> vs <NFLTeamLogo team={item.opponent} size={18} /> <strong>{item.opponent}</strong>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginLeft: '4px' }}>
-                          • Proj: {item.projected_points.toFixed(1)} pts
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>{renderAdvantageBadge(item.advantage_rating, item.advantage_score)}</div>
-                  </div>
-
-                  {/* Route Alignment */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)' }}>
-                    <span>Route Distribution:</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      {(item.alignment.pct_slot * 100).toFixed(0)}% Slot / {(item.alignment.pct_wide * 100).toFixed(0)}% Wide
+          {/* MODE 1: WR VS CB COVERAGE MATRIX */}
+          {pffSubMode === 'wrcb' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="intel-dvp-banner" style={{ borderLeft: '4px solid var(--accent-cyan)' }}>
+                <div className="intel-dvp-banner-content">
+                  <div className="intel-dvp-banner-title">
+                    <span>🎯 PFF Film Coverage & Cornerback Scouting</span>
+                    <span className="pill cyan" style={{ fontSize: '10px', fontWeight: 800 }}>
+                      Film-Graded Matchup Mismatches
                     </span>
                   </div>
-
-                  {/* CB Matchup Strip */}
-                  <div className="intel-cb-strip">
-                    <div className="intel-cb-header">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>Primary CB:</span>
-                        <strong>{item.primary_cb.name}</strong>
-                        {item.primary_cb.is_shadow && (
-                          <span className="pill rose" style={{ fontSize: '9px', padding: '0 4px', fontWeight: 800 }}>
-                            SHADOW
-                          </span>
-                        )}
-                      </div>
-                      {renderCbGradeBadge(item.primary_cb.coverage_grade)}
-                    </div>
-
-                    <div className="intel-cb-stats-row">
-                      <div>Role: <span className="intel-cb-stat-val">{item.primary_cb.slot_role}</span></div>
-                      <div>Catch Allowed: <span className="intel-cb-stat-val">{(item.primary_cb.catch_rate_allowed * 100).toFixed(0)}%</span></div>
-                      <div>FP/Route: <span className="intel-cb-stat-val">{item.primary_cb.fpts_per_route_allowed.toFixed(2)}</span></div>
-                    </div>
-                  </div>
-
-                  {/* Tactical Takeaway */}
-                  <div className="intel-takeaway-box">
-                    {item.tactical_takeaway}
-                  </div>
+                  <p className="intel-dvp-banner-text">
+                    Evaluates individual cornerback coverage grades, shadow assignments, route alignments (slot vs perimeter), and live injury backup promotions. When a starting CB is ruled OUT, our model automatically promotes the backup defender and updates matchup ratings in real-time.
+                  </p>
                 </div>
-                )
-              })}
+              </div>
+
+              {isLoadingWrcb ? (
+                <div className="card" style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
+                  Loading NFL WR vs CB matrix...
+                </div>
+              ) : filteredWrcbList.length === 0 ? (
+                <div className="card" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  No wide receivers match your current search or filter criteria.
+                </div>
+              ) : (
+                <div className="intel-grid">
+                  {filteredWrcbList.map((item) => {
+                    const isUserStarter = lineup ? starterWRPids.has(item.player_id) : item.is_user_starter
+                    const isUserRostered = lineup ? rosteredWRPids.has(item.player_id) : item.is_user_rostered
+
+                    return (
+                      <div
+                        key={item.player_id}
+                        className={`intel-player-card ${isUserStarter ? 'starter' : isUserRostered ? 'bench' : ''}`}
+                      >
+                        <div className="intel-card-header">
+                          <div className="intel-player-identity">
+                            <div className="intel-player-name-row">
+                              <span className="intel-player-name">{item.full_name}</span>
+                              {isUserStarter && (
+                                <span className="pill emerald" style={{ fontSize: '9px', fontWeight: 800 }}>
+                                  MY STARTER
+                                </span>
+                              )}
+                              {isUserRostered && !isUserStarter && (
+                                <span className="pill zinc" style={{ fontSize: '9px', fontWeight: 700 }}>
+                                  MY BENCH
+                                </span>
+                              )}
+                            </div>
+                            <div className="intel-team-opp-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                              <NFLTeamLogo team={item.pro_team} size={18} />
+                              <strong>{item.pro_team}</strong> vs <NFLTeamLogo team={item.opponent} size={18} /> <strong>{item.opponent}</strong>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginLeft: '4px' }}>
+                                • Proj: {item.projected_points.toFixed(1)} pts
+                              </span>
+                            </div>
+                          </div>
+
+                          <div>{renderAdvantageBadge(item.advantage_rating, item.advantage_score)}</div>
+                        </div>
+
+                        {/* Route Alignment */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)' }}>
+                          <span>Route Distribution:</span>
+                          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+                            {(item.alignment.pct_slot * 100).toFixed(0)}% Slot / {(item.alignment.pct_wide * 100).toFixed(0)}% Wide
+                          </span>
+                        </div>
+
+                        {/* CB Matchup Strip */}
+                        <div className="intel-cb-strip">
+                          <div className="intel-cb-header">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span>Primary CB:</span>
+                              <strong>{item.primary_cb.name}</strong>
+                              {item.primary_cb.is_shadow && (
+                                <span className="pill rose" style={{ fontSize: '9px', padding: '0 4px', fontWeight: 800 }}>
+                                  SHADOW
+                                </span>
+                              )}
+                              {item.primary_cb.is_backup_replacement && (
+                                <span className="pill amber" style={{ fontSize: '9px', padding: '0 5px', fontWeight: 800 }}>
+                                  🎯 BACKUP ({item.primary_cb.original_starter_name} OUT)
+                                </span>
+                              )}
+                            </div>
+                            {renderCbGradeBadge(item.primary_cb.coverage_grade)}
+                          </div>
+
+                          <div className="intel-cb-stats-row">
+                            <div>Role: <span className="intel-cb-stat-val">{item.primary_cb.slot_role}</span></div>
+                            <div>Catch Allowed: <span className="intel-cb-stat-val">{(item.primary_cb.catch_rate_allowed * 100).toFixed(0)}%</span></div>
+                            <div>FP/Route: <span className="intel-cb-stat-val">{item.primary_cb.fpts_per_route_allowed.toFixed(2)}</span></div>
+                          </div>
+
+                          {item.primary_cb.injury_note && (
+                            <div style={{ fontSize: '11px', color: 'var(--accent-amber)', marginTop: '4px', fontWeight: 600 }}>
+                              ⚠️ {item.primary_cb.injury_note}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Tactical Takeaway */}
+                        <div className="intel-takeaway-box">
+                          {item.tactical_takeaway}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MODE 2: TRENCH WARFARE (O-LINE VS D-LINE) */}
+          {pffSubMode === 'trenches' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="intel-dvp-banner" style={{ borderLeft: '4px solid var(--accent-emerald)' }}>
+                <div className="intel-dvp-banner-content">
+                  <div className="intel-dvp-banner-title">
+                    <span>🛡️ PFF Trench Warfare (O-Line vs D-Line Matchup Leverage)</span>
+                    <span className="pill emerald" style={{ fontSize: '10px', fontWeight: 800 }}>
+                      Pocket Cleanliness & Push Metrics
+                    </span>
+                  </div>
+                  <p className="intel-dvp-banner-text">
+                    NFL outcomes are decided in the trenches. PFF offensive line pass-blocking & run-blocking grades are pitted directly against defensive front pass-rush grades and run-stop rates. Use this to identify clean pockets for passing stacks and road-grader offensive lines for running back ground volume.
+                  </p>
+                </div>
+              </div>
+
+              {isLoadingTrenches ? (
+                <div className="card" style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
+                  Loading trench warfare matchups...
+                </div>
+              ) : trenchMatchups.length === 0 ? (
+                <div className="card" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  No trench matchup data available for this slate.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '16px' }}>
+                  {trenchMatchups
+                    .filter((m) => {
+                      if (!searchQuery) return true
+                      const q = searchQuery.toLowerCase()
+                      return (
+                        m.off_team.toLowerCase().includes(q) ||
+                        m.def_team.toLowerCase().includes(q)
+                      )
+                    })
+                    .map((m, idx) => (
+                      <div
+                        key={idx}
+                        className="card"
+                        style={{
+                          background: 'var(--card-bg, #18181b)',
+                          border: '1px solid var(--border-color, #27272a)',
+                          borderRadius: '12px',
+                          padding: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px',
+                        }}
+                      >
+                        {/* Game Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <NFLTeamLogo team={m.off_team} size={22} />
+                            <strong style={{ fontSize: '15px' }}>{m.off_team} Offense</strong>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{m.is_home ? 'vs' : '@'}</span>
+                            <NFLTeamLogo team={m.def_team} size={22} />
+                            <strong style={{ fontSize: '15px' }}>{m.def_team} Defense</strong>
+                          </div>
+                          <span className="pill zinc" style={{ fontSize: '10.5px' }}>
+                            {m.off_team} {m.is_home ? 'vs' : '@'} {m.def_team}
+                          </span>
+                        </div>
+
+                        {/* Edge Pills */}
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {renderPassProBadge(m.pass_protection_tier, m.pass_protection_edge)}
+                          {renderRunPushBadge(m.run_push_tier, m.run_push_edge)}
+                        </div>
+
+                        {/* Head-to-Head Comparison Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          {/* O-Line Column */}
+                          <div style={{ background: 'rgba(0, 0, 0, 0.25)', borderRadius: '8px', padding: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>O-LINE TRENCH</span>
+                              <strong style={{ color: 'var(--accent-cyan)', fontSize: '12px' }}>{((m.pass_block_grade + m.run_block_grade) / 2).toFixed(1)}</strong>
+                            </div>
+                            <div style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Pass Block:</span>
+                              <strong>{m.pass_block_grade.toFixed(1)}</strong>
+                            </div>
+                            <div style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Run Block:</span>
+                              <strong>{m.run_block_grade.toFixed(1)}</strong>
+                            </div>
+                          </div>
+
+                          {/* D-Line Column */}
+                          <div style={{ background: 'rgba(0, 0, 0, 0.25)', borderRadius: '8px', padding: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>D-FRONT TRENCH</span>
+                              <strong style={{ color: 'var(--accent-amber)', fontSize: '12px' }}>{((m.pass_rush_grade + m.run_defense_grade) / 2).toFixed(1)}</strong>
+                            </div>
+                            <div style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Pass Rush:</span>
+                              <strong>{m.pass_rush_grade.toFixed(1)}</strong>
+                            </div>
+                            <div style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Run Stop:</span>
+                              <strong>{m.run_defense_grade.toFixed(1)}</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Probability Progress Bars */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255, 255, 255, 0.02)', padding: '10px', borderRadius: '8px' }}>
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '3px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>QB Pressure Probability:</span>
+                              <strong style={{ color: m.pressure_prob_pct >= 32.0 ? 'var(--accent-rose)' : m.pressure_prob_pct <= 22.0 ? 'var(--accent-emerald)' : 'var(--accent-cyan)' }}>
+                                {m.pressure_prob_pct.toFixed(1)}% {m.pressure_prob_pct >= 32.0 ? '(High)' : m.pressure_prob_pct <= 22.0 ? '(Clean)' : '(Norm)'}
+                              </strong>
+                            </div>
+                            <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                              <div
+                                style={{
+                                  width: `${Math.min(100, m.pressure_prob_pct * 2.2)}%`,
+                                  height: '100%',
+                                  background: m.pressure_prob_pct >= 32.0 ? 'var(--accent-rose)' : m.pressure_prob_pct <= 22.0 ? 'var(--accent-emerald)' : 'var(--accent-cyan)',
+                                  borderRadius: '3px',
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '3px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Stuffed Run Rate Risk:</span>
+                              <strong style={{ color: m.stuffed_run_prob_pct >= 22.0 ? 'var(--accent-rose)' : m.stuffed_run_prob_pct <= 14.0 ? 'var(--accent-emerald)' : 'var(--accent-amber)' }}>
+                                {m.stuffed_run_prob_pct.toFixed(1)}%
+                              </strong>
+                            </div>
+                            <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                              <div
+                                style={{
+                                  width: `${Math.min(100, m.stuffed_run_prob_pct * 3)}%`,
+                                  height: '100%',
+                                  background: m.stuffed_run_prob_pct >= 22.0 ? 'var(--accent-rose)' : m.stuffed_run_prob_pct <= 14.0 ? 'var(--accent-emerald)' : 'var(--accent-amber)',
+                                  borderRadius: '3px',
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Tactical Takeaway */}
+                        <div className="intel-takeaway-box" style={{ margin: 0, fontSize: '11.5px' }}>
+                          💡 <strong>Trench Insight:</strong> {m.key_matchup_note}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MODE 3: 32-TEAM COMPOSITE DEFENSE MATRIX (PFF FILM + DVP) */}
+          {pffSubMode === 'composite' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="intel-dvp-banner" style={{ borderLeft: '4px solid var(--accent-purple, #8b5cf6)' }}>
+                <div className="intel-dvp-banner-content">
+                  <div className="intel-dvp-banner-title">
+                    <span>⚖️ 3-Pillar Composite Defense Doctrine (PFF Film 60% + DvP FPA 40% + Live Inactive Downgrades)</span>
+                    <span className="pill purple" style={{ fontSize: '10px', fontWeight: 800 }}>
+                      Institutional Defense Matrix
+                    </span>
+                  </div>
+                  <p className="intel-dvp-banner-text">
+                    Fantasy points allowed (DvP) can be deceiving due to blowout garbage time or small sample sizes. Our quant model weights <strong>60% PFF Film Grades</strong> (coverage & run stop win rates) with <strong>40% DvP Fantasy Points Allowed</strong>. Crucially, when key defensive starters are ruled OUT (e.g. Seattle CB Terrion Arnold & Safety Nick Emmanwori), their unit ratings automatically degrade in real-time.
+                  </p>
+                </div>
+              </div>
+
+              {isLoadingComposite ? (
+                <div className="card" style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
+                  Loading 32-team composite defense matrix...
+                </div>
+              ) : compositeDefenses.length === 0 ? (
+                <div className="card" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  No composite defense records available.
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="custom-table" style={{ width: '100%' }}>
+                    <thead>
+                      <tr>
+                        <th>NFL Team</th>
+                        <th>Overall Def Grade</th>
+                        <th>Pass Defense Tier</th>
+                        <th>Pass Film / DvP</th>
+                        <th>Rush Defense Tier</th>
+                        <th>Rush Film / DvP</th>
+                        <th>Secondary / Defensive Alerts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {compositeDefenses
+                        .filter((c) => {
+                          if (!searchQuery) return true
+                          return (
+                            c.team.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (c.team_name && c.team_name.toLowerCase().includes(searchQuery.toLowerCase()))
+                          )
+                        })
+                        .map((c) => (
+                          <tr key={c.team}>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <NFLTeamLogo team={c.team} size={22} />
+                                <strong style={{ fontSize: '14px' }}>{c.team_name || c.team}</strong>
+                              </div>
+                            </td>
+                            <td>
+                              <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
+                                {c.overall_def_grade.toFixed(1)}
+                              </strong>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {renderDefTierBadge(c.pass_tier)}
+                                <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                                  ({c.composite_pass_score.toFixed(1)})
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+                                PFF: <strong style={{ color: 'var(--text-primary)' }}>{c.pass_defense_pff_grade.toFixed(1)}</strong> • DvP: <strong style={{ color: c.dvp_pass_rank <= 10 ? 'var(--accent-rose)' : c.dvp_pass_rank >= 22 ? 'var(--accent-emerald)' : 'var(--accent-amber)' }}>#{c.dvp_pass_rank}</strong>
+                              </div>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {renderDefTierBadge(c.rush_tier)}
+                                <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                                  ({c.composite_rush_score.toFixed(1)})
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+                                PFF: <strong style={{ color: 'var(--text-primary)' }}>{c.run_defense_pff_grade.toFixed(1)}</strong> • DvP: <strong style={{ color: c.dvp_rush_rank <= 10 ? 'var(--accent-rose)' : c.dvp_rush_rank >= 22 ? 'var(--accent-emerald)' : 'var(--accent-amber)' }}>#{c.dvp_rush_rank}</strong>
+                              </div>
+                            </td>
+                            <td>
+                              {c.secondary_injury_alert ? (
+                                <span className="pill amber" style={{ fontSize: '10px', fontWeight: 700 }}>
+                                  ⚠️ {c.secondary_injury_alert}
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                  Full Strength
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>

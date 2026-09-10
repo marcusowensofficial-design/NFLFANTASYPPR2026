@@ -75,6 +75,12 @@ export interface StartSitEvaluation {
   position: string
   pro_team: string
   projected_points: number
+  actual_points?: number
+  lineup_locked?: boolean
+  is_started?: boolean
+  is_final?: boolean
+  game_status?: 'UPCOMING' | 'LIVE' | 'FINAL'
+  effective_points?: number
   start_score: number
   confidence: string
   recommendation: string
@@ -253,6 +259,8 @@ export interface OptimizedLineupResult {
   team_id: number
   total_start_score: number
   total_projected_points: number
+  total_actual_points?: number
+  total_effective_points?: number
   current_espn_projected: number
   net_projected_gain: number
   starters: SlotAssignment[]
@@ -302,6 +310,9 @@ export interface TeamSummary {
   rank?: number
   points_for: number
   points_against: number
+  live_points_for?: number
+  live_points_against?: number
+  live_projected_points_for?: number
   starter_count: number
   bench_count: number
 }
@@ -320,9 +331,12 @@ export interface MatchupResponseItem {
   away_team_abbrev: string
   home_score: number
   away_score: number
+  home_actual?: number
+  away_actual?: number
   home_projected: number
   away_projected: number
   winner: string | null
+  is_completed?: boolean
 }
 
 export interface LeagueSummaryResponse {
@@ -354,6 +368,9 @@ export interface RosterPlayerResponse {
   projected_points: number
   actual_points: number
   lineup_locked: boolean
+  is_final?: boolean
+  game_status?: 'UPCOMING' | 'LIVE' | 'FINAL'
+  effective_points?: number
   fp_injury_note?: string | null
   fp_start_sit_grade?: string | null
   fp_pos_rank?: string | null
@@ -373,6 +390,8 @@ export interface TeamRosterResponse {
   starters_count: number
   bench_count: number
   total_projected_points: number
+  total_actual_points?: number
+  total_effective_points?: number
   roster: RosterPlayerResponse[]
   bench_slots_count: number
   ir_slots_count: number
@@ -524,11 +543,17 @@ export interface InjuryResponseItem {
   team: string
   status: string
   practice_status: string | null
+  practice_trend?: string | null
+  decoy_risk?: 'HIGH' | 'MODERATE' | 'LOW' | null
   headline: string | null
   notes: string | null
   date: string | null
   is_playable: boolean
   is_out: boolean
+  backup_player_name?: string | null
+  backup_player_id?: number | null
+  backup_slot?: string | null
+  vacated_opportunity_note?: string | null
 }
 
 export interface InjuryFeedResponse {
@@ -751,6 +776,45 @@ export interface CornerbackProfile {
   targets_per_route_allowed: number
   fpts_per_route_allowed: number
   catch_rate_allowed: number
+  is_backup_replacement?: boolean
+  original_starter_name?: string | null
+  injury_note?: string | null
+}
+
+export interface PFFTrenchMatchup {
+  off_team: string
+  def_team: string
+  is_home: boolean
+  pass_block_grade: number
+  pass_rush_grade: number
+  run_block_grade: number
+  run_defense_grade: number
+  pass_protection_edge: number
+  run_push_edge: number
+  pass_protection_tier: string
+  run_push_tier: string
+  key_matchup_note: string
+  pressure_prob_pct: number
+  stuffed_run_prob_pct: number
+}
+
+export interface PFFCompositeDefenseRecord {
+  team: string
+  team_name: string
+  pass_defense_pff_grade: number
+  run_defense_pff_grade: number
+  pass_rush_pff_grade: number
+  overall_def_grade: number
+  dvp_pass_rank: number
+  dvp_rush_rank: number
+  composite_pass_score: number
+  composite_rush_score: number
+  pass_tier: string
+  rush_tier: string
+  key_disruptors: string[]
+  key_corners: string[]
+  secondary_injury_alert?: string | null
+  tactical_verdict: string
 }
 
 export interface WRAlignmentProfile {

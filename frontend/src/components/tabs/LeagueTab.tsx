@@ -95,8 +95,15 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
     }
 
     // Sort order
+    const getScore = (p: RosterPlayerResponse) => {
+      if (p.effective_points !== undefined && p.effective_points !== null) return p.effective_points
+      const isDone = p.is_final || (p.lineup_locked && (p.actual_points ?? 0) > 0)
+      if (isDone && p.actual_points !== undefined) return p.actual_points
+      return p.projected_points
+    }
+
     if (sortBy === 'PROJ_DESC') {
-      list.sort((a, b) => b.projected_points - a.projected_points)
+      list.sort((a, b) => getScore(b) - getScore(a))
     } else if (sortBy === 'NAME') {
       list.sort((a, b) => a.full_name.localeCompare(b.full_name))
     } else {
@@ -118,7 +125,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
         const orderA = slotOrderMap[a.slot_name?.toUpperCase()] || 99
         const orderB = slotOrderMap[b.slot_name?.toUpperCase()] || 99
         if (orderA !== orderB) return orderA - orderB
-        return b.projected_points - a.projected_points
+        return getScore(b) - getScore(a)
       })
     }
 
@@ -337,8 +344,8 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                 <th>Team & Manager</th>
                 <th>Record (W-L-T)</th>
                 <th>Win Pct</th>
-                <th>Points For (PF)</th>
-                <th>Points Against (PA)</th>
+                <th style={{ minWidth: '135px' }} title="Points For: Total fantasy points scored by this team">PF (Scored)</th>
+                <th style={{ minWidth: '135px' }} title="Points Against: Fantasy points scored by opponents against this team">PA (Allowed)</th>
                 <th>Current Status</th>
                 <th style={{ textAlign: 'right' }}>Action</th>
               </tr>
@@ -391,11 +398,54 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                     <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
                       {((t.win_pct || 0) * 100).toFixed(1)}%
                     </td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent-cyan)' }}>
-                      {t.points_for.toFixed(1)} pts
+                    <td style={{ fontFamily: 'var(--font-mono)' }}>
+                      {(t.live_points_for ?? 0) > 0 ? (
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontWeight: 800, color: 'var(--accent-emerald, #10b981)' }}>
+                              {t.points_for.toFixed(1)} pts
+                            </span>
+                            <span
+                              className="pill emerald"
+                              style={{ fontSize: '9px', padding: '1px 5px', fontWeight: 800 }}
+                              title={`Live Week Actual: ${t.live_points_for?.toFixed(1)} pts scored`}
+                            >
+                              LIVE
+                            </span>
+                          </div>
+                          {(t.live_projected_points_for ?? 0) > 0 && (
+                            <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                              Live Proj: {t.live_projected_points_for?.toFixed(1)}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
+                          {t.points_for.toFixed(1)} pts
+                        </span>
+                      )}
                     </td>
-                    <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                      {t.points_against.toFixed(1)} pts
+                    <td style={{ fontFamily: 'var(--font-mono)' }}>
+                      {(() => {
+                        const oppMatchup = matchups.find((m) => m.home_team_id === t.id || m.away_team_id === t.id)
+                        const oppName = oppMatchup
+                          ? (oppMatchup.home_team_id === t.id ? oppMatchup.away_team_name : oppMatchup.home_team_name)
+                          : null
+                        const oppShort = oppName ? (oppName.length > 15 ? oppName.slice(0, 13) + '…' : oppName) : null
+
+                        return (
+                          <div>
+                            <span style={{ fontWeight: 600, color: (t.live_points_against ?? 0) > 0 ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+                              {t.points_against.toFixed(1)} pts
+                            </span>
+                            {oppShort && (
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                {(t.live_points_against ?? 0) > 0 ? `conceded vs ${oppShort}` : `vs ${oppShort}`}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -461,11 +511,23 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                 league?.user_team_id &&
                 (m.away_team_id === league.user_team_id || m.home_team_id === league.user_team_id)
               )
-              const awayWon = m.winner === 'AWAY'
-              const homeWon = m.winner === 'HOME'
-              const isCompleted = m.winner !== null && m.winner !== 'UNDECIDED' && m.winner !== 'NONE'
+              const isCompleted = m.is_completed || ((m as any).winner !== null && (m as any).winner !== 'UNDECIDED' && (m as any).winner !== 'NONE')
+              const awayWon = isCompleted && m.away_score > m.home_score
+              const homeWon = isCompleted && m.home_score > m.away_score
               const isAwaySelected = selectedRosterTeamId === m.away_team_id
               const isHomeSelected = selectedRosterTeamId === m.home_team_id
+
+              const awayActualScore = isCompleted
+                ? m.away_score
+                : (m.away_actual ?? 0) > 0
+                ? (m.away_actual ?? 0)
+                : m.away_score
+              const homeActualScore = isCompleted
+                ? m.home_score
+                : (m.home_actual ?? 0) > 0
+                ? (m.home_actual ?? 0)
+                : m.home_score
+              const hasLiveScore = !isCompleted && ((m.away_actual ?? 0) > 0 || (m.home_actual ?? 0) > 0)
 
               return (
                 <div key={m.matchup_id} className={`matchup-card ${isUserMatchup ? 'user-matchup' : ''}`}>
@@ -494,20 +556,30 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                       </span>
                     </div>
                     <div className="matchup-team-scoring">
-                      <span className="matchup-score-actual">
+                      <span
+                        className="matchup-score-actual"
+                        style={hasLiveScore && (m.away_actual ?? 0) > 0 ? { color: 'var(--accent-emerald, #10b981)' } : undefined}
+                      >
                         {isCompleted
-                          ? `${m.away_score.toFixed(1)}`
-                          : m.away_score > 0
-                          ? `${m.away_score.toFixed(1)}`
+                          ? `${awayActualScore.toFixed(1)}`
+                          : awayActualScore > 0
+                          ? `${awayActualScore.toFixed(1)}`
                           : '—'}
                       </span>
-                      <span className="matchup-score-proj">Proj: {m.away_projected.toFixed(1)}</span>
+                      <span className="matchup-score-proj">
+                        {hasLiveScore ? `Live Proj: ${m.away_projected.toFixed(1)}` : `Proj: ${m.away_projected.toFixed(1)}`}
+                      </span>
                     </div>
                   </div>
 
                   {/* Divider / Status */}
                   <div className="matchup-divider">
-                    <span className="matchup-vs-pill">{isCompleted ? 'FINAL' : 'VS'}</span>
+                    <span
+                      className={`matchup-vs-pill ${isCompleted ? 'final' : hasLiveScore ? 'live' : ''}`}
+                      style={hasLiveScore ? { color: 'var(--accent-emerald, #10b981)', borderColor: 'rgba(16, 185, 129, 0.4)' } : undefined}
+                    >
+                      {isCompleted ? 'FINAL' : hasLiveScore ? 'LIVE' : 'VS'}
+                    </span>
                   </div>
 
                   {/* Home Team */}
@@ -535,14 +607,19 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                       </span>
                     </div>
                     <div className="matchup-team-scoring">
-                      <span className="matchup-score-actual">
+                      <span
+                        className="matchup-score-actual"
+                        style={hasLiveScore && (m.home_actual ?? 0) > 0 ? { color: 'var(--accent-emerald, #10b981)' } : undefined}
+                      >
                         {isCompleted
-                          ? `${m.home_score.toFixed(1)}`
-                          : m.home_score > 0
-                          ? `${m.home_score.toFixed(1)}`
+                          ? `${homeActualScore.toFixed(1)}`
+                          : homeActualScore > 0
+                          ? `${homeActualScore.toFixed(1)}`
                           : '—'}
                       </span>
-                      <span className="matchup-score-proj">Proj: {m.home_projected.toFixed(1)}</span>
+                      <span className="matchup-score-proj">
+                        {hasLiveScore ? `Live Proj: ${m.home_projected.toFixed(1)}` : `Proj: ${m.home_projected.toFixed(1)}`}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -569,15 +646,23 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                 )}
               </div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Manager: {selectedTeamSummary?.primary_owner || 'League Member'} • Record: {selectedTeamSummary?.record || '0-0'} • Standings Rank: #{selectedTeamSummary?.rank || 1}
+                Manager: {selectedTeamSummary?.primary_owner || 'League Member'} • Record: {selectedTeamSummary?.record || '0-0'} • Standings Rank: #{selectedTeamSummary?.rank || 1} • PF: {(selectedTeamSummary?.points_for ?? 0).toFixed(1)} pts
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               {activeRosterData && (
-                <span className="pill purple" style={{ fontSize: '12px', fontWeight: 700, padding: '4px 10px' }}>
-                  Total Projected: {activeRosterData.total_projected_points.toFixed(1)} pts
-                </span>
+                <>
+                  {(activeRosterData.total_actual_points ?? 0) > 0 && (
+                    <span className="pill emerald" style={{ fontSize: '12px', fontWeight: 800, padding: '4px 10px' }}>
+                      ⚡ Live Score: {(activeRosterData.total_actual_points ?? 0).toFixed(1)} pts
+                    </span>
+                  )}
+                  <span className="pill purple" style={{ fontSize: '12px', fontWeight: 700, padding: '4px 10px' }}>
+                    {(activeRosterData.total_actual_points ?? 0) > 0 ? 'Projected Total: ' : 'Total Projected: '}
+                    {(activeRosterData.total_effective_points ?? activeRosterData.total_projected_points).toFixed(1)} pts
+                  </span>
+                </>
               )}
               {onRefreshRoster && (
                 <button
@@ -742,7 +827,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                 style={{ padding: '5px 10px', fontSize: '12px' }}
               >
                 <option value="SLOT">Sort: Slot Order</option>
-                <option value="PROJ_DESC">Sort: Proj Pts (High-Low)</option>
+                <option value="PROJ_DESC">Sort: Fantasy Pts (High-Low)</option>
                 <option value="NAME">Sort: Player Name</option>
               </select>
             </div>
@@ -760,7 +845,9 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                     <th>Player</th>
                     <th>Pos</th>
                     <th>NFL Team</th>
-                    <th>Projected Points</th>
+                    <th title="Displays actual fantasy points scored for resolved/live games, or pre-game projected points for upcoming matchups">
+                      Fantasy Pts (Actual / Proj)
+                    </th>
                     <th>Injury & Game Status</th>
                     <th style={{ textAlign: 'right' }}>Action</th>
                   </tr>
@@ -826,22 +913,66 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                         </td>
                         <td>
                           <div>
-                            <span
-                              style={{
-                                fontFamily: 'var(--font-mono)',
-                                fontWeight: 800,
-                                fontSize: '13px',
-                                color: 'var(--accent-cyan)',
-                              }}
-                            >
-                              {p.projected_points.toFixed(1)} pts
-                            </span>
-                            {(((p.projected_points_espn ?? 0) > 0) || ((p.projected_points_fp ?? 0) > 0)) && (
-                              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                                ESPN: {p.projected_points_espn !== undefined ? p.projected_points_espn.toFixed(1) : p.projected_points.toFixed(1)}
-                                {(p.projected_points_fp ?? 0) > 0 ? ` • FP: ${p.projected_points_fp?.toFixed(1)}` : ''}
-                              </div>
-                            )}
+                            {(() => {
+                              const isFinal = p.game_status === 'FINAL' || p.is_final || (p.lineup_locked && (p.actual_points ?? 0) > 0)
+                              const isLive = p.game_status === 'LIVE'
+                              const hasActual = (p.actual_points !== undefined && p.actual_points !== null) && (isFinal || isLive || (p.lineup_locked && (p.actual_points ?? 0) > 0))
+
+                              if (hasActual) {
+                                return (
+                                  <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <span
+                                        style={{
+                                          fontFamily: 'var(--font-mono)',
+                                          fontWeight: 800,
+                                          fontSize: '13px',
+                                          color: isFinal ? 'var(--accent-emerald, #10b981)' : 'var(--accent-amber, #f59e0b)',
+                                        }}
+                                      >
+                                        {(p.actual_points ?? 0).toFixed(1)} pts
+                                      </span>
+                                      <span
+                                        className={`pill ${isFinal ? 'emerald' : 'amber'}`}
+                                        style={{ fontSize: '9px', padding: '1px 5px', fontWeight: 800 }}
+                                      >
+                                        {isFinal ? 'FINAL' : 'LIVE'}
+                                      </span>
+                                    </div>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                      Proj: {p.projected_points.toFixed(1)}
+                                      {(((p.projected_points_espn ?? 0) > 0) || ((p.projected_points_fp ?? 0) > 0)) && (
+                                        <span>
+                                          {' '}(ESPN: {p.projected_points_espn !== undefined ? p.projected_points_espn.toFixed(1) : p.projected_points.toFixed(1)}
+                                          {(p.projected_points_fp ?? 0) > 0 ? ` • FP: ${p.projected_points_fp?.toFixed(1)}` : ''})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                )
+                              }
+
+                              return (
+                                <div>
+                                  <span
+                                    style={{
+                                      fontFamily: 'var(--font-mono)',
+                                      fontWeight: 800,
+                                      fontSize: '13px',
+                                      color: 'var(--accent-cyan)',
+                                    }}
+                                  >
+                                    {p.projected_points.toFixed(1)} pts
+                                  </span>
+                                  {(((p.projected_points_espn ?? 0) > 0) || ((p.projected_points_fp ?? 0) > 0)) && (
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                                      ESPN: {p.projected_points_espn !== undefined ? p.projected_points_espn.toFixed(1) : p.projected_points.toFixed(1)}
+                                      {(p.projected_points_fp ?? 0) > 0 ? ` • FP: ${p.projected_points_fp?.toFixed(1)}` : ''}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })()}
                           </div>
                         </td>
                         <td>

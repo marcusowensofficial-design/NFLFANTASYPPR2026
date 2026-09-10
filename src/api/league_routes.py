@@ -1,5 +1,4 @@
-"""FastAPI route handlers for League, Teams, Rosters, and Sync operations."""
-
+import logging
 from collections import defaultdict
 from datetime import datetime
 from typing import Any
@@ -13,6 +12,8 @@ from src.db.models import LeagueModel, MatchupModel, PlayerModel, RosterEntryMod
 from src.db.session import get_db
 from src.services.espn_sync import ESPNSyncService
 from src.services.optimizer.lineup_optimizer import SLOT_ORDER
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/league", tags=["League"])
 
@@ -41,6 +42,9 @@ class TeamResponse(BaseModel):
     rank: int = 1
     points_for: float
     points_against: float
+    live_points_for: float = 0.0
+    live_points_against: float = 0.0
+    live_projected_points_for: float = 0.0
     starter_count: int
     bench_count: int
 
@@ -59,6 +63,8 @@ class MatchupResponseItem(BaseModel):
     away_team_abbrev: str
     home_score: float
     away_score: float
+    home_actual: float = 0.0
+    away_actual: float = 0.0
     home_projected: float = 0.0
     away_projected: float = 0.0
     winner: str | None = None
@@ -80,6 +86,9 @@ class RosterPlayerResponse(BaseModel):
     projected_points: float
     actual_points: float
     lineup_locked: bool
+    is_final: bool = False
+    game_status: str = "UPCOMING"
+    effective_points: float = 0.0
     fp_injury_note: str | None = None
     fp_start_sit_grade: str | None = None
     fp_pos_rank: str | None = None
@@ -108,6 +117,7 @@ class PlayerDirectoryItem(BaseModel):
     slot_name: str | None = None
 
 
+
 class TeamRosterResponse(BaseModel):
     team_id: int
     team_name: str
@@ -116,6 +126,8 @@ class TeamRosterResponse(BaseModel):
     starters_count: int
     bench_count: int
     total_projected_points: float
+    total_actual_points: float = 0.0
+    total_effective_points: float = 0.0
     roster: list[RosterPlayerResponse]
     bench_slots_count: int = 7
     ir_slots_count: int = 1
@@ -211,9 +223,20 @@ async def sync_league_data(
 
 
 
-@router.get("/summary", response_model=LeagueSummaryResponse)
-def get_league_summary(db: Session = Depends(get_db)) -> LeagueSummaryResponse:
-    """Retrieve full league summary with 8 teams from SQLite."""
+async def _background_league_sync(league_id: int):
+    try:
+        sync_svc = ESPNSyncService()
+        await sync_svc.sync(league_id=league_id, force=True)
+        logger.info(f"Auto-synchronized league {league_id} in background.")
+    except Exception as e:
+        logger.warning(f"Background league auto-sync failed: {e}")
+
+
+def _get_league_summary_data(
+    db: Session,
+    background_tasks: BackgroundTasks | None = None,
+) -> LeagueSummaryResponse:
+    """Internal helper to retrieve full league summary with 8 teams from SQLite."""
     league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
     if not league:
         raise HTTPException(
@@ -221,17 +244,48 @@ def get_league_summary(db: Session = Depends(get_db)) -> LeagueSummaryResponse:
             detail="No league data found in SQLite. Run POST /api/league/sync or test_espn_connection.py first.",
         )
 
+    # Auto-refresh: If league cache is stale (older than 10 minutes), queue background sync from ESPN
+    sync_service = ESPNSyncService()
+    if background_tasks and sync_service.is_cache_stale(league.id, max_age_minutes=10):
+        background_tasks.add_task(_background_league_sync, league.id)
+
     teams_db = db.execute(
         select(TeamModel).where(TeamModel.league_id == league.id).order_by(TeamModel.id)
     ).scalars().all()
 
-    # Batch query all roster entries in a single fast round-trip
-    all_entries = db.execute(
-        select(RosterEntryModel).where(RosterEntryModel.league_id == league.id)
-    ).scalars().all()
+    # Batch query all roster entries joined with player stats to compute live actuals
+    roster_rows = db.execute(
+        select(RosterEntryModel, PlayerModel)
+        .join(PlayerModel, RosterEntryModel.player_id == PlayerModel.id)
+        .where(RosterEntryModel.league_id == league.id)
+    ).all()
+
     entries_by_team: dict[int, list[RosterEntryModel]] = defaultdict(list)
-    for e in all_entries:
-        entries_by_team[e.team_id].append(e)
+    live_starters_actual: dict[int, float] = defaultdict(float)
+    live_starters_effective: dict[int, float] = defaultdict(float)
+
+    for entry, player in roster_rows:
+        entries_by_team[entry.team_id].append(entry)
+        if entry.is_starter:
+            act = float(player.actual_points or 0.0)
+            proj = float(player.projected_points or 0.0)
+            is_locked = bool(entry.lineup_locked)
+            live_starters_actual[entry.team_id] += act
+            eff = act if (act > 0 or is_locked) else proj
+            live_starters_effective[entry.team_id] += eff
+
+    # Matchups for current week to resolve opponents
+    current_matchups = db.execute(
+        select(MatchupModel).where(
+            MatchupModel.league_id == league.id,
+            MatchupModel.week == league.current_week,
+        )
+    ).scalars().all()
+
+    team_opponent_map: dict[int, int] = {}
+    for m in current_matchups:
+        team_opponent_map[m.home_team_id] = m.away_team_id
+        team_opponent_map[m.away_team_id] = m.home_team_id
 
     team_responses: list[TeamResponse] = []
     for t in teams_db:
@@ -240,6 +294,26 @@ def get_league_summary(db: Session = Depends(get_db)) -> LeagueSummaryResponse:
         bench = sum(1 for e in entries if not e.is_starter)
         total_games = t.wins + t.losses + t.ties
         win_pct = round((t.wins + (t.ties * 0.5)) / max(total_games, 1), 3) if total_games > 0 else 0.0
+
+        live_pf = round(live_starters_actual.get(t.id, 0.0), 2)
+        opp_id = team_opponent_map.get(t.id)
+        live_pa = round(live_starters_actual.get(opp_id, 0.0) if opp_id else 0.0, 2)
+        live_proj_pf = round(live_starters_effective.get(t.id, 0.0), 2)
+
+        # Cumulative Points For: Base points_for (from completed weeks) + live starter actuals
+        if round(t.points_for, 2) == live_pf:
+            total_pf = live_pf
+        elif t.points_for == 0.0:
+            total_pf = live_pf
+        else:
+            total_pf = round(t.points_for + live_pf, 2)
+
+        if round(t.points_against, 2) == live_pa:
+            total_pa = live_pa
+        elif t.points_against == 0.0:
+            total_pa = live_pa
+        else:
+            total_pa = round(t.points_against + live_pa, 2)
 
         team_responses.append(
             TeamResponse(
@@ -256,8 +330,11 @@ def get_league_summary(db: Session = Depends(get_db)) -> LeagueSummaryResponse:
                 ties=t.ties,
                 win_pct=win_pct,
                 rank=1,
-                points_for=t.points_for,
-                points_against=t.points_against,
+                points_for=total_pf,
+                points_against=total_pa,
+                live_points_for=live_pf,
+                live_points_against=live_pa,
+                live_projected_points_for=live_proj_pf,
                 starter_count=starters,
                 bench_count=bench,
             )
@@ -283,10 +360,22 @@ def get_league_summary(db: Session = Depends(get_db)) -> LeagueSummaryResponse:
     )
 
 
+@router.get("/summary", response_model=LeagueSummaryResponse)
+def get_league_summary(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+) -> LeagueSummaryResponse:
+    """Retrieve full league summary with 8 teams from SQLite."""
+    return _get_league_summary_data(db=db, background_tasks=background_tasks)
+
+
 @router.get("/teams", response_model=list[TeamResponse])
-def get_league_teams(db: Session = Depends(get_db)) -> list[TeamResponse]:
+def get_league_teams(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+) -> list[TeamResponse]:
     """List all teams in the league ordered by official standings rank."""
-    summary = get_league_summary(db)
+    summary = _get_league_summary_data(db=db, background_tasks=background_tasks)
     return summary.teams
 
 
@@ -312,7 +401,7 @@ def get_league_matchups(
     teams = db.execute(select(TeamModel).where(TeamModel.league_id == league.id)).scalars().all()
     team_map = {t.id: t for t in teams}
 
-    # Pre-calculate team projected totals from starters
+    # Pre-calculate team projected totals and actual totals from starters
     starters = db.execute(
         select(RosterEntryModel, PlayerModel)
         .join(PlayerModel, RosterEntryModel.player_id == PlayerModel.id)
@@ -322,13 +411,19 @@ def get_league_matchups(
         )
     ).all()
     team_projections: dict[int, float] = {}
+    team_actuals: dict[int, float] = {}
     for re, p in starters:
-        team_projections[re.team_id] = team_projections.get(re.team_id, 0.0) + p.projected_points
+        act_pts = float(p.actual_points or 0.0)
+        eff = act_pts if (re.lineup_locked or act_pts > 0) else float(p.projected_points or 0.0)
+        team_projections[re.team_id] = team_projections.get(re.team_id, 0.0) + eff
+        team_actuals[re.team_id] = team_actuals.get(re.team_id, 0.0) + act_pts
 
     items: list[MatchupResponseItem] = []
     for m in matchups:
         home_t = team_map.get(m.home_team_id)
         away_t = team_map.get(m.away_team_id)
+        h_act = round(m.home_score if m.home_score > 0 else team_actuals.get(m.home_team_id, 0.0), 2)
+        a_act = round(m.away_score if m.away_score > 0 else team_actuals.get(m.away_team_id, 0.0), 2)
         items.append(
             MatchupResponseItem(
                 id=m.id,
@@ -342,8 +437,10 @@ def get_league_matchups(
                 away_team_name=away_t.name if away_t else f"Team {m.away_team_id}",
                 home_team_abbrev=home_t.abbrev if home_t else f"T{m.home_team_id}",
                 away_team_abbrev=away_t.abbrev if away_t else f"T{m.away_team_id}",
-                home_score=round(m.home_score, 2),
-                away_score=round(m.away_score, 2),
+                home_score=h_act,
+                away_score=a_act,
+                home_actual=h_act,
+                away_actual=a_act,
                 home_projected=round(team_projections.get(m.home_team_id, 0.0), 2),
                 away_projected=round(team_projections.get(m.away_team_id, 0.0), 2),
                 winner=m.winner,
@@ -378,10 +475,31 @@ def get_team_roster(team_id: int, db: Session = Depends(get_db)) -> TeamRosterRe
 
     player_items: list[RosterPlayerResponse] = []
     total_proj = 0.0
+    total_act = 0.0
+    total_eff = 0.0
 
     for roster_entry, player in entries:
+        act_pts = float(player.actual_points or 0.0)
+        proj_pts = float(player.projected_points or 0.0)
+        is_locked = bool(roster_entry.lineup_locked)
+
+        if is_locked and act_pts > 0:
+            g_status = "FINAL"
+            eff_pts = act_pts
+        elif is_locked:
+            g_status = "LIVE"
+            eff_pts = act_pts if act_pts > 0 else proj_pts
+        elif act_pts > 0:
+            g_status = "FINAL"
+            eff_pts = act_pts
+        else:
+            g_status = "UPCOMING"
+            eff_pts = proj_pts
+
         if roster_entry.is_starter:
-            total_proj += player.projected_points
+            total_proj += proj_pts
+            total_act += act_pts
+            total_eff += eff_pts
 
         player_items.append(
             RosterPlayerResponse(
@@ -396,9 +514,12 @@ def get_team_roster(team_id: int, db: Session = Depends(get_db)) -> TeamRosterRe
                 is_starter=roster_entry.is_starter,
                 injury_status=player.injury_status,
                 injured=player.injured,
-                projected_points=player.projected_points,
-                actual_points=player.actual_points,
-                lineup_locked=roster_entry.lineup_locked,
+                projected_points=proj_pts,
+                actual_points=act_pts,
+                lineup_locked=is_locked,
+                is_final=(g_status == "FINAL"),
+                game_status=g_status,
+                effective_points=round(eff_pts, 2),
                 fp_injury_note=player.fp_injury_note,
                 fp_start_sit_grade=player.fp_start_sit_grade,
                 fp_pos_rank=player.fp_pos_rank,
@@ -428,6 +549,8 @@ def get_team_roster(team_id: int, db: Session = Depends(get_db)) -> TeamRosterRe
         starters_count=starters_count,
         bench_count=bench_count,
         total_projected_points=round(total_proj, 2),
+        total_actual_points=round(total_act, 2),
+        total_effective_points=round(total_eff, 2),
         roster=player_items,
         bench_slots_count=bench_slots_count,
         ir_slots_count=ir_slots_count,

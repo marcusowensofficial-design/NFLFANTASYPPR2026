@@ -1,0 +1,518 @@
+{
+  "season": 2026,
+  "last_updated": "2026-09-09T17:00:00Z",
+  "teams": {
+    "ARI": {
+      "team_name": "Arizona Cardinals",
+      "cornerbacks": {
+        "outside1": { "name": "Sean Murphy-Bunting", "role": "LWR", "grade": 67.0, "is_shadow": false, "targets_per_route": 0.21, "catch_rate": 0.65, "fpts_per_route": 0.34 },
+        "outside2": { "name": "Starling Thomas V", "role": "RWR", "grade": 62.0, "is_shadow": false, "targets_per_route": 0.24, "catch_rate": 0.69, "fpts_per_route": 0.41 },
+        "slot": { "name": "Garrett Williams", "role": "SLOT", "grade": 71.0, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.62, "fpts_per_route": 0.28 },
+        "safety": { "name": "Budda Baker", "role": "SS", "grade": 79.5, "coverage_grade": 75.0, "run_def_grade": 83.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Max Melton", "grade": 63.5 },
+        "slot_backup": { "name": "Kei'Trel Clark", "grade": 60.0 },
+        "safety_backup": { "name": "Dadrion Taylor-Demerson", "grade": 62.0 }
+      },
+      "offensive_line": { "pass_block_grade": 66.5, "run_block_grade": 73.0, "overall_grade": 69.5, "rank": 19, "key_tackles": ["Paris Johnson Jr.", "Jonah Williams"] },
+      "defensive_line_front": { "pass_rush_grade": 63.0, "run_defense_grade": 65.5, "overall_grade": 64.0, "pressure_rate_pct": 28.5, "stuffed_run_pct": 16.0, "rank": 27, "key_disruptors": ["Zaven Collins", "Bilal Nichols"] }
+    },
+    "ATL": {
+      "team_name": "Atlanta Falcons",
+      "cornerbacks": {
+        "outside1": { "name": "A.J. Terrell", "role": "SHADOW", "grade": 83.5, "is_shadow": true, "targets_per_route": 0.15, "catch_rate": 0.55, "fpts_per_route": 0.23 },
+        "outside2": { "name": "Mike Hughes", "role": "RWR", "grade": 68.0, "is_shadow": false, "targets_per_route": 0.21, "catch_rate": 0.64, "fpts_per_route": 0.33 },
+        "slot": { "name": "Dee Alford", "role": "SLOT", "grade": 69.5, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.63, "fpts_per_route": 0.29 },
+        "safety": { "name": "Jessie Bates III", "role": "FS", "grade": 89.0, "coverage_grade": 91.0, "run_def_grade": 82.5 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Clark Phillips III", "grade": 65.0 },
+        "slot_backup": { "name": "Kevin King", "grade": 61.5 },
+        "safety_backup": { "name": "Richie Grant", "grade": 64.0 }
+      },
+      "offensive_line": { "pass_block_grade": 78.0, "run_block_grade": 82.5, "overall_grade": 80.5, "rank": 6, "key_tackles": ["Jake Matthews", "Kaleb McGary"] },
+      "defensive_line_front": { "pass_rush_grade": 68.5, "run_defense_grade": 74.0, "overall_grade": 71.0, "pressure_rate_pct": 31.0, "stuffed_run_pct": 19.5, "rank": 20, "key_disruptors": ["Grady Jarrett", "Matthew Judon"] }
+    },
+    "BAL": {
+      "team_name": "Baltimore Ravens",
+      "cornerbacks": {
+        "outside1": { "name": "Marlon Humphrey", "role": "SHADOW", "grade": 86.0, "is_shadow": true, "targets_per_route": 0.15, "catch_rate": 0.55, "fpts_per_route": 0.22 },
+        "outside2": { "name": "Nate Wiggins", "role": "RWR", "grade": 74.5, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.60, "fpts_per_route": 0.29 },
+        "slot": { "name": "Arthur Maulet", "role": "SLOT", "grade": 68.0, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.65, "fpts_per_route": 0.32 },
+        "safety": { "name": "Kyle Hamilton", "role": "SS", "grade": 91.5, "coverage_grade": 90.0, "run_def_grade": 93.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Brandon Stephens", "grade": 71.0 },
+        "slot_backup": { "name": "T.J. Tampa", "grade": 64.0 },
+        "safety_backup": { "name": "Eddie Jackson", "grade": 68.5 }
+      },
+      "offensive_line": { "pass_block_grade": 72.0, "run_block_grade": 85.0, "overall_grade": 78.5, "rank": 9, "key_tackles": ["Ronnie Stanley", "Roger Rosengarten"] },
+      "defensive_line_front": { "pass_rush_grade": 81.0, "run_defense_grade": 88.5, "overall_grade": 84.5, "pressure_rate_pct": 36.5, "stuffed_run_pct": 24.0, "rank": 4, "key_disruptors": ["Nnamdi Madubuike", "Odafe Oweh"] }
+    },
+    "BUF": {
+      "team_name": "Buffalo Bills",
+      "cornerbacks": {
+        "outside1": { "name": "Christian Benford", "role": "LWR", "grade": 84.5, "is_shadow": false, "targets_per_route": 0.15, "catch_rate": 0.55, "fpts_per_route": 0.23 },
+        "outside2": { "name": "Rasul Douglas", "role": "RWR", "grade": 80.0, "is_shadow": false, "targets_per_route": 0.17, "catch_rate": 0.58, "fpts_per_route": 0.26 },
+        "slot": { "name": "Taron Johnson", "role": "SLOT", "grade": 85.5, "is_shadow": false, "targets_per_route": 0.14, "catch_rate": 0.56, "fpts_per_route": 0.21 },
+        "safety": { "name": "Taylor Rapp", "role": "SS", "grade": 74.0, "coverage_grade": 72.0, "run_def_grade": 77.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Kaiir Elam", "grade": 66.0 },
+        "slot_backup": { "name": "Ja'Marcus Ingram", "grade": 68.0 },
+        "safety_backup": { "name": "Cole Bishop", "grade": 69.0 }
+      },
+      "offensive_line": { "pass_block_grade": 77.5, "run_block_grade": 81.0, "overall_grade": 79.5, "rank": 8, "key_tackles": ["Dion Dawkins", "Spencer Brown"] },
+      "defensive_line_front": { "pass_rush_grade": 76.5, "run_defense_grade": 75.0, "overall_grade": 76.0, "pressure_rate_pct": 34.0, "stuffed_run_pct": 20.0, "rank": 11, "key_disruptors": ["Greg Rousseau", "Ed Oliver"] }
+    },
+    "CAR": {
+      "team_name": "Carolina Panthers",
+      "cornerbacks": {
+        "outside1": { "name": "Jaycee Horn", "role": "SHADOW", "grade": 84.0, "is_shadow": true, "targets_per_route": 0.15, "catch_rate": 0.54, "fpts_per_route": 0.23 },
+        "outside2": { "name": "Michael Jackson", "role": "RWR", "grade": 64.0, "is_shadow": false, "targets_per_route": 0.22, "catch_rate": 0.67, "fpts_per_route": 0.37 },
+        "slot": { "name": "Troy Hill", "role": "SLOT", "grade": 63.0, "is_shadow": false, "targets_per_route": 0.23, "catch_rate": 0.68, "fpts_per_route": 0.39 },
+        "safety": { "name": "Xavier Woods", "role": "FS", "grade": 73.5, "coverage_grade": 74.0, "run_def_grade": 71.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Dane Jackson", "grade": 62.0 },
+        "slot_backup": { "name": "Chau Smith-Wade", "grade": 61.0 },
+        "safety_backup": { "name": "Jordan Fuller", "grade": 65.0 }
+      },
+      "offensive_line": { "pass_block_grade": 71.0, "run_block_grade": 76.0, "overall_grade": 73.5, "rank": 15, "key_tackles": ["Ikem Ekwonu", "Taylor Moton"] },
+      "defensive_line_front": { "pass_rush_grade": 61.5, "run_defense_grade": 62.0, "overall_grade": 61.5, "pressure_rate_pct": 26.0, "stuffed_run_pct": 14.5, "rank": 31, "key_disruptors": ["Derrick Brown", "Jadeveon Clowney"] }
+    },
+    "CHI": {
+      "team_name": "Chicago Bears",
+      "cornerbacks": {
+        "outside1": { "name": "Jaylon Johnson", "role": "SHADOW", "grade": 90.0, "is_shadow": true, "targets_per_route": 0.13, "catch_rate": 0.51, "fpts_per_route": 0.19 },
+        "outside2": { "name": "Tyrique Stevenson", "role": "RWR", "grade": 69.0, "is_shadow": false, "targets_per_route": 0.21, "catch_rate": 0.64, "fpts_per_route": 0.33 },
+        "slot": { "name": "Kyler Gordon", "role": "SLOT", "grade": 77.0, "is_shadow": false, "targets_per_route": 0.16, "catch_rate": 0.58, "fpts_per_route": 0.24 },
+        "safety": { "name": "Kevin Byard III", "role": "FS", "grade": 78.0, "coverage_grade": 79.5, "run_def_grade": 74.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Terell Smith", "grade": 67.0 },
+        "slot_backup": { "name": "Josh Blackwell", "grade": 63.5 },
+        "safety_backup": { "name": "Jaquan Brisker", "grade": 76.0 }
+      },
+      "offensive_line": { "pass_block_grade": 68.0, "run_block_grade": 71.5, "overall_grade": 70.0, "rank": 18, "key_tackles": ["Braxton Jones", "Darnell Wright"] },
+      "defensive_line_front": { "pass_rush_grade": 74.0, "run_defense_grade": 78.5, "overall_grade": 76.5, "pressure_rate_pct": 33.5, "stuffed_run_pct": 21.0, "rank": 10, "key_disruptors": ["Montez Sweat", "Gervon Dexter Sr."] }
+    },
+    "CIN": {
+      "team_name": "Cincinnati Bengals",
+      "cornerbacks": {
+        "outside1": { "name": "Cam Taylor-Britt", "role": "LWR", "grade": 76.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.59, "fpts_per_route": 0.28 },
+        "outside2": { "name": "DJ Turner II", "role": "RWR", "grade": 66.5, "is_shadow": false, "targets_per_route": 0.22, "catch_rate": 0.66, "fpts_per_route": 0.36 },
+        "slot": { "name": "Mike Hilton", "role": "SLOT", "grade": 80.5, "is_shadow": false, "targets_per_route": 0.16, "catch_rate": 0.57, "fpts_per_route": 0.24 },
+        "safety": { "name": "Geno Stone", "role": "FS", "grade": 74.5, "coverage_grade": 76.0, "run_def_grade": 70.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Josh Newton", "grade": 64.0 },
+        "slot_backup": { "name": "Jalen Davis", "grade": 62.0 },
+        "safety_backup": { "name": "Jordan Battle", "grade": 72.0 }
+      },
+      "offensive_line": { "pass_block_grade": 73.5, "run_block_grade": 70.0, "overall_grade": 71.5, "rank": 16, "key_tackles": ["Orlando Brown Jr.", "Amarius Mims"] },
+      "defensive_line_front": { "pass_rush_grade": 77.0, "run_defense_grade": 68.0, "overall_grade": 72.5, "pressure_rate_pct": 34.5, "stuffed_run_pct": 17.5, "rank": 17, "key_disruptors": ["Trey Hendrickson", "Sam Hubbard"] }
+    },
+    "CLE": {
+      "team_name": "Cleveland Browns",
+      "cornerbacks": {
+        "outside1": { "name": "Denzel Ward", "role": "SHADOW", "grade": 88.0, "is_shadow": true, "targets_per_route": 0.14, "catch_rate": 0.52, "fpts_per_route": 0.20 },
+        "outside2": { "name": "Martin Emerson Jr.", "role": "RWR", "grade": 74.0, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.60, "fpts_per_route": 0.30 },
+        "slot": { "name": "Greg Newsome II", "role": "SLOT", "grade": 75.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.59, "fpts_per_route": 0.27 },
+        "safety": { "name": "Grant Delpit", "role": "SS", "grade": 81.0, "coverage_grade": 79.0, "run_def_grade": 84.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Cameron Mitchell", "grade": 65.5 },
+        "slot_backup": { "name": "Kahlef Hailassie", "grade": 62.0 },
+        "safety_backup": { "name": "Juan Thornhill", "grade": 70.0 }
+      },
+      "offensive_line": { "pass_block_grade": 76.0, "run_block_grade": 79.5, "overall_grade": 78.0, "rank": 10, "key_tackles": ["Jedrick Wills Jr.", "Jack Conklin"] },
+      "defensive_line_front": { "pass_rush_grade": 89.5, "run_defense_grade": 83.0, "overall_grade": 86.5, "pressure_rate_pct": 41.0, "stuffed_run_pct": 23.5, "rank": 2, "key_disruptors": ["Myles Garrett", "Dalvin Tomlinson"] }
+    },
+    "DAL": {
+      "team_name": "Dallas Cowboys",
+      "cornerbacks": {
+        "outside1": { "name": "DaRon Bland", "role": "LWR", "grade": 82.0, "is_shadow": false, "targets_per_route": 0.17, "catch_rate": 0.57, "fpts_per_route": 0.25 },
+        "outside2": { "name": "Trevon Diggs", "role": "RWR", "grade": 79.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.58, "fpts_per_route": 0.28 },
+        "slot": { "name": "Jourdan Lewis", "role": "SLOT", "grade": 72.0, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.62, "fpts_per_route": 0.29 },
+        "safety": { "name": "Malik Hooker", "role": "FS", "grade": 78.5, "coverage_grade": 81.0, "run_def_grade": 73.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Caelen Carson", "grade": 65.0 },
+        "slot_backup": { "name": "Israel Mukuamu", "grade": 64.0 },
+        "safety_backup": { "name": "Donovan Wilson", "grade": 73.0 }
+      },
+      "offensive_line": { "pass_block_grade": 74.0, "run_block_grade": 72.0, "overall_grade": 73.0, "rank": 14, "key_tackles": ["Tyler Guyton", "Terence Steele"] },
+      "defensive_line_front": { "pass_rush_grade": 84.5, "run_defense_grade": 69.5, "overall_grade": 77.0, "pressure_rate_pct": 37.0, "stuffed_run_pct": 18.0, "rank": 9, "key_disruptors": ["Micah Parsons", "DeMarcus Lawrence"] }
+    },
+    "DEN": {
+      "team_name": "Denver Broncos",
+      "cornerbacks": {
+        "outside1": { "name": "Patrick Surtain II", "role": "SHADOW", "grade": 92.5, "is_shadow": true, "targets_per_route": 0.12, "catch_rate": 0.48, "fpts_per_route": 0.16 },
+        "outside2": { "name": "Riley Moss", "role": "RWR", "grade": 74.0, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.61, "fpts_per_route": 0.29 },
+        "slot": { "name": "Ja'Quan McMillian", "role": "SLOT", "grade": 76.5, "is_shadow": false, "targets_per_route": 0.17, "catch_rate": 0.59, "fpts_per_route": 0.25 },
+        "safety": { "name": "Brandon Jones", "role": "SS", "grade": 77.0, "coverage_grade": 75.0, "run_def_grade": 80.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Damarri Mathis", "grade": 63.0 },
+        "slot_backup": { "name": "Tremon Smith", "grade": 61.0 },
+        "safety_backup": { "name": "P.J. Locke", "grade": 68.0 }
+      },
+      "offensive_line": { "pass_block_grade": 78.5, "run_block_grade": 77.0, "overall_grade": 77.8, "rank": 11, "key_tackles": ["Garett Bolles", "Mike McGlinchey"] },
+      "defensive_line_front": { "pass_rush_grade": 75.0, "run_defense_grade": 76.0, "overall_grade": 75.5, "pressure_rate_pct": 33.0, "stuffed_run_pct": 20.5, "rank": 13, "key_disruptors": ["Zach Allen", "Jonathon Cooper"] }
+    },
+    "DET": {
+      "team_name": "Detroit Lions",
+      "cornerbacks": {
+        "outside1": { "name": "Terrion Arnold", "role": "LWR", "grade": 73.5, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.63, "fpts_per_route": 0.31 },
+        "outside2": { "name": "Carlton Davis III", "role": "RWR", "grade": 74.0, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.61, "fpts_per_route": 0.30 },
+        "slot": { "name": "Brian Branch", "role": "SLOT", "grade": 85.0, "is_shadow": false, "targets_per_route": 0.14, "catch_rate": 0.55, "fpts_per_route": 0.20 },
+        "safety": { "name": "Kerby Joseph", "role": "FS", "grade": 80.5, "coverage_grade": 82.0, "run_def_grade": 76.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Ennis Rakestraw Jr.", "grade": 66.5 },
+        "slot_backup": { "name": "Amik Robertson", "grade": 70.0 },
+        "safety_backup": { "name": "Ifeatu Melifonwu", "grade": 73.0 }
+      },
+      "offensive_line": { "pass_block_grade": 88.0, "run_block_grade": 93.5, "overall_grade": 91.0, "rank": 1, "key_tackles": ["Taylor Decker", "Penei Sewell"] },
+      "defensive_line_front": { "pass_rush_grade": 83.0, "run_defense_grade": 84.5, "overall_grade": 83.8, "pressure_rate_pct": 38.0, "stuffed_run_pct": 23.0, "rank": 5, "key_disruptors": ["Aidan Hutchinson", "Alim McNeill"] }
+    },
+    "GB": {
+      "team_name": "Green Bay Packers",
+      "cornerbacks": {
+        "outside1": { "name": "Jaire Alexander", "role": "SHADOW", "grade": 86.5, "is_shadow": true, "targets_per_route": 0.14, "catch_rate": 0.53, "fpts_per_route": 0.21 },
+        "outside2": { "name": "Carrington Valentine", "role": "RWR", "grade": 69.5, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.63, "fpts_per_route": 0.32 },
+        "slot": { "name": "Keisean Nixon", "role": "SLOT", "grade": 67.0, "is_shadow": false, "targets_per_route": 0.21, "catch_rate": 0.66, "fpts_per_route": 0.34 },
+        "safety": { "name": "Xavier McKinney", "role": "FS", "grade": 88.5, "coverage_grade": 90.5, "run_def_grade": 81.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Eric Stokes", "grade": 64.0 },
+        "slot_backup": { "name": "Javon Bullard", "grade": 72.0 },
+        "safety_backup": { "name": "Evan Williams", "grade": 74.0 }
+      },
+      "offensive_line": { "pass_block_grade": 81.0, "run_block_grade": 77.5, "overall_grade": 79.0, "rank": 7, "key_tackles": ["Rasheed Walker", "Zach Tom"] },
+      "defensive_line_front": { "pass_rush_grade": 80.0, "run_defense_grade": 75.5, "overall_grade": 77.8, "pressure_rate_pct": 35.0, "stuffed_run_pct": 19.5, "rank": 8, "key_disruptors": ["Rashan Gary", "Kenny Clark"] }
+    },
+    "HOU": {
+      "team_name": "Houston Texans",
+      "cornerbacks": {
+        "outside1": { "name": "Derek Stingley Jr.", "role": "LWR", "grade": 88.0, "is_shadow": false, "targets_per_route": 0.14, "catch_rate": 0.52, "fpts_per_route": 0.21 },
+        "outside2": { "name": "Kamari Lassiter", "role": "RWR", "grade": 75.5, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.59, "fpts_per_route": 0.28 },
+        "slot": { "name": "Jalen Pitre", "role": "SLOT", "grade": 73.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.61, "fpts_per_route": 0.27 },
+        "safety": { "name": "Jimmie Ward", "role": "FS", "grade": 75.0, "coverage_grade": 76.0, "run_def_grade": 72.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Jeff Okudah", "grade": 65.0 },
+        "slot_backup": { "name": "Myles Bryant", "grade": 64.5 },
+        "safety_backup": { "name": "Calen Bullock", "grade": 71.0 }
+      },
+      "offensive_line": { "pass_block_grade": 69.5, "run_block_grade": 71.0, "overall_grade": 70.2, "rank": 17, "key_tackles": ["Laremy Tunsil", "Tytus Howard"] },
+      "defensive_line_front": { "pass_rush_grade": 86.0, "run_defense_grade": 80.0, "overall_grade": 83.0, "pressure_rate_pct": 39.5, "stuffed_run_pct": 21.5, "rank": 6, "key_disruptors": ["Will Anderson Jr.", "Danielle Hunter"] }
+    },
+    "IND": {
+      "team_name": "Indianapolis Colts",
+      "cornerbacks": {
+        "outside1": { "name": "JuJu Brents", "role": "LWR", "grade": 72.0, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.61, "fpts_per_route": 0.30 },
+        "outside2": { "name": "Jaylon Jones", "role": "RWR", "grade": 68.5, "is_shadow": false, "targets_per_route": 0.21, "catch_rate": 0.64, "fpts_per_route": 0.33 },
+        "slot": { "name": "Kenny Moore II", "role": "SLOT", "grade": 82.0, "is_shadow": false, "targets_per_route": 0.15, "catch_rate": 0.56, "fpts_per_route": 0.23 },
+        "safety": { "name": "Julian Blackmon", "role": "SS", "grade": 76.0, "coverage_grade": 77.5, "run_def_grade": 73.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Dallis Flowers", "grade": 63.0 },
+        "slot_backup": { "name": "Samuel Womack III", "grade": 65.5 },
+        "safety_backup": { "name": "Nick Cross", "grade": 70.0 }
+      },
+      "offensive_line": { "pass_block_grade": 84.5, "run_block_grade": 86.0, "overall_grade": 85.2, "rank": 3, "key_tackles": ["Bernhard Raimann", "Braden Smith"] },
+      "defensive_line_front": { "pass_rush_grade": 75.5, "run_defense_grade": 74.0, "overall_grade": 74.8, "pressure_rate_pct": 33.0, "stuffed_run_pct": 19.0, "rank": 15, "key_disruptors": ["DeForest Buckner", "Kwity Paye"] }
+    },
+    "JAX": {
+      "team_name": "Jacksonville Jaguars",
+      "cornerbacks": {
+        "outside1": { "name": "Tyson Campbell", "role": "SHADOW", "grade": 80.5, "is_shadow": true, "targets_per_route": 0.16, "catch_rate": 0.56, "fpts_per_route": 0.25 },
+        "outside2": { "name": "Ronald Darby", "role": "RWR", "grade": 71.0, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.63, "fpts_per_route": 0.32 },
+        "slot": { "name": "Jarrian Jones", "role": "SLOT", "grade": 69.0, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.64, "fpts_per_route": 0.31 },
+        "safety": { "name": "Andre Cisco", "role": "FS", "grade": 75.5, "coverage_grade": 77.0, "run_def_grade": 71.5 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Montaric Brown", "grade": 67.0 },
+        "slot_backup": { "name": "De'Antre Prince", "grade": 63.0 },
+        "safety_backup": { "name": "Antonio Johnson", "grade": 71.0 }
+      },
+      "offensive_line": { "pass_block_grade": 67.0, "run_block_grade": 68.5, "overall_grade": 67.8, "rank": 23, "key_tackles": ["Cam Robinson", "Anton Harrison"] },
+      "defensive_line_front": { "pass_rush_grade": 77.5, "run_defense_grade": 73.0, "overall_grade": 75.2, "pressure_rate_pct": 34.0, "stuffed_run_pct": 18.5, "rank": 14, "key_disruptors": ["Josh Allen-Hines", "Travon Walker"] }
+    },
+    "KC": {
+      "team_name": "Kansas City Chiefs",
+      "cornerbacks": {
+        "outside1": { "name": "Trent McDuffie", "role": "SHADOW", "grade": 88.5, "is_shadow": true, "targets_per_route": 0.14, "catch_rate": 0.54, "fpts_per_route": 0.21 },
+        "outside2": { "name": "Nazeeh Johnson", "role": "RWR", "grade": 69.5, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.63, "fpts_per_route": 0.31 },
+        "slot": { "name": "Chamarri Conner", "role": "SLOT", "grade": 71.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.62, "fpts_per_route": 0.27 },
+        "safety": { "name": "Justin Reid", "role": "SS", "grade": 77.5, "coverage_grade": 76.0, "run_def_grade": 80.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Joshua Williams", "grade": 66.5 },
+        "slot_backup": { "name": "Jaylen Watson", "grade": 68.0 },
+        "safety_backup": { "name": "Bryan Cook", "grade": 74.0 }
+      },
+      "offensive_line": { "pass_block_grade": 86.0, "run_block_grade": 83.0, "overall_grade": 84.5, "rank": 4, "key_tackles": ["Kingsley Suamataia", "Jawaan Taylor"] },
+      "defensive_line_front": { "pass_rush_grade": 85.0, "run_defense_grade": 81.5, "overall_grade": 83.2, "pressure_rate_pct": 38.5, "stuffed_run_pct": 22.0, "rank": 7, "key_disruptors": ["Chris Jones", "George Karlaftis"] }
+    },
+    "LAC": {
+      "team_name": "Los Angeles Chargers",
+      "cornerbacks": {
+        "outside1": { "name": "Asante Samuel Jr.", "role": "LWR", "grade": 78.5, "is_shadow": false, "targets_per_route": 0.17, "catch_rate": 0.58, "fpts_per_route": 0.26 },
+        "outside2": { "name": "Kristian Fulton", "role": "RWR", "grade": 72.0, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.62, "fpts_per_route": 0.30 },
+        "slot": { "name": "Ja'Sir Taylor", "role": "SLOT", "grade": 68.5, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.64, "fpts_per_route": 0.31 },
+        "safety": { "name": "Derwin James Jr.", "role": "SS", "grade": 84.0, "coverage_grade": 82.0, "run_def_grade": 87.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Tarheeb Still", "grade": 67.5 },
+        "slot_backup": { "name": "Cam Hart", "grade": 65.0 },
+        "safety_backup": { "name": "Alohi Gilman", "grade": 75.0 }
+      },
+      "offensive_line": { "pass_block_grade": 80.5, "run_block_grade": 84.0, "overall_grade": 82.2, "rank": 5, "key_tackles": ["Rashawn Slater", "Joe Alt"] },
+      "defensive_line_front": { "pass_rush_grade": 78.0, "run_defense_grade": 77.0, "overall_grade": 77.5, "pressure_rate_pct": 35.0, "stuffed_run_pct": 20.0, "rank": 12, "key_disruptors": ["Joey Bosa", "Khalil Mack"] }
+    },
+    "LAR": {
+      "team_name": "Los Angeles Rams",
+      "cornerbacks": {
+        "outside1": { "name": "Tre'Davious White", "role": "LWR", "grade": 72.5, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.61, "fpts_per_route": 0.30 },
+        "outside2": { "name": "Darious Williams", "role": "RWR", "grade": 77.0, "is_shadow": false, "targets_per_route": 0.17, "catch_rate": 0.58, "fpts_per_route": 0.27 },
+        "slot": { "name": "Cobie Durant", "role": "SLOT", "grade": 71.5, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.62, "fpts_per_route": 0.28 },
+        "safety": { "name": "Kamren Curl", "role": "SS", "grade": 78.0, "coverage_grade": 77.0, "run_def_grade": 80.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Tre Tomlinson", "grade": 64.0 },
+        "slot_backup": { "name": "Quentin Lake", "grade": 73.0 },
+        "safety_backup": { "name": "Kamren Kinchens", "grade": 69.0 }
+      },
+      "offensive_line": { "pass_block_grade": 75.0, "run_block_grade": 76.5, "overall_grade": 75.8, "rank": 12, "key_tackles": ["Alaric Jackson", "Rob Havenstein"] },
+      "defensive_line_front": { "pass_rush_grade": 74.5, "run_defense_grade": 72.0, "overall_grade": 73.2, "pressure_rate_pct": 32.5, "stuffed_run_pct": 18.0, "rank": 18, "key_disruptors": ["Kobie Turner", "Jared Verse"] }
+    },
+    "LV": {
+      "team_name": "Las Vegas Raiders",
+      "cornerbacks": {
+        "outside1": { "name": "Jack Jones", "role": "LWR", "grade": 75.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.59, "fpts_per_route": 0.28 },
+        "outside2": { "name": "Jakorian Bennett", "role": "RWR", "grade": 68.0, "is_shadow": false, "targets_per_route": 0.21, "catch_rate": 0.64, "fpts_per_route": 0.33 },
+        "slot": { "name": "Nate Hobbs", "role": "SLOT", "grade": 79.5, "is_shadow": false, "targets_per_route": 0.16, "catch_rate": 0.57, "fpts_per_route": 0.24 },
+        "safety": { "name": "Tre'von Moehrig", "role": "FS", "grade": 75.0, "coverage_grade": 76.5, "run_def_grade": 72.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Decamerion Richardson", "grade": 63.5 },
+        "slot_backup": { "name": "Sam Webb", "grade": 61.0 },
+        "safety_backup": { "name": "Marcus Epps", "grade": 71.0 }
+      },
+      "offensive_line": { "pass_block_grade": 69.0, "run_block_grade": 70.5, "overall_grade": 69.8, "rank": 20, "key_tackles": ["Kolton Miller", "Thayer Munford Jr."] },
+      "defensive_line_front": { "pass_rush_grade": 80.5, "run_defense_grade": 76.5, "overall_grade": 78.5, "pressure_rate_pct": 36.0, "stuffed_run_pct": 20.5, "rank": 7, "key_disruptors": ["Maxx Crosby", "Christian Wilkins"] }
+    },
+    "MIA": {
+      "team_name": "Miami Dolphins",
+      "cornerbacks": {
+        "outside1": { "name": "Jalen Ramsey", "role": "SHADOW", "grade": 89.0, "is_shadow": true, "targets_per_route": 0.13, "catch_rate": 0.52, "fpts_per_route": 0.19 },
+        "outside2": { "name": "Kendall Fuller", "role": "RWR", "grade": 81.0, "is_shadow": false, "targets_per_route": 0.16, "catch_rate": 0.57, "fpts_per_route": 0.25 },
+        "slot": { "name": "Kader Kohou", "role": "SLOT", "grade": 70.5, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.63, "fpts_per_route": 0.29 },
+        "safety": { "name": "Jevon Holland", "role": "FS", "grade": 85.5, "coverage_grade": 87.0, "run_def_grade": 81.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Storm Duck", "grade": 64.5 },
+        "slot_backup": { "name": "Ethan Bonner", "grade": 62.0 },
+        "safety_backup": { "name": "Jordan Poyer", "grade": 70.0 }
+      },
+      "offensive_line": { "pass_block_grade": 70.0, "run_block_grade": 75.0, "overall_grade": 72.5, "rank": 17, "key_tackles": ["Terron Armstead", "Austin Jackson"] },
+      "defensive_line_front": { "pass_rush_grade": 79.0, "run_defense_grade": 75.0, "overall_grade": 77.0, "pressure_rate_pct": 35.0, "stuffed_run_pct": 19.0, "rank": 10, "key_disruptors": ["Bradley Chubb", "Jaelan Phillips"] }
+    },
+    "MIN": {
+      "team_name": "Minnesota Vikings",
+      "cornerbacks": {
+        "outside1": { "name": "Stephon Gilmore", "role": "LWR", "grade": 77.5, "is_shadow": false, "targets_per_route": 0.17, "catch_rate": 0.58, "fpts_per_route": 0.27 },
+        "outside2": { "name": "Shaquill Griffin", "role": "RWR", "grade": 71.5, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.62, "fpts_per_route": 0.30 },
+        "slot": { "name": "Byron Murphy Jr.", "role": "SLOT", "grade": 75.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.59, "fpts_per_route": 0.26 },
+        "safety": { "name": "Harrison Smith", "role": "SS", "grade": 79.0, "coverage_grade": 78.0, "run_def_grade": 81.5 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Fabian Moreau", "grade": 64.0 },
+        "slot_backup": { "name": "Dwight McGlothern", "grade": 66.0 },
+        "safety_backup": { "name": "Camryn Bynum", "grade": 76.5 }
+      },
+      "offensive_line": { "pass_block_grade": 78.0, "run_block_grade": 74.0, "overall_grade": 76.0, "rank": 13, "key_tackles": ["Christian Darrisaw", "Brian O'Neill"] },
+      "defensive_line_front": { "pass_rush_grade": 76.0, "run_defense_grade": 74.5, "overall_grade": 75.2, "pressure_rate_pct": 34.0, "stuffed_run_pct": 18.5, "rank": 15, "key_disruptors": ["Jonathan Greenard", "Andrew Van Ginkel"] }
+    },
+    "NE": {
+      "team_name": "New England Patriots",
+      "cornerbacks": {
+        "outside1": { "name": "Christian Gonzalez", "role": "SHADOW", "grade": 87.5, "is_shadow": true, "targets_per_route": 0.14, "catch_rate": 0.53, "fpts_per_route": 0.20 },
+        "outside2": { "name": "Jonathan Jones", "role": "RWR", "grade": 71.0, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.63, "fpts_per_route": 0.32 },
+        "slot": { "name": "Marcus Jones", "role": "SLOT", "grade": 72.5, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.61, "fpts_per_route": 0.28 },
+        "safety": { "name": "Kyle Dugger", "role": "SS", "grade": 80.0, "coverage_grade": 76.5, "run_def_grade": 84.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Marco Wilson", "grade": 63.0 },
+        "slot_backup": { "name": "Alex Austin", "grade": 62.5 },
+        "safety_backup": { "name": "Jabrill Peppers", "grade": 81.0 }
+      },
+      "offensive_line": { "pass_block_grade": 63.5, "run_block_grade": 67.0, "overall_grade": 65.2, "rank": 29, "key_tackles": ["Vederian Lowe", "Mike Onwenu"] },
+      "defensive_line_front": { "pass_rush_grade": 73.0, "run_defense_grade": 78.0, "overall_grade": 75.5, "pressure_rate_pct": 32.0, "stuffed_run_pct": 21.0, "rank": 13, "key_disruptors": ["Christian Barmore", "Keion White"] }
+    },
+    "NO": {
+      "team_name": "New Orleans Saints",
+      "cornerbacks": {
+        "outside1": { "name": "Marshon Lattimore", "role": "SHADOW", "grade": 85.5, "is_shadow": true, "targets_per_route": 0.15, "catch_rate": 0.54, "fpts_per_route": 0.22 },
+        "outside2": { "name": "Paulson Adebo", "role": "RWR", "grade": 79.0, "is_shadow": false, "targets_per_route": 0.17, "catch_rate": 0.58, "fpts_per_route": 0.27 },
+        "slot": { "name": "Alontae Taylor", "role": "SLOT", "grade": 74.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.60, "fpts_per_route": 0.28 },
+        "safety": { "name": "Tyrann Mathieu", "role": "FS", "grade": 81.0, "coverage_grade": 82.5, "run_def_grade": 77.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Kool-Aid McKinstry", "grade": 71.5 },
+        "slot_backup": { "name": "Rico Payton", "grade": 64.0 },
+        "safety_backup": { "name": "Jordan Howden", "grade": 68.0 }
+      },
+      "offensive_line": { "pass_block_grade": 69.0, "run_block_grade": 72.0, "overall_grade": 70.5, "rank": 19, "key_tackles": ["Taliese Fuaga", "Trevor Penning"] },
+      "defensive_line_front": { "pass_rush_grade": 74.0, "run_defense_grade": 75.0, "overall_grade": 74.5, "pressure_rate_pct": 33.0, "stuffed_run_pct": 19.5, "rank": 16, "key_disruptors": ["Carl Granderson", "Bryan Bresee"] }
+    },
+    "NYG": {
+      "team_name": "New York Giants",
+      "cornerbacks": {
+        "outside1": { "name": "Deonte Banks", "role": "SHADOW", "grade": 69.0, "is_shadow": true, "targets_per_route": 0.21, "catch_rate": 0.64, "fpts_per_route": 0.34 },
+        "outside2": { "name": "Cor'Dale Flott", "role": "RWR", "grade": 63.0, "is_shadow": false, "targets_per_route": 0.23, "catch_rate": 0.67, "fpts_per_route": 0.38 },
+        "slot": { "name": "Dru Phillips", "role": "SLOT", "grade": 71.5, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.61, "fpts_per_route": 0.27 },
+        "safety": { "name": "Tyler Nubin", "role": "FS", "grade": 72.0, "coverage_grade": 73.0, "run_def_grade": 70.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Nick McCloud", "grade": 62.0 },
+        "slot_backup": { "name": "Adoree' Jackson", "grade": 65.0 },
+        "safety_backup": { "name": "Jason Pinnock", "grade": 70.5 }
+      },
+      "offensive_line": { "pass_block_grade": 65.0, "run_block_grade": 66.5, "overall_grade": 65.8, "rank": 28, "key_tackles": ["Andrew Thomas", "Jermaine Eluemunor"] },
+      "defensive_line_front": { "pass_rush_grade": 79.5, "run_defense_grade": 73.5, "overall_grade": 76.5, "pressure_rate_pct": 35.5, "stuffed_run_pct": 19.0, "rank": 11, "key_disruptors": ["Dexter Lawrence II", "Brian Burns"] }
+    },
+    "NYJ": {
+      "team_name": "New York Jets",
+      "cornerbacks": {
+        "outside1": { "name": "Sauce Gardner", "role": "LWR", "grade": 91.0, "is_shadow": true, "targets_per_route": 0.13, "catch_rate": 0.50, "fpts_per_route": 0.18 },
+        "outside2": { "name": "D.J. Reed", "role": "RWR", "grade": 82.5, "is_shadow": false, "targets_per_route": 0.17, "catch_rate": 0.57, "fpts_per_route": 0.24 },
+        "slot": { "name": "Michael Carter II", "role": "SLOT", "grade": 80.0, "is_shadow": false, "targets_per_route": 0.16, "catch_rate": 0.58, "fpts_per_route": 0.23 },
+        "safety": { "name": "Tony Adams", "role": "FS", "grade": 75.0, "coverage_grade": 76.0, "run_def_grade": 73.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Brandin Echols", "grade": 68.0 },
+        "slot_backup": { "name": "Isaiah Oliver", "grade": 65.5 },
+        "safety_backup": { "name": "Chuck Clark", "grade": 71.0 }
+      },
+      "offensive_line": { "pass_block_grade": 79.5, "run_block_grade": 76.0, "overall_grade": 77.8, "rank": 11, "key_tackles": ["Tyron Smith", "Morgan Moses"] },
+      "defensive_line_front": { "pass_rush_grade": 87.0, "run_defense_grade": 84.0, "overall_grade": 85.5, "pressure_rate_pct": 40.0, "stuffed_run_pct": 23.0, "rank": 3, "key_disruptors": ["Quinnen Williams", "Will McDonald IV"] }
+    },
+    "PHI": {
+      "team_name": "Philadelphia Eagles",
+      "cornerbacks": {
+        "outside1": { "name": "Quinyon Mitchell", "role": "LWR", "grade": 82.5, "is_shadow": false, "targets_per_route": 0.16, "catch_rate": 0.56, "fpts_per_route": 0.24 },
+        "outside2": { "name": "Darius Slay", "role": "RWR", "grade": 78.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.59, "fpts_per_route": 0.27 },
+        "slot": { "name": "Cooper DeJean", "role": "SLOT", "grade": 81.5, "is_shadow": false, "targets_per_route": 0.15, "catch_rate": 0.56, "fpts_per_route": 0.22 },
+        "safety": { "name": "Reed Blankenship", "role": "SS", "grade": 79.0, "coverage_grade": 78.0, "run_def_grade": 81.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Kelee Ringo", "grade": 68.0 },
+        "slot_backup": { "name": "Avonte Maddox", "grade": 67.5 },
+        "safety_backup": { "name": "C.J. Gardner-Johnson", "grade": 74.0 }
+      },
+      "offensive_line": { "pass_block_grade": 87.0, "run_block_grade": 91.0, "overall_grade": 89.0, "rank": 2, "key_tackles": ["Jordan Mailata", "Lane Johnson"] },
+      "defensive_line_front": { "pass_rush_grade": 82.0, "run_defense_grade": 83.5, "overall_grade": 82.8, "pressure_rate_pct": 37.5, "stuffed_run_pct": 22.0, "rank": 8, "key_disruptors": ["Jalen Carter", "Josh Sweat"] }
+    },
+    "PIT": {
+      "team_name": "Pittsburgh Steelers",
+      "cornerbacks": {
+        "outside1": { "name": "Joey Porter Jr.", "role": "SHADOW", "grade": 85.0, "is_shadow": true, "targets_per_route": 0.15, "catch_rate": 0.53, "fpts_per_route": 0.22 },
+        "outside2": { "name": "Donte Jackson", "role": "RWR", "grade": 72.0, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.61, "fpts_per_route": 0.30 },
+        "slot": { "name": "Beanie Bishop Jr.", "role": "SLOT", "grade": 64.0, "is_shadow": false, "targets_per_route": 0.22, "catch_rate": 0.68, "fpts_per_route": 0.38 },
+        "safety": { "name": "Minkah Fitzpatrick", "role": "FS", "grade": 86.5, "coverage_grade": 88.0, "run_def_grade": 82.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Cory Trice Jr.", "grade": 66.0 },
+        "slot_backup": { "name": "Thomas Graham Jr.", "grade": 61.5 },
+        "safety_backup": { "name": "DeShon Elliott", "grade": 75.0 }
+      },
+      "offensive_line": { "pass_block_grade": 68.5, "run_block_grade": 74.0, "overall_grade": 71.2, "rank": 18, "key_tackles": ["Broderick Jones", "Dan Moore Jr."] },
+      "defensive_line_front": { "pass_rush_grade": 90.0, "run_defense_grade": 86.0, "overall_grade": 88.0, "pressure_rate_pct": 42.0, "stuffed_run_pct": 24.5, "rank": 1, "key_disruptors": ["T.J. Watt", "Cameron Heyward"] }
+    },
+    "SEA": {
+      "team_name": "Seattle Seahawks",
+      "cornerbacks": {
+        "outside1": { "name": "Terrion Arnold", "role": "LWR", "grade": 73.5, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.63, "fpts_per_route": 0.31 },
+        "outside2": { "name": "Julian Neal", "role": "RWR", "grade": 67.0, "is_shadow": false, "targets_per_route": 0.22, "catch_rate": 0.66, "fpts_per_route": 0.35 },
+        "slot": { "name": "Devon Witherspoon", "role": "SLOT", "grade": 83.5, "is_shadow": false, "targets_per_route": 0.15, "catch_rate": 0.55, "fpts_per_route": 0.22 },
+        "safety": { "name": "Nick Emmanwori", "role": "SS", "grade": 71.0, "coverage_grade": 69.6, "run_def_grade": 71.6 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Avery Smith", "grade": 59.0 },
+        "slot_backup": { "name": "Mike Sainristil", "grade": 66.5 },
+        "safety_backup": { "name": "Ty Okada", "grade": 58.5 }
+      },
+      "offensive_line": { "pass_block_grade": 66.0, "run_block_grade": 68.0, "overall_grade": 67.0, "rank": 25, "key_tackles": ["Charles Cross", "George Fant"] },
+      "defensive_line_front": { "pass_rush_grade": 76.5, "run_defense_grade": 75.0, "overall_grade": 75.8, "pressure_rate_pct": 34.0, "stuffed_run_pct": 20.0, "rank": 12, "key_disruptors": ["Leonard Williams", "Boye Mafe"] }
+    },
+    "SF": {
+      "team_name": "San Francisco 49ers",
+      "cornerbacks": {
+        "outside1": { "name": "Charvarius Ward", "role": "LWR", "grade": 83.0, "is_shadow": false, "targets_per_route": 0.16, "catch_rate": 0.56, "fpts_per_route": 0.24 },
+        "outside2": { "name": "Isaac Yiadom", "role": "RWR", "grade": 71.0, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.62, "fpts_per_route": 0.31 },
+        "slot": { "name": "Deommodore Lenoir", "role": "SLOT", "grade": 80.0, "is_shadow": false, "targets_per_route": 0.16, "catch_rate": 0.57, "fpts_per_route": 0.23 },
+        "safety": { "name": "Ji'Ayir Brown", "role": "FS", "grade": 75.0, "coverage_grade": 76.0, "run_def_grade": 73.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Renardo Green", "grade": 69.0 },
+        "slot_backup": { "name": "Rock Ya-Sin", "grade": 65.0 },
+        "safety_backup": { "name": "Talanoa Hufanga", "grade": 81.0 }
+      },
+      "offensive_line": { "pass_block_grade": 73.0, "run_block_grade": 83.5, "overall_grade": 78.2, "rank": 10, "key_tackles": ["Trent Williams", "Colton McKivitz"] },
+      "defensive_line_front": { "pass_rush_grade": 84.0, "run_defense_grade": 85.0, "overall_grade": 84.5, "pressure_rate_pct": 38.0, "stuffed_run_pct": 23.0, "rank": 5, "key_disruptors": ["Nick Bosa", "Javon Hargrave"] }
+    },
+    "TB": {
+      "team_name": "Tampa Bay Buccaneers",
+      "cornerbacks": {
+        "outside1": { "name": "Zyon McCollum", "role": "LWR", "grade": 78.0, "is_shadow": false, "targets_per_route": 0.17, "catch_rate": 0.57, "fpts_per_route": 0.26 },
+        "outside2": { "name": "Jamel Dean", "role": "RWR", "grade": 76.5, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.59, "fpts_per_route": 0.28 },
+        "slot": { "name": "Tykee Smith", "role": "SLOT", "grade": 73.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.60, "fpts_per_route": 0.27 },
+        "safety": { "name": "Antoine Winfield Jr.", "role": "SS", "grade": 91.0, "coverage_grade": 90.0, "run_def_grade": 92.5 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Keenan Isaac", "grade": 62.0 },
+        "slot_backup": { "name": "Josh Hayes", "grade": 61.0 },
+        "safety_backup": { "name": "Jordan Whitehead", "grade": 73.5 }
+      },
+      "offensive_line": { "pass_block_grade": 79.0, "run_block_grade": 74.0, "overall_grade": 76.5, "rank": 12, "key_tackles": ["Tristan Wirfs", "Luke Goedeke"] },
+      "defensive_line_front": { "pass_rush_grade": 76.0, "run_defense_grade": 82.0, "overall_grade": 79.0, "pressure_rate_pct": 34.0, "stuffed_run_pct": 22.5, "rank": 9, "key_disruptors": ["Vita Vea", "Yaya Diaby"] }
+    },
+    "TEN": {
+      "team_name": "Tennessee Titans",
+      "cornerbacks": {
+        "outside1": { "name": "L'Jarius Sneed", "role": "SHADOW", "grade": 85.0, "is_shadow": true, "targets_per_route": 0.15, "catch_rate": 0.54, "fpts_per_route": 0.22 },
+        "outside2": { "name": "Chidobe Awuzie", "role": "RWR", "grade": 72.0, "is_shadow": false, "targets_per_route": 0.19, "catch_rate": 0.61, "fpts_per_route": 0.30 },
+        "slot": { "name": "Roger McCreary", "role": "SLOT", "grade": 74.0, "is_shadow": false, "targets_per_route": 0.18, "catch_rate": 0.60, "fpts_per_route": 0.27 },
+        "safety": { "name": "Amani Hooker", "role": "SS", "grade": 78.5, "coverage_grade": 79.0, "run_def_grade": 77.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Jarvis Brownlee Jr.", "grade": 68.0 },
+        "slot_backup": { "name": "Gabe Jeudy-Lally", "grade": 63.0 },
+        "safety_backup": { "name": "Quandre Diggs", "grade": 72.0 }
+      },
+      "offensive_line": { "pass_block_grade": 65.5, "run_block_grade": 69.0, "overall_grade": 67.2, "rank": 26, "key_tackles": ["JC Latham", "Nicholas Petit-Frere"] },
+      "defensive_line_front": { "pass_rush_grade": 77.0, "run_defense_grade": 75.5, "overall_grade": 76.2, "pressure_rate_pct": 34.5, "stuffed_run_pct": 19.5, "rank": 13, "key_disruptors": ["Jeffery Simmons", "Harold Landry III"] }
+    },
+    "WAS": {
+      "team_name": "Washington Commanders",
+      "cornerbacks": {
+        "outside1": { "name": "Benjamin St-Juste", "role": "LWR", "grade": 61.0, "is_shadow": false, "targets_per_route": 0.24, "catch_rate": 0.69, "fpts_per_route": 0.42 },
+        "outside2": { "name": "Noah Igbinoghene", "role": "RWR", "grade": 60.0, "is_shadow": false, "targets_per_route": 0.25, "catch_rate": 0.71, "fpts_per_route": 0.44 },
+        "slot": { "name": "Mike Sainristil", "role": "SLOT", "grade": 68.5, "is_shadow": false, "targets_per_route": 0.20, "catch_rate": 0.64, "fpts_per_route": 0.31 },
+        "safety": { "name": "Jeremy Chinn", "role": "SS", "grade": 71.0, "coverage_grade": 68.0, "run_def_grade": 76.0 }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": { "name": "Emmanuel Forbes Jr.", "grade": 58.0 },
+        "slot_backup": { "name": "Michael Davis", "grade": 61.5 },
+        "safety_backup": { "name": "Percy Butler", "grade": 65.0 }
+      },
+      "offensive_line": { "pass_block_grade": 71.0, "run_block_grade": 73.0, "overall_grade": 72.0, "rank": 16, "key_tackles": ["Brandon Coleman", "Andrew Wylie"] },
+      "defensive_line_front": { "pass_rush_grade": 73.5, "run_defense_grade": 71.0, "overall_grade": 72.2, "pressure_rate_pct": 32.0, "stuffed_run_pct": 17.0, "rank": 22, "key_disruptors": ["Daron Payne", "Dorance Armstrong Jr."] }
+    }
+  }
+}

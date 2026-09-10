@@ -64,6 +64,12 @@ class StartSitEvaluation(BaseModel):
     position: str
     pro_team: str
     projected_points: float
+    actual_points: float = 0.0
+    lineup_locked: bool = False
+    is_started: bool = False
+    is_final: bool = False
+    game_status: str = "UPCOMING"  # UPCOMING, LIVE, FINAL
+    effective_points: float = 0.0
     start_score: float  # 0 to 100
     confidence: str     # HIGH, MEDIUM, LOW
     recommendation: str # STRONG START, START, TOSS-UP, BENCH, SIT
@@ -311,6 +317,8 @@ class StartSitScoringEngine:
         mode: str = "BALANCED",
         league_size: int | None = None,
         projection_source: str = "MODEL",
+        actual_points: float | None = None,
+        lineup_locked: bool = False,
     ) -> StartSitEvaluation:
         eff_size = league_size or self.league_size
         baselines = LEAGUE_SIZE_BASELINES.get(eff_size, LEAGUE_SIZE_BASELINES[8])
@@ -1382,12 +1390,38 @@ class StartSitScoringEngine:
             res_espn_pts = q_proj.espn_points if q_proj and q_proj.espn_points > 0 else (getattr(player, "projected_points_espn", 0.0) or 0.0)
             res_consensus_pts = q_proj.consensus_points if q_proj and q_proj.consensus_points > 0 else (getattr(player, "projected_points_consensus", 0.0) or proj)
 
+        act_pts = float(actual_points if actual_points is not None else (getattr(player, "actual_points", 0.0) or 0.0))
+        game_started = bool(nfl_game.is_started if nfl_game else False)
+        game_final = bool(nfl_game.is_final if nfl_game else False)
+
+        if game_final:
+            g_status = "FINAL"
+        elif game_started or lineup_locked:
+            g_status = "LIVE" if (act_pts > 0 or not game_final) else "FINAL"
+        elif act_pts > 0:
+            g_status = "FINAL"
+        else:
+            g_status = "UPCOMING"
+
+        if g_status == "FINAL":
+            eff_pts = round(act_pts, 2)
+        elif g_status == "LIVE":
+            eff_pts = round(act_pts if act_pts > 0 else proj, 2)
+        else:
+            eff_pts = round(proj, 2)
+
         return StartSitEvaluation(
             player_id=player.id,
             full_name=player.full_name,
             position=pos,
             pro_team=player.pro_team,
             projected_points=round(proj, 2),
+            actual_points=round(act_pts, 2),
+            lineup_locked=lineup_locked,
+            is_started=game_started,
+            is_final=game_final,
+            game_status=g_status,
+            effective_points=eff_pts,
             start_score=final_score,
             confidence=confidence,
             recommendation=recommendation,

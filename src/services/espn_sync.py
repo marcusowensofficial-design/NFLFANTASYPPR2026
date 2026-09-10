@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -435,6 +436,38 @@ class ESPNSyncService:
                 matchup_model.away_score = m.away.total_points
                 matchup_model.winner = m.winner
                 matchup_model.updated_at = utc_now()
+
+        # 5. Compute and persist live starter points into Points For (PF) and Points Against (PA)
+        # ESPN's t.record.overall.points_for stays 0.0 during active weeks until official finalization.
+        live_starters_by_team: dict[int, float] = defaultdict(float)
+        for t in data.teams:
+            if not t.roster or not t.roster.entries:
+                continue
+            for entry in t.roster.entries:
+                if entry.lineup_slot_id not in (RosterSlot.BENCH, RosterSlot.IR):
+                    p_entry = entry.player_pool_entry
+                    ath = p_entry.player if p_entry else None
+                    if ath:
+                        act = float(ath.get_actual_for_week(data.scoring_period_id) or 0.0)
+                        live_starters_by_team[t.id] += act
+
+        team_opps: dict[int, int] = {}
+        if data.schedule:
+            for m in data.schedule:
+                if m.matchup_period_id == data.scoring_period_id and m.home and m.away:
+                    team_opps[m.home.team_id] = m.away.team_id
+                    team_opps[m.away.team_id] = m.home.team_id
+
+        for t_id, team_m in team_models.items():
+            live_pf = round(live_starters_by_team.get(t_id, 0.0), 2)
+            opp_id = team_opps.get(t_id)
+            live_pa = round(live_starters_by_team.get(opp_id, 0.0) if opp_id else 0.0, 2)
+            base_pf = team_m.points_for or 0.0
+            base_pa = team_m.points_against or 0.0
+            if base_pf == 0.0:
+                team_m.points_for = live_pf
+            if base_pa == 0.0:
+                team_m.points_against = live_pa
 
         return league
 

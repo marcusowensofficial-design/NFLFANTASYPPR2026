@@ -59,6 +59,8 @@ class OptimizedLineupResult(BaseModel):
     team_id: int
     total_start_score: float
     total_projected_points: float
+    total_actual_points: float = 0.0
+    total_effective_points: float = 0.0
     current_espn_projected: float
     net_projected_gain: float
     starters: list[SlotAssignment]
@@ -133,10 +135,16 @@ class LineupOptimizer:
         game_theory_rec: str | None = None
 
         current_starters_list = [eval_by_id[pid] for pid in current_starter_ids if pid in eval_by_id]
-        current_espn_points = sum(p.projected_points for p in current_starters_list)
+        current_espn_points = sum(
+            p.effective_points if (p.effective_points > 0 or p.is_final) else p.projected_points
+            for p in current_starters_list
+        )
 
         if isinstance(opponent_projected_points, (int, float)) and opponent_projected_points > 0:
-            est_proj = current_espn_points if current_espn_points > 0 else sum(p.projected_points for p in sorted(evaluations, key=lambda x: x.start_score, reverse=True)[:9])
+            est_proj = current_espn_points if current_espn_points > 0 else sum(
+                p.effective_points if (p.effective_points > 0 or p.is_final) else p.projected_points
+                for p in sorted(evaluations, key=lambda x: x.start_score, reverse=True)[:9]
+            )
             implied_spread = round(est_proj - opponent_projected_points, 1)
 
             if mode_upper == "AUTO":
@@ -608,11 +616,18 @@ class LineupOptimizer:
         total_sleeper_pts = sum(s.recommended_player.proj_sleeper for s in starters_assigned)
         total_espn_pts = sum(s.recommended_player.proj_espn for s in starters_assigned)
         total_consensus_pts = sum(s.recommended_player.proj_consensus for s in starters_assigned)
+        total_actual_pts = sum(s.recommended_player.actual_points for s in starters_assigned)
+        total_effective_pts = sum(
+            s.recommended_player.effective_points if (s.recommended_player.effective_points > 0 or s.recommended_player.is_final) else s.recommended_player.projected_points
+            for s in starters_assigned
+        )
 
         return OptimizedLineupResult(
             team_id=team_id,
             total_start_score=round(total_opt_start_score, 1),
             total_projected_points=round(total_opt_proj, 2),
+            total_actual_points=round(total_actual_pts, 2),
+            total_effective_points=round(total_effective_pts, 2),
             current_espn_projected=round(current_espn_points, 2),
             net_projected_gain=round(net_gain, 2),
             starters=starters_assigned,

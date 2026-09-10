@@ -141,6 +141,15 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
               <MatchupStarRating stars={p.matchup_stars} oppDvpRank={p.opp_dvp_rank} position={p.position} />
             </Tooltip>
           )}
+          {p.wrcb_primary_cb && (
+            <span
+              className={`pill ${p.wrcb_is_shadow ? 'rose' : p.wrcb_advantage_rating === 'SLOT_MISMATCH' || ((p.wrcb_advantage_score ?? 0) >= 15) ? 'emerald' : ((p.wrcb_advantage_score ?? 0) <= -15) ? 'rose' : 'cyan'}`}
+              style={{ fontSize: '11px', fontWeight: 700 }}
+              title={`PFF Opposing Primary Cornerback: ${p.wrcb_primary_cb} (${p.wrcb_advantage_rating || 'NEUTRAL'})`}
+            >
+              {p.wrcb_is_shadow ? '🚨 Shadow: ' : '🎯 vs '} {p.wrcb_primary_cb} {p.wrcb_advantage_score != null ? `(${p.wrcb_advantage_score > 0 ? '+' : ''}${p.wrcb_advantage_score}%)` : ''}
+            </span>
+          )}
           {(p.fp_pos_rank || p.fp_rank_ecr) && (
             <Tooltip term="FP_RANK" title={`FantasyPros Consensus: ${p.fp_pos_rank || '#' + p.fp_rank_ecr} PPR`}>
               <span
@@ -732,6 +741,85 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Dedicated PFF Film Coverage & Cornerback Scouting Panel */}
+      {p.wrcb_primary_cb && (
+        <div
+          className="pff-matchup-panel"
+          style={{
+            marginTop: '12px',
+            background: 'rgba(30, 27, 75, 0.45)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            borderRadius: '10px',
+            padding: '12px 14px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '8px',
+              flexWrap: 'wrap',
+              gap: '6px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '13px' }}>🎯</span>
+              <strong style={{ fontSize: '12px', color: '#f8fafc' }}>
+                PFF Film Scouting: Opposing Primary CB Matchup
+              </strong>
+              <span
+                className={`pill ${
+                  p.wrcb_is_shadow
+                    ? 'rose'
+                    : p.wrcb_advantage_rating === 'SLOT_MISMATCH' || (p.wrcb_advantage_score && p.wrcb_advantage_score >= 15)
+                    ? 'emerald'
+                    : (p.wrcb_advantage_score && p.wrcb_advantage_score <= -15)
+                    ? 'rose'
+                    : 'cyan'
+                }`}
+                style={{ fontSize: '10px', fontWeight: 800 }}
+              >
+                {p.wrcb_is_shadow ? '🚨 SHADOW LOCKDOWN' : p.wrcb_advantage_rating || 'NEUTRAL MATCHUP'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="pill purple" style={{ fontSize: '9.5px', padding: '1px 6px' }}>
+                PFF Tape Study Layer Active
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+              gap: '8px',
+              marginTop: '6px',
+            }}
+          >
+            <div className="statcard-box">
+              <span className="statcard-box-val" style={{ color: 'var(--accent-cyan)', fontSize: '14px' }}>
+                {p.wrcb_primary_cb}
+              </span>
+              <span className="statcard-box-lbl">Primary Matchup CB</span>
+            </div>
+            <div className="statcard-box">
+              <span className="statcard-box-val" style={{ color: (p.wrcb_advantage_score ?? 0) >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)', fontSize: '14px' }}>
+                {(p.wrcb_advantage_score ?? 0) > 0 ? `+${p.wrcb_advantage_score}` : p.wrcb_advantage_score ?? 0}%
+              </span>
+              <span className="statcard-box-lbl">Coverage Advantage Score</span>
+            </div>
+            <div className="statcard-box">
+              <span className="statcard-box-val" style={{ color: p.wrcb_is_shadow ? 'var(--accent-rose)' : 'var(--accent-emerald)', fontSize: '14px' }}>
+                {p.wrcb_is_shadow ? 'YES (Lockdown)' : 'NO (Zone/Rotational)'}
+              </span>
+              <span className="statcard-box-lbl">Shadow Tracking Assignment</span>
+            </div>
           </div>
         </div>
       )}

@@ -11,13 +11,18 @@ from sqlalchemy.orm import Session
 from src.adapters.betting.props_client import PlayerPropsData, vegas_props_client
 from src.adapters.borischen.client import BorisChenTierItem, boris_chen_client
 from src.adapters.nfl.depthchart_client import TeamDepthChart, nfl_depthchart_client
-from src.adapters.nfl.dvp_client import dvp_client
+from src.adapters.nfl.dvp_client import dvp_client, DEFAULT_DVP_PROFILES
 from src.adapters.nfl.injuries_client import nfl_injuries_client
 from src.adapters.nfl.schedule_client import nfl_schedule_client
 from src.core.config import settings
 from src.services.market.sentiment_service import PlayerMarketSentiment, market_sentiment_service
 from src.db.models import LeagueModel, MatchupModel, PlayerModel, RosterEntryModel, TeamModel
 from src.db.session import get_db
+from src.services.matchup.pff_service import (
+    PFFCompositeDefenseRecord,
+    PFFTrenchMatchup,
+    pff_scouting_service,
+)
 from src.services.matchup.vegas_gamescript import (
     VegasIntelligenceResponse,
     vegas_gamescript_analyzer,
@@ -464,13 +469,21 @@ async def get_wrcb_matrix(
         team_opp_map[g.home_team] = g.away_team
         team_opp_map[g.away_team] = g.home_team
 
+    # Resolve live inactives for real-time secondary downgrade
+    inactive_names: set[str] = set()
+    try:
+        injuries = await nfl_injuries_client.fetch_injuries()
+        inactive_names = {p.name for p in injuries.values() if p.is_out}
+    except Exception as e:
+        logger.debug(f"Failed to fetch live inactives for WRCB: {e}")
+
     results: list[WRCBMatchupAnalysis] = []
     for wr in wr_players:
         opp = team_opp_map.get(wr.pro_team.upper().strip(), "UNK")
         is_user_rostered = wr.id in user_roster_pids
         is_user_starter = wr.id in user_starter_pids
 
-        # Analyze individual matchup
+        # Analyze individual matchup with live secondary injury awareness
         analysis = wrcb_analyzer.analyze_matchup(
             player_id=wr.id,
             full_name=wr.full_name,
@@ -479,6 +492,7 @@ async def get_wrcb_matrix(
             projected_points=wr.projected_points or 10.0,
             is_user_rostered=is_user_rostered,
             is_user_starter=is_user_starter,
+            inactive_player_names=inactive_names,
         )
         results.append(analysis)
 
@@ -490,6 +504,52 @@ async def get_wrcb_matrix(
         )
     )
 
+    return results
+
+
+@router.get("/pff/composite-defense", response_model=list[PFFCompositeDefenseRecord])
+async def get_pff_composite_defense(
+    db: Session = Depends(get_db),
+) -> list[PFFCompositeDefenseRecord]:
+    """Retrieve 32-team composite defense ranking combining PFF film grades, DvP production ranks, and live secondary inactives."""
+    inactive_map: dict[str, set[str]] = {}
+    try:
+        injuries = await nfl_injuries_client.fetch_injuries()
+        for p in injuries.values():
+            if p.is_out and p.team:
+                t_key = p.team.upper().strip()
+                inactive_map.setdefault(t_key, set()).add(p.name)
+    except Exception as e:
+        logger.debug(f"Failed to fetch inactives for composite defense: {e}")
+
+    pass_ranks = {team: prof.wr_rank for team, prof in DEFAULT_DVP_PROFILES.items()}
+    rush_ranks = {team: prof.rb_rank for team, prof in DEFAULT_DVP_PROFILES.items()}
+
+    return pff_scouting_service.get_composite_defense_matrix(
+        dvp_pass_ranks=pass_ranks,
+        dvp_rush_ranks=rush_ranks,
+        inactive_map=inactive_map,
+    )
+
+
+@router.get("/pff/trenches", response_model=list[PFFTrenchMatchup])
+async def get_pff_trenches(
+    week: int = Query(default=1, ge=1, le=18),
+) -> list[PFFTrenchMatchup]:
+    """Retrieve weekly offensive line vs. defensive line trench warfare ratings."""
+    schedule_games = await nfl_schedule_client.fetch_week_schedule(
+        season=settings.espn_season, week=week
+    )
+    results: list[PFFTrenchMatchup] = []
+    for g in schedule_games:
+        # Home offense vs Away defense
+        results.append(
+            pff_scouting_service.get_trench_matchup(g.home_team, g.away_team, is_home=True)
+        )
+        # Away offense vs Home defense
+        results.append(
+            pff_scouting_service.get_trench_matchup(g.away_team, g.home_team, is_home=False)
+        )
     return results
 
 

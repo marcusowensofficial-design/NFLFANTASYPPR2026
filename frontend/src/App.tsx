@@ -327,10 +327,10 @@ export function App() {
     }
   }
 
-  const loadInjuries = async () => {
+  const loadInjuries = async (force = false) => {
     setIsLoadingInjuries(true)
     try {
-      const res = await fetch('/api/injuries?limit=250')
+      const res = await fetch(`/api/injuries?limit=250${force ? '&force=true' : ''}`)
       if (res.ok) {
         const data: InjuryFeedResponse = await res.json()
         setInjuriesFeed(data)
@@ -1217,7 +1217,15 @@ export function App() {
         <InjuriesTab
           injuriesFeed={injuriesFeed}
           isLoadingInjuries={isLoadingInjuries}
-          onRefreshInjuries={loadInjuries}
+          onRefreshInjuries={(force = true) => loadInjuries(force)}
+          teamRosterData={teamRosterData}
+          onSelectPlayerForCompare={(playerId) => {
+            setIsExplicitCompare(true)
+            setCompareIds([playerId])
+            runComparison([playerId], strategyMode, projectionSource)
+            setActiveTab('compare')
+          }}
+          onNavigateTab={(tab) => setActiveTab(tab as any)}
         />
       )}
 

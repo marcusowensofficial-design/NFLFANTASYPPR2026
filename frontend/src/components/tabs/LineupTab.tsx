@@ -97,20 +97,30 @@ export const LineupTab: React.FC<LineupTabProps> = ({
     const substitutedStarterOriginals: StartSitEvaluation[] = []
     const substitutedBenchPlayerIds: number[] = []
 
+    const getPlayerScore = (p: StartSitEvaluation) => {
+      if (p.effective_points !== undefined && (p.effective_points > 0 || p.is_final)) {
+        return p.effective_points
+      }
+      if (p.actual_points !== undefined && p.actual_points > 0) {
+        return p.actual_points
+      }
+      return p.projected_points
+    }
+
     const starters = lineup.starters.map((slot: SlotAssignment, idx: number) => {
       if (customSubstitutions[idx]) {
         const benchReplacement = customSubstitutions[idx]
         substitutedStarterOriginals.push(slot.recommended_player)
         substitutedBenchPlayerIds.push(benchReplacement.player_id)
-        const starterPts = slot.recommended_player.projected_points
-        const benchPts = benchReplacement.projected_points
+        const starterPts = getPlayerScore(slot.recommended_player)
+        const benchPts = getPlayerScore(benchReplacement)
         return {
           ...slot,
           is_custom_swap: true,
           original_recommended: slot.recommended_player,
           recommended_player: benchReplacement,
           net_projected_delta:
-            Math.round((benchPts - (slot.current_starter?.projected_points ?? starterPts)) * 10) / 10,
+            Math.round((benchPts - (slot.current_starter ? getPlayerScore(slot.current_starter) : starterPts)) * 10) / 10,
         }
       }
       return {
@@ -124,11 +134,15 @@ export const LineupTab: React.FC<LineupTabProps> = ({
     bench = [...bench, ...substitutedStarterOriginals]
 
     const optimalTotal = lineup.starters.reduce(
-      (sum: number, s: SlotAssignment) => sum + s.recommended_player.projected_points,
+      (sum: number, s: SlotAssignment) => sum + getPlayerScore(s.recommended_player),
       0
     )
     const currentTotal = starters.reduce(
-      (sum: number, s: any) => sum + s.recommended_player.projected_points,
+      (sum: number, s: any) => sum + getPlayerScore(s.recommended_player),
+      0
+    )
+    const actualTotal = starters.reduce(
+      (sum: number, s: any) => sum + (s.recommended_player.actual_points || 0),
       0
     )
     const customGain = Math.round((currentTotal - optimalTotal) * 10) / 10
@@ -144,6 +158,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
       hasCustomSwaps: Object.keys(customSubstitutions).length > 0,
       hasRevertibleSwaps: hasRevertible,
       currentLineupProjectedTotal: Math.round(currentTotal * 10) / 10,
+      currentLineupActualTotal: Math.round(actualTotal * 10) / 10,
+      currentLineupEffectiveTotal: Math.round(currentTotal * 10) / 10,
     }
   }, [lineup, customSubstitutions])
 
@@ -312,6 +328,67 @@ export const LineupTab: React.FC<LineupTabProps> = ({
       default:
         return <span className="pill cyan" style={{ fontSize: '10.5px' }}>{grade}</span>
     }
+  }
+
+  const renderPlayerPointsBadge = (p: StartSitEvaluation) => {
+    const isFinal = p.is_final || p.game_status === 'FINAL'
+    const isLive = p.game_status === 'LIVE' || (p.lineup_locked && !isFinal)
+    const hasActual = (p.actual_points !== undefined && p.actual_points > 0) || isFinal
+
+    if (isFinal || (hasActual && !isLive)) {
+      return (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontWeight: 800, fontSize: '13.5px', color: '#34d399', fontFamily: 'var(--font-mono)' }}>
+              {(p.actual_points ?? 0).toFixed(1)} pts
+            </span>
+            <span
+              className="pill emerald"
+              style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 800, letterSpacing: '0.5px' }}
+              title="Official Final Score: Game is completed"
+            >
+              FINAL
+            </span>
+          </div>
+          <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            Proj: {p.projected_points.toFixed(1)}
+          </div>
+        </div>
+      )
+    }
+
+    if (isLive) {
+      return (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontWeight: 800, fontSize: '13.5px', color: '#fbbf24', fontFamily: 'var(--font-mono)' }}>
+              {(p.actual_points ?? 0).toFixed(1)} pts
+            </span>
+            <span
+              className="pill amber"
+              style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 800, letterSpacing: '0.5px' }}
+              title="Game In-Progress: Live actual fantasy points"
+            >
+              ⚡ LIVE
+            </span>
+          </div>
+          <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            Proj: {p.projected_points.toFixed(1)}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div>
+        <span style={{ fontWeight: 600, fontSize: '13px' }}>
+          {p.projected_points.toFixed(1)} pts
+        </span>
+        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+          Proj
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -642,11 +719,21 @@ export const LineupTab: React.FC<LineupTabProps> = ({
         <div className="executive-banner">
           <div className="banner-metric">
             <span className="metric-label">{hasCustomSwaps ? 'Custom Lineup Total' : 'Optimal Projected Total'}</span>
-            <span className="metric-val">{hasCustomSwaps ? currentLineupProjectedTotal : lineup.total_projected_points} pts</span>
+            <span className="metric-val">{hasCustomSwaps ? currentLineupProjectedTotal : (lineup.total_effective_points || lineup.total_projected_points)} pts</span>
             <span className="metric-sub">
               Engine: {projectionSource === 'MODEL' ? 'Quant Model' : projectionSource === 'CONSENSUS' ? 'Multi-Source Consensus' : projectionSource === 'FANTASYPROS' ? 'FantasyPros PPR' : projectionSource === 'SLEEPER' ? 'Sleeper (RotoWire)' : 'ESPN Official'}
             </span>
           </div>
+
+          {(lineup.total_actual_points !== undefined && lineup.total_actual_points > 0) && (
+            <div className="banner-metric">
+              <span className="metric-label">Live Fantasy Score</span>
+              <span className="metric-val emerald">{lineup.total_actual_points.toFixed(1)} pts</span>
+              <span className="metric-sub">
+                Live Projected: {(lineup.total_effective_points || lineup.total_projected_points).toFixed(1)} pts
+              </span>
+            </div>
+          )}
 
           <div className="banner-metric">
             <span className="metric-label">Current ESPN Projected</span>
@@ -782,7 +869,11 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                 <th>Player</th>
                 <th>NFL Matchup</th>
                 <th>StartScore</th>
-                <th>Proj. PPR</th>
+                <th>
+                  <Tooltip term="POINTS_PROJ" title="Actual Fantasy Points (Final/Live) or Pre-Game Projection (PPR)">
+                    <span style={{ cursor: 'pointer' }}>Fantasy Pts</span>
+                  </Tooltip>
+                </th>
                 <th>Matchup</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -950,13 +1041,22 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                   🚨 Shadow ({p.wrcb_primary_cb})
                                 </span>
                               )}
+                              {p.wrcb_primary_cb && !p.wrcb_is_shadow && p.wrcb_advantage_rating !== 'SLOT_MISMATCH' && (
+                                <span
+                                  className={`pill ${((p.wrcb_advantage_score ?? 0) >= 15) ? 'emerald' : ((p.wrcb_advantage_score ?? 0) <= -15) ? 'rose' : 'cyan'}`}
+                                  style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 700 }}
+                                  title={`PFF Opposing Primary CB: ${p.wrcb_primary_cb} (${p.wrcb_advantage_rating || 'NEUTRAL'})`}
+                                >
+                                  🎯 vs {p.wrcb_primary_cb} {p.wrcb_advantage_score != null ? `(${p.wrcb_advantage_score > 0 ? '+' : ''}${p.wrcb_advantage_score}%)` : ''}
+                                </span>
+                              )}
                               {p.wrcb_advantage_rating === 'SLOT_MISMATCH' && (
-                                <Tooltip term="SLOT_MISMATCH" title="PFF Slot Mismatch Advantage">
+                                <Tooltip term="SLOT_MISMATCH" title={`PFF Slot Mismatch Advantage vs ${p.wrcb_primary_cb || 'Slot CB'}`}>
                                   <span
                                     className="pill emerald"
                                     style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 800, cursor: 'pointer' }}
                                   >
-                                    🔥 Slot Adv
+                                    🔥 Slot Adv ({p.wrcb_primary_cb || 'Slot'})
                                   </span>
                                 </Tooltip>
                               )}
@@ -999,7 +1099,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                           </div>
                         </div>
                       </td>
-                      <td style={{ fontWeight: 600 }}>{p.projected_points} pts</td>
+                      <td>{renderPlayerPointsBadge(p)}</td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-start' }}>
                           {renderMatchupGradePill(p.matchup_grade)}
@@ -1252,7 +1352,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                       <td>
                         <span className={`score-badge ${getScoreColorClass(b.start_score)}`}>{b.start_score}</span>
                       </td>
-                      <td style={{ fontWeight: 600 }}>{b.projected_points} pts</td>
+                      <td>{renderPlayerPointsBadge(b)}</td>
                       <td>
                         {renderMatchupGradePill(b.matchup_grade)}
                       </td>
@@ -1380,7 +1480,11 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                     <th>Position</th>
                     <th>Opponent</th>
                     <th>StartScore</th>
-                    <th>Proj. PPR</th>
+                    <th>
+                      <Tooltip term="POINTS_PROJ" title="Actual Fantasy Points (Final/Live) or Pre-Game Projection (PPR)">
+                        <span style={{ cursor: 'pointer' }}>Fantasy Pts</span>
+                      </Tooltip>
+                    </th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -1528,13 +1632,22 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                       </span>
                                     </Tooltip>
                                   )}
+                                  {b.wrcb_primary_cb && !b.wrcb_is_shadow && b.wrcb_advantage_rating !== 'SLOT_MISMATCH' && (
+                                    <span
+                                      className={`pill ${((b.wrcb_advantage_score ?? 0) >= 15) ? 'emerald' : ((b.wrcb_advantage_score ?? 0) <= -15) ? 'rose' : 'cyan'}`}
+                                      style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 700 }}
+                                      title={`PFF Opposing Primary CB: ${b.wrcb_primary_cb} (${b.wrcb_advantage_rating || 'NEUTRAL'})`}
+                                    >
+                                      🎯 vs {b.wrcb_primary_cb} {b.wrcb_advantage_score != null ? `(${b.wrcb_advantage_score > 0 ? '+' : ''}${b.wrcb_advantage_score}%)` : ''}
+                                    </span>
+                                  )}
                                   {b.wrcb_advantage_rating === 'SLOT_MISMATCH' && (
-                                    <Tooltip term="SLOT_MISMATCH" title="PFF Slot Mismatch Advantage">
+                                    <Tooltip term="SLOT_MISMATCH" title={`PFF Slot Mismatch Advantage vs ${b.wrcb_primary_cb || 'Slot CB'}`}>
                                       <span
                                         className="pill emerald"
                                         style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 800, cursor: 'pointer' }}
                                       >
-                                        🔥 Slot Adv
+                                        🔥 Slot Adv ({b.wrcb_primary_cb || 'Slot'})
                                       </span>
                                     </Tooltip>
                                   )}
@@ -1584,7 +1697,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                               </div>
                             </div>
                           </td>
-                          <td>{b.projected_points} pts</td>
+                          <td>{renderPlayerPointsBadge(b)}</td>
                           <td>
                             <InjuryStatusPill
                               status={b.injury_status}

@@ -829,6 +829,15 @@ export const CompareTab: React.FC<CompareTabProps> = ({
                     position={p.position}
                   />
                 )}
+                {p.wrcb_primary_cb && (
+                  <span
+                    className={`pill ${p.wrcb_is_shadow ? 'rose' : p.wrcb_advantage_rating === 'SLOT_MISMATCH' || ((p.wrcb_advantage_score ?? 0) >= 15) ? 'emerald' : ((p.wrcb_advantage_score ?? 0) <= -15) ? 'rose' : 'cyan'}`}
+                    style={{ fontSize: '10px', padding: '1px 5px', fontWeight: 700 }}
+                    title={`PFF Cornerback Scouting: ${p.wrcb_primary_cb} (${p.wrcb_advantage_rating || 'NEUTRAL'})`}
+                  >
+                    {p.wrcb_is_shadow ? '🚨 Shadow: ' : '🎯 vs '} {p.wrcb_primary_cb} {p.wrcb_advantage_score != null ? `(${p.wrcb_advantage_score > 0 ? '+' : ''}${p.wrcb_advantage_score}%)` : ''}
+                  </span>
+                )}
               </div>
             </div>
           </div>
