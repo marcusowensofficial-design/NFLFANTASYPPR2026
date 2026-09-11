@@ -291,7 +291,7 @@ export const InjuriesTab: React.FC<InjuriesTabProps> = ({
                 <tr key={inj.athlete_id} style={isStarter ? { backgroundColor: 'rgba(244, 63, 94, 0.05)' } : undefined}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <NFLTeamLogo team={inj.team} size={24} style={{ marginTop: '2px' }} />
+                      <NFLTeamLogo team={inj.team_abbr || inj.team} size={24} style={{ marginTop: '2px' }} />
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           <span style={{ fontWeight: 700, fontSize: '13.5px' }}>{inj.name}</span>

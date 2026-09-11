@@ -4,7 +4,7 @@ from typing import Any
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
-from src.adapters.nfl.injuries_client import PlayerInjuryReport, nfl_injuries_client
+from src.adapters.nfl.injuries_client import PlayerInjuryReport, nfl_injuries_client, resolve_team_abbrev
 
 router = APIRouter(prefix="/api/injuries", tags=["Injuries"])
 
@@ -14,6 +14,7 @@ class InjuryResponseItem(BaseModel):
     name: str
     position: str
     team: str
+    team_abbr: str | None = None
     status: str
     practice_status: str | None = None
     practice_trend: str | None = None
@@ -82,6 +83,7 @@ async def get_injuries(
             name=inj.name,
             position=inj.position,
             team=inj.team,
+            team_abbr=resolve_team_abbrev(inj.team),
             status=inj.status,
             practice_status=inj.practice_status,
             practice_trend=inj.practice_trend,

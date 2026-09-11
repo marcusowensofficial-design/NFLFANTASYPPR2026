@@ -543,6 +543,7 @@ export interface InjuryResponseItem {
   name: string
   position: string
   team: string
+  team_abbr?: string | null
   status: string
   practice_status: string | null
   practice_trend?: string | null

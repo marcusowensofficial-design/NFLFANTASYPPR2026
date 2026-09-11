@@ -12,30 +12,153 @@ export interface NFLTeamLogoProps {
 }
 
 /**
+ * Comprehensive dictionary mapping NFL franchise names, nicknames, and abbreviations
+ * directly to ESPN CDN lowercase keys.
+ */
+const NFL_TEAM_TO_CDN: Record<string, string> = {
+  // Full Names
+  'ARIZONA CARDINALS': 'ari',
+  'ATLANTA FALCONS': 'atl',
+  'BALTIMORE RAVENS': 'bal',
+  'BUFFALO BILLS': 'buf',
+  'CAROLINA PANTHERS': 'car',
+  'CHICAGO BEARS': 'chi',
+  'CINCINNATI BENGALS': 'cin',
+  'CLEVELAND BROWNS': 'cle',
+  'DALLAS COWBOYS': 'dal',
+  'DENVER BRONCOS': 'den',
+  'DETROIT LIONS': 'det',
+  'GREEN BAY PACKERS': 'gb',
+  'HOUSTON TEXANS': 'hou',
+  'INDIANAPOLIS COLTS': 'ind',
+  'JACKSONVILLE JAGUARS': 'jax',
+  'KANSAS CITY CHIEFS': 'kc',
+  'LAS VEGAS RAIDERS': 'lv',
+  'LOS ANGELES CHARGERS': 'lac',
+  'LOS ANGELES RAMS': 'lar',
+  'MIAMI DOLPHINS': 'mia',
+  'MINNESOTA VIKINGS': 'min',
+  'NEW ENGLAND PATRIOTS': 'ne',
+  'NEW ORLEANS SAINTS': 'no',
+  'NEW YORK GIANTS': 'nyg',
+  'NEW YORK JETS': 'nyj',
+  'PHILADELPHIA EAGLES': 'phi',
+  'PITTSBURGH STEELERS': 'pit',
+  'SAN FRANCISCO 49ERS': 'sf',
+  'SEATTLE SEAHAWKS': 'sea',
+  'TAMPA BAY BUCCANEERS': 'tb',
+  'TENNESSEE TITANS': 'ten',
+  'WASHINGTON COMMANDERS': 'wsh',
+
+  // Common Nicknames
+  'CARDINALS': 'ari',
+  'FALCONS': 'atl',
+  'RAVENS': 'bal',
+  'BILLS': 'buf',
+  'PANTHERS': 'car',
+  'BEARS': 'chi',
+  'BENGALS': 'cin',
+  'BROWNS': 'cle',
+  'COWBOYS': 'dal',
+  'BRONCOS': 'den',
+  'LIONS': 'det',
+  'PACKERS': 'gb',
+  'TEXANS': 'hou',
+  'COLTS': 'ind',
+  'JAGUARS': 'jax',
+  'CHIEFS': 'kc',
+  'RAIDERS': 'lv',
+  'CHARGERS': 'lac',
+  'RAMS': 'lar',
+  'DOLPHINS': 'mia',
+  'VIKINGS': 'min',
+  'PATRIOTS': 'ne',
+  'SAINTS': 'no',
+  'GIANTS': 'nyg',
+  'JETS': 'nyj',
+  'EAGLES': 'phi',
+  'STEELERS': 'pit',
+  '49ERS': 'sf',
+  'NINERS': 'sf',
+  'SEAHAWKS': 'sea',
+  'BUCCANEERS': 'tb',
+  'BUCS': 'tb',
+  'TITANS': 'ten',
+  'COMMANDERS': 'wsh',
+
+  // Canonical & Legacy Abbreviations
+  'ARI': 'ari',
+  'ARZ': 'ari',
+  'ATL': 'atl',
+  'BAL': 'bal',
+  'BLT': 'bal',
+  'BUF': 'buf',
+  'CAR': 'car',
+  'CHI': 'chi',
+  'CIN': 'cin',
+  'CLE': 'cle',
+  'CLV': 'cle',
+  'DAL': 'dal',
+  'DEN': 'den',
+  'DET': 'det',
+  'GB': 'gb',
+  'GBP': 'gb',
+  'HOU': 'hou',
+  'HST': 'hou',
+  'IND': 'ind',
+  'JAX': 'jax',
+  'JAC': 'jax',
+  'KC': 'kc',
+  'KCC': 'kc',
+  'LV': 'lv',
+  'LVR': 'lv',
+  'OAK': 'lv',
+  'LAC': 'lac',
+  'SD': 'lac',
+  'LAR': 'lar',
+  'LA': 'lar',
+  'STL': 'lar',
+  'SL': 'lar',
+  'MIA': 'mia',
+  'MIN': 'min',
+  'NE': 'ne',
+  'NEP': 'ne',
+  'NO': 'no',
+  'NOS': 'no',
+  'NYG': 'nyg',
+  'NYJ': 'nyj',
+  'PHI': 'phi',
+  'PIT': 'pit',
+  'SF': 'sf',
+  'SFO': 'sf',
+  'SEA': 'sea',
+  'TB': 'tb',
+  'TBB': 'tb',
+  'TEN': 'ten',
+  'WAS': 'wsh',
+  'WSH': 'wsh',
+}
+
+/**
  * Standardize alternative or legacy team codes to ESPN CDN keys
  */
 export const normalizeNflTeamCode = (team?: string | null): string => {
   if (!team) return ''
   const clean = team.trim().toUpperCase()
-  const map: Record<string, string> = {
-    JAC: 'jax',
-    JAX: 'jax',
-    WAS: 'wsh',
-    WSH: 'wsh',
-    LA: 'lar',
-    LAR: 'lar',
-    SD: 'lac',
-    LAC: 'lac',
-    OAK: 'lv',
-    LV: 'lv',
-    STL: 'lar',
-    ARZ: 'ari',
-    BLT: 'bal',
-    CLV: 'cle',
-    HST: 'hou',
-    SL: 'lar',
+
+  // Direct dictionary hit
+  if (NFL_TEAM_TO_CDN[clean]) {
+    return NFL_TEAM_TO_CDN[clean]
   }
-  return map[clean] || clean.toLowerCase()
+
+  // Check if string contains any recognized team keyword (e.g. "Cardinals", "Falcons")
+  for (const [key, code] of Object.entries(NFL_TEAM_TO_CDN)) {
+    if (key.length > 3 && clean.includes(key)) {
+      return code
+    }
+  }
+
+  return clean.toLowerCase().slice(0, 3)
 }
 
 /**
@@ -62,6 +185,7 @@ export const NFLTeamLogo: React.FC<NFLTeamLogoProps> = ({
   const logoUrl = `https://a.espncdn.com/i/teamlogos/nfl/500/${cdnKey}.png`
   const displayTitle = title || cleanTeam
   const displayAlt = alt || cleanTeam
+  const fallbackLabel = (cdnKey || cleanTeam.slice(0, 3)).toUpperCase()
 
   const logoElement = hasError ? (
     <span
@@ -70,12 +194,20 @@ export const NFLTeamLogo: React.FC<NFLTeamLogoProps> = ({
         width: `${size}px`,
         height: `${size}px`,
         minWidth: `${size}px`,
-        fontSize: size > 24 ? '11px' : size > 18 ? '9.5px' : '8px',
+        maxWidth: `${size}px`,
+        fontSize: size > 24 ? '11px' : size > 18 ? '9px' : '7.5px',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'clip',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
         ...style,
       }}
       title={displayTitle}
     >
-      {cleanTeam}
+      {fallbackLabel}
     </span>
   ) : (
     <img
@@ -88,11 +220,13 @@ export const NFLTeamLogo: React.FC<NFLTeamLogoProps> = ({
         width: `${size}px`,
         height: `${size}px`,
         minWidth: `${size}px`,
+        maxWidth: `${size}px`,
         objectFit: 'contain',
+        flexShrink: 0,
         ...style,
       }}
       title={displayTitle}
-    />
+    ></img>
   )
 
   if (!showLabel) {
