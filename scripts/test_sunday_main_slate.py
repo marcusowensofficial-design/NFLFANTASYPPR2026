@@ -23,7 +23,7 @@ async def main():
     print("\n--- TOP GAME STACKS ---")
     stacks = dfs_analyzer.get_top_game_stacks(df_slate, top_n=5)
     for s in stacks:
-        print(f"Game: {s.get('game')} (O/U: {s.get('total')}) | QB: {s.get('qb')} | Stack Score: {s.get('stack_score')}")
+        print(f"Game: {s.get('game')} (O/U: {s.get('game_ou')}) | QB: {s.get('qb')} | Stack Proj: {s.get('total_proj')} | Value: {s.get('avg_value')}")
 
     print("\n--- TOP VALUE PLAYS BY POSITION ---")
     for pos in ["QB", "RB", "WR", "TE", "D"]:

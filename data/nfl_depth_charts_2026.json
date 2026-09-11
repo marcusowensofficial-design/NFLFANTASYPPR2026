@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "last_updated": "2026-09-11T18:27:09.045415+00:00",
+  "last_updated": "2026-09-11T22:03:19.863779+00:00",
   "total_teams": 32,
   "teams": {
     "ARI": {
@@ -725,11 +725,6 @@
             "name": "Sydney Brown",
             "rank": 2,
             "id": 4360386
-          },
-          {
-            "name": "Malik Verdon",
-            "rank": 3,
-            "id": 4684636
           }
         ],
         "rcb": [
@@ -4303,13 +4298,8 @@
         ],
         "rdt": [
           {
-            "name": "Levi Onwuzurike",
-            "rank": 1,
-            "id": 4039020
-          },
-          {
             "name": "Skyler Gill-Howard",
-            "rank": 2,
+            "rank": 1,
             "id": 5103940
           }
         ],
@@ -4517,14 +4507,9 @@
             "id": 4248528
           },
           {
-            "name": "Bo Melton",
+            "name": "Skyy Moore",
             "rank": 2,
-            "id": 4259305
-          },
-          {
-            "name": "Savion Williams",
-            "rank": 3,
-            "id": 4431487
+            "id": 4430191
           }
         ],
         "wr2": [
@@ -4534,9 +4519,9 @@
             "id": 4362249
           },
           {
-            "name": "Skyy Moore",
+            "name": "J. Michael Sturdivant",
             "rank": 2,
-            "id": 4430191
+            "id": 4635009
           }
         ],
         "wr3": [
@@ -4546,9 +4531,9 @@
             "id": 4701936
           },
           {
-            "name": "J. Michael Sturdivant",
+            "name": "Savion Williams",
             "rank": 2,
-            "id": 4635009
+            "id": 4431487
           }
         ],
         "lt": [
@@ -8354,11 +8339,6 @@
             "name": "Demond Claiborne",
             "rank": 3,
             "id": 4832846
-          },
-          {
-            "name": "Jermar Jefferson",
-            "rank": 4,
-            "id": 4374033
           }
         ],
         "fb": [
@@ -12311,6 +12291,11 @@
             "name": "Fernando Carmona",
             "rank": 2,
             "id": 4710000
+          },
+          {
+            "name": "Atonio Mafi",
+            "rank": 3,
+            "id": 4367202
           }
         ],
         "c": [
@@ -12335,11 +12320,6 @@
             "name": "Jackson Slater",
             "rank": 2,
             "id": 4876319
-          },
-          {
-            "name": "Garrett Dellinger",
-            "rank": 3,
-            "id": 4431252
           }
         ],
         "rt": [
