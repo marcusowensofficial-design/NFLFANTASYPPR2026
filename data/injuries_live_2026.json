@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "last_updated": "2026-09-11T17:18:37.727830+00:00",
+  "last_updated": "2026-09-11T18:27:09.404904+00:00",
   "total_injuries": 800,
   "injuries": [
     {
@@ -15,8 +15,8 @@
       "practice_trend": "FULL PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Tyler Allgeier",
+      "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
     },
     {
       "athlete_id": 4568506,
@@ -225,8 +225,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Jameson Geers",
+      "vacated_opportunity_note": "Assumes inline snaps and high-leverage red-zone target share."
     },
     {
       "athlete_id": 3045147,
@@ -379,13 +379,13 @@
       "vacated_opportunity_note": null
     },
     {
-      "athlete_id": 4241479,
-      "name": "Tua Tagovailoa",
-      "position": "QB",
+      "athlete_id": 4034961,
+      "name": "Jawaan Taylor",
+      "position": "OT",
       "team": "Atlanta Falcons",
-      "status": "QUESTIONABLE",
-      "headline": "Tagovailoa (oblique) wasn't on the field for the media-access portion of Friday's practice, Marc Raimondi of ESPN.com reports.",
-      "notes": "Tagovailoa is considered day-to-day after suffering an oblique strain during Thursday's practice. His absence Friday suggests there's serious risk the Falcons will end up starting Cooper Rush this Sunday in Pittsburgh. The team has yet to announce any kind of decision, beyond ruling out Michael Penix (knee) at the start of the week. It won't be surprising if Penix is under center by the end of the month, however.",
+      "status": "ACTIVE",
+      "headline": "",
+      "notes": "",
       "practice_status": null,
       "practice_trend": null,
       "is_playable": true,
@@ -394,15 +394,30 @@
       "vacated_opportunity_note": null
     },
     {
-      "athlete_id": 4870612,
-      "name": "Zachariah Branch",
-      "position": "WR",
+      "athlete_id": 4595343,
+      "name": "Kendal Daniels",
+      "position": "LB",
       "team": "Atlanta Falcons",
-      "status": "QUESTIONABLE",
-      "headline": "Branch (hamstring) remained limited at practice Thursday, Tori McElhaney of the Falcons' official site reports.",
-      "notes": "Branch has been a limited participant in consecutive practices to kick off Week 1 prep, but the rookie third-round pick still has a chance to avoid an injury designation if he can upgrade to full practice participation Friday as he looks to make his NFL debut Sunday against the Steelers. Branch is expected to fill a reserve role at wide receiver to begin his career, but he's penciled in as Atlanta's primary punt returner.",
-      "practice_status": "FULL",
-      "practice_trend": "FULL PARTICIPANT",
+      "status": "ACTIVE",
+      "headline": "",
+      "notes": "",
+      "practice_status": null,
+      "practice_trend": null,
+      "is_playable": true,
+      "is_out": false,
+      "backup_athlete_name": null,
+      "vacated_opportunity_note": null
+    },
+    {
+      "athlete_id": 4427090,
+      "name": "Brandon Dorlus",
+      "position": "DT",
+      "team": "Atlanta Falcons",
+      "status": "ACTIVE",
+      "headline": "",
+      "notes": "",
+      "practice_status": null,
+      "practice_trend": null,
       "is_playable": true,
       "is_out": false,
       "backup_athlete_name": null,
@@ -413,11 +428,101 @@
       "name": "Da'Shawn Hand",
       "position": "DT",
       "team": "Atlanta Falcons",
-      "status": "QUESTIONABLE",
-      "headline": "questionable",
-      "notes": "questionable",
+      "status": "ACTIVE",
+      "headline": "",
+      "notes": "",
       "practice_status": null,
       "practice_trend": null,
+      "is_playable": true,
+      "is_out": false,
+      "backup_athlete_name": null,
+      "vacated_opportunity_note": null
+    },
+    {
+      "athlete_id": 4685590,
+      "name": "Cameron Williams",
+      "position": "OL",
+      "team": "Atlanta Falcons",
+      "status": "OUT",
+      "headline": "out",
+      "notes": "out",
+      "practice_status": null,
+      "practice_trend": null,
+      "is_playable": false,
+      "is_out": true,
+      "backup_athlete_name": null,
+      "vacated_opportunity_note": null
+    },
+    {
+      "athlete_id": 4431194,
+      "name": "Billy Bowman Jr.",
+      "position": "CB",
+      "team": "Atlanta Falcons",
+      "status": "OUT",
+      "headline": "out",
+      "notes": "out",
+      "practice_status": null,
+      "practice_trend": null,
+      "is_playable": false,
+      "is_out": true,
+      "backup_athlete_name": null,
+      "vacated_opportunity_note": null
+    },
+    {
+      "athlete_id": 4360423,
+      "name": "Michael Penix Jr.",
+      "position": "QB",
+      "team": "Atlanta Falcons",
+      "status": "OUT",
+      "headline": "Penix (knee), who won't play Sunday in Pittsburgh, was seen throwing to practice-squad players during the open portion of Friday's practice, Daniel Flick of The Atlanta Journal-Constitution reports.",
+      "notes": "On Monday, coach Kevin Stefanski announced that Tua Tagovailoa as the Falcons' Week 1 starting quarterback, while conversely Penix would be inactive for the season opener. On Thursday, though, Tagovailoa strained his oblique and now won't be available this weekend, either, with coach Kevin Stefanski calling him \"week-to-week\" Friday, per Marc Raimondi of ESPN.com. Penix's listed activity of \"full\" all week indicates he's closing in on his first game action since tearing his left ACL last November, and if Tagovailoa is indeed in danger of missing multiple games, Penix could soon be in the mix for starts under center. As for this Sunday, Cooper Rush will direct the offense, with Jack Strand backing him up.",
+      "practice_status": null,
+      "practice_trend": "FULL ALL WEEK",
+      "is_playable": false,
+      "is_out": true,
+      "backup_athlete_name": "Cooper Rush",
+      "vacated_opportunity_note": "Takes over first-team reps under center with full pass-funnel responsibility."
+    },
+    {
+      "athlete_id": 2972515,
+      "name": "Cooper Rush",
+      "position": "QB",
+      "team": "Atlanta Falcons",
+      "status": "ACTIVE",
+      "headline": "Rush will start Sunday's game at Pittsburgh after Tua Tagovailoa (oblique) was ruled out for Week 1 action, NFL reporter Jordan Schultz reports.",
+      "notes": "Tagovailoa suffered an oblique strain during Thursday's practice and now will join Michael Penix (knee) on the sideline this weekend. Rush handled the first-team reps in the final two sessions of Week 1 prep and thus will be under center Sunday, with Jack Strand backup him up. Because coach Kevin Stefanski told Marc Raimondi of ESPN.com on Friday that Tagovailoa is \"week-to-week,\" Rush could be in consideration for multiple starts to kick off the 2026 campaign.",
+      "practice_status": null,
+      "practice_trend": null,
+      "is_playable": true,
+      "is_out": false,
+      "backup_athlete_name": null,
+      "vacated_opportunity_note": null
+    },
+    {
+      "athlete_id": 4241479,
+      "name": "Tua Tagovailoa",
+      "position": "QB",
+      "team": "Atlanta Falcons",
+      "status": "OUT",
+      "headline": "Tagovailoa (oblique) has been ruled out for Sunday's game at Pittsburgh, Tori McElhaney of the Falcons' official site reports.",
+      "notes": "Tagovailoa opened the week getting the call as Atlanta's Week 1 starting quarterback but ended it sidelined due to an oblique injury that he sustained during Thursday's practice. Coach Kevin Stefanski told Marc Raimondi of ESPN.com on Friday that Tagovailoa is \"week-to-week, which would seem to suggest multiple DNPs are on the horizon for the QB. Iny any case, Tagovailoa will join Michael Penix (knee) in street clothes Sunday, while Cooper Rush gets the nod under center and Marc Raimondi of ESPN.com serves as his backup.",
+      "practice_status": null,
+      "practice_trend": null,
+      "is_playable": false,
+      "is_out": true,
+      "backup_athlete_name": "Cooper Rush",
+      "vacated_opportunity_note": "Takes over first-team reps under center with full pass-funnel responsibility."
+    },
+    {
+      "athlete_id": 4870612,
+      "name": "Zachariah Branch",
+      "position": "WR",
+      "team": "Atlanta Falcons",
+      "status": "ACTIVE",
+      "headline": "Branch (hamstring) remained limited at practice Thursday, Tori McElhaney of the Falcons' official site reports.",
+      "notes": "Branch has been a limited participant in consecutive practices to kick off Week 1 prep, but the rookie third-round pick still has a chance to avoid an injury designation if he can upgrade to full practice participation Friday as he looks to make his NFL debut Sunday against the Steelers. Branch is expected to fill a reserve role at wide receiver to begin his career, but he's penciled in as Atlanta's primary punt returner.",
+      "practice_status": "FULL",
+      "practice_trend": "FULL PARTICIPANT",
       "is_playable": true,
       "is_out": false,
       "backup_athlete_name": null,
@@ -439,84 +544,9 @@
       "vacated_opportunity_note": null
     },
     {
-      "athlete_id": 4034961,
-      "name": "Jawaan Taylor",
-      "position": "OT",
-      "team": "Atlanta Falcons",
-      "status": "QUESTIONABLE",
-      "headline": "questionable",
-      "notes": "questionable",
-      "practice_status": null,
-      "practice_trend": null,
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
-      "athlete_id": 4595343,
-      "name": "Kendal Daniels",
-      "position": "LB",
-      "team": "Atlanta Falcons",
-      "status": "QUESTIONABLE",
-      "headline": "questionable",
-      "notes": "questionable",
-      "practice_status": null,
-      "practice_trend": null,
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
-      "athlete_id": 2972515,
-      "name": "Cooper Rush",
-      "position": "QB",
-      "team": "Atlanta Falcons",
-      "status": "ACTIVE",
-      "headline": "Rush took all of the first-team reps at Thursday's practice while Tua Tagovailoa (oblique) was unable to participate, Marc Raimondi of ESPN.com reports.",
-      "notes": "Michael Penix (knee) has already been ruled out, so if Tagovailoa is sidelined by the oblique injury he suffered during individual drills Thursday, Rush would be next in line to get tabbed for the Week 1 start Sunday against the Steelers, ahead of undrafted rookie Jack Strand. Tagovailoa officially went down as a limited participant Thursday, per Raimondi. Rush has a career 9-7 record as a regular-season starter, having gone 9-5 with the Cowboys from 2021 through 2024 but 0-2 with the Ravens last season.",
-      "practice_status": "LIMITED",
-      "practice_trend": "LIMITED PARTICIPANT",
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
-      "athlete_id": 4431194,
-      "name": "Billy Bowman Jr.",
-      "position": "CB",
-      "team": "Atlanta Falcons",
-      "status": "QUESTIONABLE",
-      "headline": "Bowman (Achilles) was a limited participant in Wednesday's practice, Will McFadden of the Falcons' official site reports.",
-      "notes": "Bowman was removed from the active/PUP list at the end of training camp after clearing his physical, but his workload is still being limited as he continues to recover from a torn Achilles that he sustained in November. Per Josh Kendall of The Athletic, Bowman said Wednesday that he feels ready to play in Sunday's season opener versus the Steelers, but he was non-committal about suiting up Week 1. His practice participation over the next two days will likely help the Falcons determine his status.",
-      "practice_status": "LIMITED",
-      "practice_trend": "LIMITED PARTICIPANT",
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
       "athlete_id": 3043168,
       "name": "Za'Darius Smith",
       "position": "DE",
-      "team": "Atlanta Falcons",
-      "status": "QUESTIONABLE",
-      "headline": "questionable",
-      "notes": "questionable",
-      "practice_status": null,
-      "practice_trend": null,
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
-      "athlete_id": 4427090,
-      "name": "Brandon Dorlus",
-      "position": "DT",
       "team": "Atlanta Falcons",
       "status": "QUESTIONABLE",
       "headline": "questionable",
@@ -570,21 +600,6 @@
       "practice_trend": "FULL PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
-      "athlete_id": 4360423,
-      "name": "Michael Penix Jr.",
-      "position": "QB",
-      "team": "Atlanta Falcons",
-      "status": "OUT",
-      "headline": "Falcons head coach Kevin Stefanski said that Penix (knee) will be inactive for Sunday's season opener in Pittsburgh, Marc Raimondi of ESPN.com reports.",
-      "notes": "While addressing the media shortly after the Falcons named Tua Tagovailoa their Week 1 starter Monday, Stefanski noted that Penix had taken part in only six 11-on-11 practices during training camp, so the third-year quarterback will need some more time to get back to full speed following last November's ACL tear before making his 2026 debut, per Raimondi. The Falcons were pleased enough with Penix's progress to wait until less than a week before the opener to name a starter, which suggests that he'll likely get a chance to supplant Tagovailoa atop the depth chart at some point this season. While Penix is in street clothes for Week 1, Cooper Rush will step in as Tagovailoa's backup, and undrafted rookie Jack Strand will serve as the No. 3 quarterback.",
-      "practice_status": null,
-      "practice_trend": null,
-      "is_playable": false,
-      "is_out": true,
       "backup_athlete_name": null,
       "vacated_opportunity_note": null
     },
@@ -739,21 +754,6 @@
       "vacated_opportunity_note": null
     },
     {
-      "athlete_id": 4037626,
-      "name": "Divine Deablo",
-      "position": "LB",
-      "team": "Atlanta Falcons",
-      "status": "ACTIVE",
-      "headline": "Deablo (ankle) participated during the Falcons' training camp practice Wednesday, D. Orlando Ledbetter of bowtiesports.com reports.",
-      "notes": "Deablo had been missing time due to an ankle injury he suffered during practice earlier in the month, but he's now dressing for training camp sessions again. He projects to play a large role in Atlanta's front seven in 2026 when available.",
-      "practice_status": null,
-      "practice_trend": null,
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
       "athlete_id": 4035245,
       "name": "Nnamdi Madubuike",
       "position": "DT",
@@ -780,8 +780,8 @@
       "practice_trend": "FULL PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Rashod Bateman",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4429615,
@@ -1129,6 +1129,21 @@
       "vacated_opportunity_note": null
     },
     {
+      "athlete_id": 3915411,
+      "name": "Ty Johnson",
+      "position": "RB",
+      "team": "Buffalo Bills",
+      "status": "QUESTIONABLE",
+      "headline": "Johnson (hamstring) is practicing Friday, but Alex Brasky of SI.com believes the running back is unlikely to play Sunday in Houston.",
+      "notes": "Johnson returned to practice Thursday after missing a full month, so the Bills will probably wait until Week 2 or 3 to have him suit up. James Cook could get a few extra snaps in passing situations, while Ray Davis also gets a minor boost for workload projection in Johnson's absence.",
+      "practice_status": null,
+      "practice_trend": null,
+      "is_playable": true,
+      "is_out": false,
+      "backup_athlete_name": null,
+      "vacated_opportunity_note": null
+    },
+    {
       "athlete_id": 4869533,
       "name": "Jude Bowry",
       "position": "OT",
@@ -1153,21 +1168,6 @@
       "notes": "Sanders recorded a limited practice Wednesday, but it seems he may have suffered some sort of setback during the week. He'll likely need to return to practice Friday to give himself a chance to be active in Week 1 at Houston.",
       "practice_status": "LIMITED",
       "practice_trend": "SETBACK (DNP)",
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
-      "athlete_id": 3915411,
-      "name": "Ty Johnson",
-      "position": "RB",
-      "team": "Buffalo Bills",
-      "status": "QUESTIONABLE",
-      "headline": "Johnson (hamstring) didn't practice Thursday, Matt Parrino of The Syracuse Post-Standard reports.",
-      "notes": "Johnson continues to miss practice due to the hamstring injury, which has kept him sidelined since Aug. 8. Though Johnson avoided placement on injured reserve coming out of the preseason, his 2026 debut could be delayed until at least Week 2 if he's unable to practice in some capacity Friday. In the event Johnson is sidelined for Sunday's season opener versus the Texans, Frank Gore could be elevated from the practice squad to provide a third option in the backfield behind James Cook and Ray Davis.",
-      "practice_status": null,
-      "practice_trend": null,
       "is_playable": true,
       "is_out": false,
       "backup_athlete_name": null,
@@ -1260,8 +1260,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Khalil Shakir",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4568703,
@@ -1504,28 +1504,28 @@
       "vacated_opportunity_note": null
     },
     {
-      "athlete_id": 4678008,
-      "name": "Jonathon Brooks",
-      "position": "RB",
-      "team": "Carolina Panthers",
-      "status": "QUESTIONABLE",
-      "headline": "Brooks (groin) doesn't have an injury designation for Sunday's game against the Bears, Joe Person of The Athletic reports.",
-      "notes": "With Brooks cleared after practicing throughout the week, he appears on track to handle whatever role the team has in mind. Chuba Hubbard remains the favorite to start and get most of the carries, but reports throughout the offseason and preseason made it clear that the Panthers have a role in mind for Brooks as well.",
-      "practice_status": null,
-      "practice_trend": null,
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
       "athlete_id": 4036063,
       "name": "Patrick Jones II",
       "position": "LB",
       "team": "Carolina Panthers",
-      "status": "QUESTIONABLE",
-      "headline": "Jones (back) is not expected to play in Sunday's regular-season opener against the Bears, Joe Person of The Athletic reports.",
-      "notes": "Jones has been nursing a back injury, and he has yet to participate at practice this week. The linebacker is considered week-to-week according to head coach Dave Canales, so his status for Week 2 versus Atlanta is also in question. In his absence against Chicago, Trevis Gipson is a top candidate to draw the start at weak-side linebacker.",
+      "status": "OUT",
+      "headline": "out",
+      "notes": "out",
+      "practice_status": null,
+      "practice_trend": null,
+      "is_playable": false,
+      "is_out": true,
+      "backup_athlete_name": null,
+      "vacated_opportunity_note": null
+    },
+    {
+      "athlete_id": 4678008,
+      "name": "Jonathon Brooks",
+      "position": "RB",
+      "team": "Carolina Panthers",
+      "status": "ACTIVE",
+      "headline": "Brooks (groin) doesn't have an injury designation for Sunday's game against the Bears, Joe Person of The Athletic reports.",
+      "notes": "With Brooks cleared after practicing throughout the week, he appears on track to handle whatever role the team has in mind. Chuba Hubbard remains the favorite to start and get most of the carries, but reports throughout the offseason and preseason made it clear that the Panthers have a role in mind for Brooks as well.",
       "practice_status": null,
       "practice_trend": null,
       "is_playable": true,
@@ -1890,8 +1890,8 @@
       "practice_trend": "UPWARD (\u2794 FP)",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Zavion Thomas",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 3040572,
@@ -1920,8 +1920,8 @@
       "practice_trend": null,
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Case Keenum",
+      "vacated_opportunity_note": "Takes over first-team reps under center with full pass-funnel responsibility."
     },
     {
       "athlete_id": 4911952,
@@ -2629,6 +2629,21 @@
       "vacated_opportunity_note": null
     },
     {
+      "athlete_id": 4870653,
+      "name": "KC Concepcion",
+      "position": "WR",
+      "team": "Cleveland Browns",
+      "status": "ACTIVE",
+      "headline": "Browns coach Todd Monken said Friday that Concepcion will handle all of the punt returns Sunday against Jacksonville, Scott Petrak of the Elyria Chronicle-Telegram reports.",
+      "notes": "Concepcion also figures to be one of the team's top offensive weapons, locked in for a top-three role alongside presumed starters Jerry Jeudy and Denzel Boston. The Browns also have TE Harold Fannin and RBs Quinshon Judkins and Dylan Sampson in the mix for short-area targets, but Monken seems intent on getting the ball into Concepcion's hands, one way or another.",
+      "practice_status": null,
+      "practice_trend": null,
+      "is_playable": true,
+      "is_out": false,
+      "backup_athlete_name": null,
+      "vacated_opportunity_note": null
+    },
+    {
       "athlete_id": 4428678,
       "name": "Jamari Thrash",
       "position": "WR",
@@ -2786,21 +2801,6 @@
       "status": "ACTIVE",
       "headline": "Sampson was rested for the Browns' 37-13 win over the Patriots in their Aug. 27 preseason finale.",
       "notes": "Cleveland held both of their top two backs -- Quinshon Judkins and Sampson -- out for the third game of the preseason to open up more playing time for other running backs to stake claims to roster spots. Judkins is locked in as the Browns' lead runner heading into their Week 1 matchup with the Jaguars, but Sampson should have a consistent role as a weapon on passing downs. Sampson proved to be adept as a pass catcher during his 2025 rookie campaign, drawing 40 targets on just 249 snaps while producing a 33-271-2 receiving line. He was much less productive as a runner, however, averaging just 2.7 yards per carry on 65 totes.",
-      "practice_status": null,
-      "practice_trend": null,
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
-      "athlete_id": 4870653,
-      "name": "KC Concepcion",
-      "position": "WR",
-      "team": "Cleveland Browns",
-      "status": "ACTIVE",
-      "headline": "Concepcion told reporters after Wednesday's practice that he's looking forward to carrying his strong play in training camp into the regular season, starting with the Browns' Week 1 clash against the Jaguars on Sunday, Sept. 13, Chris Easterling of the Akron Beacon Journal reports.",
-      "notes": "\"Seeing that these coaches have trust built up in me to put me in different type of situations, I would say that it only makes me more excited for Week 1,\" Concepcion shared with reporters Wednesday. Concepcion's lone preseason appearance was against the Bears on Aug. 15, but he looked good in that game and finished with three catches (on four targets) for 27 yards while adding a 14-yard rushing touchdown and a 31-yard punt return. The Texas A&amp;M product was one of the standout players for the Browns in training camp, and the rookie first-rounder has enough trust from his coaching staff to be an immediate contributor on offense. Concepcion, fellow rookie Denzel Boston, veteran Jerry Jeudy, tight end Harold Fannin and running back Quinshon Judkins figure to be the key playmakers for the Browns this season, with Deshaun Watson manning the offense, at least to begin the campaign.",
       "practice_status": null,
       "practice_trend": null,
       "is_playable": true,
@@ -4470,8 +4470,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Thomas Yassmin",
+      "vacated_opportunity_note": "Assumes inline snaps and high-leverage red-zone target share."
     },
     {
       "athlete_id": 4361423,
@@ -4920,8 +4920,8 @@
       "practice_trend": "UPWARD (\u2794 FP)",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Ashton Dulin",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4430815,
@@ -5265,8 +5265,8 @@
       "practice_trend": "LIMITED PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "CJ Williams",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4432620,
@@ -5295,8 +5295,8 @@
       "practice_trend": "UPWARD (\u2794 FP)",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Ameer Abdullah",
+      "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
     },
     {
       "athlete_id": 4035791,
@@ -6015,8 +6015,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Michael Mayer",
+      "vacated_opportunity_note": "Assumes inline snaps and high-leverage red-zone target share."
     },
     {
       "athlete_id": 4890973,
@@ -6390,8 +6390,8 @@
       "practice_trend": "LIMITED PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Quentin Johnston",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4429018,
@@ -6420,8 +6420,8 @@
       "practice_trend": "LIMITED PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Kimani Vidal",
+      "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
     },
     {
       "athlete_id": 4242283,
@@ -6930,8 +6930,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Davante Adams",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4360797,
@@ -6945,8 +6945,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Davante Adams",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4685522,
@@ -6960,8 +6960,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Matthew Caldwell",
+      "vacated_opportunity_note": "Takes over first-team reps under center with full pass-funnel responsibility."
     },
     {
       "athlete_id": 4259553,
@@ -7140,8 +7140,8 @@
       "practice_trend": "LIMITED PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Seydou Traore",
+      "vacated_opportunity_note": "Assumes inline snaps and high-leverage red-zone target share."
     },
     {
       "athlete_id": 4869961,
@@ -8130,8 +8130,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Romeo Doubs",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4606666,
@@ -8175,8 +8175,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Corey Kiner",
+      "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
     },
     {
       "athlete_id": 4890074,
@@ -8265,8 +8265,8 @@
       "practice_trend": null,
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Moliki Matavao",
+      "vacated_opportunity_note": "Assumes inline snaps and high-leverage red-zone target share."
     },
     {
       "athlete_id": 4569682,
@@ -8280,8 +8280,8 @@
       "practice_trend": null,
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Ty Chandler",
+      "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
     },
     {
       "athlete_id": 3054850,
@@ -8295,8 +8295,8 @@
       "practice_trend": "LIMITED PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Kendre Miller",
+      "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
     },
     {
       "athlete_id": 4248047,
@@ -8535,8 +8535,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Devaughn Vele",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4880281,
@@ -8640,8 +8640,8 @@
       "practice_trend": "FULL PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Odell Beckham Jr.",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4921249,
@@ -9030,8 +9030,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Chip Trayanum",
+      "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
     },
     {
       "athlete_id": 4362094,
@@ -9060,8 +9060,8 @@
       "practice_trend": "LIMITED PARTICIPANT",
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Omar Cooper Jr.",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4685247,
@@ -9405,8 +9405,8 @@
       "practice_trend": "LIMITED PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "E.J. Jenkins",
+      "vacated_opportunity_note": "Assumes inline snaps and high-leverage red-zone target share."
     },
     {
       "athlete_id": 4428850,
@@ -10245,8 +10245,8 @@
       "practice_trend": null,
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Luke Farrell",
+      "vacated_opportunity_note": "Assumes inline snaps and high-leverage red-zone target share."
     },
     {
       "athlete_id": 3117251,
@@ -10275,8 +10275,8 @@
       "practice_trend": null,
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "KhaDarel Hodge",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4685523,
@@ -10320,8 +10320,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Ricky Pearsall",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4685397,
@@ -10335,8 +10335,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Isaac Guerendo",
+      "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
     },
     {
       "athlete_id": 4430835,
@@ -10680,8 +10680,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Drew Lock",
+      "vacated_opportunity_note": "Takes over first-team reps under center with full pass-funnel responsibility."
     },
     {
       "athlete_id": 4576297,
@@ -10830,8 +10830,8 @@
       "practice_trend": null,
       "is_playable": false,
       "is_out": true,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
+      "backup_athlete_name": "Jake Bobo",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 4592823,
@@ -10879,13 +10879,28 @@
       "vacated_opportunity_note": null
     },
     {
+      "athlete_id": 4430834,
+      "name": "Jalen McMillan",
+      "position": "WR",
+      "team": "Tampa Bay Buccaneers",
+      "status": "DOUBTFUL",
+      "headline": "McMillan (knee) is doubtful for Sunday's game at Cincinnati, Scott Smith of the Buccaneers' official site reports.",
+      "notes": "McMillan reportedly looked good at practice earlier this week, but the Bucs have been listing him as a limited participant and apparently don't expect a contribution this Sunday. Continued practice participation does hint at a shot to be back for Week 2 against Cleveland. With McMillan likely inactive this week, Chris Godwin and Emeka Egbuka should get plenty of snaps, with Tez Johnson and Ted Hurst also candidates for routes/targets.",
+      "practice_status": "LIMITED",
+      "practice_trend": "LIMITED PARTICIPANT",
+      "is_playable": false,
+      "is_out": true,
+      "backup_athlete_name": "Kameron Johnson",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
+    },
+    {
       "athlete_id": 4430871,
       "name": "Sean Tucker",
       "position": "RB",
       "team": "Tampa Bay Buccaneers",
       "status": "DOUBTFUL",
-      "headline": "Tucker (hamstring) is practicing Friday, Greg Auman of Fox Sports reports.",
-      "notes": "Tucker returned to practice Thursday as a limited participant. Another appearance Friday gives him a shot to play Sunday at Cincinnati, though it's unclear if he'll be involved on offense or mostly just handling kick returns.",
+      "headline": "Tucker (hamstring) is doubtful for Sunday's game at Cincinnati, Scott Smith of the Buccaneers' official site reports.",
+      "notes": "Tucker returned to practice Thursday as a limited participant and reportedly is practicing again Friday. It sounds like it won't be enough for a Week 1 appearance, but he should have a decent shot to return in Week 2.",
       "practice_status": "LIMITED",
       "practice_trend": "LIMITED PARTICIPANT",
       "is_playable": false,
@@ -10920,21 +10935,6 @@
       "practice_trend": "FULL PARTICIPANT",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": null,
-      "vacated_opportunity_note": null
-    },
-    {
-      "athlete_id": 4430834,
-      "name": "Jalen McMillan",
-      "position": "WR",
-      "team": "Tampa Bay Buccaneers",
-      "status": "DOUBTFUL",
-      "headline": "McMillan (knee) was a limited practice participant Thursday.",
-      "notes": "McMillan has been tending to a knee injury since early August, a scenario that sidelined him for the entire preseason slate. With back-to-back capped sessions under his belt, he still has some work to do to make himself available for Sunday's game at Cincinnati. Friday's practice report will reveal if McMillan enters the weekend with a designation ahead of that matchup.",
-      "practice_status": "LIMITED",
-      "practice_trend": "LIMITED PARTICIPANT",
-      "is_playable": false,
-      "is_out": true,
       "backup_athlete_name": null,
       "vacated_opportunity_note": null
     },
@@ -11633,11 +11633,11 @@
       "name": "Jacory Croskey-Merritt",
       "position": "RB",
       "team": "Washington Commanders",
-      "status": "QUESTIONABLE",
-      "headline": "Croskey-Merritt (groin) will play in Sunday's game against the Eagles, Tashan Reed reports after Commanders coach Dan Quinn's update Friday.",
-      "notes": "Croskey-Merritt was limited in practice Wednesday and Thursday but will apparently be fine for the season opener. He's got a tough matchup on the road in Philadelphia, and he'll will be sharing snaps with Rachaad White in some fashion, regardless of health/durability considerations.",
-      "practice_status": "LIMITED",
-      "practice_trend": "LIMITED PARTICIPANT",
+      "status": "ACTIVE",
+      "headline": "",
+      "notes": "",
+      "practice_status": null,
+      "practice_trend": null,
       "is_playable": true,
       "is_out": false,
       "backup_athlete_name": null,
@@ -11648,11 +11648,11 @@
       "name": "Odafe Oweh",
       "position": "LB",
       "team": "Washington Commanders",
-      "status": "QUESTIONABLE",
-      "headline": "Oweh (calf) was a limited participant at the Commanders' practice Thursday.",
+      "status": "ACTIVE",
+      "headline": "Odafe Oweh has been officially cleared and will play in Sunday's game against the Eagles.",
       "notes": "Oweh has been limited at back-to-back practices to open the week as he continues to work his way back from a calf injury he suffered in mid-August. The linebacker will have one more chance to log a full session Friday before the team's begins the regular season on the road in Philadelphia on Sunday.",
-      "practice_status": "LIMITED",
-      "practice_trend": "LIMITED PARTICIPANT",
+      "practice_status": "FULL",
+      "practice_trend": "CLEARED TO PLAY",
       "is_playable": true,
       "is_out": false,
       "backup_athlete_name": null,
@@ -11663,11 +11663,11 @@
       "name": "K'Lavon Chaisson",
       "position": "LB",
       "team": "Washington Commanders",
-      "status": "QUESTIONABLE",
-      "headline": "Chaisson (knee) was a limited participant at the Commanders' practice Thursday.",
+      "status": "ACTIVE",
+      "headline": "K'Lavon Chaisson has been officially cleared and will play in Sunday's game against the Eagles.",
       "notes": "Chaisson has logged back-to-back limited sessions to open the week as he continues to work his way back from the knee injury he sustained during Washington's joint practice with Miami in early August. The 27-year-old will have one last chance to log a full practice Friday before Sunday's regular-season opener against the Eagles on the road.",
       "practice_status": "FULL",
-      "practice_trend": "FULL PARTICIPANT",
+      "practice_trend": "CLEARED TO PLAY",
       "is_playable": true,
       "is_out": false,
       "backup_athlete_name": null,
@@ -11678,11 +11678,11 @@
       "name": "Daron Payne",
       "position": "DT",
       "team": "Washington Commanders",
-      "status": "QUESTIONABLE",
-      "headline": "Payne (knee) was a limited participant at the Commanders' practice Thursday.",
+      "status": "ACTIVE",
+      "headline": "Daron Payne has been officially cleared and will play in Sunday's game against the Eagles.",
       "notes": "Payne was added to the injury report Thursday after he opened the week as a full participant Wednesday. The defensive tackle is dealing with an apparent knee injury, and he will have one more chance to log a full practice Friday before the team takes on the Eagles in Week 1 on Sunday.",
       "practice_status": "FULL",
-      "practice_trend": "UPWARD (\u2794 FP)",
+      "practice_trend": "CLEARED TO PLAY",
       "is_playable": true,
       "is_out": false,
       "backup_athlete_name": null,

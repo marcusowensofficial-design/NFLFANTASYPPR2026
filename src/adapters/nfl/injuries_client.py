@@ -171,13 +171,15 @@ class NFLInjuriesClient:
         """Resolves depth chart direct backups/beneficiaries for injured starters."""
         from src.adapters.nfl.depthchart_client import nfl_depthchart_client
 
+        ruled_out_names = {i.name for i in injuries if i.is_out}
+
         for inj in injuries:
             if inj.position.upper() in ("QB", "RB", "WR", "TE") and (inj.is_out or "QUESTIONABLE" in inj.status.upper()):
                 team_abbr = resolve_team_abbrev(inj.team)
                 try:
                     chart = await nfl_depthchart_client.fetch_team_depth_chart(team_abbr)
                     if chart:
-                        next_up = chart.get_next_man_up(inj.name, inj.position)
+                        next_up = chart.get_next_man_up(inj.name, inj.position, excluded_names=ruled_out_names)
                         if next_up:
                             inj.backup_athlete_name = next_up.get("display_name")
                             inj.backup_athlete_id = next_up.get("athlete_id")

@@ -82,11 +82,12 @@ async def sync_injuries() -> int:
     """Fetches active injury reports and exports to data/injuries_live_2026.json."""
     logger.info("Fetching live NFL injury wire...")
     injuries = await nfl_injuries_client.fetch_injuries()
+    enriched_list = await nfl_injuries_client.enrich_beneficiaries(list(injuries.values()))
 
     report = {
         "season": 2026,
         "last_updated": datetime.now(timezone.utc).isoformat(),
-        "total_injuries": len(injuries),
+        "total_injuries": len(enriched_list),
         "injuries": [
             {
                 "athlete_id": inj.athlete_id,
@@ -103,7 +104,7 @@ async def sync_injuries() -> int:
                 "backup_athlete_name": inj.backup_athlete_name,
                 "vacated_opportunity_note": inj.vacated_opportunity_note,
             }
-            for inj in injuries.values()
+            for inj in enriched_list
         ],
     }
 

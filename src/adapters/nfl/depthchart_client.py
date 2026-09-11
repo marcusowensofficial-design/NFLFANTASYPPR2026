@@ -88,10 +88,19 @@ class TeamDepthChart(BaseModel):
             "athlete_id": 0,
         }
 
-    def get_next_man_up(self, player_name: str, position: str) -> dict[str, Any] | None:
-        """Finds the direct backup / next-man-up beneficiary on the depth chart."""
+    def get_next_man_up(
+        self,
+        player_name: str,
+        position: str,
+        excluded_names: set[str] | None = None,
+    ) -> dict[str, Any] | None:
+        """Finds the direct backup / next-man-up beneficiary on the depth chart, skipping inactive assets."""
         norm_target = re.sub(r"[^\w\s]", "", player_name.lower()).strip()
         pos_clean = position.upper().strip()
+        excluded_norm = {
+            re.sub(r"[^\w\s]", "", ex.lower()).strip()
+            for ex in (excluded_names or set())
+        }
 
         search_pools = []
         if pos_clean in ("QB", "RB", "FB", "WR", "TE"):
@@ -110,9 +119,12 @@ class TeamDepthChart(BaseModel):
                 for idx, ath in enumerate(athletes):
                     norm_ath = re.sub(r"[^\w\s]", "", ath.display_name.lower()).strip()
                     if norm_target in norm_ath or norm_ath in norm_target:
-                        # Direct backup in same slot (rank 2 if injured is rank 1, etc.)
-                        if idx + 1 < len(athletes):
-                            backup = athletes[idx + 1]
+                        # Direct backup in same slot (checking subsequent ranks if backup is also sidelined)
+                        for next_idx in range(idx + 1, len(athletes)):
+                            backup = athletes[next_idx]
+                            norm_bk = re.sub(r"[^\w\s]", "", backup.display_name.lower()).strip()
+                            if norm_bk in excluded_norm or any(ex in norm_bk for ex in excluded_norm if len(ex) > 3):
+                                continue
                             return {
                                 "athlete_id": backup.athlete_id,
                                 "display_name": backup.display_name,
@@ -124,8 +136,10 @@ class TeamDepthChart(BaseModel):
                             for other_slot in ("wr2", "wr3", "slot_wr", "wr1"):
                                 if other_slot != slot.lower() and other_slot in target_pool:
                                     other_athletes = target_pool[other_slot]
-                                    if other_athletes:
-                                        cand = other_athletes[0]
+                                    for cand in other_athletes:
+                                        norm_cand = re.sub(r"[^\w\s]", "", cand.display_name.lower()).strip()
+                                        if norm_cand in excluded_norm:
+                                            continue
                                         return {
                                             "athlete_id": cand.athlete_id,
                                             "display_name": cand.display_name,
