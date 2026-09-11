@@ -211,5 +211,22 @@ Before locking or recommending any single-game DFS lineup, execute this verifica
 4. **Punt Route Viability Filter:** Ensure every sub-$3,500 punt meets the 25%+ route participation or designated red-zone package threshold. Zero pure-blocking fullbacks.
 5. **Salary Buffer Verification:** Confirm **$200 to $900 remains unspent** ($59,100 to $59,800 total cap spent) to prevent prize duplication.
 6. **Official 90-Minute Inactive Verification:** Inspect active/inactive reports to ensure all 6 rostered players are confirmed active.
+7. **Anti-Bias & Steel-Manned Counter-Script Audit:** Mandatory requirement to generate and inspect the inverse game script before locking.
 
+---
 
+## 9. The Anti-Bias Protocol & The Rams vs. 49ers Case Study
+
+### The Historical Precedent (Rams vs. 49ers Week 1 2026):
+* **The Trap:** Prior to kickoff, pro model Mike McClure published exposure targets highlighting **Brock Purdy as his #1 overall pick and 30% MVP exposure**. 
+* **The Analytical Failure:** The analytical agent succumbed to **confirmation bias and the "Contrarian Trap"**—arguing that Purdy was chalk to fade, doubling down on an aggressive 5-1 Rams onslaught, and relying on a $2,600 rotational TE (Terrance Ferguson).
+* **The Result:** The 49ers blew out the Rams 27-7. Ferguson scored 0.0 points, the Rams scored only 7 points, and the 5-1 Rams build finished 28,850th of 29,761. Meanwhile, the $7,500 1st-place tournament winner (`@btbybee4`, 96.45 pts) rostered:
+  - **MVP:** Brock Purdy (33.15 pts)
+  - **FLEX:** Christian McCaffrey, Deebo Samuel Sr., Eddy Pineiro, Demarcus Robinson ($5,400), and Kyren Williams.
+  - **Total Salary:** $59,900.
+
+### The Permanent Safeguards:
+1. **Zero Yes-Man Rule:** An analytical assistant must NEVER validate an entered lineup simply because the user asks for confirmation. It is mandatory to present the exact counter-script and how the lineup dies.
+2. **The Knapsack Solution Rule:** In FanDuel single-game, evaluate the **cap relief of the MVP slot**. Purdy at $15,900 at MVP was $1,200 to $3,600 cheaper than Stafford, Puka, or CMC, allowing the 1st-place winner to roster five verified $5,400+ players without taking on a zero-point punt.
+3. **The Sub-$3,500 Punt Ban in Single-Entry:** Taking a 0.0 in single-entry is fatal. All players rostered in single-entry must have a verified 60%+ snap share or multi-target role.
+4. **Algorithmic Solver Tool:** Always execute `python scripts/run_showdown_optimizer.py --slate <path>` to review all 4 script options mathematically before selecting a lineup.

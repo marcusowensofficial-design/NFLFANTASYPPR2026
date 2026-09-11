@@ -408,6 +408,43 @@ class ESPNSyncService:
                 else:
                     fa_player.upcoming_schedule_json = "[]"
 
+        # 3b. Authoritative Live Injury Wire Reconciliation
+        # Ensures breaking news (e.g. OUT designations, IR placements, practice downgrades)
+        # overrides stale or delayed league platform statuses (e.g. DAY_TO_DAY).
+        try:
+            from pathlib import Path
+            inj_file = Path(__file__).resolve().parent.parent.parent / "data" / "injuries_live_2026.json"
+            if inj_file.exists():
+                with open(inj_file, encoding="utf-8") as f:
+                    live_json = json.load(f)
+                live_injuries = live_json.get("injuries", [])
+                live_by_id = {item["athlete_id"]: item for item in live_injuries if "athlete_id" in item}
+                live_by_name = {item["name"].lower().strip(): item for item in live_injuries if "name" in item}
+                all_db_players = db.execute(select(PlayerModel)).scalars().all()
+                for p in all_db_players:
+                    live_rep = live_by_id.get(p.id) or live_by_name.get(p.full_name.lower().strip())
+                    if live_rep:
+                        st_upper = (live_rep.get("status") or "").upper()
+                        if "IR" in st_upper or "INJURED RESERVE" in st_upper:
+                            p.injury_status = "INJURY_RESERVE"
+                            p.injured = True
+                        elif "OUT" in st_upper:
+                            p.injury_status = "OUT"
+                            p.injured = True
+                        elif "DOUBTFUL" in st_upper:
+                            p.injury_status = "DOUBTFUL"
+                            p.injured = True
+                        elif "QUESTIONABLE" in st_upper:
+                            p.injury_status = "QUESTIONABLE"
+                            p.injured = True
+                        elif st_upper in ("ACTIVE", "NORMAL") and p.injury_status in ("DAY_TO_DAY", "QUESTIONABLE"):
+                            hl = (live_rep.get("headline") or "").lower()
+                            if "no injury designation" in hl:
+                                p.injury_status = "ACTIVE"
+                                p.injured = False
+        except Exception as e:
+            logger.debug(f"Failed to reconcile live injury wire in ESPN sync: {e}")
+
         # 4. Upsert Matchups / Schedule
         if data.schedule:
             for m in data.schedule:

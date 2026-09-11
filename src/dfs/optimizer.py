@@ -41,6 +41,16 @@ class DFSLineupOptimizer:
             & (df_slate["proj"] >= 3.0)
         ].reset_index(drop=True).copy()
 
+        # Disqualify non-starting backup QBs: on each NFL team, only the starter (highest salaried QB) is eligible
+        for t in df["team"].dropna().unique():
+            team_qbs = df[(df["team"] == t) & (df["position"] == "QB")]
+            if len(team_qbs) > 1:
+                max_qb_sal = team_qbs["salary"].max()
+                backup_qb_idx = team_qbs[team_qbs["salary"] < max_qb_sal].index
+                df = df.drop(backup_qb_idx)
+
+        df = df.reset_index(drop=True)
+
         n = len(df)
         if mode == "SINGLE_ENTRY_GPP" and "ceiling_proj" in df.columns:
             # 75% 90th percentile ceiling + 25% median projection for tournament explosion

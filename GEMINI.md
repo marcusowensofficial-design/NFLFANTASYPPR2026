@@ -59,4 +59,21 @@
      5. Salary Buffer Verification ($200–$900 unspent to eliminate prize chops).
      6. Official 90-Minute Inactive Verification.
 
-
+5. **Anti-Bias, Multi-Script Stress-Testing & Knapsack Optimization Directives:**
+   * **The "Zero Yes-Man" Anti-Cheerleading Mandate:**
+     * NEVER cheerlead, validate, or double down on a lineup simply because the user has already entered it.
+     * When the user expresses doubt (e.g. "should I hop off?"), the assistant MUST STOP and provide a steel-manned counter-script detailing the exact failure mode and downside risks of the lineup before confirming.
+     * Always run and present the **Multi-Script Solver** (`python scripts/run_showdown_optimizer.py`) to show the user the optimal construction across all 4 scripts:
+       1. Team A Dominant (Onslaught)
+       2. Team B Dominant (Onslaught)
+       3. Balanced Game Script (3-3 / 4-2)
+       4. Zero-QB Touchdown Monopoly
+   * **The Knapsack MVP Cap Relief Rule:**
+     * In FanDuel Showdown, evaluate MVP selection through the lens of the **Knapsack Problem**: A cheaper ceiling MVP (e.g., Purdy at $15,900) that unlocks five $5,400+ full-time starters mathematically dominates an expensive MVP ($17,100–$19,500) that forces a sub-$3,500 zero-point punt.
+   * **The Strict Single-Entry Punt Floor ($\ge \$3,500$):**
+     * In Single-Entry contests, taking a 0.0 point score is mathematically fatal.
+     * Strictly **ban all sub-$3,500 rotational/depth punts** (e.g. 3rd-string tight ends or backup vultures) unless an official 90-minute inactive directly vaults them into a verified starting role ($\ge 60\%$ projected snap share).
+     * The lowest-priced player in a single-entry lineup must be a verified offensive contributor (e.g., Demarcus Robinson at $5,400).
+   * **Pro Exposure Signal Integration:**
+     * When top pro models (like Mike McClure / SportsLine or ETR) publish exposure distributions with $\ge 25\%$ MVP or $\ge 50\%$ total exposure on a player, treat this as a high-priority mathematical signal.
+     * NEVER dismiss consensus pro exposure as "chalk to fade" without running an integer programming simulation to understand why the optimizer favored them.
