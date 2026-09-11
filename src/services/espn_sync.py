@@ -320,6 +320,21 @@ class ESPNSyncService:
 
                 # Upsert Player record if athlete data is present
                 if athlete:
+                    # Clean up any unrostered ghost records with the same name but different ID
+                    ghost_players = db.execute(
+                        select(PlayerModel).where(
+                            PlayerModel.full_name == athlete.full_name,
+                            PlayerModel.id != athlete.id,
+                        )
+                    ).scalars().all()
+                    for gp in ghost_players:
+                        has_roster = db.execute(
+                            select(RosterEntryModel).where(RosterEntryModel.player_id == gp.id)
+                        ).scalars().first()
+                        if not has_roster:
+                            logger.info(f"Cleaning up ghost PlayerModel {gp.id} ({gp.full_name}) superseded by {athlete.id}")
+                            db.delete(gp)
+
                     player = db.execute(select(PlayerModel).where(PlayerModel.id == athlete.id)).scalar_one_or_none()
                     if not player:
                         player = PlayerModel(id=athlete.id)

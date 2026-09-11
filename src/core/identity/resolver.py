@@ -226,7 +226,7 @@ class PlayerIdentityResolver:
             ("4430027", "00-0039889", "11628", "Brock Bowers", "TE", "LV"),
             ("4426515", "00-0039891", "11635", "Malik Nabers", "WR", "NYG"),
             ("4374302", "00-0038564", "9228", "De'Von Achane", "RB", "MIA"),
-            ("4258183", "00-0037240", "8138", "Drake London", "WR", "ATL"),
+            ("4426502", "00-0037240", "8138", "Drake London", "WR", "ATL"),
             ("4242335", "00-0038668", "10444", "Brandon Aubrey", "K", "DAL"),
             ("3918298", "00-0033873", "4046", "Patrick Mahomes", "QB", "KC"),
             ("4040715", "00-0034796", "4881", "Lamar Jackson", "QB", "BAL"),

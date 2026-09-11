@@ -386,7 +386,8 @@ class StartSitScoringEngine:
                     f"[Consensus] ⭐ FantasyPros ECR #{fp_ecr} ({fp_pos or pos}) Undisputed 8-Team Starter (Grade: {fp_grade or 'A'})"
                 )
             elif fp_ecr <= 12:
-                pos_reasons.append(f"[Consensus] ⭐ FantasyPros Top-12 Weekly Rank ({fp_pos or pos}) • Avg: #{fp_ave:.1f}")
+                avg_str = f" • Avg: #{fp_ave:.1f}" if fp_ave is not None else ""
+                pos_reasons.append(f"[Consensus] ⭐ FantasyPros Top-12 Weekly Rank ({fp_pos or pos}){avg_str}")
 
             if fp_r2p is not None and fp_r2p >= pos_baseline * 1.15:
                 pos_reasons.append(f"[Consensus] ⭐ FantasyPros expert projected output: {fp_r2p:.1f} pts")

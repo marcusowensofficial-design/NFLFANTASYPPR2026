@@ -305,15 +305,15 @@
             }
           },
           {
-            "playerId": 4258183,
+            "playerId": 4426502,
             "lineupSlotId": 20,
             "injuryStatus": "ACTIVE",
             "playerPoolEntry": {
-              "id": 4258183,
+              "id": 4426502,
               "status": "ONTEAM",
               "lineupLocked": false,
               "player": {
-                "id": 4258183,
+                "id": 4426502,
                 "fullName": "Drake London",
                 "firstName": "Drake",
                 "lastName": "London",

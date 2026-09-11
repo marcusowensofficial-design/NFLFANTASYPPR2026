@@ -433,6 +433,29 @@ export interface DeadweightBenchItem {
   suggested_action: string
 }
 
+export interface IRRecommendationItem {
+  player_id: number
+  full_name: string
+  position: string
+  pro_team: string
+  injury_status: string
+  action_headline: string
+  suggested_wire_add: string
+  tactical_steps: string[]
+}
+
+export interface BenchSecurityItem {
+  player_id: number
+  full_name: string
+  position: string
+  pro_team: string
+  security_tier: string
+  cut_safety_score: number
+  is_injured: boolean
+  ros_rank?: number | null
+  reasoning: string
+}
+
 export interface WaiverUpgradeRecommendation {
   pickup_player: StartSitEvaluation
   drop_player: StartSitEvaluation | null
@@ -441,6 +464,14 @@ export interface WaiverUpgradeRecommendation {
   net_projected_delta: number
   net_start_score_delta: number
   rationale: string
+  faab_recommended_pct?: number
+  faab_recommended_amount?: number
+  urgency_tier?: string
+  tactical_bucket?: string
+  catalyst?: string
+  matchup_context?: string
+  drop_reassurance?: string
+  action_type?: string
 }
 
 export interface WaiverAnalysisResult {
@@ -454,6 +485,9 @@ export interface WaiverAnalysisResult {
   lookahead_streaming_dst?: LookaheadStreamerItem[]
   lookahead_streaming_k?: LookaheadStreamerItem[]
   deadweight_drops?: DeadweightBenchItem[]
+  ir_recommendations?: IRRecommendationItem[]
+  bench_security_ledger?: BenchSecurityItem[]
+  executive_summary?: string
 }
 
 export interface TradePlayerSummary {

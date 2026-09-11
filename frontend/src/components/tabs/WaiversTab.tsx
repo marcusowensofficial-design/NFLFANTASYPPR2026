@@ -1,165 +1,385 @@
-import React from 'react'
+import React, { useState } from 'react'
 import type { WaiverAnalysisResult } from '../../types'
-import { Tooltip } from '../shared/Tooltip'
 import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 
 export interface WaiversTabProps {
   waivers: WaiverAnalysisResult | null
 }
 
+type TacticalCategory = 'ALL' | 'PRIORITY' | 'HANDCUFFS' | 'BREAKOUTS' | 'STREAMERS' | 'LEDGER'
+
 export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
+  const [activeCategory, setActiveCategory] = useState<TacticalCategory>('ALL')
+
+  if (!waivers) {
+    return (
+      <div className="card" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+        <p>No waiver analysis available. Sync your ESPN league to scan available free agents.</p>
+      </div>
+    )
+  }
+
+  const irRec = waivers.ir_recommendations?.[0]
+
+  // Filter upgrades based on tactical category
+  const filteredUpgrades = waivers.top_upgrades.filter((u) => {
+    if (activeCategory === 'ALL') return true
+    if (activeCategory === 'PRIORITY') {
+      return u.tactical_bucket === 'PRIORITY_STARTER' || u.urgency_tier === 'MUST_ADD'
+    }
+    if (activeCategory === 'HANDCUFFS') {
+      return u.tactical_bucket === 'CONTINGENT_HANDCUFF' || u.upgrade_type === 'CONTINGENT_UPSIDE_STASH'
+    }
+    if (activeCategory === 'BREAKOUTS') {
+      return u.tactical_bucket === 'VOLUME_BREAKOUT' || u.upgrade_type === 'BENCH_STASH'
+    }
+    return true
+  })
+
   return (
-    <div>
-      {/* 8-Man Roster Architecture & Bench Audit */}
-      {waivers?.architecture_audit && (
-        <div className="roster-audit-card">
-          <div className="roster-audit-header">
-            <div className="audit-grade-display">
-              <div
-                className={`grade-badge-circle ${
-                  waivers.architecture_audit.grade.startsWith('A')
-                    ? 'grade-A'
-                    : waivers.architecture_audit.grade.startsWith('B')
-                    ? 'grade-B'
-                    : waivers.architecture_audit.grade.startsWith('C')
-                    ? 'grade-C'
-                    : 'grade-D'
-                }`}
-              >
-                {waivers.architecture_audit.grade}
-              </div>
-              <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-                  8-Man Roster Architecture & Bench Audit
-                </h3>
-                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  Audit Score: <strong style={{ color: 'var(--text-primary)' }}>{waivers.architecture_audit.score} / 100</strong> • Bench Optimization Strategy for Shallow Leagues
-                </div>
-              </div>
-            </div>
-
-            <div className="audit-metrics-summary">
-              <div className="audit-metric-box">
-                <div className="label">Contingent RBs Stashed</div>
-                <div className="val" style={{ color: waivers.architecture_audit.handcuff_rb_count >= 2 ? '#34d399' : '#f59e0b' }}>
-                  {waivers.architecture_audit.handcuff_rb_count} RBs {waivers.architecture_audit.handcuff_rb_count >= 2 ? '✓' : '⚠️'}
-                </div>
-              </div>
-
-              <div className="audit-metric-box">
-                <div className="label">Wasted Bench Slots</div>
-                <div className="val" style={{ color: waivers.architecture_audit.wasted_bench_slots.length === 0 ? '#34d399' : '#f43f5e' }}>
-                  {waivers.architecture_audit.wasted_bench_slots.length === 0 ? '0 (Clean)' : `${waivers.architecture_audit.wasted_bench_slots.length} Wasted`}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="audit-grid">
-            {/* Tactical Prescriptions */}
-            <div className="audit-section-box">
-              <div className="audit-section-title" style={{ color: '#f59e0b' }}>
-                <span>🎯 Tactical Prescriptions ({waivers.architecture_audit.tactical_prescriptions.length})</span>
-              </div>
-              <ul className="audit-list">
-                {waivers.architecture_audit.tactical_prescriptions.map((rx, idx) => (
-                  <li key={idx} className="prescription">
-                    <span>→</span>
-                    <span>{rx}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Key Strengths */}
-            <div className="audit-section-box">
-              <div className="audit-section-title" style={{ color: '#10b981' }}>
-                <span>💪 Architecture Strengths</span>
-              </div>
-              <ul className="audit-list">
-                {waivers.architecture_audit.key_strengths.map((str, idx) => (
-                  <li key={idx} className="strength">
-                    <span>✓</span>
-                    <span>{str}</span>
-                  </li>
-                ))}
-                {waivers.architecture_audit.key_strengths.length === 0 && (
-                  <li className="warning">
-                    <span>⚠️</span>
-                    <span>No core architecture strengths detected yet. Consolidate depth and clear backup K/DST.</span>
-                  </li>
-                )}
-              </ul>
-            </div>
-
-            {/* Wasted Bench Flags (if any) */}
-            {waivers.architecture_audit.wasted_bench_slots.length > 0 && (
-              <div className="audit-section-box">
-                <div className="audit-section-title" style={{ color: '#f43f5e' }}>
-                  <span>🚫 8-Man Bench Capital Traps</span>
-                </div>
-                <ul className="audit-list">
-                  {waivers.architecture_audit.wasted_bench_slots.map((wb, idx) => (
-                    <li key={idx} className="warning">
-                      <span>⚠️</span>
-                      <span>Holding {wb}. In an 8-man league, this roster spot has zero upside. Drop immediately for a high-contingency RB.</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+    <div className="waiver-tab-container">
+      {/* Executive Waiver Directive Banner */}
+      {waivers.executive_summary && (
+        <div className="waiver-executive-banner">
+          <div className="banner-icon">⚡</div>
+          <div className="banner-content">
+            <div className="banner-title">Executive Waiver Directive</div>
+            <div className="banner-text">{waivers.executive_summary}</div>
           </div>
         </div>
       )}
 
-      {/* Deadweight Bench Purge Alert */}
-      {waivers?.deadweight_drops && waivers.deadweight_drops.length > 0 && (
-        <div className="card" style={{ marginBottom: '24px', borderColor: 'rgba(244, 63, 94, 0.4)', background: 'rgba(244, 63, 94, 0.05)' }}>
-          <div className="card-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '20px' }}>⚠️</span>
-              <h3 className="card-title" style={{ color: '#f43f5e' }}>8-Man Deadweight Bench Purge Radar</h3>
-            </div>
-            <span className="pill rose">{waivers.deadweight_drops.length} Deadweight Assets</span>
+      {/* Emergency IR Triage Protocol Card */}
+      {irRec && (
+        <div className="ir-triage-card">
+          <div className="ir-triage-header">
+            <div className="ir-badge">🚨 IR TRIAGE ACTION REQUIRED</div>
+            <div className="ir-free-tag">✨ $0 DROP PENALTY</div>
           </div>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-            In an 8-team PPR league, roster depth is abundant on waivers. Holding low-ceiling players with no contingent upside burns valuable roster spots needed for elite backup RBs or $0 streaming stashes.
+          <h3 className="ir-triage-title">
+            Action: Move {irRec.full_name} ({irRec.position} - {irRec.injury_status}) into Designated IR Slot
+          </h3>
+          <p className="ir-triage-desc">
+            <strong>Do NOT drop {irRec.full_name}!</strong> As an elite consensus asset currently marked{' '}
+            <span style={{ color: 'var(--accent-rose)', fontWeight: 700 }}>{irRec.injury_status}</span>, moving him to your
+            designated IR slot vacates an active roster spot immediately. This unlocks a free waiver claim on{' '}
+            <strong style={{ color: 'var(--accent-emerald)' }}>{irRec.suggested_wire_add}</strong> without dropping any active player.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-            {waivers.deadweight_drops.map((dw) => (
-              <div key={dw.player_id} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{dw.full_name} ({dw.position})</strong>
-                  <span className="pill rose" style={{ fontSize: '10px' }}>Purge Candidate</span>
-                </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Proj: {dw.projected_points} pts • Ceiling: {dw.ceiling_score} • StartScore: {dw.start_score}
-                </div>
-                <div style={{ fontSize: '12px', color: '#fda4af', marginTop: '6px', lineHeight: 1.4 }}>
-                  {dw.diagnosis}
-                </div>
-                <div style={{ fontSize: '12px', color: 'var(--accent-emerald)', marginTop: '4px', fontWeight: 600 }}>
-                  → {dw.suggested_action}
-                </div>
+          <div className="ir-steps-grid">
+            {irRec.tactical_steps.map((step, idx) => (
+              <div key={idx} className="ir-step-pill">
+                <span>{step}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
+      {/* Tactical Category Filter Navigation */}
+      <div className="waiver-nav-tabs">
+        <button
+          className={`waiver-nav-btn ${activeCategory === 'ALL' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('ALL')}
+        >
+          🔥 All Upgrades ({waivers.top_upgrades.length})
+        </button>
+        <button
+          className={`waiver-nav-btn ${activeCategory === 'PRIORITY' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('PRIORITY')}
+        >
+          ⭐ Priority Starters (
+          {waivers.top_upgrades.filter((u) => u.tactical_bucket === 'PRIORITY_STARTER' || u.urgency_tier === 'MUST_ADD').length})
+        </button>
+        <button
+          className={`waiver-nav-btn ${activeCategory === 'HANDCUFFS' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('HANDCUFFS')}
+        >
+          🚀 RB Handcuffs (
+          {waivers.top_upgrades.filter((u) => u.tactical_bucket === 'CONTINGENT_HANDCUFF' || u.upgrade_type === 'CONTINGENT_UPSIDE_STASH').length})
+        </button>
+        <button
+          className={`waiver-nav-btn ${activeCategory === 'BREAKOUTS' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('BREAKOUTS')}
+        >
+          📈 Volume Breakouts (
+          {waivers.top_upgrades.filter((u) => u.tactical_bucket === 'VOLUME_BREAKOUT' || u.upgrade_type === 'BENCH_STASH').length})
+        </button>
+        <button
+          className={`waiver-nav-btn ${activeCategory === 'STREAMERS' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('STREAMERS')}
+        >
+          🛡️ Streaming Radar
+        </button>
+        <button
+          className={`waiver-nav-btn ${activeCategory === 'LEDGER' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('LEDGER')}
+        >
+          ✂️ Bench Security Ledger ({waivers.bench_security_ledger?.length ?? 0})
+        </button>
+      </div>
+
+      {/* Primary Waiver Upgrades Feed (Shown for ALL, PRIORITY, HANDCUFFS, BREAKOUTS) */}
+      {activeCategory !== 'STREAMERS' && activeCategory !== 'LEDGER' && (
+        <div className="card" style={{ marginBottom: '24px' }}>
+          <div className="card-header">
+            <div>
+              <h3 className="card-title">🎯 Human-Pro Lineup Upgrades & Tactical Wire Claims</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
+                Every recommendation is cross-referenced with team depth charts, target volumes, and rest-of-season consensus value.
+              </p>
+            </div>
+            <span className="pill emerald">8-Man Depth Calibrated</span>
+          </div>
+
+          <div className="upgrades-list">
+            {filteredUpgrades.map((upg, idx) => {
+              const isMustAdd = upg.urgency_tier === 'MUST_ADD'
+              const isHighPri = upg.urgency_tier === 'HIGH_PRIORITY'
+              const isIRAdd = upg.action_type === 'MOVE_TO_IR_AND_ADD'
+
+              return (
+                <div
+                  key={idx}
+                  className={`pro-upgrade-card ${isMustAdd ? 'must-add-card' : ''}`}
+                >
+                  <div className="pro-upgrade-top-bar">
+                    <div className="badge-cluster">
+                      {/* Urgency Pill */}
+                      <span
+                        className={`pill ${
+                          isMustAdd ? 'rose' : isHighPri ? 'amber' : 'cyan'
+                        }`}
+                        style={{ fontWeight: 800, fontSize: '11px', letterSpacing: '0.04em' }}
+                      >
+                        {isMustAdd
+                          ? '🔥 MUST-ADD (TIER 1 PRIORITY)'
+                          : isHighPri
+                          ? '⚡ HIGH-PRIORITY CLAIM'
+                          : '🎯 SPECULATIVE STASH'}
+                      </span>
+
+                      {/* Tactical Bucket */}
+                      <span className="pill purple" style={{ fontSize: '11px' }}>
+                        {upg.tactical_bucket === 'PRIORITY_STARTER'
+                          ? '⭐ Priority Starter'
+                          : upg.tactical_bucket === 'CONTINGENT_HANDCUFF'
+                          ? '🚀 Workhorse Handcuff'
+                          : '📈 Volume Breakout'}
+                      </span>
+
+                      {/* Action Type */}
+                      <span
+                        className={`pill ${isIRAdd ? 'emerald' : 'slate'}`}
+                        style={{ fontSize: '11px' }}
+                      >
+                        {isIRAdd ? '✨ IR Triage Claim ($0 Drop Penalty)' : '🔄 1-for-1 Add/Drop'}
+                      </span>
+                    </div>
+
+                    {/* FAAB Guidance Box */}
+                    {upg.faab_recommended_pct !== undefined && upg.faab_recommended_pct > 0 && (
+                      <div className="faab-badge-box">
+                        <div className="faab-label">FAAB TARGET</div>
+                        <div className="faab-val">
+                          ${upg.faab_recommended_amount} ({upg.faab_recommended_pct}%)
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Player Transaction Banner */}
+                  <div className="pro-transaction-banner">
+                    <div className="transaction-party pickup">
+                      <NFLTeamLogo team={upg.pickup_player.pro_team} size={40} />
+                      <div>
+                        <div className="trans-sub">ADD FREE AGENT</div>
+                        <h4 className="trans-name">
+                          {upg.pickup_player.full_name}{' '}
+                          <span className="trans-pos">
+                            ({upg.pickup_player.position} - {upg.pickup_player.pro_team})
+                          </span>
+                        </h4>
+                        <div className="trans-stats">
+                          <span>Proj: <strong>{upg.pickup_player.projected_points} pts</strong></span>
+                          <span>StartScore: <strong>{upg.pickup_player.start_score}</strong></span>
+                          {upg.pickup_player.contingency_score !== undefined && upg.pickup_player.contingency_score > 0 && (
+                            <span style={{ color: 'var(--accent-amber)' }}>
+                              ⚡ Contingency: <strong>{upg.pickup_player.contingency_score}</strong>
+                            </span>
+                          )}
+                          {upg.pickup_player.live_vorp !== undefined && upg.pickup_player.live_vorp !== null && (
+                            <span style={{ color: 'var(--accent-cyan)' }}>
+                              VORP: <strong>+{upg.pickup_player.live_vorp}</strong>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="trans-arrow">
+                      <span>➔</span>
+                      <div className="delta-pill">
+                        +{upg.net_projected_delta} pts net
+                      </div>
+                    </div>
+
+                    <div className="transaction-party drop">
+                      {isIRAdd ? (
+                        <div className="ir-slot-destination">
+                          <div className="trans-sub" style={{ color: 'var(--accent-emerald)' }}>FREE ROSTER VACANCY</div>
+                          <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
+                            Move {irRec?.full_name} to IR
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                            Zero active players sacrificed
+                          </div>
+                        </div>
+                      ) : upg.drop_player ? (
+                        <>
+                          <NFLTeamLogo team={upg.drop_player.pro_team} size={40} />
+                          <div>
+                            <div className="trans-sub" style={{ color: 'var(--accent-rose)' }}>RECOMMENDED DROP</div>
+                            <h4 className="trans-name">
+                              {upg.drop_player.full_name}{' '}
+                              <span className="trans-pos">
+                                ({upg.drop_player.position} - {upg.drop_player.pro_team})
+                              </span>
+                            </h4>
+                            <div className="trans-stats">
+                              <span>Proj: <strong>{upg.drop_player.projected_points} pts</strong></span>
+                              <span>StartScore: <strong>{upg.drop_player.start_score}</strong></span>
+                              <span className="cut-pill">Safe Sacrifice</span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div>
+                          <div className="trans-sub">EMPTY ROSTER SLOT</div>
+                          <div style={{ fontWeight: 700, fontSize: '15px' }}>Free Claim</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Human-Pro Scouting Narrative Sections */}
+                  <div className="pro-narrative-box">
+                    {upg.catalyst && (
+                      <div className="narrative-row">
+                        <span className="narrative-tag catalyst">🎯 The Role & Catalyst:</span>
+                        <span className="narrative-body">{upg.catalyst}</span>
+                      </div>
+                    )}
+
+                    {upg.matchup_context && (
+                      <div className="narrative-row">
+                        <span className="narrative-tag matchup">🏟️ Matchup Advantage:</span>
+                        <span className="narrative-body">{upg.matchup_context}</span>
+                      </div>
+                    )}
+
+                    {upg.drop_reassurance && (
+                      <div className="narrative-row">
+                        <span className="narrative-tag drop">🛡️ Drop Reassurance:</span>
+                        <span className="narrative-body">{upg.drop_reassurance}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+
+            {filteredUpgrades.length === 0 && (
+              <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                No players match this specific tactical bucket. Check "All Upgrades" to view all available moves.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bench Security Ledger (The "Do Not Drop" Defense) */}
+      {(activeCategory === 'ALL' || activeCategory === 'LEDGER') && (
+        <div className="card" style={{ marginBottom: '24px' }}>
+          <div className="card-header">
+            <div>
+              <h3 className="card-title">🛡️ Roster Bench Security Ledger</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
+                Mathematical evaluation of your bench assets. Distinguishes untouchable studs from safe sacrifice candidates.
+              </p>
+            </div>
+            <span className="pill cyan">Anti-Drop Protection</span>
+          </div>
+
+          <div className="bench-ledger-grid">
+            {waivers.bench_security_ledger?.map((b) => {
+              const isUntouchable = b.security_tier === 'UNTOUCHABLE_CORE'
+              const isStrongHold = b.security_tier === 'STRONG_HOLD'
+
+              return (
+                <div
+                  key={b.player_id}
+                  className={`ledger-item-card ${
+                    isUntouchable ? 'ledger-untouchable' : isStrongHold ? 'ledger-hold' : 'ledger-cut'
+                  }`}
+                >
+                  <div className="ledger-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <NFLTeamLogo team={b.pro_team} size={24} />
+                      <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                        {b.full_name} ({b.position})
+                      </strong>
+                    </div>
+
+                    <span
+                      className={`pill ${
+                        isUntouchable ? 'emerald' : isStrongHold ? 'amber' : 'rose'
+                      }`}
+                      style={{ fontSize: '10.5px', fontWeight: 700 }}
+                    >
+                      {isUntouchable
+                        ? '🛡️ UNTOUCHABLE'
+                        : isStrongHold
+                        ? '🔒 STRONG HOLD'
+                        : '✂️ SAFE DROP CANDIDATE'}
+                    </span>
+                  </div>
+
+                  <div className="ledger-meta-row">
+                    <span>
+                      Cut Safety: <strong style={{ color: isUntouchable ? '#34d399' : isStrongHold ? '#fbbf24' : '#f43f5e' }}>
+                        {b.cut_safety_score}%
+                      </strong>
+                    </span>
+                    {b.ros_rank && <span>Consensus ROS: <strong>#{b.ros_rank}</strong></span>}
+                    {b.is_injured && (
+                      <span className="pill rose" style={{ fontSize: '10px' }}>
+                        INJURED (IR ELIGIBLE)
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="ledger-reasoning">{b.reasoning}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Week N+1 Lookahead Streaming Radar */}
-      {((waivers?.lookahead_streaming_dst?.length ?? 0) > 0 || (waivers?.lookahead_streaming_k?.length ?? 0) > 0) && (
+      {(activeCategory === 'ALL' || activeCategory === 'STREAMERS') && (
         <div className="card" style={{ marginBottom: '24px', borderColor: 'rgba(56, 189, 248, 0.3)', background: 'rgba(56, 189, 248, 0.04)' }}>
           <div className="card-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '20px' }}>🔭</span>
               <h3 className="card-title" style={{ color: '#38bdf8' }}>Week N+1 Lookahead Streaming Radar</h3>
             </div>
-            <span className="pill cyan">Exploit 8-Man Wire Depth</span>
+            <span className="pill cyan">Pre-Emptive $0 Stashes</span>
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-            With 24 defenses and kickers sitting on waivers, world-class 8-man managers stash next week's smash matchups on Friday/Saturday for $0 FAAB before waivers run Tuesday.
+            In shallow leagues, elite managers stash next week's smash matchups on Friday/Saturday for $0 FAAB before Tuesday waivers run.
           </p>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
             {/* D/ST Lookaheads */}
             <div>
@@ -168,7 +388,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {waivers?.lookahead_streaming_dst?.map((item) => (
-                  <div key={item.player_id} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '10px 12px' }}>
+                  <div key={item.player_id} className="streamer-subcard">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <NFLTeamLogo team={item.pro_team} size={24} />
@@ -198,7 +418,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {waivers?.lookahead_streaming_k?.map((item) => (
-                  <div key={item.player_id} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '10px 12px' }}>
+                  <div key={item.player_id} className="streamer-subcard">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <NFLTeamLogo team={item.pro_team} size={24} />
@@ -224,102 +444,36 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: '24px' }}>
-        <div className="card-header">
-          <h3 className="card-title">🎯 High-Impact Waiver Upgrades (Unowned Players)</h3>
-          <span className="pill emerald">Drop-Protected</span>
-        </div>
-
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px' }}>
-          Every candidate is verified unowned across all 8 league teams. Suggestions pair the pickup with the
-          safest bench drop candidate while protecting your core starters.
-        </p>
-
-        <div className="upgrades-list">
-          {waivers?.top_upgrades.map((upg, idx) => (
-            <div key={idx} className="upgrade-card">
-              <div className="upgrade-header">
-                <div>
-                  <span className={`pill ${upg.upgrade_type === 'CONTINGENT_UPSIDE_STASH' ? 'amber' : upg.upgrade_type === 'STARTING_LINEUP_UPGRADE' ? 'emerald' : 'cyan'}`}>
-                    {upg.upgrade_type === 'CONTINGENT_UPSIDE_STASH' ? '🚀 CONTINGENT UPSIDE STASH' : upg.upgrade_type}
-                  </span>
-                  {upg.pickup_player.contingency_score !== undefined && upg.pickup_player.contingency_score > 0 && (
-                    <span className="ceiling-floor-tag contingent" style={{ marginLeft: '8px' }}>
-                      ⚡ Workhorse Contingency: {upg.pickup_player.contingency_score}
-                    </span>
-                  )}
-                  {upg.pickup_player.live_vorp !== undefined && upg.pickup_player.live_vorp !== null && (
-                    <Tooltip term="VORP" title={`Live-Wire VORP: ${upg.pickup_player.live_vorp > 0 ? '+' : ''}${upg.pickup_player.live_vorp}`}>
-                      <span className="vorp-badge" style={{ marginLeft: '8px' }}>
-                        VORP: {upg.pickup_player.live_vorp > 0 ? `+${upg.pickup_player.live_vorp}` : upg.pickup_player.live_vorp}
-                      </span>
-                    </Tooltip>
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
-                    <NFLTeamLogo team={upg.pickup_player.pro_team} size={28} />
-                    <h4 style={{ fontSize: '18px', fontWeight: 800, margin: 0 }}>
-                      Pickup: {upg.pickup_player.full_name} ({upg.pickup_player.position} - {upg.pickup_player.pro_team})
-                    </h4>
-                  </div>
+      {/* Weekly Streaming Specialists (D/ST & TE) */}
+      {(activeCategory === 'ALL' || activeCategory === 'STREAMERS') && (
+        <div className="dashboard-grid">
+          <div className="card">
+            <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>🛡️ Top D/ST Streamers</h4>
+            {waivers?.streaming_dst.map((d) => (
+              <div key={d.player_id} className="streamer-item">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <NFLTeamLogo team={d.pro_team || d.full_name} size={20} />
+                  <span>{d.full_name}</span>
                 </div>
+                <span className="score-badge cyan">{d.start_score}</span>
+              </div>
+            ))}
+          </div>
 
-                <div className="upgrade-delta">
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Net Gain</span>
-                  <span style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-emerald)' }}>
-                    +{upg.net_projected_delta} pts
-                  </span>
+          <div className="card">
+            <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>🎯 Top TE Streamers</h4>
+            {waivers?.streaming_te.map((t) => (
+              <div key={t.player_id} className="streamer-item">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <NFLTeamLogo team={t.pro_team} size={20} />
+                  <span>{t.full_name} ({t.pro_team})</span>
                 </div>
+                <span className="score-badge cyan">{t.start_score}</span>
               </div>
-
-              <div className="upgrade-details">
-                <div>
-                  <strong>Recommended Drop:</strong>{' '}
-                  {upg.drop_player ? (
-                    <span style={{ color: 'var(--accent-rose)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                      <NFLTeamLogo team={upg.drop_player.pro_team} size={16} />
-                      <span>{upg.drop_player.full_name} ({upg.drop_player.position} - StartScore: {upg.drop_player.start_score})</span>
-                    </span>
-                  ) : (
-                    'Empty Roster Slot'
-                  )}
-                </div>
-                <div style={{ marginTop: '6px', color: 'var(--text-secondary)' }}>
-                  {upg.rationale}
-                </div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-
-      {/* Streaming Targets */}
-      <div className="dashboard-grid">
-        <div className="card">
-          <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>🛡️ Top D/ST Streamers</h4>
-          {waivers?.streaming_dst.map((d) => (
-            <div key={d.player_id} className="streamer-item">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <NFLTeamLogo team={d.pro_team || d.full_name} size={20} />
-                <span>{d.full_name}</span>
-              </div>
-              <span className="score-badge cyan">{d.start_score}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="card">
-          <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>🎯 Top TE Streamers</h4>
-          {waivers?.streaming_te.map((t) => (
-            <div key={t.player_id} className="streamer-item">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <NFLTeamLogo team={t.pro_team} size={20} />
-                <span>{t.full_name} ({t.pro_team})</span>
-              </div>
-              <span className="score-badge cyan">{t.start_score}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   )
 }
