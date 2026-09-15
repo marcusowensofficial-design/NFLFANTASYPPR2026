@@ -14,19 +14,28 @@ logger = logging.getLogger(__name__)
 class DFSSlateAnalyzer:
     """Provides analytical tools for positional rankings, value plays, and game stacks."""
 
-    def get_top_by_position(
+    @staticmethod
+    def _is_active_mask(df: pd.DataFrame) -> pd.Series:
+        mask = df["injury"].isin(["IR", "O", "OUT", "DOUBTFUL"])
+        if "db_status" in df.columns:
+            mask = mask | df["db_status"].isin(["IR", "OUT", "DOUBTFUL"])
+        if "is_out" in df.columns:
+            mask = mask | df["is_out"].fillna(False)
+        return ~mask
+
+    def get_position_rankings(
         self,
         df_slate: pd.DataFrame,
         position: str,
+        top_n: int = 10,
         min_salary: int = 4000,
-        top_n: int = 15,
         exclude_injuries: bool = True,
     ) -> pd.DataFrame:
         """Returns the top players for a specific position sorted by projected points or value."""
         sub = df_slate[df_slate["position"] == position.upper()].copy()
 
         if exclude_injuries:
-            sub = sub[~sub["injury"].isin(["IR", "O", "OUT"]) & ~sub["db_status"].isin(["IR", "OUT", "DAY_TO_DAY"])]
+            sub = sub[self._is_active_mask(sub)]
 
         sub = sub[sub["salary"] >= min_salary]
         return sub.sort_values(by="proj", ascending=False).head(top_n)
@@ -40,7 +49,7 @@ class DFSSlateAnalyzer:
     ) -> pd.DataFrame:
         """Returns the best point-per-dollar values across the slate."""
         sub = df_slate[df_slate["proj"] >= min_proj].copy()
-        sub = sub[~sub["injury"].isin(["IR", "O", "OUT"])]
+        sub = sub[self._is_active_mask(sub)]
 
         if position:
             sub = sub[sub["position"] == position.upper()]
@@ -73,13 +82,13 @@ class DFSSlateAnalyzer:
             opp = qb["opponent"]
 
             # Team WRs/TEs
-            pass_catchers = df_slate[(df_slate["team"] == team) & (df_slate["position"].isin(["WR", "TE"])) & (~df_slate["injury"].isin(["IR", "O"]))]
+            pass_catchers = df_slate[(df_slate["team"] == team) & (df_slate["position"].isin(["WR", "TE"])) & self._is_active_mask(df_slate)]
             if pass_catchers.empty:
                 continue
             primary_target = pass_catchers.sort_values(by="proj", ascending=False).iloc[0]
 
             # Opposing Bring-Back
-            opp_weapons = df_slate[(df_slate["team"] == opp) & (df_slate["position"].isin(["WR", "TE", "RB"])) & (~df_slate["injury"].isin(["IR", "O"]))]
+            opp_weapons = df_slate[(df_slate["team"] == opp) & (df_slate["position"].isin(["WR", "TE", "RB"])) & self._is_active_mask(df_slate)]
             if opp_weapons.empty:
                 continue
             primary_bringback = opp_weapons.sort_values(by="proj", ascending=False).iloc[0]
@@ -103,13 +112,13 @@ class DFSSlateAnalyzer:
 
     def get_top_ownership_plays(self, df_slate: pd.DataFrame, top_n: int = 15) -> pd.DataFrame:
         """Returns the highest-owned chalk plays across the slate."""
-        sub = df_slate[~df_slate["injury"].isin(["IR", "O", "OUT"]) & (df_slate["proj"] >= 5.0)].copy()
+        sub = df_slate[self._is_active_mask(df_slate) & (df_slate["proj"] >= 5.0)].copy()
         return sub.sort_values(by="proj_ownership", ascending=False).head(top_n)
 
     def get_top_leverage_plays(self, df_slate: pd.DataFrame, top_n: int = 15) -> pd.DataFrame:
         """Returns players with the highest leverage scores (high ceiling relative to low ownership)."""
         sub = df_slate[
-            ~df_slate["injury"].isin(["IR", "O", "OUT"])
+            self._is_active_mask(df_slate)
             & (df_slate["proj"] >= 10.0)
             & (df_slate["proj_ownership"] <= 14.0)
         ].copy()

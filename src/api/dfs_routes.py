@@ -31,19 +31,26 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
 SLATES_MAP = {
+    "showdown_tnf": {
+        "id": "showdown_tnf",
+        "name": "Week 2 TNF: Detroit at Buffalo ($60k Showdown)",
+        "games_count": 1,
+        "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
+        "default_csv": str(DATA_DIR / "detvsbuffalosinglegameslaterostersnsalaries.csv"),
+    },
     "main": {
         "id": "main",
-        "name": "Week 1 Main Slate (13 Games)",
+        "name": "Week 1 Main Slate Archive ($60k Classic)",
         "games_count": 13,
         "platform": "FanDuel ($60k Cap)",
-        "default_csv": str(DATA_DIR / "FanDuel-NFL-2026 MDT-09 MDT-13 MDT-133104-players-list.csv"),
+        "default_csv": str(DATA_DIR / "mainslate9-13-2026.csv") if (DATA_DIR / "mainslate9-13-2026.csv").exists() else str(DATA_DIR / "FanDuel-NFL-2026 MDT-09 MDT-13 MDT-133104-players-list.csv"),
     },
     "early": {
         "id": "early",
-        "name": "Week 1 Early-Only Slate (8 Games)",
+        "name": "Week 1 Early-Only Archive (8 Games)",
         "games_count": 8,
         "platform": "FanDuel ($60k Cap)",
-        "default_csv": str(DATA_DIR / "earlyonlysalariesandrosters.csv"),
+        "default_csv": str(DATA_DIR / "earlyonlysalariesandrosters.csv") if (DATA_DIR / "earlyonlysalariesandrosters.csv").exists() else str(PROJECT_ROOT / "earlyonlysalariesandrosters.csv"),
     },
 }
 
@@ -54,6 +61,12 @@ def _resolve_csv_path(slate_id: str) -> str:
         if uploaded_path.exists():
             return str(uploaded_path)
         raise HTTPException(status_code=404, detail="No uploaded FanDuel CSV found. Please upload one first.")
+
+    # Check for TNF showdown variants
+    if slate_id.lower() in ("showdown_tnf", "det_buf", "tnf"):
+        tnf_path = DATA_DIR / "detvsbuffalosinglegameslaterostersnsalaries.csv"
+        if tnf_path.exists():
+            return str(tnf_path)
 
     slate_info = SLATES_MAP.get(slate_id.lower())
     if slate_info and os.path.exists(slate_info["default_csv"]):
@@ -202,8 +215,9 @@ async def get_slate_data(
 ) -> dict[str, Any]:
     """Returns enriched player pool, top game stacks, chalk radar, and tournament leverage targets."""
     csv_path = _resolve_csv_path(slate_id)
+    source_str = projection_source if isinstance(projection_source, str) else "MODEL"
     try:
-        slate_df = await dfs_engine.get_slate(csv_path=csv_path, projection_source=projection_source)
+        slate_df = await dfs_engine.get_slate(csv_path=csv_path, projection_source=source_str)
     except Exception as e:
         logger.error(f"Failed to load slate data for {slate_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load slate: {e}")
@@ -243,7 +257,7 @@ async def get_slate_data(
 
     raw_resp = {
         "slate_id": slate_id,
-        "projection_source": (projection_source or "MODEL").upper(),
+        "projection_source": source_str.upper(),
         "total_players": len(player_items),
         "top_stacks": top_stacks,
         "leverage_plays": leverage_plays,

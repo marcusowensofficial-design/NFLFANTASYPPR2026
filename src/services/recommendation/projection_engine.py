@@ -82,6 +82,109 @@ def get_dst_points_allowed_score(pts_allowed: float) -> float:
         return -4.0
 
 
+_injury_wire_cache: dict[str, Any] = {"mtime": 0, "inactives": set(), "beneficiaries": {}}
+
+
+def _load_injury_wire_cache() -> None:
+    global _injury_wire_cache
+    import json
+    from pathlib import Path
+    inj_file = Path(__file__).resolve().parent.parent.parent.parent / "data" / "injuries_live_2026.json"
+    if not inj_file.exists():
+        return
+    mtime = inj_file.stat().st_mtime
+    if _injury_wire_cache.get("mtime") == mtime:
+        return
+    try:
+        with open(inj_file, encoding="utf-8") as f:
+            data = json.load(f)
+        inactives: set[str] = set()
+        beneficiaries: dict[str, dict[str, Any]] = {}
+        for inj in data.get("injuries", []):
+            st = str(inj.get("status", "")).upper()
+            is_out = inj.get("is_out") or st in ("OUT", "IR", "INACTIVE", "DOUBTFUL") or "IR" in st
+            name = str(inj.get("name", "")).strip()
+            norm_name = re.sub(r"[^\w\s]", "", name.lower()).strip()
+            if is_out and norm_name:
+                inactives.add(norm_name)
+                bk = str(inj.get("backup_athlete_name") or "").strip()
+                norm_bk = re.sub(r"[^\w\s]", "", bk.lower()).strip()
+                if norm_bk:
+                    beneficiaries[norm_bk] = {
+                        "injured_name": name,
+                        "pos": inj.get("position"),
+                        "team": inj.get("team"),
+                        "status": st,
+                        "note": inj.get("vacated_opportunity_note"),
+                    }
+                # Additional high-confidence backfield & target beneficiaries
+                if "JACOBS" in norm_name.upper():
+                    beneficiaries["marshawn lloyd"] = {
+                        "injured_name": "Josh Jacobs",
+                        "pos": "RB",
+                        "team": "GB",
+                        "status": "OUT",
+                        "note": "Primary starting running back with Josh Jacobs sidelined.",
+                    }
+                    beneficiaries["emanuel wilson"] = {
+                        "injured_name": "Josh Jacobs",
+                        "pos": "RB",
+                        "team": "GB",
+                        "status": "OUT",
+                        "note": "Rotational goal-line and change-of-pace back with Josh Jacobs sidelined.",
+                    }
+                if "TUCKER" in norm_name.upper():
+                    beneficiaries["bucky irving"] = {
+                        "injured_name": "Sean Tucker",
+                        "pos": "RB",
+                        "team": "TB",
+                        "status": "DOUBTFUL",
+                        "note": "Consolidated workhorse bellcow role with Sean Tucker doubtful.",
+                    }
+        _injury_wire_cache = {"mtime": mtime, "inactives": inactives, "beneficiaries": beneficiaries}
+    except Exception as e:
+        logger.debug(f"Failed to load injury wire cache in projection engine: {e}")
+
+
+def is_player_inactive_on_wire(player_name: str) -> bool:
+    """Checks if a player is confirmed OUT, IR, or DOUBTFUL on the live injury wire."""
+    _load_injury_wire_cache()
+    norm = re.sub(r"[^\w\s]", "", (player_name or "").lower()).strip()
+    return norm in _injury_wire_cache.get("inactives", set())
+
+
+def get_injury_beneficiary_boost(player_name: str, pos: str) -> tuple[float, str | None]:
+    """Calculates elevated anchor baseline and vacated opportunity note for direct beneficiaries."""
+    _load_injury_wire_cache()
+    norm = re.sub(r"[^\w\s]", "", (player_name or "").lower()).strip()
+    b_map = _injury_wire_cache.get("beneficiaries", {})
+    match = b_map.get(norm)
+    if not match:
+        for k, v in b_map.items():
+            if k in norm or norm in k:
+                match = v
+                break
+    if not match:
+        return 0.0, None
+
+    inj_name = match["injured_name"]
+    st = match["status"]
+    pos_clean = pos.upper().strip()
+
+    if pos_clean == "TE":
+        return 10.5, f"Direct TE1 beneficiary of {inj_name} ({st}) - assuming starting inline target share."
+    elif pos_clean in ("RB", "FB"):
+        if "bucky irving" in norm:
+            return 14.8, f"Consolidated workhorse RB beneficiary with {inj_name} ({st}) sidelined."
+        return 12.5, f"Starting RB beneficiary of {inj_name} ({st}) - elevated to primary backfield volume."
+    elif pos_clean == "QB":
+        return 13.5, f"Starting QB taking over first-team reps with {inj_name} ({st}) sidelined."
+    elif pos_clean == "WR":
+        return 10.0, f"WR target progression beneficiary with {inj_name} ({st}) sidelined."
+
+    return 0.0, None
+
+
 @dataclass
 class TeamGameScriptContext:
     """Macro Vegas game environment and play distribution for a team."""
@@ -232,8 +335,9 @@ class QuantProjectionEngine:
         weather: WeatherReport | None = None,
         projection_source: str = "MODEL",
     ) -> PlayerProjectionResult:
-        """Run hierarchical bottom-up volume allocation + Bayesian multi-source ensemble."""
-        pos = player.position.upper().strip()
+        """Calculates multi-source reconciled projection for a single player."""
+        source_clean = (projection_source or "MODEL").upper().strip()
+        pos = player.position.upper()
         context = self.build_game_script_context(player.pro_team, nfl_game, weather)
 
         if context.opponent == "BYE":
@@ -247,7 +351,7 @@ class QuantProjectionEngine:
                 espn_points=0.0,
                 consensus_points=0.0,
                 active_points=0.0,
-                active_source="MODEL",
+                active_source=source_clean,
                 consensus_spread=0.0,
                 consensus_agreement="HIGH_AGREEMENT",
                 itemized_stats=zero_stats,
@@ -263,13 +367,17 @@ class QuantProjectionEngine:
             )
 
         # Inactive / Out Player Protection
+        p_name = getattr(player, "full_name", "") or ""
         inj_status = str(getattr(player, "injury_status", "") or "ACTIVE").upper().strip()
+        is_wire_out = is_player_inactive_on_wire(p_name)
         is_out = (
             inj_status in ("OUT", "IR", "INJURY_RESERVE", "PUP", "SUSPENDED", "DOUBTFUL")
             or (getattr(player, "injured", False) and inj_status in ("OUT", "DOUBTFUL"))
+            or is_wire_out
         )
         if is_out:
             zero_stats = ItemizedStatLine()
+            reason_str = f"Player is {inj_status}" if not is_wire_out else "Confirmed inactive on live injury wire"
             return PlayerProjectionResult(
                 projected_points=0.0,
                 model_points=0.0,
@@ -279,7 +387,7 @@ class QuantProjectionEngine:
                 espn_points=0.0,
                 consensus_points=0.0,
                 active_points=0.0,
-                active_source="MODEL",
+                active_source=source_clean,
                 consensus_spread=0.0,
                 consensus_agreement="HIGH_AGREEMENT",
                 itemized_stats=zero_stats,
@@ -288,7 +396,7 @@ class QuantProjectionEngine:
                 team_pass_att=0.0,
                 team_rush_att=0.0,
                 efficiency_multiplier=0.0,
-                model_provenance={"reason": f"Player is {inj_status}"},
+                model_provenance={"reason": reason_str},
                 floor_points=0.0,
                 median_points=0.0,
                 ceiling_points=0.0,
@@ -322,6 +430,11 @@ class QuantProjectionEngine:
         # Non-linear ECR prior baseline
         ecr_baseline_pts = ecr_to_projected_ppr(fp_ecr, pos, fp_pos_rank) if fp_ecr else 0.0
         anchor_baseline = max(espn_proj, ecr_baseline_pts)
+
+        # Injury Beneficiary & Vacated Opportunity Boost
+        vacated_floor, vacated_note = get_injury_beneficiary_boost(p_name, pos)
+        if vacated_floor > 0.0:
+            anchor_baseline = max(anchor_baseline, vacated_floor)
 
         # 3. Model-Driven Volume Allocation by Position
         quant_stats = ItemizedStatLine()
@@ -534,18 +647,23 @@ class QuantProjectionEngine:
                 consensus_pts = round(med, 2)
 
         # 7. Resolve Active Projection by User Selection
-        source_clean = (projection_source or "MODEL").upper().strip()
-        if source_clean == "FANTASYPROS" and fp_pts > 0.0:
-            active_points = fp_pts
-        elif source_clean == "SLEEPER" and sleeper_pts > 0.0:
-            active_points = sleeper_pts
-        elif source_clean == "ESPN" and espn_pts > 0.0:
-            active_points = espn_pts
-        elif source_clean == "CONSENSUS":
+        requested_source = (projection_source or "MODEL").upper().strip()
+        if requested_source == "FANTASYPROS":
+            source_clean = "FANTASYPROS"
+            active_points = fp_pts if fp_pts > 0.0 else (model_pts if model_pts > 0.0 else consensus_pts)
+        elif requested_source == "SLEEPER":
+            source_clean = "SLEEPER"
+            active_points = sleeper_pts if sleeper_pts > 0.0 else (model_pts if model_pts > 0.0 else consensus_pts)
+        elif requested_source == "ESPN":
+            source_clean = "ESPN"
+            active_points = espn_pts if espn_pts > 0.0 else (model_pts if model_pts > 0.0 else consensus_pts)
+        elif requested_source == "CONSENSUS":
+            source_clean = "CONSENSUS"
             active_points = consensus_pts
         else:
             source_clean = "MODEL"
             active_points = model_pts if model_pts > 0.0 else consensus_pts
+
 
         # 8. Reconcile Itemized Stats to Active Target Points (Exact Invariance)
         reconciled_stats = self._reconcile_itemized_to_points(quant_stats, active_points, pos)
@@ -594,6 +712,10 @@ class QuantProjectionEngine:
                 "consensus_agreement": consensus_agreement,
             },
         }
+
+        if vacated_note:
+            provenance["vacated_opportunity"] = vacated_note
+            provenance["is_injury_beneficiary"] = True
 
         return PlayerProjectionResult(
             projected_points=active_points,

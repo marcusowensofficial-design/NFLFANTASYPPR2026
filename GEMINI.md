@@ -12,6 +12,27 @@
      * *Alpha Outlier Slate:* When a player has an elite separated ceiling (e.g. JSN 30% target share), pay up at MVP and use injury vacancies to subsidize the roster.
      * *Compressed Slate:* In low-total, committee games, pay down at MVP ($9k–$11k) to upgrade to an all-starter FLEX and eliminate low-floor punts.
    * **Official Scoring Nuance:** FanDuel awards **4.0 pts per passing TD (6.0 at MVP)**, **0.5 PPR (0.75 at MVP)**, **-1.0 per INT thrown (-1.5 at MVP)**, **+2.0 per INT made by D/ST (+3.0 at MVP)**, **6.0 per rush/rec TD (9.0 at MVP)**, and **+3.0 milestone bonuses for 100+ rush/rec yards and 300+ passing yards (+4.5 at MVP)**. Recognize that in competitive, mid-total games (O/U 40–46), **"Zero-QB" builds that monopolize both teams' WR1s and RB1s** offer a massive structural edge over casual QB-heavy lineups.
+   * **Format Engine:** Always operate on the updated **6-slot roster** (1 MVP + 5 AnyFLEX) with a **$60,000 salary cap**.
+   * **1.5x MVP Pricing Rule & Strategic Regimes:** Factor in that placing a player in the MVP slot costs **1.5x their base salary**, requiring true mathematical trade-off analysis between **"Multiplier Equity"** and **"FLEX Cap Relief"**:
+     * *Alpha Outlier Slate (40% of slates):* When a player has an elite separated ceiling (e.g. Josh Allen 57.99, Swift 52.35, Gibbs 51.15, Jeanty 49.05, Bijan 40.95, JSN 37.80), pay up at MVP ($18k–$20.4k) to capture the 9.0-pt TD multiplier.
+     * *Knapsack Cap Relief Slate (60% of slates):* In low/mid-total games (O/U $\le 44.5$) or committee environments, pay down at MVP ($9.6k–$13k, e.g. Purdy $15.9k, Wentz $12k, Likely $12.3k, Goedert $12.9k) to unlock five $8k-$12k starters across the entire FLEX and eliminate low-floor punts.
+   * **The Dynamic Unspent Salary Law (Breaking the Forced-Spend Fallacy):**
+      * *Empirical 16-Slate Proof:* Across all 16 slates of Week 1 2026 (culminating in KC's 31-10 MNF win leaving $1,600 unspent), **87.5% (14 of 16)** of optimal lineups left salary on the table, averaging **$1,644 unspent** (up to $4,300 left in TB@CIN and $3,700 in SF@LAR). Only 2 of 16 spent all $60k.
+      * *Vegas Total Dynamic Thresholds:*
+        * **Low Totals (O/U $\le$ 42.0):** Allow and embrace leaving **$1,500 to $3,500 unspent** ($56,500–$58,500 spent). Never force salary spending by dropping high-scoring Kickers or D/STs for overpriced low-ceiling receivers.
+        * **Mid Totals (O/U 42.1–46.5):** Target **$800 to $2,500 unspent** ($57,500–$59,200 spent).
+        * **High Totals (O/U $\ge$ 47.0):** Target **$200 to $1,000 unspent** ($59,000–$59,800 spent).
+   * **The 4-2 / 5-1 Stacking Hegemony (Ban Default 3-3 Builds):**
+      * **87.5% (14 of 16)** of optimal showdown lineups were either **4-2 (50.0%)** or **5-1 (37.5%)** (e.g. KC 5-1 Onslaught).
+      * Strictly ban default 3-3 builds unless the game is a Pick'em (Spread 0.0) with an ultra-low total ($\le 42.0$). Single game fantasy production is almost always asymmetrically concentrated on one team.
+   * **Kicker & D/ST Structural Edge:**
+      * **75.0% (12 of 16)** of optimal lineups contained at least one Kicker or D/ST (62.5% Kicker, 37.5% D/ST, 25.0% BOTH).
+      * In games with O/U $\le 44.0$, rostering Kickers and D/STs in the FLEX provides a massive point-per-dollar advantage over volatile WR3/TE2 punts.
+   * **Historical Slate Outcomes Master Archive:**
+      * All winning single-game rosters and forensic reviews are persistently archived in [SHOWDOWN_SLATE_RESULTS_ARCHIVE.md](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/SHOWDOWN_SLATE_RESULTS_ARCHIVE.md) and [single_game_slate_outcomes.json](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/single_game_slate_outcomes.json).
+   * **The Dual-QB Safety Floor vs. Zero-QB Touchdown Monopoly:**
+     * **Dual-QB (60% of slates):** Roster BOTH starting QBs when passing volume is diffused across multiple receivers, or in back-and-forth shootouts. In ugly games, opposing QBs provide an unbeatable 11–14 point baseline floor that secondary receivers fail to reach.
+     * **Zero-QB Touchdown Monopoly (40% of slates):** Roster ZERO QBs only when touchdowns are monopolized on the ground by starting RBs and field goals by kickers, and passing touchdowns are captured exclusively by the rostered WR1/WR2.
    * **Correlation Integrity (ETR & FantasyLabs):**
      * Never pair a D/ST with the opposing starting Running Back (RB1).
      * Never roster a D/ST against 3+ opposing offensive players.
@@ -20,14 +41,6 @@
        * **NEVER roster 3 or more pass-catchers (WR/TE) from the same team without their Quarterback.** If 3+ receivers from Team A have ceiling games, their QB aggregates all their yards and TDs and will mathematically outscore the 3rd and 4th receiver, knocking them out of the optimal lineup.
        * If a team's QB is NOT in the lineup (e.g. Zero-QB builds), **strictly cap that team to at most 2 pass-catchers**.
        * If rostering 3 or more pass-catchers from Team A, **Team A's QB MUST be rostered** (either at MVP or in the FLEX).
-     * **Pro-Calibrated Zero-QB Touchdown Monopoly Structure:**
-       * True Zero-QB winners do not overload one receiving room; they capture the **True Touchdown Monopoly**: Team A RB1 + Team B RB1 + Team A WR1 + Team B WR1 + Favored Kicker + Value Starter/FB.
-       * Rushing TDs (6.0 pts) and Field Goals (3.0–5.0 pts) bypass the QB entirely. When 2-3 passing TDs are divided strictly between WR1 and WR2, the QBs are completely starved of ceiling points.
-     * **1.5x MVP Dynamic Salary Leverage:**
-       * When running a QB stack, the sharpest GPP construction places the **alpha pass-catcher (WR1/WR2) at MVP** to leverage the 1.5x multiplier on 6.0-pt receiving TDs (9.0 pts), while placing the **QB in the FLEX** to capture the volume floor.
-   * **Single-Entry Discipline:**
-     * Do not gamble on speculative backups (e.g. backup vultures); prioritize verified, high-volume starting assets.
-     * Leave **$200 to $900 unspent** to prevent chopped/split prizes.
    * **Specialized Skill Link:** Reference and follow [.agents/skills/fanduel-single-game/SKILL.md](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/.agents/skills/fanduel-single-game/SKILL.md) for full algorithmic guidelines.
 
 3. **NFL DFS Contest Slate Taxonomy & Multi-Game Formats (MST Reference):**
@@ -51,13 +64,14 @@
      * **Defensive Shell Alignment:** Distinguish Middle-Field Closed (MOFC - Cover 1/3, single-high boundary 1-on-1s) from Middle-Field Open (MOFO - Cover 2/4/6, intermediate crossers and RB checkdowns).
      * **High-Value Touches (HVTs):** Weight carries inside the 5-yard line and targets inside the 10-yard line over empty between-the-20s touches.
      * **Usage Efficiency:** Prioritize TPRR ($\ge 26\%$) and YPRR ($\ge 2.20$) over raw box-score flukes.
-   * **Mandatory 6-Step Pre-Lock Checklist:**
-     1. Vegas Blueprint (Spreads, game totals, 5-1 / 4-2 / 3-3 script classification).
-     2. 1.5x MVP Math (Multiplier Equity vs. Cap Relief, avoiding the Salary Relief Fallacy).
-     3. Correlation & Anti-Cannibalization (QB Rule of 3, D/ST vs. RB1 ban).
+   * **Mandatory 7-Step Pre-Lock Checklist:**
+     1. Vegas Blueprint & Game Script (Spreads, game totals, 4-2 vs 5-1 classification; ban default 3-3).
+     2. 1.5x MVP Regime Math (Alpha Multiplier vs. Knapsack Cap Relief).
+     3. Correlation & Anti-Cannibalization (QB Rule of 3, D/ST vs RB1 ban, Dual-QB vs Zero-QB).
      4. Sub-$3,500 Punt Route Viability Filter ($\ge 25\%$ route participation, zero blocking-only assets).
-     5. Salary Buffer Verification ($200–$900 unspent to eliminate prize chops).
-     6. Official 90-Minute Inactive Verification.
+     5. Dynamic Salary Buffer Verification (O/U $\le 42$: leave $1,500–$3,500 unspent; O/U 42.1–46.5: leave $800–$2,500 unspent; O/U $\ge 47$: leave $200–$1,000 unspent).
+     6. World-Class Pro Forensics (Coach 4th-down aggressiveness for kickers, QB Pressure-to-Sack P2S rates for D/ST, PFF CB shadow alignment, high-value touches inside the 5/10).
+     7. Official 90-Minute Inactive Verification.
 
 5. **Anti-Bias, Multi-Script Stress-Testing & Knapsack Optimization Directives:**
    * **The "Zero Yes-Man" Anti-Cheerleading Mandate:**
@@ -77,3 +91,49 @@
    * **Pro Exposure Signal Integration:**
      * When top pro models (like Mike McClure / SportsLine or ETR) publish exposure distributions with $\ge 25\%$ MVP or $\ge 50\%$ total exposure on a player, treat this as a high-priority mathematical signal.
      * NEVER dismiss consensus pro exposure as "chalk to fade" without running an integer programming simulation to understand why the optimizer favored them.
+
+6. **FanDuel Main Slate (Sunday Classic) Championship Directives:**
+   * **The 3-Game Geometric Matrix Architecture:**
+     * Winning Main Slate tournament lineups are built around **exactly three game environments plus a cheap disruption D/ST**:
+       1. **Primary Game Stack (3-4 Players):** QB + 1-2 Pass-Catchers (WR/TE) + 1-2 Opposing Bring-Backs (Opposing WR1/RB1) in a high-total shootout ($\ge 44.5$ O/U).
+       2. **Secondary Mini-Stack 1 (2 Players):** Favored starting RB + Trailing underdog primary WR in a fast-paced game ($\ge 46.5$ O/U).
+       3. **Secondary Mini-Stack 2 (2 Players):** "Good Chalk" dome engine or high-total target hog pair.
+       4. **Standalone D/ST ($3,200–$3,700):** Top-8 PFF pass-rush unit facing an offensive line ranked bottom-10 in the lowest Vegas total game on the slate (O/U $\le 40.0$).
+   * **The Rushing QB Ceiling Inversion Axiom:**
+     * NEVER downgrade elite dual-threat QBs (Josh Allen, Lamar Jackson, Jalen Hurts, Jayden Daniels) due to facing a "tough" top-10 pass rush. Heavy edge pressure stimulates broken-play scrambles, designed rush attempts, and goal-line sneaks (creating 35+ pt ceilings).
+     * When an elite rushing QB's projected ownership drops below 8% due to matchup fear, aggressively treat them as the slate's highest-leverage GPP anchor.
+   * **"Good Chalk" vs. "Bad Chalk" Discipline:**
+     * **Eat Good Chalk:** Bellcow RBs running behind elite offensive lines (PFF run blocking $\ge 85$) and Alpha WRs with $\ge 28\%$ target share in 48+ point totals (e.g. Gibbs at 45%, Olave at 30%). Do not fade them just to be contrarian.
+     * **Fade Bad Chalk:** Immobile pocket QBs with $>20\%$ ownership and touchdown-dependent committee backs.
+     * **Leverage Formula:** Combine high-floor Good Chalk with sub-5% primary stacks (e.g., Allen + Kincaid) and sub-8% secondary bring-backs (e.g., Coker).
+   * **PFF Trench & DvP Mismatch Multipliers (Empirical 2.0x Law):**
+     * Verified Week 1 Backtest Law: RBs facing bottom-10 run defenses averaged 16.62 pts (2.66 FP/$k) vs 8.51 pts (1.34 FP/$k) for RBs facing top-10 run defenses—a literal 2.0x scoring disparity.
+     * Automatically apply a +15% ceiling boost to starting RBs facing bottom-8 defensive line run ranks (e.g., Swift vs CAR #31).
+     * Identify shadow CB alignments (e.g. Jaylon Johnson) and funnel targets to intermediate/slot targets (e.g. Jalen Coker) facing secondaries ranked bottom-8 in DvP.
+   * **Cross-Positional Vacancy Redistribution (Beyond Backup Substitution):**
+     * When an alpha pass-catcher is ruled OUT (e.g., Brock Bowers), NEVER automatically chase the backup positional punt (e.g., Michael Mayer at 1.2 pts).
+     * Instead, trace the vacated target volume cross-positionally to the backfield and slot (e.g., Ashton Jeanty absorbing 6 targets and 2 receiving TDs).
+   * **Shootout Delta & The Sub-$6,000 Secondary Vacuum:**
+     * When high-total games ($\ge 46.5$ O/U) shoot out, secondary offensive options priced $\le \$6,000$ (e.g., Jalen Coker at $5,400, Dalton Kincaid at $5,200) inherit multiple red-zone opportunities.
+     * Capture this positive feedback loop by always rostering the trailing team's primary target vacuum as the bring-back.
+   * **The Late-Swap FLEX Discipline (Kickoff Window Hierarchy):**
+     * NEVER place an early-window (11:00 AM MST) starter in the FLEX slot.
+     * Always place the offensive asset from the latest kickoff window (2:05/2:25 PM MST or 6:20 PM MST) into the FLEX (e.g. Ashton Jeanty in the late afternoon window).
+     * Preserves 100% late-swap optionality across RB/WR/TE if afternoon inactive wires break or tournament pacing requires an aggressive pivot.
+   * **Home Favored RB + D/ST Positive Script Covariance:**
+     * When a home favorite faces a backup QB or low-implied offense ($\le 19.0$ pts), pairing the starting RB with their own D/ST (e.g. Jeanty + LV Raiders D/ST) carries a high positive correlation (+0.28).
+     * The defense suppresses scoring and builds a lead; the offense protects the lead by pounding the bellcow back, forcing the opponent into obvious passing situations (generating sacks and turnovers).
+     * Strictly enforce: NEVER pair a D/ST against opposing offensive players in the same lineup.
+   * **Week 2 Utilization Dip Exploitation (The Salary Lag Edge):**
+     * Do not chase fluky Week 1 box scores or fade elite volume based on 1-game noise (e.g., fading Chase/London after low box scores despite $\ge 85\%$ route participation).
+     * Ingest underlying utilization metrics (Route Participation $\ge 75\%$, Air Yards Share $\ge 30\%$, HVTs inside the 10). Attack elite volume players whose ownership collapses in Week 2 due to public box-score overreaction.
+   * **Week 2 Automated Roster Protocol (Zero Overfitting Execution):**
+     * Whenever a user opens a new conversation and provides the Week 2 FanDuel CSV, automatically execute the 5-step pipeline:
+       1. Ingest the new slate CSV (salaries, positions, matchups).
+       2. Integrate Week 1 realized metrics (snap rates $\ge 65\%$, route participation $\ge 75\%$, target shares, touches inside the 10-yard line).
+       3. Cross-reference official depth charts (`data/nfl_depth_charts_2026.json`) and active 90-minute inactive wires (`data/injuries_live_2026.json`).
+       4. Re-calculate PFF Trench and Vegas O/U multipliers.
+       5. Solve the 3-Game Matrix enforcing a $200–$900 unspent buffer to eliminate duplicate lineups.
+   * **Dedicated Engine & Skill Links:**
+     * Reference [.agents/skills/fanduel-main-slate/SKILL.md](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/.agents/skills/fanduel-main-slate/SKILL.md) for full algorithmic guidelines.
+     * Run `python scripts/solve_main_slate_matrix.py` to optimize Main Slate lineups through the 3-Game Matrix.

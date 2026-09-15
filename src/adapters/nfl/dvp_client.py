@@ -62,6 +62,8 @@ class DvPClient:
 
     def __init__(self, profiles: dict[str, DvPProfile] | None = None):
         self.profiles = dict(profiles or DEFAULT_DVP_PROFILES)
+        self.hydrate_from_draftedge()
+        self.hydrate_from_db()
 
     def hydrate_from_draftedge(self) -> None:
         """Hydrate team DvP ranks with DraftEdge calibrated baseline rankings."""
@@ -78,7 +80,45 @@ class DvPClient:
                         team = item.get("pro_team")
                         softness = item.get("rank_softness")
                         if team and softness and team in self.profiles:
-                            setattr(self.profiles[team], attr, 33 - softness)
+                            setattr(self.profiles[team], attr, 33 - int(softness))
+        except Exception:
+            pass
+
+    def hydrate_from_db(self, season: int = 2026, week: int | None = None) -> None:
+        """Hydrate team DvP ranks with the latest week's records from defense_vs_position table."""
+        try:
+            from sqlalchemy import select
+            from src.db.session import SessionLocal
+            from src.db.models import DefenseVsPositionModel, LeagueModel
+            db = SessionLocal()
+            try:
+                eff_week = week
+                if eff_week is None:
+                    league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+                    eff_week = league.current_week if league else 2
+
+                records = db.execute(
+                    select(DefenseVsPositionModel).where(
+                        DefenseVsPositionModel.season == season,
+                        DefenseVsPositionModel.week == eff_week,
+                    )
+                ).scalars().all()
+
+                if not records:
+                    records = db.execute(
+                        select(DefenseVsPositionModel).where(DefenseVsPositionModel.season == season)
+                        .order_by(DefenseVsPositionModel.week.desc())
+                    ).scalars().all()
+
+                pos_attr_map = {"QB": "qb_rank", "RB": "rb_rank", "WR": "wr_rank", "TE": "te_rank"}
+                for r in records:
+                    team = r.pro_team.upper().strip() if r.pro_team else ""
+                    pos = r.position.upper().strip() if r.position else ""
+                    attr = pos_attr_map.get(pos)
+                    if team and attr and team in self.profiles:
+                        setattr(self.profiles[team], attr, r.rank_defense)
+            finally:
+                db.close()
         except Exception:
             pass
 

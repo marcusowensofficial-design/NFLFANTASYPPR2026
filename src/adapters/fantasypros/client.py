@@ -171,7 +171,7 @@ class FantasyProsClient:
         return []
 
     async def _fetch_web_projections(
-        self, position: str, week: int = 1, scoring: str = "PPR"
+        self, position: str, week: int = 2, scoring: str = "PPR"
     ) -> list[dict[str, Any]]:
         """Fetch weekly statistical projections from official FantasyPros web projections table."""
         pos_clean = position.lower().replace("dst", "dst")
@@ -317,7 +317,7 @@ class FantasyProsClient:
     async def fetch_consensus_rankings(
         self,
         season: int = 2026,
-        week: int = 1,
+        week: int = 2,
         position: str = "FLX",
         scoring: str = "PPR",
     ) -> list[dict[str, Any]]:
@@ -460,7 +460,7 @@ class FantasyProsClient:
     async def fetch_top_100(
         self,
         season: int = 2026,
-        week: int = 1,
+        week: int = 2,
         scoring: str = "PPR",
     ) -> list[dict[str, Any]]:
         """Fetch the official FantasyPros Top 100 overall consensus rankings with matchup grades."""
@@ -471,7 +471,7 @@ class FantasyProsClient:
     async def fetch_all_consensus_rankings(
         self,
         season: int = 2026,
-        week: int = 1,
+        week: int = 2,
         scoring: str = "PPR",
     ) -> dict[str, list[dict[str, Any]]]:
         """Fetch consensus rankings across TOP100, QB, RB, WR, TE, FLX, K, and DST concurrently."""
@@ -502,7 +502,7 @@ class FantasyProsClient:
     async def fetch_projections(
         self,
         season: int = 2026,
-        week: int = 1,
+        week: int = 2,
         position: str = "FLX",
         scoring: str = "PPR",
     ) -> list[dict[str, Any]]:
@@ -614,7 +614,7 @@ class FantasyProsClient:
     async def fetch_all_projections(
         self,
         season: int = 2026,
-        week: int = 1,
+        week: int = 2,
         scoring: str = "PPR",
     ) -> dict[str, list[dict[str, Any]]]:
         """Fetch weekly projections across QB, RB, WR, TE, K, and DST concurrently."""
@@ -674,7 +674,7 @@ class FantasyProsClient:
         position: str,
         pro_team: str,
         season: int = 2026,
-        week: int = 1,
+        week: int = 2,
     ) -> dict[str, Any] | None:
         """Look up consolidated FantasyPros intelligence for an individual player."""
         pos_clean = position.upper().replace("D/ST", "DST")

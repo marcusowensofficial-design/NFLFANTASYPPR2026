@@ -114,6 +114,7 @@ interface CompareTabProps {
   runComparison: (ids: number[], mode?: string, source?: string) => Promise<void>
   onClearComparison?: () => void
   onAutoLoadDilemma?: () => void
+  onOpenGameLog?: (playerId: number | string, name?: string, pos?: string, team?: string) => void
 }
 
 export const CompareTab: React.FC<CompareTabProps> = ({
@@ -130,6 +131,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
   runComparison,
   onClearComparison,
   onAutoLoadDilemma,
+  onOpenGameLog,
 }) => {
   const [comparePosFilter, setComparePosFilter] = useState<string>('ALL')
   const [compareScope, setCompareScope] = useState<'roster' | 'all'>('roster')
@@ -465,7 +467,42 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <NFLTeamLogo team={cand1.pro_team} size={34} />
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="duel-player-name">{cand1.full_name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <div
+                      className="duel-player-name"
+                      onClick={() => onOpenGameLog?.(cand1.id, cand1.full_name, cand1.position, cand1.pro_team)}
+                      style={{ cursor: onOpenGameLog ? 'pointer' : 'default' }}
+                      title={onOpenGameLog ? 'Click to view previous game logs' : undefined}
+                    >
+                      {cand1.full_name}
+                    </div>
+                    {onOpenGameLog && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onOpenGameLog(cand1.id, cand1.full_name, cand1.position, cand1.pro_team)
+                        }}
+                        style={{
+                          background: 'rgba(56, 189, 248, 0.12)',
+                          border: '1px solid rgba(56, 189, 248, 0.35)',
+                          color: '#38bdf8',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title="View previous game logs & snap rates"
+                      >
+                        📊 Log
+                      </button>
+                    )}
+                  </div>
                   <div className="duel-meta-row" style={{ marginTop: '3px' }}>
                     <span className="pill cyan" style={{ fontSize: '11px', padding: '2px 7px' }}>
                       {cand1.position}
@@ -577,7 +614,42 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <NFLTeamLogo team={cand2.pro_team} size={34} />
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="duel-player-name">{cand2.full_name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <div
+                      className="duel-player-name"
+                      onClick={() => onOpenGameLog?.(cand2.id, cand2.full_name, cand2.position, cand2.pro_team)}
+                      style={{ cursor: onOpenGameLog ? 'pointer' : 'default' }}
+                      title={onOpenGameLog ? 'Click to view previous game logs' : undefined}
+                    >
+                      {cand2.full_name}
+                    </div>
+                    {onOpenGameLog && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onOpenGameLog(cand2.id, cand2.full_name, cand2.position, cand2.pro_team)
+                        }}
+                        style={{
+                          background: 'rgba(56, 189, 248, 0.12)',
+                          border: '1px solid rgba(56, 189, 248, 0.35)',
+                          color: '#38bdf8',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title="View previous game logs & snap rates"
+                      >
+                        📊 Log
+                      </button>
+                    )}
+                  </div>
                   <div className="duel-meta-row" style={{ marginTop: '3px' }}>
                     <span className="pill purple" style={{ fontSize: '11px', padding: '2px 7px' }}>
                       {cand2.position}
@@ -769,7 +841,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
             </div>
             <div className="duel-guide-feature-item">
               <div className="duel-guide-feature-title">🛡️ Defense-vs-Position</div>
-              <div className="duel-guide-feature-text">Full DvP star ratings & positional defensive rankings for Week 1.</div>
+              <div className="duel-guide-feature-text">Full DvP star ratings & positional defensive rankings for Week {league?.current_week || 2}.</div>
             </div>
             <div className="duel-guide-feature-item">
               <div className="duel-guide-feature-title">🎲 Vegas Sharp Props</div>
@@ -797,7 +869,42 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <NFLTeamLogo team={p.pro_team} size={32} />
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="comp-player-name">{p.full_name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <div
+                      className="comp-player-name"
+                      onClick={() => onOpenGameLog?.(p.player_id, p.full_name, p.position, p.pro_team)}
+                      style={{ cursor: onOpenGameLog ? 'pointer' : 'default' }}
+                      title={onOpenGameLog ? 'Click to view previous game logs' : undefined}
+                    >
+                      {p.full_name}
+                    </div>
+                    {onOpenGameLog && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onOpenGameLog(p.player_id, p.full_name, p.position, p.pro_team)
+                        }}
+                        style={{
+                          background: 'rgba(56, 189, 248, 0.12)',
+                          border: '1px solid rgba(56, 189, 248, 0.35)',
+                          color: '#38bdf8',
+                          fontSize: '10.5px',
+                          fontWeight: 700,
+                          padding: '2px 7px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title="View previous game logs & snap rates"
+                      >
+                        📊 Log
+                      </button>
+                    )}
+                  </div>
                   <div className="comp-player-meta" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '3px' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       <span>{p.position} • {p.pro_team} • {p.is_home ? 'vs' : '@'}</span>

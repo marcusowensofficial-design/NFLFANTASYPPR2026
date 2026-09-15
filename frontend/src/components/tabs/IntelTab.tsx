@@ -2067,13 +2067,13 @@ export const IntelTab: React.FC<IntelTabProps> = ({
           <div className="intel-dvp-banner" style={{ borderLeft: '4px solid var(--accent-purple, #8b5cf6)' }}>
             <div className="intel-dvp-banner-content">
               <div className="intel-dvp-banner-title">
-                <span>🏈 Week 1 Prediction Market Intelligence (Polymarket Integration)</span>
+                <span>🏈 Week {league?.current_week || 2} Prediction Market Intelligence (Polymarket Integration)</span>
                 <span className="pill purple" style={{ fontSize: '10px', fontWeight: 800 }}>
                   Real-Money Crowd Probabilities
                 </span>
               </div>
               <p className="intel-dvp-banner-text">
-                Week 1 is the most unpredictable slate of the NFL calendar. Because zero regular-season snaps have occurred, official coach statements and depth charts are frequently guarded. <strong>Polymarket</strong> aggregates real-money crowd bets into live implied probabilities—pricing true starting quarterback battles, Thursday/Sunday game-time injury risks, and rookie target ceilings before kickoff.
+                Week {league?.current_week || 2} brings critical depth chart adjustments, utilization shifts, and market overreactions following Week 1. <strong>Polymarket</strong> aggregates real-money crowd bets into live implied probabilities—pricing true starting quarterback battles, Thursday/Sunday game-time injury risks, and rookie target ceilings before kickoff.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
                 <span className="pill cyan" style={{ fontSize: '10.5px' }}>
@@ -2794,7 +2794,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                 <span className="pill cyan" style={{ fontSize: '10px' }}>DraftKings & FanDuel Scoring</span>
               </div>
               <p className="intel-dvp-banner-text">
-                Rankings evaluate defensive matchup generosity per position group. In <strong>Week 1</strong>, zero 2026-27 regular season games have occurred; ratings are calibrated from the full <strong>2025-26 regular season</strong> with heavy weighting on the final 8 games. As 2026-27 games are played, current-season data automatically enters the blend. Higher DK FPA represents a softer, more favorable fantasy matchup.
+                Rankings evaluate defensive matchup generosity per position group. For <strong>Week {league?.current_week || 2}</strong>, defensive ratings combine Week 1 realized game data with the weighted 2025-26 baseline. As additional 2026-27 games are played, current-season data automatically expands in the blend. Higher DK FPA represents a softer, more favorable fantasy matchup.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
                 <span className="pill purple" style={{ fontSize: '10.5px' }}>

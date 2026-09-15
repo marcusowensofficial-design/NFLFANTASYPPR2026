@@ -10,6 +10,7 @@ export interface InjuriesTabProps {
   teamRosterData?: TeamRosterResponse | null
   onSelectPlayerForCompare?: (playerId: number) => void
   onNavigateTab?: (tab: string) => void
+  onOpenGameLog?: (playerId: number | string, name?: string, pos?: string, team?: string) => void
 }
 
 export const InjuriesTab: React.FC<InjuriesTabProps> = ({
@@ -19,6 +20,7 @@ export const InjuriesTab: React.FC<InjuriesTabProps> = ({
   teamRosterData,
   onSelectPlayerForCompare,
   onNavigateTab,
+  onOpenGameLog,
 }) => {
   const [injurySearch, setInjurySearch] = useState<string>('')
   const [injuryPosFilter, setInjuryPosFilter] = useState<string>('ALL')
@@ -294,7 +296,19 @@ export const InjuriesTab: React.FC<InjuriesTabProps> = ({
                       <NFLTeamLogo team={inj.team_abbr || inj.team} size={24} style={{ marginTop: '2px' }} />
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          <span style={{ fontWeight: 700, fontSize: '13.5px' }}>{inj.name}</span>
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              fontSize: '13.5px',
+                              cursor: onOpenGameLog ? 'pointer' : 'default',
+                              color: onOpenGameLog ? 'var(--accent-cyan)' : 'inherit',
+                              textDecoration: onOpenGameLog ? 'underline dotted' : 'none',
+                            }}
+                            onClick={() => onOpenGameLog && onOpenGameLog(inj.athlete_id, inj.name, inj.position, inj.team_abbr || inj.team)}
+                            title={onOpenGameLog ? `View previous game logs for ${inj.name}` : undefined}
+                          >
+                            {inj.name}
+                          </span>
                           {isRostered && (
                             <span
                               className={`pill ${isStarter ? 'rose' : 'zinc'}`}
@@ -374,7 +388,17 @@ export const InjuriesTab: React.FC<InjuriesTabProps> = ({
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 700, color: 'var(--accent-cyan)' }}>
                           <span>➔ Next Up:</span>
-                          <span style={{ color: 'var(--text-primary)' }}>{inj.backup_player_name}</span>
+                          <span
+                            style={{
+                              color: 'var(--text-primary)',
+                              cursor: onOpenGameLog ? 'pointer' : 'default',
+                              textDecoration: onOpenGameLog ? 'underline dotted' : 'none',
+                            }}
+                            onClick={() => onOpenGameLog && onOpenGameLog(inj.backup_player_name!, inj.backup_player_name!, inj.position, inj.team_abbr || inj.team)}
+                            title={onOpenGameLog ? `View previous game logs for ${inj.backup_player_name}` : undefined}
+                          >
+                            {inj.backup_player_name}
+                          </span>
                           {inj.backup_slot && (
                             <span className="pill zinc" style={{ fontSize: '9px', padding: '1px 4px' }}>
                               {inj.backup_slot}
@@ -404,37 +428,52 @@ export const InjuriesTab: React.FC<InjuriesTabProps> = ({
                   </td>
 
                   <td style={{ textAlign: 'center' }}>
-                    {isRostered ? (
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-xs"
-                        onClick={() => {
-                          if (onSelectPlayerForCompare) {
-                            onSelectPlayerForCompare(inj.athlete_id)
-                          }
-                          if (onNavigateTab) {
-                            onNavigateTab('compare')
-                          }
-                        }}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '11px',
-                          padding: '4px 8px',
-                          whiteSpace: 'nowrap',
-                          backgroundColor: isStarter ? 'rgba(244, 63, 94, 0.15)' : undefined,
-                          borderColor: isStarter ? 'var(--accent-rose)' : undefined,
-                          color: isStarter ? 'var(--accent-rose)' : undefined,
-                          fontWeight: 700,
-                        }}
-                        title="Open Start/Sit Comparator to compare against your bench replacements"
-                      >
-                        ⚖️ Pivot / Compare
-                      </button>
-                    ) : (
-                      <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>--</span>
-                    )}
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+                      {onOpenGameLog && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-xs"
+                          onClick={() => onOpenGameLog(inj.athlete_id, inj.name, inj.position, inj.team_abbr || inj.team)}
+                          style={{
+                            fontSize: '11px',
+                            padding: '4px 7px',
+                            whiteSpace: 'nowrap',
+                          }}
+                          title={`View game logs for ${inj.name}`}
+                        >
+                          📊 Log
+                        </button>
+                      )}
+                      {isRostered ? (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-xs"
+                          onClick={() => {
+                            if (onSelectPlayerForCompare) {
+                              onSelectPlayerForCompare(inj.athlete_id)
+                            }
+                            if (onNavigateTab) {
+                              onNavigateTab('compare')
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '11px',
+                            padding: '4px 8px',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: isStarter ? 'rgba(244, 63, 94, 0.15)' : undefined,
+                            borderColor: isStarter ? 'var(--accent-rose)' : undefined,
+                            color: isStarter ? 'var(--accent-rose)' : undefined,
+                            fontWeight: 700,
+                          }}
+                          title="Open Start/Sit Comparator to compare against your bench replacements"
+                        >
+                          ⚖️ Compare
+                        </button>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               )

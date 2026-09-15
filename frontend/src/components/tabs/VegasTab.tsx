@@ -58,7 +58,7 @@ export function VegasTab({
   selectedTeamId,
   lineup,
 }: VegasTabProps) {
-  const currentWeek = league?.current_week || 1
+  const currentWeek = league?.current_week || 2
   const [selectedWeek, setSelectedWeek] = useState<number>(currentWeek)
   const [vegasData, setVegasData] = useState<VegasIntelligenceResponse | null>(null)
   const [propsData, setPropsData] = useState<VegasPlayerPropsItem[]>([])

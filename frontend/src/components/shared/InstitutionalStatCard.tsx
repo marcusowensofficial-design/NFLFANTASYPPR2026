@@ -300,7 +300,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
 
       {/* Real Itemized Stats Section */}
       <div className="statcard-grid-title">
-        <span>📈</span> Projected Box Score & Touch Volume (PPR Week 1)
+        <span>📈</span> Projected Box Score & Touch Volume (PPR Weekly Projection)
       </div>
       <div className="statcard-itemized-grid">
         {p.position === 'QB' && (

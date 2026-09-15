@@ -33,21 +33,33 @@ class FantasyProsSyncService:
     async def sync_league_intelligence(
         self,
         league_id: int | None = None,
-        season: int = 2026,
-        week: int = 1,
+        season: int | None = None,
+        week: int | None = None,
     ) -> dict[str, Any]:
         db = self._get_db()
         try:
+            from src.db.models import LeagueModel
+            league = None
+            if league_id is not None:
+                league = db.execute(select(LeagueModel).where(LeagueModel.id == league_id)).scalars().first()
+            if not league:
+                league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+
+            eff_season = season if season is not None else (league.season if league else 2026)
+            eff_week = week if week is not None else (league.current_week if league else 2)
+
+            logger.info("Starting FantasyPros intelligence sync for season=%s, week=%s", eff_season, eff_week)
+
             # 1. Concurrently fetch all PPR ECR rankings, weekly PPR projections, and live injuries
             all_ecr, all_projs, injuries = await asyncio.gather(
                 fantasypros_client.fetch_all_consensus_rankings(
-                    season=season,
-                    week=week,
+                    season=eff_season,
+                    week=eff_week,
                     scoring="PPR",
                 ),
                 fantasypros_client.fetch_all_projections(
-                    season=season,
-                    week=week,
+                    season=eff_season,
+                    week=eff_week,
                     scoring="PPR",
                 ),
                 fantasypros_client.fetch_injuries(),
@@ -220,7 +232,7 @@ class FantasyProsSyncService:
             calib_res = {}
             try:
                 from src.services.recommendation.bulk_projection_service import bulk_projection_service
-                calib_res = await bulk_projection_service.calibrate_all_players(season=season, week=week)
+                calib_res = await bulk_projection_service.calibrate_all_players(season=eff_season, week=eff_week)
                 logger.info("Bulk quant projections calibrated: %s", calib_res.get("calibrated_count", 0))
             except Exception as ex:
                 logger.warning("Post-sync bulk quant calibration skipped or failed: %s", ex)

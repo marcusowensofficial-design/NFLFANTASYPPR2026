@@ -44,6 +44,7 @@ interface LineupTabProps {
   onCompareStarterWithBench: (p: StartSitEvaluation) => void
   onCompareBenchWithStarter: (b: StartSitEvaluation) => void
   onReviewCloseCall: (starterId: number, benchId: number) => void
+  onOpenGameLog?: (playerId: number, name?: string, pos?: string, team?: string) => void
   inactivesAlerts?: InactiveAlertItem[]
 }
 
@@ -72,6 +73,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
   onCompareStarterWithBench,
   onCompareBenchWithStarter,
   onReviewCloseCall,
+  onOpenGameLog,
   inactivesAlerts = [],
 }) => {
   // Calculate effective starters and bench considering manual user substitutions
@@ -450,7 +452,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
             <span style={{ fontSize: '24px' }}>🏈</span>
             <div>
               <strong style={{ color: '#c084fc', fontSize: '15px' }}>
-                Week 1 Kickoff & Market Volatility Alert ({marketAlerts.length} Starter{marketAlerts.length > 1 ? 's' : ''} Flagged):
+                Week {league?.current_week || 2} Kickoff & Market Volatility Alert ({marketAlerts.length} Starter{marketAlerts.length > 1 ? 's' : ''} Flagged):
               </strong>
               <div style={{ fontSize: '12.5px', color: '#e9d5ff', marginTop: '2px' }}>
                 Polymarket prediction crowd odds detect volatile starting roles, decoy risks, or Thursday FLEX positioning.
@@ -905,7 +907,13 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                           <NFLTeamLogo team={p.pro_team} size={24} />
-                          <span style={{ fontWeight: 700 }}>{p.full_name}</span>
+                          <span
+                            style={{ fontWeight: 700, cursor: onOpenGameLog ? 'pointer' : 'default' }}
+                            onClick={() => onOpenGameLog?.(p.player_id, p.full_name, p.position, p.pro_team)}
+                            title="Click to view 2026 game logs & box scores"
+                          >
+                            {p.full_name}
+                          </span>
                           {slot.is_custom_swap && (
                             <span className="pill amber" style={{ fontSize: '10px', padding: '1px 6px', fontWeight: 700 }} title={`Custom Bench Swap replacing ${slot.original_recommended?.full_name}`}>
                               🔄 Sub for {slot.original_recommended?.full_name}
@@ -1142,10 +1150,33 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                           <button
                             className="btn-link"
                             onClick={() => setExpandedStatsPlayerId(isStatsExpanded ? null : p.player_id)}
-                            style={{ color: isStatsExpanded ? 'var(--accent-cyan)' : 'var(--text-secondary)' }}
+                            style={{
+                              color: isStatsExpanded ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                            title="View multi-source itemized projections & stat model"
                           >
-                            {isStatsExpanded ? 'Hide Stats' : '📊 Stats'}
+                            {isStatsExpanded ? 'Hide Proj' : '📈 Projections'}
                           </button>
+                          {onOpenGameLog && (
+                            <button
+                              className="btn-link"
+                              onClick={() => onOpenGameLog(p.player_id, p.full_name, p.position, p.pro_team)}
+                              style={{
+                                color: '#38bdf8',
+                                fontWeight: 600,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                              title="View 2026 game logs & box scores"
+                            >
+                              📋 Game Log
+                            </button>
+                          )}
                           <button
                             className="btn-link"
                             onClick={() => setExpandedWhy(isExpanded ? null : p.player_id)}
@@ -1324,57 +1355,109 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                   </tr>
 
                   {/* Bench Players */}
-                  {lineup?.bench.map((b: StartSitEvaluation) => (
-                    <tr key={`unified-bench-${b.player_id}`}>
-                      <td>
-                        <span className="slot-badge" style={{ background: 'rgba(148, 163, 184, 0.15)', borderColor: 'rgba(148, 163, 184, 0.3)', color: '#cbd5e1' }}>
-                          BENCH
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <NFLTeamLogo team={b.pro_team} size={22} />
-                          <span style={{ fontWeight: 600 }}>{b.full_name}</span>
-                        </div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                          <span>{b.position} • {b.pro_team}</span>
-                          {b.fp_pos_rank && <span style={{ marginLeft: '6px', color: '#38bdf8', fontWeight: 600 }}>⭐ FP {b.fp_pos_rank}</span>}
-                        </div>
-                      </td>
-                      <td>
-                        <span className="matchup-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                          <span>{b.is_home ? 'vs' : '@'}</span>
-                          <NFLTeamLogo team={b.opponent} size={16} />
-                          <span>{b.opponent}</span>
-                        </span>
-                        {b.opp_dvp_rank && <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>DvP #{b.opp_dvp_rank}</div>}
-                      </td>
-                      <td>
-                        <span className={`score-badge ${getScoreColorClass(b.start_score)}`}>{b.start_score}</span>
-                      </td>
-                      <td>{renderPlayerPointsBadge(b)}</td>
-                      <td>
-                        {renderMatchupGradePill(b.matchup_grade)}
-                      </td>
-                      <td>
-                        <InjuryStatusPill
-                          status={b.injury_status}
-                          fullName={b.full_name}
-                          position={b.position}
-                          injuryNote={b.fp_injury_note}
-                        />
-                      </td>
-                      <td>
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          style={{ padding: '2px 8px', fontSize: '11px' }}
-                          onClick={() => onCompareBenchWithStarter(b)}
-                        >
-                          ⚖️ Compare
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {lineup?.bench.map((b: StartSitEvaluation) => {
+                    const isStatsExpanded = expandedStatsPlayerId === b.player_id
+                    return (
+                      <React.Fragment key={`unified-bench-${b.player_id}`}>
+                        <tr>
+                          <td>
+                            <span className="slot-badge" style={{ background: 'rgba(148, 163, 184, 0.15)', borderColor: 'rgba(148, 163, 184, 0.3)', color: '#cbd5e1' }}>
+                              BENCH
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <NFLTeamLogo team={b.pro_team} size={22} />
+                              <span
+                                style={{ fontWeight: 600, cursor: onOpenGameLog ? 'pointer' : 'default' }}
+                                onClick={() => onOpenGameLog?.(b.player_id, b.full_name, b.position, b.pro_team)}
+                                title="Click to view 2026 game logs & box scores"
+                              >
+                                {b.full_name}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                              <span>{b.position} • {b.pro_team}</span>
+                              {b.fp_pos_rank && <span style={{ marginLeft: '6px', color: '#38bdf8', fontWeight: 600 }}>⭐ FP {b.fp_pos_rank}</span>}
+                            </div>
+                          </td>
+                          <td>
+                            <span className="matchup-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                              <span>{b.is_home ? 'vs' : '@'}</span>
+                              <NFLTeamLogo team={b.opponent} size={16} />
+                              <span>{b.opponent}</span>
+                            </span>
+                            {b.opp_dvp_rank && <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>DvP #{b.opp_dvp_rank}</div>}
+                          </td>
+                          <td>
+                            <span className={`score-badge ${getScoreColorClass(b.start_score)}`}>{b.start_score}</span>
+                          </td>
+                          <td>{renderPlayerPointsBadge(b)}</td>
+                          <td>
+                            {renderMatchupGradePill(b.matchup_grade)}
+                          </td>
+                          <td>
+                            <InjuryStatusPill
+                              status={b.injury_status}
+                              fullName={b.full_name}
+                              position={b.position}
+                              injuryNote={b.fp_injury_note}
+                            />
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <button
+                                className="btn-link"
+                                onClick={() => setExpandedStatsPlayerId(isStatsExpanded ? null : b.player_id)}
+                                style={{
+                                  color: isStatsExpanded ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                                  fontWeight: 600,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                                title="View multi-source itemized projections & stat model"
+                              >
+                                {isStatsExpanded ? 'Hide Proj' : '📈 Projections'}
+                              </button>
+                              {onOpenGameLog && (
+                                <button
+                                  className="btn-link"
+                                  onClick={() => onOpenGameLog(b.player_id, b.full_name, b.position, b.pro_team)}
+                                  style={{
+                                    color: '#38bdf8',
+                                    fontWeight: 600,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                  }}
+                                  title="View 2026 game logs & box scores"
+                                >
+                                  📋 Game Log
+                                </button>
+                              )}
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '2px 8px', fontSize: '11px' }}
+                                onClick={() => onCompareBenchWithStarter(b)}
+                              >
+                                ⚖️ Compare
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* Itemized Projections Drawer */}
+                        {isStatsExpanded && (
+                          <tr className="stat-drawer-row">
+                            <td colSpan={8} style={{ padding: '0 0 16px 0', background: 'transparent' }}>
+                              <InstitutionalStatCard player={b} activeSource={projectionSource} />
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    )
+                  })}
 
                   {/* Empty Bench Spots */}
                   {Array.from({ length: Math.max(0, (lineup?.bench_slots_count || 7) - (lineup?.bench.length || 0)) }).map((_, idx) => (
@@ -1707,14 +1790,37 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                             />
                           </td>
                           <td>
-                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                               <button
                                 className="btn-link"
                                 onClick={() => setExpandedStatsPlayerId(isStatsExpanded ? null : b.player_id)}
-                                style={{ color: isStatsExpanded ? 'var(--accent-cyan)' : 'var(--text-secondary)' }}
+                                style={{
+                                  color: isStatsExpanded ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                                  fontWeight: 600,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                                title="View multi-source itemized projections & stat model"
                               >
-                                {isStatsExpanded ? 'Hide' : '📊 Stats'}
+                                {isStatsExpanded ? 'Hide Proj' : '📈 Projections'}
                               </button>
+                              {onOpenGameLog && (
+                                <button
+                                  className="btn-link"
+                                  onClick={() => onOpenGameLog(b.player_id, b.full_name, b.position, b.pro_team)}
+                                  style={{
+                                    color: '#38bdf8',
+                                    fontWeight: 600,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                  }}
+                                  title="View 2026 game logs & box scores"
+                                >
+                                  📋 Game Log
+                                </button>
+                              )}
                               <button
                                 className="btn-link"
                                 onClick={() => setExpandedWhy(expandedWhy === b.player_id ? null : b.player_id)}

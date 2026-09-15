@@ -1,0 +1,146 @@
+{
+  "contest": "FanDuel NFL Single Game - Dallas Cowboys @ New York Giants (SNF)",
+  "date": "2026-09-13",
+  "final_score": "NYG 28, DAL 20",
+  "cash_line": 92.0,
+  "user_lineup": {
+    "username": "youngdfsballer",
+    "score": 91.9,
+    "position": "2109th of 9611",
+    "payout": ".00 (missed cash by 0.1 pt due to Dart kneel downs)",
+    "roster": [
+      {
+        "slot": "MVP (1.5x)",
+        "name": "Jaxson Dart",
+        "team": "NYG",
+        "pos": "QB",
+        "cost": 16200,
+        "fpts": 39.9,
+        "drafted_pct": 73.6
+      },
+      {
+        "slot": "AnyFLEX",
+        "name": "CeeDee Lamb",
+        "team": "DAL",
+        "pos": "WR",
+        "cost": 11800,
+        "fpts": 12.9,
+        "drafted_pct": 43.7
+      },
+      {
+        "slot": "AnyFLEX",
+        "name": "Dak Prescott",
+        "team": "DAL",
+        "pos": "QB",
+        "cost": 12600,
+        "fpts": 15.4,
+        "drafted_pct": 75.0
+      },
+      {
+        "slot": "AnyFLEX",
+        "name": "Javonte Williams",
+        "team": "DAL",
+        "pos": "RB",
+        "cost": 9800,
+        "fpts": 21.7,
+        "drafted_pct": 62.9
+      },
+      {
+        "slot": "AnyFLEX",
+        "name": "Brandon Aubrey",
+        "team": "DAL",
+        "pos": "K",
+        "cost": 6800,
+        "fpts": 2.0,
+        "drafted_pct": 48.8
+      },
+      {
+        "slot": "AnyFLEX",
+        "name": "Odell Beckham Jr.",
+        "team": "NYG",
+        "pos": "WR",
+        "cost": 2600,
+        "fpts": 0.0,
+        "drafted_pct": 12.7
+      }
+    ],
+    "salary_spent": 59800,
+    "unspent_buffer": 200
+  },
+  "first_place_winning_lineup": {
+    "payout": ",000.00 (1st of 9611)",
+    "score": 125.3,
+    "salary_spent": 59100,
+    "unspent_buffer": 900,
+    "roster": [
+      {
+        "slot": "MVP (1.5x)",
+        "name": "Isaiah Likely",
+        "team": "NYG",
+        "pos": "TE",
+        "cost": 12300,
+        "base_sal": 8200,
+        "fpts": 35.7,
+        "mvp_drafted_pct": 2.0,
+        "total_drafted_pct": 24.8,
+        "stats": "8 rec, 78 yds, 2 TD"
+      },
+      {
+        "slot": "AnyFLEX",
+        "name": "Dak Prescott",
+        "team": "DAL",
+        "pos": "QB",
+        "cost": 12600,
+        "fpts": 15.4,
+        "total_drafted_pct": 75.0,
+        "stats": "22/34, 175 yds, 2 TD, 1 INT"
+      },
+      {
+        "slot": "AnyFLEX",
+        "name": "Jaxson Dart",
+        "team": "NYG",
+        "pos": "QB",
+        "cost": 10800,
+        "fpts": 26.6,
+        "total_drafted_pct": 73.6,
+        "stats": "23/29, 230 yds, 3 TD, 54 rush yds"
+      },
+      {
+        "slot": "AnyFLEX",
+        "name": "Javonte Williams",
+        "team": "DAL",
+        "pos": "RB",
+        "cost": 9800,
+        "fpts": 21.7,
+        "total_drafted_pct": 62.9,
+        "stats": "12 car, 41 yds, 1 rush TD, rec TD"
+      },
+      {
+        "slot": "AnyFLEX",
+        "name": "Cam Skattebo",
+        "team": "NYG",
+        "pos": "RB",
+        "cost": 9200,
+        "fpts": 14.1,
+        "total_drafted_pct": 48.0,
+        "stats": "18 car, 81 yds, 1 TD"
+      },
+      {
+        "slot": "AnyFLEX",
+        "name": "Devin Singletary",
+        "team": "NYG",
+        "pos": "RB",
+        "cost": 4400,
+        "fpts": 11.8,
+        "total_drafted_pct": 5.5,
+        "stats": "6 car, 16 yds, 1 rec TD"
+      }
+    ],
+    "architectural_insights": [
+      "Captured 6 of 7 total touchdowns in the game (100% touchdown monopoly).",
+      "Paid down to ,200 TE at MVP (saving ,900 vs Dart MVP).",
+      "Salary savings unlocked an All-Starter FLEX with Devin Singletary (,400) as the lowest priced player.",
+      "Zero sub-,500 punts on the entire roster."
+    ]
+  }
+}

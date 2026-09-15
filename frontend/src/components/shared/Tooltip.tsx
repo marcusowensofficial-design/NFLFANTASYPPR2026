@@ -110,13 +110,13 @@ export const PPR_GLOSSARY: Record<string, GlossaryEntry> = {
       'In 8-team leagues, championships are won in starting lineups, not on deep benches. Target teams with losing records and trade your depth for Top-5 overall assets.',
   },
   DVP_BASELINE: {
-    title: 'Week 1 DvP Baseline Weighting',
+    title: 'Early Season DvP Baseline Weighting',
     acronym: 'Baseline',
     category: 'MATCHUP',
     beginnerDef:
-      'In Week 1, zero current-season regular games have occurred. Defensive matchup ratings are built from the full 2025-26 regular season, with heavy weighting placed on the final eight games.',
+      'In early regular season weeks, defensive matchup ratings combine the weighted 2025-26 baseline with fresh 2026 realized game data as the sample size expands.',
     proStrategy:
-      'Early season ratings are informative indicators of defensive scheme and personnel continuity, but still stabilizing. By Week 2 and beyond, ratings automatically incorporate fresh 2026-27 game data.',
+      'Early season ratings are informative indicators of defensive scheme and personnel continuity, but still stabilizing. Ratings automatically blend fresh realized game data each week.',
   },
   DVP_FPA: {
     title: 'DraftKings Fantasy Points Allowed (FPA)',

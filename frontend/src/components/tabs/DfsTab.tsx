@@ -14,11 +14,13 @@ export type ProjectionSourceType = 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEE
 interface DfsTabProps {
   projectionSource?: ProjectionSourceType
   onProjectionSourceChange?: (source: ProjectionSourceType) => void
+  onOpenGameLog?: (playerId: number | string, name?: string, pos?: string, team?: string) => void
 }
 
 export function DfsTab({
   projectionSource: propSource,
   onProjectionSourceChange: propOnChange,
+  onOpenGameLog,
 }: DfsTabProps = {}) {
   // Slate state
   const [slates, setSlates] = useState<DFSSlateInfo[]>([])
@@ -458,7 +460,7 @@ export function DfsTab({
               onClick={() => setSelectedSlate(s.id)}
               className={`dfs-slate-btn ${selectedSlate === s.id ? 'active' : ''}`}
             >
-              <span>{s.id === 'main' ? '🏈' : s.id === 'early' ? '🌅' : '📂'}</span>
+              <span>{s.id.includes('showdown') || s.id.includes('tnf') ? '⚡' : s.id === 'main' ? '🏈' : s.id === 'early' ? '🌅' : '📂'}</span>
               <span>{s.name}</span>
             </button>
           ))}
@@ -1002,7 +1004,17 @@ export function DfsTab({
                                   {item.position}
                                 </span>
                                 <div className="dfs-player-meta">
-                                  <span className="dfs-player-name">{item.name}</span>
+                                  <span
+                                    className="dfs-player-name"
+                                    style={{
+                                      cursor: onOpenGameLog ? 'pointer' : 'default',
+                                      textDecoration: onOpenGameLog ? 'underline dotted' : 'none',
+                                    }}
+                                    onClick={() => onOpenGameLog && onOpenGameLog(item.name, item.name, item.position, item.team)}
+                                    title={onOpenGameLog ? `View previous game logs and stats for ${item.name}` : undefined}
+                                  >
+                                    {item.name}
+                                  </span>
                                 </div>
                               </div>
                             </td>
@@ -1089,6 +1101,16 @@ export function DfsTab({
                             </td>
                             <td style={{ textAlign: 'center' }}>
                               <div className="dfs-action-btn-group" style={{ justifyContent: 'center' }}>
+                                {onOpenGameLog && (
+                                  <button
+                                    onClick={() => onOpenGameLog(item.name, item.name, item.position, item.team)}
+                                    className="dfs-icon-action-btn"
+                                    title={`View game logs for ${item.name}`}
+                                    style={{ fontSize: '11px' }}
+                                  >
+                                    📊
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => toggleLock(item.name)}
                                   className={`dfs-icon-action-btn ${isLocked ? 'active-lock' : ''}`}
@@ -1292,7 +1314,17 @@ export function DfsTab({
                         </td>
                         <td>
                           <div className="dfs-player-meta">
-                            <span className="dfs-player-name">{p.name}</span>
+                            <span
+                              className="dfs-player-name"
+                              style={{
+                                cursor: onOpenGameLog ? 'pointer' : 'default',
+                                textDecoration: onOpenGameLog ? 'underline dotted' : 'none',
+                              }}
+                              onClick={() => onOpenGameLog && onOpenGameLog(p.name, p.name, p.position, p.team)}
+                              title={onOpenGameLog ? `View previous game logs and stats for ${p.name}` : undefined}
+                            >
+                              {p.name}
+                            </span>
                           </div>
                         </td>
                         <td>
@@ -1387,6 +1419,16 @@ export function DfsTab({
                         </td>
                         <td style={{ textAlign: 'center' }}>
                           <div className="dfs-action-btn-group" style={{ justifyContent: 'center' }}>
+                            {onOpenGameLog && (
+                              <button
+                                onClick={() => onOpenGameLog(p.name, p.name, p.position, p.team)}
+                                className="dfs-icon-action-btn"
+                                title={`View game logs for ${p.name}`}
+                                style={{ fontSize: '11px' }}
+                              >
+                                📊
+                              </button>
+                            )}
                             <button
                               onClick={() => toggleLock(p.name)}
                               className={`dfs-icon-action-btn ${isLocked ? 'active-lock' : ''}`}

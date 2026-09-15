@@ -73,8 +73,14 @@ class FanDuelShowdownOptimizer:
             df["name"] = df["name"].str.strip()
 
         # Remove injured players
+        is_out_mask = pd.Series(False, index=df.index)
         if "injury" in df.columns:
-            df = df[~df["injury"].isin(["IR", "O", "OUT"])].copy()
+            is_out_mask = is_out_mask | df["injury"].isin(["IR", "O", "OUT", "DOUBTFUL"])
+        if "db_status" in df.columns:
+            is_out_mask = is_out_mask | df["db_status"].isin(["IR", "OUT", "DOUBTFUL"])
+        if "is_out" in df.columns:
+            is_out_mask = is_out_mask | df["is_out"].fillna(False)
+        df = df[~is_out_mask].copy()
 
         # Filter out backup QBs on single-game slates (keep only highest salaried QB per team)
         if "position" in df.columns and "team" in df.columns and "salary" in df.columns:
@@ -84,7 +90,7 @@ class FanDuelShowdownOptimizer:
                 is_backup_qb = qb_mask & (df["salary"] < df["team"].map(max_qb_sal_by_team))
                 df = df[~is_backup_qb].copy()
 
-        # Fill missing projections
+        # Fill missing projections (do NOT assign 5.0 to unplayed backups/long snappers)
         if "proj" in df.columns:
             df["proj"] = pd.to_numeric(df["proj"], errors="coerce")
             if "FPPG" in df.columns:
@@ -92,7 +98,7 @@ class FanDuelShowdownOptimizer:
         elif "FPPG" in df.columns:
             df["proj"] = pd.to_numeric(df["FPPG"], errors="coerce")
 
-        df["proj"] = df["proj"].fillna(5.0)
+        df["proj"] = df["proj"].fillna(0.0)
 
         # Eliminate players with 0 projection
         df = df[df["proj"] > 0.0].copy()
@@ -284,7 +290,7 @@ class FanDuelShowdownOptimizer:
                 b_l.append(0.0)
                 b_u.append(1.0)
 
-        # 7. Zero-QB script constraint
+        # 7. Zero-QB / Dual-QB script constraints
         if script == "ZERO_QB":
             mask_qb = (df["position"] == "QB").values.astype(float)
             row_zero_qb = np.zeros(2 * n)
@@ -293,6 +299,14 @@ class FanDuelShowdownOptimizer:
             A_rows.append(row_zero_qb)
             b_l.append(0.0)
             b_u.append(0.0)
+        elif script == "DUAL_QB":
+            mask_qb = (df["position"] == "QB").values.astype(float)
+            row_dual_qb = np.zeros(2 * n)
+            row_dual_qb[0:n] = mask_qb
+            row_dual_qb[n : 2 * n] = mask_qb
+            A_rows.append(row_dual_qb)
+            b_l.append(2.0)
+            b_u.append(2.0)
 
         # 7. Correlation Rules (QB Stacking, QB Rule of 3, D/ST Anti-Cannibalization)
         if enforce_qb_rules and script != "ZERO_QB":
@@ -448,9 +462,16 @@ class FanDuelShowdownOptimizer:
         df_slate: pd.DataFrame,
         mode: str = "GPP",
         allow_sub3500_punts: bool = False,
+        lock_mvp: str | None = None,
+        lock_players: list[str] | None = None,
+        exclude_players: list[str] | None = None,
     ) -> dict[str, Any]:
         """Solves and compares all 4 distinct game scripts for stress-testing and balanced portfolio building."""
-        clean_df = self.clean_slate(df_slate, allow_sub3500_punts=allow_sub3500_punts)
+        clean_df = self.clean_slate(
+            df_slate,
+            allow_sub3500_punts=allow_sub3500_punts,
+            exclude_players=exclude_players,
+        )
         teams = clean_df["team"].dropna().unique().tolist()
         team_a, team_b = (teams[0], teams[1]) if len(teams) >= 2 else ("TeamA", "TeamB")
 
@@ -459,6 +480,7 @@ class FanDuelShowdownOptimizer:
             ("TEAM_A_DOMINANT", f"{team_a} Onslaught (4-2 or 5-1)"),
             ("TEAM_B_DOMINANT", f"{team_b} Onslaught (4-2 or 5-1)"),
             ("BALANCED", "Balanced Game Script (3-3 / 4-2)"),
+            ("DUAL_QB", "Dual-QB Baseline Floor / Shootout"),
             ("ZERO_QB", "Zero-QB Touchdown Monopoly"),
         ]
 
@@ -469,6 +491,9 @@ class FanDuelShowdownOptimizer:
                 mode=mode,
                 script=script_id,
                 allow_sub3500_punts=allow_sub3500_punts,
+                lock_mvp=lock_mvp,
+                lock_players=lock_players,
+                exclude_players=exclude_players,
             )
             if sol:
                 sol["script_name"] = script_name

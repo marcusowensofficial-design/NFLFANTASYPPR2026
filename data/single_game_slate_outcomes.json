@@ -1,0 +1,74 @@
+{
+  "week_1": {
+    "DEN_at_KC_2026_09_14": {
+      "date": "2026-09-14",
+      "game": "DEN @ KC",
+      "slate_type": "Monday Night Football (MNF)",
+      "final_score": "KC 31, DEN 10",
+      "vegas_total": 43.5,
+      "vegas_spread": "KC -2.5",
+      "total_score": 117.86,
+      "total_salary_spent": 58400,
+      "unspent_salary": 1600,
+      "stack_split": "5-1 KC",
+      "mvp": {
+        "name": "Kenneth Walker III",
+        "team": "KC",
+        "position": "RB",
+        "salary": 16200,
+        "base_salary": 10800,
+        "fpts": 53.4,
+        "base_fpts": 35.6,
+        "stats": "23 car, 173 rush yds, 1 rush TD (60 yds), 3 rec, 18 rec yds, 1 rec TD (191 scrimmage yds, 2 TDs)"
+      },
+      "flex": [
+        {
+          "name": "Patrick Mahomes",
+          "team": "KC",
+          "position": "QB",
+          "salary": 12400,
+          "fpts": 22.66,
+          "stats": "15/27, 184 pass yds, 2 pass TD, 1 INT, 1 rush TD (15 yds)"
+        },
+        {
+          "name": "Evan Engram",
+          "team": "DEN",
+          "position": "TE",
+          "salary": 4800,
+          "fpts": 12.30,
+          "stats": "4 rec, 43 yds, 1 TD (lone Denver touchdown)"
+        },
+        {
+          "name": "Kansas City Chiefs",
+          "team": "KC",
+          "position": "DST",
+          "salary": 6400,
+          "fpts": 12.00,
+          "stats": "10 pts allowed, 4 sacks, 1 INT, 1 fumble recovery"
+        },
+        {
+          "name": "Rashee Rice",
+          "team": "KC",
+          "position": "WR",
+          "salary": 11400,
+          "fpts": 8.90,
+          "stats": "2 rec, 19 yds, 1 TD"
+        },
+        {
+          "name": "Travis Kelce",
+          "team": "KC",
+          "position": "TE",
+          "salary": 7200,
+          "fpts": 8.60,
+          "stats": "3 rec, 71 yds"
+        }
+      ],
+      "key_takeaways": [
+        "5-1 KC Onslaught: 5 Chiefs + 1 Bronco (Engram lone TD bring-back).",
+        "Dynamic Unspent Salary: Left $1,600 unspent ($58,400 spent).",
+        "Favored RB1 + D/ST Covariance: Pairing Walker MVP with KC D/ST captured the ground domination and second-half sacks/turnovers against trailing Bo Nix.",
+        "Underdog QB Fade in Blowout: Bo Nix held to 6.44 FP as KC blitzes forced 2 turnovers and 4 sacks."
+      ]
+    }
+  }
+}

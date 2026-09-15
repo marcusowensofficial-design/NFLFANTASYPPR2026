@@ -128,9 +128,16 @@ class BacktestingEvaluator:
         league_id: int,
         team_id: int,
         current_weights: ScoringWeights,
+        week: int | None = None,
     ) -> WeightTuningResult:
         """Run systematic parameter grid search to find weights strictly maximizing retrospective accuracy."""
-        baseline_audit = self.audit_week(db, league_id, team_id, week=1, weights=current_weights)
+        from src.db.models import LeagueModel
+        target_week = week
+        if target_week is None:
+            league = db.execute(select(LeagueModel).where(LeagueModel.id == league_id)).scalar_one_or_none()
+            target_week = max(1, (league.current_week - 1) if (league and league.current_week) else 1)
+
+        baseline_audit = self.audit_week(db, league_id, team_id, week=target_week, weights=current_weights)
         best_accuracy = baseline_audit.accuracy_pct
         best_efficiency = baseline_audit.efficiency_pct
         best_weights = current_weights
@@ -162,7 +169,7 @@ class BacktestingEvaluator:
 
         for cand in candidate_profiles:
             cand_norm = cand.normalize()
-            cand_audit = self.audit_week(db, league_id, team_id, week=1, weights=cand_norm)
+            cand_audit = self.audit_week(db, league_id, team_id, week=target_week, weights=cand_norm)
             # Optimize primarily for accuracy; tie-break on efficiency
             is_better = (
                 cand_audit.accuracy_pct > best_accuracy

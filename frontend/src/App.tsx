@@ -28,6 +28,7 @@ import { isPlayerDoubtfulOrInjured } from './types'
 import { PreFlightPushModal } from './components/modals/PreFlightPushModal'
 import { CommandPaletteModal } from './components/modals/CommandPaletteModal'
 import { ShareLineupModal } from './components/modals/ShareLineupModal'
+import { PlayerGameLogModal } from './components/modals/PlayerGameLogModal'
 
 // Shared Brand & Navigation Components
 import { ApexLogo } from './components/shared/ApexLogo'
@@ -226,6 +227,10 @@ export function App() {
   // Modal & HUD State
   const [showCommandPalette, setShowCommandPalette] = useState<boolean>(false)
   const [showShareModal, setShowShareModal] = useState<boolean>(false)
+  const [gameLogPlayer, setGameLogPlayer] = useState<{ id: number | string; name?: string; position?: string; proTeam?: string } | null>(null)
+  const handleOpenGameLog = (id: number | string, name?: string, position?: string, proTeam?: string) => {
+    setGameLogPlayer({ id, name, position, proTeam })
+  }
   const [isTipDismissed, setIsTipDismissed] = useState<boolean>(() => {
     try {
       return localStorage.getItem('apex_tip_dismissed') === 'true'
@@ -937,7 +942,9 @@ export function App() {
             </div>
             <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span className="pill gold" style={{ fontSize: '11px', padding: '3px 10px', fontWeight: 800, background: 'rgba(234, 179, 8, 0.15)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.35)', display: 'inline-flex', alignItems: 'center', gap: '6px', letterSpacing: '0.03em' }}>
-                🏈 KICKOFF TODAY: NE @ SEA (WED 9-9-26 6:20 P.M. MDT)
+                {league?.current_week === 1
+                  ? '🏈 KICKOFF TODAY: NE @ SEA (WED 9-9-26 6:20 P.M. MDT)'
+                  : '🏈 WEEK 2 TNF: DET @ BUF (THU 9-17-26 6:15 P.M. MDT • 53.5 O/U)'}
               </span>
               {inactivesAlerts.length > 0 && (
                 <span className="pill rose" style={{ fontSize: '11px', padding: '3px 10px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -1169,6 +1176,7 @@ export function App() {
           isPushing={isPushing}
           onCompareStarterWithBench={handleCompareStarterWithBench}
           onCompareBenchWithStarter={handleCompareBenchWithStarter}
+          onOpenGameLog={handleOpenGameLog}
           onReviewCloseCall={(starterId, benchId) => {
             const ids = [starterId, benchId]
             setIsExplicitCompare(true)
@@ -1195,12 +1203,14 @@ export function App() {
           runComparison={runComparison}
           onClearComparison={handleClearComparison}
           onAutoLoadDilemma={handleAutoLoadRosterDilemma}
+          onOpenGameLog={handleOpenGameLog}
         />
       )}
 
       {activeTab === 'waivers' && (
         <WaiversTab
           waivers={waivers}
+          onOpenGameLog={handleOpenGameLog}
         />
       )}
 
@@ -1226,6 +1236,7 @@ export function App() {
             setActiveTab('compare')
           }}
           onNavigateTab={(tab) => setActiveTab(tab as any)}
+          onOpenGameLog={handleOpenGameLog}
         />
       )}
 
@@ -1242,6 +1253,7 @@ export function App() {
           onRefreshRoster={() => loadTeamRoster(selectedRosterTeamId, true)}
           lineup={lineup}
           onCompareFromRoster={handleCompareFromRoster}
+          onOpenGameLog={handleOpenGameLog}
         />
       )}
 
@@ -1261,7 +1273,7 @@ export function App() {
 
       {activeTab === 'fantasypros' && (
         <FantasyProsTab
-          currentWeek={league?.current_week || 1}
+          currentWeek={league?.current_week || 2}
           onSyncSuccess={() => {
             loadLeagueData()
             loadTeamLineup(selectedTeamId, strategyMode, projectionSource, true)
@@ -1301,6 +1313,7 @@ export function App() {
               localStorage.setItem('agy_projection_source', source)
             } catch {}
           }}
+          onOpenGameLog={handleOpenGameLog}
         />
       )}
 
@@ -1325,7 +1338,7 @@ export function App() {
           toggleMoveSelection={toggleMoveSelection}
           onExecutePush={handleExecutePush}
           isPushing={isPushing}
-          currentWeek={league?.current_week || 1}
+          currentWeek={league?.current_week || 2}
         />
       )}
 
@@ -1355,6 +1368,16 @@ export function App() {
           projectionSource={projectionSource}
         />
       )}
+
+      {/* Player Historical Game Log Modal */}
+      <PlayerGameLogModal
+        isOpen={Boolean(gameLogPlayer)}
+        onClose={() => setGameLogPlayer(null)}
+        playerIdOrName={gameLogPlayer?.id || null}
+        playerName={gameLogPlayer?.name}
+        position={gameLogPlayer?.position}
+        proTeam={gameLogPlayer?.proTeam}
+      />
     </div>
   )
 }

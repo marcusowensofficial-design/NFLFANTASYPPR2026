@@ -1221,6 +1221,95 @@ export interface PlayerMarketSentimentItem {
   urgency_level: 'CRITICAL_TNF' | 'HIGH' | 'NORMAL'
 }
 
+export interface GameLogPassing {
+  completions: number
+  attempts: number
+  yards: number
+  touchdowns: number
+  interceptions: number
+  qbr?: number | null
+}
+
+export interface GameLogRushing {
+  attempts: number
+  yards: number
+  touchdowns: number
+  long?: number
+  ypc: number
+}
+
+export interface GameLogReceiving {
+  targets: number
+  receptions: number
+  yards: number
+  touchdowns: number
+  long?: number
+  ypr: number
+  catch_pct: number
+}
+
+export interface GameLogKicking {
+  fg_made: number
+  xp_made: number
+  long?: number
+}
+
+export interface GameLogDefense {
+  points_allowed?: number
+  sacks?: number
+  interceptions?: number
+  fumbles_recovered?: number
+  def_td?: number
+}
+
+export interface PlayerGameLogItem {
+  week: number
+  date: string
+  opponent: string
+  opponent_name?: string
+  at_vs: string
+  is_home: boolean
+  result: string
+  fantasy_points_ppr: number
+  fantasy_points_half_ppr: number
+  fantasy_points_std: number
+  passing: GameLogPassing
+  rushing: GameLogRushing
+  receiving: GameLogReceiving
+  kicking?: GameLogKicking
+  defense?: GameLogDefense
+  fumbles_lost?: number
+  summary_line: string
+}
+
+export interface PlayerGameLogResponse {
+  success: boolean
+  player_id: number | string
+  player_name: string
+  position: string
+  pro_team: string
+  season: number
+  games_played: number
+  logs: PlayerGameLogItem[]
+  season_totals: {
+    games_played?: number
+    avg_fantasy_points_ppr?: number
+    total_fantasy_points_ppr?: number
+    total_touches?: number
+    total_passing_yards?: number
+    total_passing_tds?: number
+    total_rushing_yards?: number
+    total_rushing_tds?: number
+    total_receptions?: number
+    total_receiving_yards?: number
+    total_receiving_tds?: number
+    total_targets?: number
+  }
+  message?: string
+  note?: string
+}
+
+
 
 
 

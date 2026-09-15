@@ -185,10 +185,23 @@ class NFLScheduleClient:
 
         return schedule_chips
 
-    def _get_fallback_schedule(self, week: int = 1) -> list[NFLGame]:
+    def _get_fallback_schedule(self, week: int = 2) -> list[NFLGame]:
         """Provides verified official 2026 NFL schedule for Weeks 1-3 when offline."""
         import json
         from pathlib import Path
+
+        # 1. Check live vegas movement file first (freshly updated for current week)
+        vegas_path = Path(__file__).resolve().parent.parent.parent.parent / "data" / "vegas_movement_2026.json"
+        if vegas_path.exists():
+            try:
+                with open(vegas_path, "r", encoding="utf-8") as f:
+                    vdata = json.load(f)
+                if vdata.get("week") == week and "games" in vdata:
+                    return [NFLGame(**{k: v for k, v in g.items() if k in NFLGame.model_fields}) for g in vdata["games"]]
+            except Exception as e:
+                logger.debug(f"Error loading {vegas_path}: {e}")
+
+        # 2. Check nfl_2026_weeks_1_3.json master schedule
         data_path = Path(__file__).resolve().parent.parent.parent.parent / "data" / "nfl_2026_weeks_1_3.json"
         if data_path.exists():
             try:
@@ -218,6 +231,25 @@ class NFLScheduleClient:
                 NFLGame(id="401872926", name="Arizona Cardinals at Los Angeles Chargers", date="2026-09-13T20:25Z", venue_name="SoFi Stadium", is_dome=True, home_team="LAC", away_team="ARI", over_under=46.0, spread=-3.0, home_implied_total=24.5, away_implied_total=21.5),
                 NFLGame(id="401872930", name="Dallas Cowboys at New York Giants", date="2026-09-14T00:20Z", venue_name="MetLife Stadium", is_dome=False, home_team="NYG", away_team="DAL", over_under=46.5, spread=4.5, home_implied_total=21.0, away_implied_total=25.5),
                 NFLGame(id="401872931", name="Denver Broncos at Kansas City Chiefs", date="2026-09-15T00:15Z", venue_name="GEHA Field at Arrowhead Stadium", is_dome=False, home_team="KC", away_team="DEN", over_under=48.5, spread=-6.5, home_implied_total=27.5, away_implied_total=21.0),
+            ]
+        elif week == 2:
+            return [
+                NFLGame(id="401872932", name="Detroit Lions at Buffalo Bills", date="2026-09-18T00:15Z", venue_name="Highmark Stadium", is_dome=False, home_team="BUF", away_team="DET", over_under=53.5, spread=-4.5, home_implied_total=29.0, away_implied_total=24.5),
+                NFLGame(id="401872933", name="Carolina Panthers at Atlanta Falcons", date="2026-09-20T17:00Z", venue_name="Mercedes-Benz Stadium", is_dome=True, home_team="ATL", away_team="CAR", over_under=43.5, spread=2.5, home_implied_total=20.5, away_implied_total=23.0),
+                NFLGame(id="401872934", name="Cincinnati Bengals at Baltimore Ravens", date="2026-09-20T17:00Z", venue_name="M&T Bank Stadium", is_dome=False, home_team="BAL", away_team="CIN", over_under=48.5, spread=-3.5, home_implied_total=26.0, away_implied_total=22.5),
+                NFLGame(id="401872935", name="Indianapolis Colts at Cleveland Browns", date="2026-09-20T17:00Z", venue_name="Huntington Bank Field", is_dome=False, home_team="CLE", away_team="IND", over_under=42.5, spread=2.0, home_implied_total=20.25, away_implied_total=22.25),
+                NFLGame(id="401872936", name="Jacksonville Jaguars at New York Jets", date="2026-09-20T17:00Z", venue_name="MetLife Stadium", is_dome=False, home_team="NYJ", away_team="JAX", over_under=44.0, spread=-3.0, home_implied_total=23.5, away_implied_total=20.5),
+                NFLGame(id="401872937", name="Kansas City Chiefs at Houston Texans", date="2026-09-20T17:00Z", venue_name="NRG Stadium", is_dome=True, home_team="HOU", away_team="KC", over_under=49.5, spread=2.5, home_implied_total=23.5, away_implied_total=26.0),
+                NFLGame(id="401872938", name="Miami Dolphins at Tennessee Titans", date="2026-09-20T17:00Z", venue_name="Nissan Stadium", is_dome=False, home_team="TEN", away_team="MIA", over_under=43.0, spread=4.5, home_implied_total=19.25, away_implied_total=23.75),
+                NFLGame(id="401872939", name="Minnesota Vikings at Green Bay Packers", date="2026-09-20T17:00Z", venue_name="Lambeau Field", is_dome=False, home_team="GB", away_team="MIN", over_under=46.5, spread=-4.0, home_implied_total=25.25, away_implied_total=21.25),
+                NFLGame(id="401872940", name="New Orleans Saints at Tampa Bay Buccaneers", date="2026-09-20T17:00Z", venue_name="Raymond James Stadium", is_dome=False, home_team="TB", away_team="NO", over_under=44.5, spread=-3.0, home_implied_total=23.75, away_implied_total=20.75),
+                NFLGame(id="401872941", name="Pittsburgh Steelers at New England Patriots", date="2026-09-20T17:00Z", venue_name="Gillette Stadium", is_dome=False, home_team="NE", away_team="PIT", over_under=39.5, spread=3.5, home_implied_total=18.0, away_implied_total=21.5),
+                NFLGame(id="401872942", name="Philadelphia Eagles at Dallas Cowboys", date="2026-09-20T20:25Z", venue_name="AT&T Stadium", is_dome=True, home_team="DAL", away_team="PHI", over_under=50.5, spread=3.0, home_implied_total=23.75, away_implied_total=26.75),
+                NFLGame(id="401872943", name="Los Angeles Chargers at Las Vegas Raiders", date="2026-09-20T20:25Z", venue_name="Allegiant Stadium", is_dome=True, home_team="LV", away_team="LAC", over_under=44.0, spread=4.5, home_implied_total=19.75, away_implied_total=24.25),
+                NFLGame(id="401872944", name="Los Angeles Rams at San Francisco 49ers", date="2026-09-20T20:25Z", venue_name="Levi's Stadium", is_dome=False, home_team="SF", away_team="LAR", over_under=45.5, spread=-3.5, home_implied_total=24.5, away_implied_total=21.0),
+                NFLGame(id="401872945", name="Seattle Seahawks at Arizona Cardinals", date="2026-09-20T20:25Z", venue_name="State Farm Stadium", is_dome=True, home_team="ARI", away_team="SEA", over_under=46.0, spread=2.5, home_implied_total=21.75, away_implied_total=24.25),
+                NFLGame(id="401872946", name="Chicago Bears at Washington Commanders", date="2026-09-21T00:20Z", venue_name="Northwest Stadium", is_dome=False, home_team="WSH", away_team="CHI", over_under=46.5, spread=-2.5, home_implied_total=24.5, away_implied_total=22.0),
+                NFLGame(id="401872947", name="Denver Broncos at New York Giants", date="2026-09-22T00:15Z", venue_name="MetLife Stadium", is_dome=False, home_team="NYG", away_team="DEN", over_under=41.5, spread=1.5, home_implied_total=20.0, away_implied_total=21.5),
             ]
         return []
 

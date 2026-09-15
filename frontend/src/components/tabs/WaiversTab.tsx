@@ -4,11 +4,12 @@ import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 
 export interface WaiversTabProps {
   waivers: WaiverAnalysisResult | null
+  onOpenGameLog?: (playerId: number | string, name?: string, pos?: string, team?: string) => void
 }
 
 type TacticalCategory = 'ALL' | 'PRIORITY' | 'HANDCUFFS' | 'BREAKOUTS' | 'STREAMERS' | 'LEDGER'
 
-export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
+export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }) => {
   const [activeCategory, setActiveCategory] = useState<TacticalCategory>('ALL')
 
   if (!waivers) {
@@ -193,11 +194,32 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
                       <NFLTeamLogo team={upg.pickup_player.pro_team} size={40} />
                       <div>
                         <div className="trans-sub">ADD FREE AGENT</div>
-                        <h4 className="trans-name">
-                          {upg.pickup_player.full_name}{' '}
+                        <h4 className="trans-name" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span
+                            style={{
+                              cursor: onOpenGameLog ? 'pointer' : 'default',
+                              color: onOpenGameLog ? 'var(--accent-cyan)' : 'inherit',
+                              textDecoration: onOpenGameLog ? 'underline dotted' : 'none',
+                            }}
+                            onClick={() => onOpenGameLog && onOpenGameLog(upg.pickup_player.player_id, upg.pickup_player.full_name, upg.pickup_player.position, upg.pickup_player.pro_team)}
+                            title={onOpenGameLog ? `View previous game logs for ${upg.pickup_player.full_name}` : undefined}
+                          >
+                            {upg.pickup_player.full_name}
+                          </span>
                           <span className="trans-pos">
                             ({upg.pickup_player.position} - {upg.pickup_player.pro_team})
                           </span>
+                          {onOpenGameLog && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-xs"
+                              style={{ padding: '1px 6px', fontSize: '10px' }}
+                              onClick={() => onOpenGameLog(upg.pickup_player.player_id, upg.pickup_player.full_name, upg.pickup_player.position, upg.pickup_player.pro_team)}
+                              title={`View game logs for ${upg.pickup_player.full_name}`}
+                            >
+                              📊 Log
+                            </button>
+                          )}
                         </h4>
                         <div className="trans-stats">
                           <span>Proj: <strong>{upg.pickup_player.projected_points} pts</strong></span>
@@ -239,11 +261,32 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
                           <NFLTeamLogo team={upg.drop_player.pro_team} size={40} />
                           <div>
                             <div className="trans-sub" style={{ color: 'var(--accent-rose)' }}>RECOMMENDED DROP</div>
-                            <h4 className="trans-name">
-                              {upg.drop_player.full_name}{' '}
+                            <h4 className="trans-name" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span
+                                style={{
+                                  cursor: onOpenGameLog ? 'pointer' : 'default',
+                                  color: onOpenGameLog ? 'var(--accent-cyan)' : 'inherit',
+                                  textDecoration: onOpenGameLog ? 'underline dotted' : 'none',
+                                }}
+                                onClick={() => onOpenGameLog && onOpenGameLog(upg.drop_player?.player_id || 0, upg.drop_player?.full_name, upg.drop_player?.position, upg.drop_player?.pro_team)}
+                                title={onOpenGameLog ? `View previous game logs for ${upg.drop_player.full_name}` : undefined}
+                              >
+                                {upg.drop_player.full_name}
+                              </span>
                               <span className="trans-pos">
                                 ({upg.drop_player.position} - {upg.drop_player.pro_team})
                               </span>
+                              {onOpenGameLog && (
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary btn-xs"
+                                  style={{ padding: '1px 6px', fontSize: '10px' }}
+                                  onClick={() => onOpenGameLog(upg.drop_player?.player_id || 0, upg.drop_player?.full_name, upg.drop_player?.position, upg.drop_player?.pro_team)}
+                                  title={`View game logs for ${upg.drop_player.full_name}`}
+                                >
+                                  📊 Log
+                                </button>
+                              )}
                             </h4>
                             <div className="trans-stats">
                               <span>Proj: <strong>{upg.drop_player.projected_points} pts</strong></span>
@@ -325,9 +368,29 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers }) => {
                   <div className="ledger-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <NFLTeamLogo team={b.pro_team} size={24} />
-                      <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                      <strong
+                        style={{
+                          fontSize: '14px',
+                          color: onOpenGameLog ? 'var(--accent-cyan)' : 'var(--text-primary)',
+                          cursor: onOpenGameLog ? 'pointer' : 'default',
+                          textDecoration: onOpenGameLog ? 'underline dotted' : 'none',
+                        }}
+                        onClick={() => onOpenGameLog && onOpenGameLog(b.player_id, b.full_name, b.position, b.pro_team)}
+                        title={onOpenGameLog ? `View previous game logs for ${b.full_name}` : undefined}
+                      >
                         {b.full_name} ({b.position})
                       </strong>
+                      {onOpenGameLog && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-xs"
+                          style={{ padding: '1px 5px', fontSize: '10px' }}
+                          onClick={() => onOpenGameLog(b.player_id, b.full_name, b.position, b.pro_team)}
+                          title={`View game logs for ${b.full_name}`}
+                        >
+                          📊 Log
+                        </button>
+                      )}
                     </div>
 
                     <span

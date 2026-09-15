@@ -1,0 +1,205 @@
+Passing markets
+Market	Odds
+Most Passing Yards — Bo Nix	-122
+Most Passing Yards — Patrick Mahomes	-106
+Bo Nix Passing Yards — Over 227.5	-113
+Bo Nix Passing Yards — Under 227.5	-113
+Patrick Mahomes Passing Yards — Over 223.5	-113
+Patrick Mahomes Passing Yards — Under 223.5	-113
+Bo Nix Passing TDs — Over 1.5	+132
+Bo Nix Passing TDs — Under 1.5	-174
+Patrick Mahomes Passing TDs — Over 1.5	+125
+Patrick Mahomes Passing TDs — Under 1.5	-164
+Game-special passing props
+Prop	Odds
+Bo Nix 25+ passing yards in each quarter	+100
+Patrick Mahomes 25+ passing yards in each quarter	+110
+Bo Nix 100+ passing yards in each half	+140
+Patrick Mahomes 100+ passing yards in each half	+155
+Nix + Mahomes to combine for 500+ passing yards	+165
+Nix + Mahomes to combine for 550+ passing yards	+340
+Alternate passing yards
+Patrick Mahomes	Odds	Bo Nix	Odds
+Patrick Mahomes	Odds	Bo Nix	Odds
+150+ yards	-900	150+ yards	-1000
+175+ yards	-400	175+ yards	-450
+200+ yards	-210	200+ yards	-230
+225+ yards	-112	225+ yards	-125
+250+ yards	+164	250+ yards	+154
+275+ yards	+280	275+ yards	+265
+Alternate passing TDs
+Patrick Mahomes	Odds	Bo Nix	Odds
+1+ passing TD	-470	1+ passing TD	-420
+2+ passing TDs	+124	2+ passing TDs	+132
+3+ passing TDs	+490	3+ passing TDs	+490
+4+ passing TDs	+1500	4+ passing TDs	+1500
+
+
+Here are **all currently expanded receiving-prop odds** on your FanDuel Broncos @ Chiefs screen; markets with no selections displayed (30+ yard reception, first-drive catches, and receiving specials) are omitted. [co.sportsbook.fanduel](https://co.sportsbook.fanduel.com/football/nfl/denver-broncos-@-kansas-city-chiefs-35601246?tab=passing-props)
+
+## Most receiving yards
+
+| Player | Odds |
+|---|---:|
+| Jaylen Waddle | +220 |
+| Rashee Rice | +320 |
+| Courtland Sutton | +550 |
+| Travis Kelce | +600 |
+| Xavier Worthy | +850 |
+| Tyquan Thornton | +1400 |
+
+## Longest reception
+
+| Player | 10+ yards | 15+ yards | 20+ yards |
+|---|---:|---:|---:|
+| Jaylen Waddle | -2000 | -475 | -190 |
+| Rashee Rice | -1250 | -310 | -125 |
+| Courtland Sutton | -800 | -260 | -115 |
+| Travis Kelce | -750 | -240 | +105 |
+| Xavier Worthy | -550 | -200 | +110 |
+| Pat Bryant | -320 | -140 | +155 |
+| Evan Engram | -240 | +130 | +340 |
+| Tyquan Thornton | -220 | -140 | +120 |
+| Kenneth Walker III | -175 | +175 | +400 |
+| RJ Harvey | -130 | +220 | +470 |
+| Marvin Mims Jr. | -115 | +185 | +360 |
+| Noah Gray | +115 | +280 | +650 |
+
+All lines in this table are player-to-record a 10+, 15+, or 20+ yard reception. [co.sportsbook.fanduel](https://co.sportsbook.fanduel.com/football/nfl/denver-broncos-@-kansas-city-chiefs-35601246?tab=passing-props)
+
+## Alternate receptions
+
+| Player | 1+ | 2+ | 3+ | 4+ | 5+ | 6+ | 7+ | 8+ |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Xavier Worthy | — | -700 | -225 | +116 | +240 | +490 | +880 | +1500 |
+| Pat Bryant | — | -330 | -110 | +225 | +490 | +920 | +1700 | — |
+| Evan Engram | — | -440 | -140 | +178 | +370 | +750 | +1280 | — |
+| RJ Harvey | — | -320 | -108 | +220 | +430 | +850 | — | — |
+| Noah Gray | -380 | +124 | +370 | +880 | — | — | — | — |
+| Marvin Mims Jr. | -400 | +122 | +370 | +880 | — | — | — | — |
+| Adam Trautman | -245 | +194 | +580 | — | — | — | — | — |
+| Kenneth Walker III | — | -670 | -225 | +108 | +225 | +410 | +750 | — |
+| Rashee Rice | — | — | -1200 | -400 | -180 | +114 | +210 | +370 |
+| Travis Kelce | — | — | -440 | -174 | +124 | +235 | +430 | +750 |
+| Jaylen Waddle | — | — | -800 | -275 | -128 | +158 | +290 | +520 |
+| Courtland Sutton | — | -1400 | -350 | -138 | +162 | +320 | +580 | — |
+
+“—” means that alternate threshold was not displayed in the open section. [co.sportsbook.fanduel](https://co.sportsbook.fanduel.com/football/nfl/denver-broncos-@-kansas-city-chiefs-35601246?tab=passing-props)
+
+## Alternate receiving yards
+
+| Player | Thresholds and odds |
+|---|---|
+| RJ Harvey | 5+ -650; 10+ -270; 15+ -140; 20+ +116; 25+ +178; 30+ +250 |
+| J.K. Dobbins | 5+ +100; 10+ +210; 15+ +360; 20+ +580; 25+ +880 |
+| Noah Gray | 5+ -240; 10+ -114; 15+ +154; 20+ +235; 25+ +360; 30+ +520 |
+| Adam Trautman | 5+ -138; 10+ +152; 15+ +250; 20+ +410; 25+ +640; 30+ +880 |
+| Marvin Mims Jr. | 5+ -270; 10+ -140; 15+ +118; 20+ +182; 25+ +250; 30+ +350 |
+| Kenneth Walker III | 5+ -1000; 10+ -360; 15+ -210; 20+ -125; 25+ +124; 30+ +178 |
+| Tyquan Thornton | 5+ -340; 10+ -235; 15+ -160; 20+ -114; 25+ +118; 30+ +154 |
+| Xavier Worthy | 10+ -1200; 15+ -600; 20+ -360; 25+ -245; 30+ -168; 40+ +110 |
+| Pat Bryant | 5+ -1200; 10+ -500; 15+ -300; 20+ -194; 25+ -132; 30+ +106 |
+| Evan Engram | 5+ -1200; 10+ -450; 15+ -245; 20+ -148; 25+ +104; 30+ +154 |
+| Rashee Rice | 20+ -1400; 25+ -750; 30+ -470; 40+ -245; 50+ -136; 60+ +122 |
+| Travis Kelce | 15+ -1100; 20+ -600; 25+ -390; 30+ -270; 40+ -136; 50+ +128 |
+| Jaylen Waddle | 20+ -1600; 25+ -900; 30+ -600; 40+ -290; 50+ -174; 60+ -108 |
+| Courtland Sutton | 15+ -1000; 20+ -580; 25+ -360; 30+ -250; 40+ -136; 50+ +124 |
+
+These are the alternate receiving-yard selections currently exposed on the page. [co.sportsbook.fanduel](https://co.sportsbook.fanduel.com/football/nfl/denver-broncos-@-kansas-city-chiefs-35601246?tab=passing-props)
+
+## Total receptions
+
+| Player | Over | Under |
+|---|---:|---:|
+| Kenneth Walker III 3.5 | +112 | -148 |
+| RJ Harvey 2.5 | -102 | -130 |
+| Adam Trautman 1.5 | +205 | -290 |
+| Noah Gray 1.5 | +130 | -174 |
+| Marvin Mims Jr. 1.5 | +124 | -166 |
+| Xavier Worthy 3.5 | +116 | -154 |
+| Tyquan Thornton 1.5 | +124 | -166 |
+| Pat Bryant 2.5 | -108 | -122 |
+| Evan Engram 2.5 | -138 | +104 |
+| Rashee Rice 5.5 | +116 | -154 |
+| Jaylen Waddle 4.5 | -128 | -104 |
+| Travis Kelce 4.5 | +130 | -174 |
+| Courtland Sutton 3.5 | -136 | +102 |
+
+## Receiving yards
+
+| Player | Over | Under |
+|---|---:|---:|
+| Tyquan Thornton 19.5 | -113 | -113 |
+| Pat Bryant 26.5 | -113 | -113 |
+| Xavier Worthy 35.5 | -113 | -113 |
+| Evan Engram 22.5 | -113 | -113 |
+| RJ Harvey 16.5 | -113 | -113 |
+| J.K. Dobbins 3.5 | -113 | -113 |
+| Adam Trautman 6.5 | -102 | -125 |
+| Noah Gray 9.5 | -113 | -113 |
+| Marvin Mims Jr. 11.5 | -113 | -113 |
+| Kenneth Walker III 20.5 | -113 | -113 |
+| Rashee Rice 52.5 | -113 | -113 |
+| Travis Kelce 42.5 | -113 | -113 |
+| Jaylen Waddle 58.5 | -113 | -113 |
+| Courtland Sutton 42.5 | -113 | -113 |
+
+## Rushing + receiving yards
+
+| Player | Over | Under |
+|---|---:|---:|
+| Kenneth Walker III 89.5 | -113 | -113 |
+| J.K. Dobbins 57.5 | -113 | -113 |
+| RJ Harvey 38.5 | -115 | -111 |
+
+Most rushing yards
+Player	Odds
+Kenneth Walker III	-160
+J.K. Dobbins	+160
+RJ Harvey	+2000
+Emmett Johnson	+2700
+Bo Nix	+3000
+Patrick Mahomes	+4000
+Xavier Worthy	+8000
+Rushing specials
+Prop	Odds
+Kenneth Walker III 5+ rushing yards in each quarter	+105
+Kenneth Walker III 25+ rushing yards in each half	+120
+J.K. Dobbins 5+ rushing yards in each quarter	+175
+J.K. Dobbins 25+ rushing yards in each half	+220
+Kenneth Walker III 10+ rushing yards in each quarter	+320
+J.K. Dobbins 10+ rushing yards in each quarter	+550
+Kenneth Walker III 50+ rushing yards in each half	+900
+J.K. Dobbins + Kenneth Walker III to combine for 200+ rushing yards	+1000
+J.K. Dobbins 50+ rushing yards in each half	+1900
+Kenneth Walker III 20+ rushing yards in each quarter	+2200
+Bo Nix 5+ rushing yards in each quarter	+2700
+Bo Nix 25+ rushing yards in each half	+4000
+J.K. Dobbins 20+ rushing yards in each quarter	+4000
+Patrick Mahomes 5+ rushing yards in each quarter	+4500
+J.K. Dobbins + Kenneth Walker III to combine for 250+ rushing yards	+5000
+Patrick Mahomes 25+ rushing yards in each half	+7000
+J.K. Dobbins + Kenneth Walker III to combine for 300+ rushing yards	+15000
+Alternate rushing yards
+Player	Thresholds and odds
+Xavier Worthy	5+ +198; 10+ +360
+Emmett Johnson	5+ -400; 10+ -172; 15+ +108; 20+ +174; 25+ +250; 30+ +360; 40+ +640; 50+ +920
+Bo Nix	5+ -850; 10+ -300; 15+ -148; 20+ +122; 25+ +198; 30+ +300; 40+ +640; 50+ +1200
+Patrick Mahomes	5+ -490; 10+ -205; 15+ +100; 20+ +174; 25+ +280; 30+ +430; 40+ +880; 50+ +1500
+RJ Harvey	5+ -1200; 10+ -360; 15+ -182; 20+ -102; 25+ +154; 30+ +230; 40+ +470; 50+ +800; 60+ +1200; 70+ +1700
+Kenneth Walker III	30+ -1400; 40+ -490; 50+ -250; 60+ -146; 70+ +112; 80+ +174; 90+ +255; 100+ +370; 110+ +550; 125+ +880; 150+ +1700
+J.K. Dobbins	20+ -1400; 25+ -700; 30+ -440; 40+ -215; 50+ -114; 60+ +152; 70+ +230; 80+ +350; 90+ +520; 100+ +750; 110+ +1000; 125+ +1500
+Rushing yards
+Player	Over	Under
+Xavier Worthy 0.5	+118	-150
+Emmett Johnson 12.5	-113	-113
+Patrick Mahomes 13.5	-113	-113
+Bo Nix 16.5	-113	-113
+RJ Harvey 18.5	-113	-113
+Kenneth Walker III 64.5	-113	-113
+J.K. Dobbins 49.5	-113	-113
+Rushing + receiving yards
+Player	Over	Under
+Kenneth Walker III 89.5	-113	-113
+RJ Harvey 38.5	-115	-111
+J.K. Dobbins 57.5	-113	-113

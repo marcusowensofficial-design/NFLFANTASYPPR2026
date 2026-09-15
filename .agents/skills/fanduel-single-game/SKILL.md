@@ -118,9 +118,13 @@ In tight or moderate-scoring games (O/U 40–46), QBs often fail to crack the to
 1. **Do NOT Gamble on Speculative Backups:**
    * In 150-max MME, players can spray 3rd-string tight ends or backup goal-line vultures (like George Holani).
    * In **Single-Entry**, stick to **verified starters with guaranteed snap counts and touch floors**.
-2. **Leave Salary on the Table:**
-   * Spending all $60,000 creates massive duplicate lineups.
-   * Leaving **$200 to $900 unspent** dramatically differentiates your lineup without sacrificing projected points.
+2. **Leave Salary on the Table (The Dynamic Unspent Cap Law):**
+   * Spending all $60,000 creates massive duplicate lineups (only 13.3% of Week 1 optimal lineups used $60k).
+   * **Vegas-Calibrated Salary Buffers:**
+     * **Low Totals (O/U $\le 42.0$):** Target **$1,500 to $3,500 unspent** ($56,500–$58,500 spent). Average unspent in low totals was $2,225!
+     * **Mid Totals (O/U 42.1–46.5):** Target **$800 to $2,500 unspent** ($57,500–$59,200 spent).
+     * **High Totals (O/U $\ge 47.0$):** Target **$200 to $1,000 unspent** ($59,000–$59,800 spent).
+   * Never drop a high-scoring Kicker ($6.4k) or D/ST ($6.8k) to "spend up" to an inefficient $10k WR.
 3. **Touchdown Monopoly Strategy:**
    * Identify the 4 players most likely to cross the goal line (WR1 and RB1 of each team). Prioritize rostering all 4.
 
@@ -201,17 +205,20 @@ As regular-season data accumulates (Weeks 2–18), integrate these definitive fo
 
 ---
 
-## 8. The 6-Step Pre-Lock Verification Checklist
+## 8. The 7-Step Pre-Lock Verification Checklist
 
 Before locking or recommending any single-game DFS lineup, execute this verification order:
 
-1. **Vegas Implied Blueprint:** Check spread, total, and team totals. Classify the game script (5-1 Onslaught, 4-2 Favored, or 3-3 Balanced).
+1. **Vegas Implied Blueprint:** Check spread, total, and team totals. Classify the game script (4-2 Favored or 5-1 Onslaught; strictly avoid default 3-3).
 2. **The 1.5x MVP Math Audit:** Calculate exact cap impact of MVP choice. Verify Multiplier Equity (9.0-pt TD upside) vs. FLEX purchasing power. Reject the "Salary Relief Fallacy."
-3. **Correlation Integrity Check:** Verify no anti-correlated pieces (no D/ST with opposing RB1, no naked QBs, no 3+ WRs without their QB).
+3. **Correlation Integrity Check:** Verify no anti-correlated pieces (no D/ST with opposing RB1, no naked QBs, no 3+ WRs without their QB). Evaluate Dual-QB vs Zero-QB.
 4. **Punt Route Viability Filter:** Ensure every sub-$3,500 punt meets the 25%+ route participation or designated red-zone package threshold. Zero pure-blocking fullbacks.
-5. **Salary Buffer Verification:** Confirm **$200 to $900 remains unspent** ($59,100 to $59,800 total cap spent) to prevent prize duplication.
-6. **Official 90-Minute Inactive Verification:** Inspect active/inactive reports to ensure all 6 rostered players are confirmed active.
-7. **Anti-Bias & Steel-Manned Counter-Script Audit:** Mandatory requirement to generate and inspect the inverse game script before locking.
+5. **Dynamic Salary Buffer Verification:** Confirm salary buffer matches the Vegas total:
+   * **O/U $\le 42.0$:** Leave **$1,500 to $3,500 unspent** ($56,500–$58,500 spent).
+   * **O/U 42.1–46.5:** Leave **$800 to $2,500 unspent** ($57,500–$59,200 spent).
+   * **O/U $\ge 47.0$:** Leave **$200 to $1,000 unspent** ($59,000–$59,800 spent).
+6. **World-Class Forensic Micro-Metrics:** Check coach 4th-down aggressiveness (kicker volume), QB Pressure-to-Sack (P2S) rates (D/ST ceiling), PFF CB shadow alignment, and red-zone high-value touches (HVTs inside the 5/10).
+7. **Official 90-Minute Inactive Verification:** Inspect active/inactive reports to ensure all 6 rostered players are confirmed active.
 
 ---
 
@@ -230,3 +237,23 @@ Before locking or recommending any single-game DFS lineup, execute this verifica
 2. **The Knapsack Solution Rule:** In FanDuel single-game, evaluate the **cap relief of the MVP slot**. Purdy at $15,900 at MVP was $1,200 to $3,600 cheaper than Stafford, Puka, or CMC, allowing the 1st-place winner to roster five verified $5,400+ players without taking on a zero-point punt.
 3. **The Sub-$3,500 Punt Ban in Single-Entry:** Taking a 0.0 in single-entry is fatal. All players rostered in single-entry must have a verified 60%+ snap share or multi-target role.
 4. **Algorithmic Solver Tool:** Always execute `python scripts/run_showdown_optimizer.py --slate <path>` to review all 4 script options mathematically before selecting a lineup.
+
+---
+
+## 10. The 16-Slate Empirical Ground-Truth Study (Week 1 2026 Complete Census)
+
+A full census audit of all 16 Week 1 single-game optimal lineups (culminating in KC's 31-10 MNF win) revealed definitive structural laws:
+
+| Metric | Empirical Frequency | Core Strategic Takeaway |
+| :--- | :--- | :--- |
+| **Lineups Leaving Salary on Table** | **14 of 16 (87.5%)** | Forcing $60k spend is a mathematical leak; mean unspent was **$1,644** ($1,600 in KC-DEN). |
+| **Lineups Leaving $\ge \$2,000$ Unspent** | **5 of 16 (31.3%)** | Up to $4,300 unspent in TB@CIN ($55.7k spent) and $3,700 in SF@LAR ($56.3k). |
+| **Lineups with $\ge 1$ Kicker or D/ST** | **12 of 16 (75.0%)** | Kickers (62.5%) & D/STs (37.5%) smash value in low-to-mid totals ($\le 44.5$). |
+| **4-2 and 5-1 Stacking Dominance** | **14 of 16 (87.5%)** | 4-2 (50.0%) and 5-1 (37.5%) dominate; 3-3 balanced builds appeared only twice (12.5%). |
+| **Dual-QB Lineups** | **9 of 16 (56.3%)** | In defensive games, opposing starting QBs (11-14 pts) beat secondary WR/TE punts. |
+| **Bellcow RBs at MVP vs Soft Run D** | **6 of 16 (37.5%)** | Walker (53.4), Swift (52.4), Gibbs (51.1), Jeanty (49.0), Bijan (41.0), Hall (32.7) broke slates. |
+
+### Master Data Archives:
+* **Historical Slate Outcomes:** [SHOWDOWN_SLATE_RESULTS_ARCHIVE.md](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/SHOWDOWN_SLATE_RESULTS_ARCHIVE.md) & [single_game_slate_outcomes.json](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/single_game_slate_outcomes.json)
+* **Week 1 Comprehensive 16-Game Autopsy:** [WEEK_1_2026_MASTER_POST_MORTEM.md](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/WEEK_1_2026_MASTER_POST_MORTEM.md)
+

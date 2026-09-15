@@ -39,6 +39,28 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/analysis", tags=["Matchup Intel"])
 
 
+def resolve_effective_week(db: Session | None = None, week: int | None = None) -> int:
+    """Dynamically resolve the current NFL week from database league settings if omitted."""
+    if week is not None and 1 <= week <= 18:
+        return week
+    if db is not None:
+        try:
+            league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+            if league and league.current_week:
+                return league.current_week
+        except Exception:
+            pass
+    try:
+        from src.db.session import SessionLocal
+        with SessionLocal() as session:
+            league = session.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+            if league and league.current_week:
+                return league.current_week
+    except Exception:
+        pass
+    return 2
+
+
 class TaleOfTheTapeSlot(BaseModel):
     slot_name: str
     position: str
@@ -416,11 +438,12 @@ async def get_opponent_scouting(
 async def get_wrcb_matrix(
     league_id: int | None = Query(default=None),
     team_id: int | None = Query(default=None),
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
     only_rostered: bool = Query(default=False),
     db: Session = Depends(get_db),
 ) -> list[WRCBMatchupAnalysis]:
     """Retrieve PFF-style WR vs CB matchup analysis with route alignments, shadow alerts, and advantage ratings."""
+    eff_week = resolve_effective_week(db, week)
     eff_lid = league_id if isinstance(league_id, int) else None
     eff_tid = team_id if isinstance(team_id, int) else None
 
@@ -466,7 +489,7 @@ async def get_wrcb_matrix(
 
     # Fetch NFL schedule for the week to ensure accurate opponent assignment
     schedule_games = await nfl_schedule_client.fetch_week_schedule(
-        season=settings.espn_season, week=week
+        season=settings.espn_season, week=eff_week
     )
     team_opp_map: dict[str, str] = {}
     for g in schedule_games:
@@ -538,11 +561,13 @@ async def get_pff_composite_defense(
 
 @router.get("/pff/trenches", response_model=list[PFFTrenchMatchup])
 async def get_pff_trenches(
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
+    db: Session = Depends(get_db),
 ) -> list[PFFTrenchMatchup]:
     """Retrieve weekly offensive line vs. defensive line trench warfare ratings."""
+    eff_week = resolve_effective_week(db, week)
     schedule_games = await nfl_schedule_client.fetch_week_schedule(
-        season=settings.espn_season, week=week
+        season=settings.espn_season, week=eff_week
     )
     results: list[PFFTrenchMatchup] = []
     for g in schedule_games:
@@ -561,11 +586,12 @@ async def get_pff_trenches(
 async def get_vegas_environments(
     league_id: int | None = Query(default=None),
     team_id: int | None = Query(default=None),
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
     season: int = Query(default=2026),
     db: Session = Depends(get_db),
 ) -> VegasIntelligenceResponse:
     """Retrieve Vegas betting market intelligence, implied totals, game scripts, and user roster exposure."""
+    eff_week = resolve_effective_week(db, week)
     eff_lid = league_id if isinstance(league_id, int) else None
     eff_tid = team_id if isinstance(team_id, int) else None
 
@@ -617,12 +643,12 @@ async def get_vegas_environments(
                 })
 
     # Fetch weekly schedule with spreads and totals
-    schedule_games = await nfl_schedule_client.fetch_week_schedule(season=season, week=week)
+    schedule_games = await nfl_schedule_client.fetch_week_schedule(season=season, week=eff_week)
 
     response = vegas_gamescript_analyzer.analyze_week(
         games=schedule_games,
         season=season,
-        week=week,
+        week=eff_week,
         user_roster_players=user_roster_data,
     )
 
@@ -631,14 +657,14 @@ async def get_vegas_environments(
 
 @router.get("/vegas-slate-props", response_model=list[PlayerPropsData])
 async def get_vegas_slate_props(
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
     season: int = Query(default=2026),
     limit: int = Query(default=60, ge=1, le=150),
     team: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> list[PlayerPropsData]:
     """Retrieve consensus sportsbook proposition lines and market-implied PPR points for players on the slate."""
-    eff_week = week if isinstance(week, int) else 1
+    eff_week = resolve_effective_week(db, week)
     eff_season = season if isinstance(season, int) else 2026
     eff_limit = limit if isinstance(limit, int) else 60
     eff_team = team if isinstance(team, str) else None
@@ -711,10 +737,11 @@ async def get_team_depth_chart(team: str) -> TeamDepthChart | None:
 async def get_h2h_tale_of_the_tape(
     league_id: int | None = Query(default=None),
     team_id: int | None = Query(default=None),
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
     db: Session = Depends(get_db),
 ) -> H2HTaleOfTheTapeResponse:
     """Retrieve slot-by-slot starter positional Tale of the Tape against the week's opponent."""
+    eff_week = resolve_effective_week(db, week)
     eff_lid = league_id if isinstance(league_id, int) else None
     eff_tid = team_id if isinstance(team_id, int) else None
 
@@ -726,7 +753,7 @@ async def get_h2h_tale_of_the_tape(
     match = db.execute(
         select(MatchupModel).where(
             MatchupModel.league_id == effective_league_id,
-            MatchupModel.week == week,
+            MatchupModel.week == eff_week,
             (MatchupModel.home_team_id == user_team_id) | (MatchupModel.away_team_id == user_team_id),
         )
     ).scalars().first()
@@ -735,7 +762,7 @@ async def get_h2h_tale_of_the_tape(
         # Fallback 1: Match for this week without league_id constraint
         match = db.execute(
             select(MatchupModel).where(
-                MatchupModel.week == week,
+                MatchupModel.week == eff_week,
                 (MatchupModel.home_team_id == user_team_id) | (MatchupModel.away_team_id == user_team_id),
             )
         ).scalars().first()
@@ -804,7 +831,7 @@ async def get_h2h_tale_of_the_tape(
     # Fetch weekly schedule to map opponents safely
     team_opp_map: dict[str, str] = {}
     try:
-        schedule_games = await nfl_schedule_client.fetch_week_schedule(season=settings.espn_season, week=week)
+        schedule_games = await nfl_schedule_client.fetch_week_schedule(season=settings.espn_season, week=eff_week)
         for g in schedule_games:
             team_opp_map[g.home_team] = g.away_team
             team_opp_map[g.away_team] = g.home_team
@@ -989,7 +1016,7 @@ async def get_h2h_tale_of_the_tape(
     )
 
     return H2HTaleOfTheTapeResponse(
-        week=week,
+        week=eff_week,
         user_team_name=user_team_name,
         user_team_id=user_team_id,
         user_projected_total=user_proj_tot,
@@ -1010,10 +1037,11 @@ async def get_h2h_tale_of_the_tape(
 @router.get("/player-props", response_model=list[PlayerPropsData])
 async def get_player_props(
     team_id: int | None = Query(default=None),
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
     db: Session = Depends(get_db),
 ) -> list[PlayerPropsData]:
     """Retrieve consensus sportsbook proposition lines & implied PPR points for rostered players."""
+    eff_week = resolve_effective_week(db, week)
     league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
     league_id = league.id if league else settings.espn_league_id
 
@@ -1028,7 +1056,7 @@ async def get_player_props(
         query = query.where(PlayerModel.id.in_(pids))
 
     players = db.execute(query).scalars().all()
-    nfl_games = await nfl_schedule_client.fetch_week_schedule(season=2026, week=week)
+    nfl_games = await nfl_schedule_client.fetch_week_schedule(season=2026, week=eff_week)
     game_map = {g.home_team: g for g in nfl_games}
     game_map.update({g.away_team: g for g in nfl_games})
 
@@ -1046,7 +1074,7 @@ async def get_player_props(
             position=p.position,
             team=p.pro_team,
             opponent=opp or "BYE",
-            week=week,
+            week=eff_week,
             season=2026,
             implied_team_total=itt,
             spread=spread,
@@ -1059,13 +1087,15 @@ async def get_player_props(
 
 @router.get("/boris-chen-tiers", response_model=dict[str, list[BorisChenTierItem]])
 async def get_boris_chen_tiers(
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
+    db: Session = Depends(get_db),
 ) -> dict[str, list[BorisChenTierItem]]:
     """Retrieve Boris Chen GMM statistical tier clusters grouped by position."""
+    eff_week = resolve_effective_week(db, week)
     positions = ["QB", "PPR-RB", "PPR-WR", "PPR-TE", "DST", "K"]
     out: dict[str, list[BorisChenTierItem]] = {}
     for pos in positions:
-        tier_dict = await boris_chen_client.get_position_tiers(position=pos, week=week)
+        tier_dict = await boris_chen_client.get_position_tiers(position=pos, week=eff_week)
         out[pos] = list(tier_dict.values())
     return out
 
@@ -1116,22 +1146,26 @@ class DvPStatusResponse(BaseModel):
 @router.get("/dvp-ratings", response_model=list[DvPRecordItem])
 def get_dvp_ratings(
     season: int = Query(default=2026),
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
     position: str | None = Query(default=None, description="Position filter: QB, RB, WR, TE, or ALL"),
     team: str | None = Query(default=None, description="Team abbreviation filter: DAL, KC, etc., or ALL"),
+    db: Session = Depends(get_db),
 ) -> list[dict[str, Any]]:
     """Retrieve normalized Defense vs Position Fantasy Points Allowed ratings (DraftEdge FPA model)."""
-    return dvp_service.get_dvp_ratings(season=season, week=week, position=position, pro_team=team)
+    eff_week = resolve_effective_week(db, week)
+    return dvp_service.get_dvp_ratings(season=season, week=eff_week, position=position, pro_team=team)
 
 
 @router.post("/dvp-sync")
 async def sync_dvp_ratings(
     season: int = Query(default=2026),
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
+    db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """Trigger live scrape and database update for Defense vs Position ratings."""
+    eff_week = resolve_effective_week(db, week)
     try:
-        res = await dvp_service.sync_dvp_data(season=season, week=week)
+        res = await dvp_service.sync_dvp_data(season=season, week=eff_week)
         return res
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to sync DvP data: {str(e)}")
@@ -1140,10 +1174,12 @@ async def sync_dvp_ratings(
 @router.get("/dvp-status", response_model=DvPStatusResponse)
 def get_dvp_status(
     season: int = Query(default=2026),
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
+    db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """Check Defense vs Position data freshness, record counts, and Week 1 baseline status."""
-    return dvp_service.get_dvp_status(season=season, week=week)
+    eff_week = resolve_effective_week(db, week)
+    return dvp_service.get_dvp_status(season=season, week=eff_week)
 
 
 # ============================================================================
@@ -1153,11 +1189,12 @@ def get_dvp_status(
 @router.get("/market-sentiment", response_model=list[PlayerMarketSentiment])
 async def get_market_sentiment(
     team_id: int | None = Query(default=None),
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
     season: int = Query(default=2026),
     db: Session = Depends(get_db),
 ) -> list[PlayerMarketSentiment]:
     """Retrieve synthesized prediction market sentiment (Polymarket), starter confidence, and decoy risk."""
+    eff_week = resolve_effective_week(db, week)
     league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
     league_id = league.id if league else settings.espn_league_id
 
@@ -1172,7 +1209,7 @@ async def get_market_sentiment(
         query = query.where(PlayerModel.id.in_(pids))
 
     players = db.execute(query).scalars().all()
-    schedule = await nfl_schedule_client.fetch_week_schedule(season=season, week=week)
+    schedule = await nfl_schedule_client.fetch_week_schedule(season=season, week=eff_week)
     injuries = await nfl_injuries_client.fetch_injuries()
 
     sentiments: list[PlayerMarketSentiment] = []
@@ -1182,7 +1219,7 @@ async def get_market_sentiment(
             player_name=p.full_name,
             position=p.position,
             pro_team=p.pro_team,
-            week=week,
+            week=eff_week,
             season=season,
             schedule=schedule,
             injuries=injuries,
@@ -1195,16 +1232,17 @@ async def get_market_sentiment(
 @router.get("/market-sentiment/player/{player_id}", response_model=PlayerMarketSentiment)
 async def get_player_market_sentiment(
     player_id: int,
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
     season: int = Query(default=2026),
     db: Session = Depends(get_db),
 ) -> PlayerMarketSentiment:
     """Retrieve detailed prediction market sentiment (Polymarket) for a specific player."""
+    eff_week = resolve_effective_week(db, week)
     player = db.execute(select(PlayerModel).where(PlayerModel.id == player_id)).scalars().first()
     if not player:
         raise HTTPException(status_code=404, detail=f"Player with ID {player_id} not found.")
 
-    schedule = await nfl_schedule_client.fetch_week_schedule(season=season, week=week)
+    schedule = await nfl_schedule_client.fetch_week_schedule(season=season, week=eff_week)
     injuries = await nfl_injuries_client.fetch_injuries()
 
     return await market_sentiment_service.get_player_sentiment(
@@ -1212,7 +1250,7 @@ async def get_player_market_sentiment(
         player_name=player.full_name,
         position=player.position,
         pro_team=player.pro_team,
-        week=week,
+        week=eff_week,
         season=season,
         schedule=schedule,
         injuries=injuries,
@@ -1221,13 +1259,14 @@ async def get_player_market_sentiment(
 
 @router.get("/market-sentiment/buzz", response_model=list[PlayerMarketSentiment])
 async def get_market_sentiment_buzz(
-    week: int = Query(default=1, ge=1, le=18),
+    week: int | None = Query(default=None, ge=1, le=18),
     season: int = Query(default=2026),
     db: Session = Depends(get_db),
 ) -> list[PlayerMarketSentiment]:
     """Retrieve high-priority market sentiment buzz (starter controversies, decoy risks, top rookies) across all NFL teams."""
+    eff_week = resolve_effective_week(db, week)
     players = db.execute(select(PlayerModel)).scalars().all()
-    schedule = await nfl_schedule_client.fetch_week_schedule(season=season, week=week)
+    schedule = await nfl_schedule_client.fetch_week_schedule(season=season, week=eff_week)
     injuries = await nfl_injuries_client.fetch_injuries()
 
     buzz: list[PlayerMarketSentiment] = []
@@ -1237,7 +1276,7 @@ async def get_market_sentiment_buzz(
             player_name=p.full_name,
             position=p.position,
             pro_team=p.pro_team,
-            week=week,
+            week=eff_week,
             season=season,
             schedule=schedule,
             injuries=injuries,
@@ -1253,6 +1292,19 @@ async def get_market_sentiment_buzz(
     priority_order = {"CRITICAL_TNF": 0, "HIGH": 1, "NORMAL": 2}
     buzz.sort(key=lambda x: (priority_order.get(x.urgency_level, 3), -x.starter_confidence))
     return buzz[:25]
+
+
+from src.services.gamelog_service import gamelog_service
+
+
+@router.get("/player/{player_id}/gamelog")
+async def get_player_gamelog_endpoint(
+    player_id: str,
+    season: int = Query(default=2026),
+) -> dict[str, Any]:
+    """Retrieve complete 2026 regular season game logs and itemized stats for any player."""
+    return await gamelog_service.get_player_gamelog(player_id_or_name=player_id, season=season)
+
 
 
 

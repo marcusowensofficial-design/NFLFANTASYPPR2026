@@ -21,6 +21,7 @@ export interface LeagueTabProps {
   onRefreshRoster?: () => void
   lineup: OptimizedLineupResult | null
   onCompareFromRoster: (player: any) => void
+  onOpenGameLog?: (playerId: number | string, name?: string, pos?: string, team?: string) => void
 }
 
 export const LeagueTab: React.FC<LeagueTabProps> = ({
@@ -34,6 +35,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
   isLoadingRoster = false,
   onRefreshRoster,
   onCompareFromRoster,
+  onOpenGameLog,
 }) => {
   const [activeSection, setActiveSection] = useState<'ALL' | 'ROSTER' | 'STANDINGS' | 'SCOREBOARD'>('ALL')
   const [positionFilter, setPositionFilter] = useState<
@@ -868,7 +870,19 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                         </td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontWeight: 700, fontSize: '13px' }}>{p.full_name}</span>
+                            <span
+                              style={{
+                                fontWeight: 700,
+                                fontSize: '13px',
+                                cursor: onOpenGameLog ? 'pointer' : 'default',
+                                color: onOpenGameLog ? 'var(--accent-cyan)' : 'inherit',
+                                textDecoration: onOpenGameLog ? 'underline dotted' : 'none',
+                              }}
+                              onClick={() => onOpenGameLog && onOpenGameLog(p.player_id, p.full_name, p.position, p.pro_team)}
+                              title={onOpenGameLog ? `View previous game logs for ${p.full_name}` : undefined}
+                            >
+                              {p.full_name}
+                            </span>
                             {p.fp_pos_rank && (
                               <span
                                 className="pill purple"
@@ -984,14 +998,26 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                           />
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            style={{ padding: '3px 10px', fontSize: '11px' }}
-                            onClick={() => onCompareFromRoster(p)}
-                            title={`Compare ${p.full_name} against your lineup starters`}
-                          >
-                            ⚖️ Compare
-                          </button>
+                          <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                            {onOpenGameLog && (
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '3px 8px', fontSize: '11px' }}
+                                onClick={() => onOpenGameLog(p.player_id, p.full_name, p.position, p.pro_team)}
+                                title={`View previous game logs and stats for ${p.full_name}`}
+                              >
+                                📊 Log
+                              </button>
+                            )}
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: '3px 10px', fontSize: '11px' }}
+                              onClick={() => onCompareFromRoster(p)}
+                              title={`Compare ${p.full_name} against your lineup starters`}
+                            >
+                              ⚖️ Compare
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )

@@ -22,8 +22,8 @@ class SleeperSyncService:
 
     async def sync_sleeper_projections(
         self,
-        season: int = 2024,
-        week: int = 1,
+        season: int = 2026,
+        week: int = 2,
         season_type: str = "regular",
     ) -> dict[str, Any]:
         """Fetch weekly projections from Sleeper/RotoWire and enrich players in DB."""

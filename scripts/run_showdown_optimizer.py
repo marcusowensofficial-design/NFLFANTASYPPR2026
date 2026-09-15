@@ -20,8 +20,9 @@ from src.dfs.showdown_optimizer import FanDuelShowdownOptimizer
 def run_optimizer(
     slate_path: str,
     mode: str = "GPP",
-    min_buffer: int = 200,
-    max_buffer: int = 900,
+    vegas_total: float | None = None,
+    min_buffer: int | None = None,
+    max_buffer: int | None = None,
     min_punt_salary: int = 3500,
     allow_sub3500_punts: bool = False,
     lock_mvp: str | None = None,
@@ -36,8 +37,23 @@ def run_optimizer(
     df = pd.read_csv(path)
     print(f"Loaded {len(df)} players from {slate_path}")
 
-    max_salary = 60000 - min_buffer
-    min_salary = 60000 - max_buffer
+    # Dynamic Vegas total calibration
+    if vegas_total is not None:
+        if vegas_total <= 42.0:
+            calibrated_min_buf = 1500 if min_buffer is None else min_buffer
+            calibrated_max_buf = 3500 if max_buffer is None else max_buffer
+        elif vegas_total <= 46.5:
+            calibrated_min_buf = 800 if min_buffer is None else min_buffer
+            calibrated_max_buf = 2500 if max_buffer is None else max_buffer
+        else:
+            calibrated_min_buf = 200 if min_buffer is None else min_buffer
+            calibrated_max_buf = 1000 if max_buffer is None else max_buffer
+    else:
+        calibrated_min_buf = 200 if min_buffer is None else min_buffer
+        calibrated_max_buf = 2500 if max_buffer is None else max_buffer
+
+    max_salary = 60000 - calibrated_min_buf
+    min_salary = 60000 - calibrated_max_buf
 
     optimizer = FanDuelShowdownOptimizer(
         salary_cap=60000,
@@ -48,7 +64,9 @@ def run_optimizer(
 
     print("\n" + "=" * 80)
     print(f"FANDUEL SINGLE-GAME MULTI-SCRIPT SOLVER | MODE: {mode}")
-    print(f"Salary Cap: $60,000 | Allowed Spend: ${min_salary:,} - ${max_salary:,} (${min_buffer}-${max_buffer} buffer)")
+    if vegas_total is not None:
+        print(f"Vegas Game Total: {vegas_total} O/U (Calibrated Buffer: ${calibrated_min_buf}-${calibrated_max_buf})")
+    print(f"Salary Cap: $60,000 | Allowed Spend: ${min_salary:,} - ${max_salary:,} (${calibrated_min_buf}-${calibrated_max_buf} buffer)")
     print(f"Punt Floor: >= ${min_punt_salary:,} (Bans unverified zero-point punts)")
     print("=" * 80)
 
@@ -56,6 +74,9 @@ def run_optimizer(
         df,
         mode=mode,
         allow_sub3500_punts=allow_sub3500_punts,
+        lock_mvp=lock_mvp,
+        lock_players=lock_players,
+        exclude_players=exclude_players,
     )
 
     if not all_scripts:
@@ -94,8 +115,9 @@ def main():
     parser = argparse.ArgumentParser(description="FanDuel Showdown MILP Optimizer")
     parser.add_argument("--slate", type=str, default="data/SINGLEGAMESLATE.csv", help="Path to single-game slate CSV")
     parser.add_argument("--mode", type=str, default="GPP", choices=["GPP", "CASH"], help="Optimization mode")
-    parser.add_argument("--min-buffer", type=int, default=200, help="Minimum unspent salary buffer ($)")
-    parser.add_argument("--max-buffer", type=int, default=900, help="Maximum unspent salary buffer ($)")
+    parser.add_argument("--vegas-total", type=float, default=None, help="Vegas Over/Under total for dynamic buffer calibration")
+    parser.add_argument("--min-buffer", type=int, default=None, help="Minimum unspent salary buffer ($)")
+    parser.add_argument("--max-buffer", type=int, default=None, help="Maximum unspent salary buffer ($)")
     parser.add_argument("--min-punt", type=int, default=3500, help="Minimum punt salary ($)")
     parser.add_argument("--allow-sub3500", action="store_true", help="Allow sub-$3,500 punts")
     parser.add_argument("--lock-mvp", type=str, default=None, help="Lock specific player at MVP")
@@ -106,6 +128,7 @@ def main():
     run_optimizer(
         slate_path=args.slate,
         mode=args.mode,
+        vegas_total=args.vegas_total,
         min_buffer=args.min_buffer,
         max_buffer=args.max_buffer,
         min_punt_salary=args.min_punt,

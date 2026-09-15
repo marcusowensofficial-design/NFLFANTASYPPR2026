@@ -116,14 +116,14 @@ async def sync_injuries() -> int:
     return len(injuries)
 
 
-async def sync_vegas_odds() -> int:
+async def sync_vegas_odds(week: int = 2) -> int:
     """Fetches week schedule and live betting lines, exporting to data/vegas_movement_2026.json."""
     nfl_schedule_client.clear_cache()
-    games = await nfl_schedule_client.fetch_week_schedule(season=2026, week=1)
+    games = await nfl_schedule_client.fetch_week_schedule(season=2026, week=week)
 
     summary = {
         "season": 2026,
-        "week": 1,
+        "week": week,
         "last_updated": datetime.now(timezone.utc).isoformat(),
         "total_games": len(games),
         "games": [
@@ -152,21 +152,62 @@ async def sync_vegas_odds() -> int:
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
 
-    logger.info(f"Exported {len(games)} game odds to {out_file.name}")
+    logger.info(f"Exported {len(games)} game odds for Week {week} to {out_file.name}")
     return len(games)
 
 
+
+async def sync_database_and_calibrate(season: int = 2026, week: int = 2):
+    """Synchronizes ESPN league, Sleeper consensus, and runs bulk projection calibration."""
+    logger.info("=== Starting Database Sync & Projection Calibration ===")
+    from src.db.session import SessionLocal
+    from src.services.espn_sync import ESPNSyncService
+    from src.services.sleeper_sync import sleeper_sync_service
+    from src.services.recommendation.bulk_projection_service import bulk_projection_service
+
+    db = SessionLocal()
+    try:
+        # 1. ESPN League Sync
+        logger.info(f"Syncing ESPN Fantasy League (Week {week} {season})...")
+        sync_service = ESPNSyncService(db=db)
+        success, message, league = await sync_service.sync(force=True)
+        logger.info(f"ESPN Sync Result: Success={success}, Message='{message}', League='{league.name if league else 'None'}'")
+
+        # 2. Sleeper Projections Sync
+        logger.info(f"Syncing Sleeper Projections (Season {season}, Week {week})...")
+        sleeper_res = await sleeper_sync_service.sync_sleeper_projections(season=season, week=week)
+        logger.info(f"Sleeper Sync Result: Success={sleeper_res.get('success')}, Enriched={sleeper_res.get('enriched_count')} players")
+
+        # 3. Bulk Quant Projection Calibration
+        logger.info("Calibrating all player projections with institutional quant engine...")
+        calib_res = await bulk_projection_service.calibrate_all_players(season=season, week=week, projection_source="MODEL")
+        logger.info(f"Calibration Result: Success={calib_res.get('success')}, Calibrated={calib_res.get('calibrated_count')} players")
+    finally:
+        db.close()
+
+
 async def main():
-    logger.info("=== Starting Master NFL Intelligence Sync ===")
+    import argparse
+    parser = argparse.ArgumentParser(description="Master NFL Intelligence Synchronizer")
+    parser.add_argument("--with-db", action="store_true", help="Also sync ESPN, Sleeper, and calibrate database projections")
+    parser.add_argument("--season", type=int, default=2026, help="NFL season year (default: 2026)")
+    parser.add_argument("--week", type=int, default=2, help="NFL week number (default: 2)")
+    args = parser.parse_args()
+
+    logger.info(f"=== Starting Master NFL Intelligence Sync (Season {args.season}, Week {args.week}) ===")
     t1 = asyncio.create_task(sync_depth_charts())
     t2 = asyncio.create_task(sync_injuries())
-    t3 = asyncio.create_task(sync_vegas_odds())
+    t3 = asyncio.create_task(sync_vegas_odds(week=args.week))
 
     teams_count, inj_count, games_count = await asyncio.gather(t1, t2, t3)
     logger.info(
-        f"=== Sync Complete! Synced {teams_count} Teams, {inj_count} Injuries, {games_count} Games ==="
+        f"=== Wire Sync Complete! Synced {teams_count} Teams, {inj_count} Injuries, {games_count} Games ==="
     )
+
+    if args.with_db:
+        await sync_database_and_calibrate(season=args.season, week=args.week)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+

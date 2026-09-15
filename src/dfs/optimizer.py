@@ -35,9 +35,15 @@ class DFSLineupOptimizer:
     ) -> dict[str, Any] | None:
         """Solves the optimal lineup under linear constraints."""
         # 1. Clean player pool: exclude injured players
+        is_out_mask = (
+            df_slate["injury"].isin(["IR", "O", "OUT", "DOUBTFUL"])
+            | df_slate["db_status"].isin(["IR", "OUT", "DAY_TO_DAY", "DOUBTFUL"])
+        )
+        if "is_out" in df_slate.columns:
+            is_out_mask = is_out_mask | df_slate["is_out"].fillna(False)
+
         df = df_slate[
-            ~df_slate["injury"].isin(["IR", "O", "OUT"])
-            & ~df_slate["db_status"].isin(["IR", "OUT", "DAY_TO_DAY"])
+            ~is_out_mask
             & (df_slate["proj"] >= 3.0)
         ].reset_index(drop=True).copy()
 
@@ -51,7 +57,14 @@ class DFSLineupOptimizer:
 
         df = df.reset_index(drop=True)
 
+        # Single-Entry Discipline: ban unverified sub-$4,500 offensive punts (zero-floor danger)
+        if mode == "SINGLE_ENTRY_GPP":
+            is_beneficiary_col = df["is_beneficiary"] if "is_beneficiary" in df.columns else pd.Series(False, index=df.index)
+            is_valid_punt = (df["position"] == "D") | (df["salary"] >= 4500) | (is_beneficiary_col == True)
+            df = df[is_valid_punt].reset_index(drop=True)
+
         n = len(df)
+
         if mode == "SINGLE_ENTRY_GPP" and "ceiling_proj" in df.columns:
             # 75% 90th percentile ceiling + 25% median projection for tournament explosion
             c = -(df["ceiling_proj"].values * 0.75 + df["proj"].values * 0.25)
@@ -113,7 +126,7 @@ class DFSLineupOptimizer:
             b_l.append(0)
             b_u.append(4)
 
-        # 10. Tournament Stacking Constraints (for SINGLE_ENTRY_GPP)
+        # 10. Tournament Stacking & Correlation Constraints (for SINGLE_ENTRY_GPP)
         if mode == "SINGLE_ENTRY_GPP":
             # If stack_qb is explicitly specified:
             if stack_qb:
@@ -128,19 +141,48 @@ class DFSLineupOptimizer:
                 b_l.append(1)
                 b_u.append(1)
 
-            # Enforce pass-catcher from the stack team
+            # Enforce pass-catcher from the stack team if stack_team specified
             if stack_team:
                 is_pc = ((df["team"] == stack_team) & (df["position"].isin(["WR", "TE"]))).astype(float).values
                 A_rows.append(is_pc)
                 b_l.append(1)
                 b_u.append(3)
+            else:
+                # Universal No Naked QB Rule: For whichever team's QB is selected, roster >= 1 pass-catcher
+                for t in df["team"].dropna().unique():
+                    qb_idx = df.index[(df["team"] == t) & (df["position"] == "QB")].tolist()
+                    pc_idx = df.index[(df["team"] == t) & (df["position"].isin(["WR", "TE"]))].tolist()
+                    if qb_idx and pc_idx:
+                        row = np.zeros(n)
+                        row[qb_idx] = -1.0
+                        row[pc_idx] = 1.0
+                        A_rows.append(row)
+                        b_l.append(0.0)
+                        b_u.append(5.0)
 
-            # Enforce opposing bring-back
+            # Enforce opposing bring-back if stack_opp specified
             if stack_opp:
                 is_bb = ((df["team"] == stack_opp) & (df["position"].isin(["WR", "TE", "RB"]))).astype(float).values
                 A_rows.append(is_bb)
                 b_l.append(1)
                 b_u.append(2)
+
+            # Anti-Correlation Rule: Never pair a D/ST with the opposing starting RB1
+            for t in df["team"].dropna().unique():
+                dst_idx = df.index[(df["team"] == t) & (df["position"] == "D")].tolist()
+                if dst_idx:
+                    opp = df.loc[dst_idx[0], "opponent"] if "opponent" in df.columns else None
+                    if opp and opp in df["team"].values:
+                        opp_rbs = df[(df["team"] == opp) & (df["position"] == "RB")]
+                        if not opp_rbs.empty:
+                            rb1_idx = opp_rbs.sort_values(by=["salary", "proj"], ascending=False).index[0]
+                            row = np.zeros(n)
+                            row[dst_idx[0]] = 1.0
+                            row[rb1_idx] = 1.0
+                            A_rows.append(row)
+                            b_l.append(0.0)
+                            b_u.append(1.0)
+
 
         # 11. Locked & Excluded players (match by name or ID)
         if lock_players:
@@ -247,6 +289,9 @@ class DFSLineupOptimizer:
                 "opp_tier_label": str(row.get("opp_tier_label", "Neutral Matchup")),
                 "opp_fd_fpa": float(row.get("opp_fd_fpa", 20.0)),
                 "value_ratio": float(row["value_ratio"]),
+                "is_beneficiary": bool(row.get("is_beneficiary", False)),
+                "beneficiary_of": row.get("beneficiary_of"),
+                "vacated_note": row.get("vacated_note"),
                 "proj_ownership": float(row.get("proj_ownership", 10.0)),
                 "ownership_tier": str(row.get("ownership_tier", "MODERATE")),
                 "leverage_score": float(row.get("leverage_score", 1.0)),
@@ -256,6 +301,26 @@ class DFSLineupOptimizer:
         total_proj = round(float(lineup_df["proj"].sum()), 2)
         total_ceiling = round(float(lineup_df["ceiling_proj"].sum() if "ceiling_proj" in lineup_df.columns else total_proj * 1.4), 2)
         value_mult = round(total_proj / (total_salary / 1000), 2)
+
+        # Identify QB stack and bring-backs
+        qb_item = next((item for item in roster_items if item["position"] == "QB"), None)
+        stack_info = None
+        if qb_item:
+            qb_team = qb_item["team"]
+            qb_opp = qb_item["opponent"]
+            pass_catchers = [item for item in roster_items if item["team"] == qb_team and item["position"] in ("WR", "TE")]
+            bring_backs = [item for item in roster_items if item["team"] == qb_opp]
+            for pc in pass_catchers:
+                pc["is_stack_partner"] = True
+            for bb in bring_backs:
+                bb["is_bring_back"] = True
+            stack_info = {
+                "team": qb_team,
+                "qb": qb_item["name"],
+                "pass_catchers": [pc["name"] for pc in pass_catchers],
+                "pass_catcher": pass_catchers[0]["name"] if pass_catchers else None,
+                "bring_back": bring_backs[0]["name"] if bring_backs else None,
+            }
 
         from src.dfs.ownership import dfs_ownership
         ownership_eval = dfs_ownership.evaluate_lineup_ownership(roster_items)
@@ -272,9 +337,11 @@ class DFSLineupOptimizer:
             "cumulative_ownership": ownership_eval["cumulative_ownership"],
             "ownership_rating": ownership_eval["rating"],
             "ownership_assessment": ownership_eval["assessment"],
+            "stack": stack_info,
             "roster": roster_items,
             "_selected_indices": selected_idx.tolist(),
         }
+
 
     def optimize_multi(
         self,
@@ -455,7 +522,7 @@ class DFSLineupOptimizer:
             if not name or name.lower() in excludes:
                 continue
             inj = str(r.get("Injury Indicator") or r.get("injury") or "").upper()
-            if inj in ["IR", "O", "OUT"]:
+            if inj in ["IR", "O", "OUT", "DOUBTFUL"] or r.get("is_out") is True:
                 continue
 
             pos = str(r.get("Position") or r.get("position") or "").strip()
