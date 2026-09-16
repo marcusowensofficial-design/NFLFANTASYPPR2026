@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import type {
   LeagueSummaryResponse,
   OptimizedLineupResult,
@@ -84,6 +84,42 @@ export const DvpTab: React.FC<DvpTabProps> = ({
   const [dvpSyncMsg, setDvpSyncMsg] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [tierFilter, setTierFilter] = useState<'ALL' | 'SMASH' | 'FAVORABLE' | 'TOUGH' | 'LOCKDOWN' | 'ROSTER'>('ALL')
+
+  // Table horizontal scroll detection and control
+  const tableWrapRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState<boolean>(false)
+  const [canScrollRight, setCanScrollRight] = useState<boolean>(true)
+  const [scrollProgress, setScrollProgress] = useState<number>(0)
+
+  const checkScrollState = () => {
+    const el = tableWrapRef.current
+    if (!el) return
+    const { scrollLeft, scrollWidth, clientWidth } = el
+    const maxScroll = scrollWidth - clientWidth
+    setCanScrollLeft(scrollLeft > 15)
+    setCanScrollRight(maxScroll > 15 && scrollLeft < maxScroll - 15)
+    const progress = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0
+    setScrollProgress(Math.min(100, Math.max(0, progress)))
+  }
+
+  const scrollTable = (direction: 'left' | 'right') => {
+    const el = tableWrapRef.current
+    if (!el) return
+    const scrollAmount = direction === 'left' ? -380 : 380
+    el.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    const handleResize = () => checkScrollState()
+    window.addEventListener('resize', handleResize)
+    const timer = setTimeout(() => {
+      checkScrollState()
+    }, 150)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      clearTimeout(timer)
+    }
+  }, [dvpPosition, allDvpRatings.length, searchQuery, tierFilter])
 
   // Fetch all 128 DvP records (all 32 teams x 4 positions)
   const fetchAllDvpData = async () => {
@@ -556,13 +592,20 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
 }
 
   // Helper to render interactive sortable table header with prominent, dedicated sort arrows
-  const renderSortTh = (title: string, colKey: string, defaultDesc: boolean = false, tooltipTerm?: string) => {
+  const renderSortTh = (
+    title: string,
+    colKey: string,
+    defaultDesc: boolean = false,
+    tooltipTerm?: string,
+    extraClassName?: string
+  ) => {
     const isActive = dvpSortCol === colKey
 
     return (
       <th
         key={colKey}
         onClick={() => handleSort(colKey, defaultDesc)}
+        className={extraClassName || ''}
         style={{
           cursor: 'pointer',
           userSelect: 'none',
@@ -753,6 +796,9 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
                     setDvpSortCol('rank_softness')
                     setDvpSortAsc(true)
                   }
+                  if (tableWrapRef.current) {
+                    tableWrapRef.current.scrollTo({ left: 0, behavior: 'smooth' })
+                  }
                 }}
                 className={`intel-dvp-pos-btn ${dvpPosition === pos ? 'active' : ''}`}
                 style={{ fontSize: '13px', padding: '8px 16px', fontWeight: dvpPosition === pos ? 800 : 600 }}
@@ -811,7 +857,88 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
         </div>
       </div>
 
-      {/* 5. INTERACTIVE SORTABLE MATRIX TABLE */}
+      {/* 5. INTERACTIVE HORIZONTAL STAT DISCOVERY & NAVIGATION BAR */}
+      {!isLoadingDvp && (dvpPosition === 'OVERALL' ? sortedOverallRecords.length > 0 : sortedPosRatings.length > 0) && (
+        <div className="intel-table-scroll-helper">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span className="pill cyan" style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ↔ More Stats Available
+            </span>
+            <span style={{ fontSize: '12px', color: canScrollRight ? '#00f0ff' : 'var(--text-secondary)', fontWeight: 600 }}>
+              {canScrollRight
+                ? '👉 Click "More Stats ▶" or scroll right to view Pass/Rush Yds, Sacks, TDs & Disruption!'
+                : '✓ All detailed statistical categories in view'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Visual Scroll Progress Bar */}
+            <div
+              style={{
+                width: '75px',
+                height: '6px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '9999px',
+                overflow: 'hidden',
+                display: 'flex',
+              }}
+              title={`Scroll Position: ${Math.round(scrollProgress)}%`}
+            >
+              <div
+                style={{
+                  width: `${scrollProgress}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #0ea5e9, #00f0ff)',
+                  borderRadius: '9999px',
+                  transition: 'width 0.15s ease',
+                }}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => scrollTable('left')}
+              disabled={!canScrollLeft}
+              className="btn btn-secondary btn-sm"
+              style={{
+                padding: '4px 10px',
+                fontSize: '11px',
+                fontWeight: 700,
+                opacity: canScrollLeft ? 1 : 0.35,
+                cursor: canScrollLeft ? 'pointer' : 'not-allowed',
+              }}
+              title="Scroll left to view Ranks & FPA"
+            >
+              ◀ Left
+            </button>
+
+            <button
+              type="button"
+              onClick={() => scrollTable(canScrollRight ? 'right' : 'left')}
+              className={`btn btn-sm ${canScrollRight ? 'btn-primary' : 'btn-secondary'}`}
+              style={{
+                padding: '5px 14px',
+                fontSize: '11.5px',
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: canScrollRight ? '0 0 14px rgba(14, 165, 233, 0.5)' : 'none',
+                background: canScrollRight ? 'linear-gradient(135deg, #0284c7, #06b6d4)' : undefined,
+                borderColor: canScrollRight ? '#00f0ff' : undefined,
+                color: canScrollRight ? '#ffffff' : undefined,
+                animation: canScrollRight ? 'dvpPulseGlow 2.5s infinite' : 'none',
+              }}
+              title={canScrollRight ? 'Click to reveal hidden stat columns to the right' : 'Click to scroll back to start'}
+            >
+              <span>{canScrollRight ? 'More Stats (Yds, Sacks, TDs)' : 'Back to Start'}</span>
+              <span style={{ fontSize: '13px' }}>{canScrollRight ? '▶' : '◀'}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 6. INTERACTIVE SORTABLE MATRIX TABLE */}
       {isLoadingDvp ? (
         <div className="card" style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
           <div style={{ fontSize: '32px', marginBottom: '12px' }}>⏳</div>
@@ -825,70 +952,103 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
         /* ========================================================================= */
         /* VIEW A: OVERALL COMPOSITE DST LEADERBOARD                                 */
         /* ========================================================================= */
-        <div className="intel-dvp-table-wrap">
-          <table className="intel-dvp-table">
-            <thead>
-              <tr>
-                {renderSortTh('Overall DST Rank', 'composite_rank', true)}
-                {renderSortTh('Defensive Team', 'team_name', false)}
-                {renderSortTh('Defense Tier', 'tier', false)}
-                <th>My Roster Exposure</th>
-                {renderSortTh('Total Half-PPR FPA', 'total_dk_fpa', true, 'DVP_FPA')}
-                {renderSortTh('Total Full-PPR FPA', 'total_fd_fpa', true, 'DVP_FULL_PPR_FPA')}
-                {renderSortTh('Total Yds/G', 'total_yds', true)}
-                {renderSortTh('Pass Yds/G', 'pass_yds', true)}
-                {renderSortTh('Rush Yds/G', 'rush_yds', true)}
-                {renderSortTh('Total TDs/G', 'total_td', true)}
-                {renderSortTh('Sacks/G', 'sacks', true)}
-                {renderSortTh('Turnovers/G', 'turnovers', true)}
-                <th style={{ whiteSpace: 'nowrap' }}>Positional Softness (QB / RB / WR / TE)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedOverallRecords.map((row) => {
-                const normProTeam = normalizeTeamKey(row.pro_team)
-                const facingPlayers = rosterOpponents.get(normProTeam) || []
-                const hasRosteredDst = rosteredDstTeam === normProTeam
-                const facingStarters = facingPlayers.filter((p) => p.is_starter && p.position !== 'DST')
-                const facingBench = facingPlayers.filter((p) => !p.is_starter && p.position !== 'DST')
-                const isFacing = facingStarters.length > 0 || hasRosteredDst
+        <div style={{ position: 'relative' }}>
+          {/* Right-edge floating clickable hint badge */}
+          {canScrollRight && (
+            <div
+              onClick={() => scrollTable('right')}
+              className="intel-table-edge-curtain"
+              title="Click to reveal more stats (Pass/Rush Yds, Sacks, TDs) →"
+            >
+              <div className="intel-table-edge-badge">
+                <span>More Stats</span>
+                <span style={{ fontSize: '13px', fontWeight: 900 }}>▶</span>
+              </div>
+            </div>
+          )}
 
-                return (
-                  <tr key={row.id} className={isFacing ? 'roster-facing' : ''}>
-                    {/* Overall DST Composite Rank */}
-                    <td>
-                      <span
-                        className={`pill ${
-                          row.composite_rank <= 6
-                            ? 'emerald'
-                            : row.composite_rank <= 14
-                            ? 'cyan'
-                            : row.composite_rank <= 22
-                            ? 'zinc'
-                            : row.composite_rank <= 28
-                            ? 'amber'
-                            : 'rose'
-                        }`}
-                        style={{ fontWeight: 800, fontSize: '11px', minWidth: '46px', justifyContent: 'center' }}
-                      >
-                        #{row.composite_rank}
-                      </span>
-                    </td>
+          {/* Left-edge floating clickable return badge */}
+          {canScrollLeft && (
+            <div
+              onClick={() => scrollTable('left')}
+              className="intel-table-edge-curtain-left"
+              title="← Click to scroll back to Ranks & FPA"
+            >
+              <div className="intel-table-edge-badge-left">
+                <span style={{ fontSize: '13px', fontWeight: 900 }}>◀</span>
+                <span>Ranks</span>
+              </div>
+            </div>
+          )}
 
-                    {/* Defensive Team */}
-                    <td>
-                      <div className="intel-dvp-team-cell">
-                        <NFLTeamLogo team={row.pro_team} size={24} />
-                        <div>
-                          <strong style={{ color: 'var(--text-primary)', fontSize: '13px' }}>
-                            {row.team_name}
-                          </strong>
-                          <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginLeft: '4px' }}>
-                            ({row.pro_team})
-                          </span>
+          <div
+            ref={tableWrapRef}
+            onScroll={checkScrollState}
+            className="intel-dvp-table-wrap"
+          >
+            <table className="intel-dvp-table">
+              <thead>
+                <tr>
+                  {renderSortTh('Overall DST Rank', 'composite_rank', true, undefined, 'sticky-col-1')}
+                  {renderSortTh('Defensive Team', 'team_name', false, undefined, 'sticky-col-2')}
+                  {renderSortTh('Defense Tier', 'tier', false)}
+                  <th>My Roster Exposure</th>
+                  {renderSortTh('Total Half-PPR FPA', 'total_dk_fpa', true, 'DVP_FPA')}
+                  {renderSortTh('Total Full-PPR FPA', 'total_fd_fpa', true, 'DVP_FULL_PPR_FPA')}
+                  {renderSortTh('Total Yds/G', 'total_yds', true)}
+                  {renderSortTh('Pass Yds/G', 'pass_yds', true)}
+                  {renderSortTh('Rush Yds/G', 'rush_yds', true)}
+                  {renderSortTh('Total TDs/G', 'total_td', true)}
+                  {renderSortTh('Sacks/G', 'sacks', true)}
+                  {renderSortTh('Turnovers/G', 'turnovers', true)}
+                  <th style={{ whiteSpace: 'nowrap' }}>Positional Softness (QB / RB / WR / TE)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedOverallRecords.map((row) => {
+                  const normProTeam = normalizeTeamKey(row.pro_team)
+                  const facingPlayers = rosterOpponents.get(normProTeam) || []
+                  const hasRosteredDst = rosteredDstTeam === normProTeam
+                  const facingStarters = facingPlayers.filter((p) => p.is_starter && p.position !== 'DST')
+                  const facingBench = facingPlayers.filter((p) => !p.is_starter && p.position !== 'DST')
+                  const isFacing = facingStarters.length > 0 || hasRosteredDst
+
+                  return (
+                    <tr key={row.id} className={isFacing ? 'roster-facing' : ''}>
+                      {/* Overall DST Composite Rank */}
+                      <td className="sticky-col-1">
+                        <span
+                          className={`pill ${
+                            row.composite_rank <= 6
+                              ? 'emerald'
+                              : row.composite_rank <= 14
+                              ? 'cyan'
+                              : row.composite_rank <= 22
+                              ? 'zinc'
+                              : row.composite_rank <= 28
+                              ? 'amber'
+                              : 'rose'
+                          }`}
+                          style={{ fontWeight: 800, fontSize: '11px', minWidth: '46px', justifyContent: 'center' }}
+                        >
+                          #{row.composite_rank}
+                        </span>
+                      </td>
+
+                      {/* Defensive Team */}
+                      <td className="sticky-col-2">
+                        <div className="intel-dvp-team-cell">
+                          <NFLTeamLogo team={row.pro_team} size={24} />
+                          <div>
+                            <strong style={{ color: 'var(--text-primary)', fontSize: '13px' }}>
+                              {row.team_name}
+                            </strong>
+                            <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginLeft: '4px' }}>
+                              ({row.pro_team})
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
                     {/* Matchup Tier */}
                     <td>
@@ -1033,16 +1193,50 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
             </tbody>
           </table>
         </div>
+        </div>
       ) : (
         /* ========================================================================= */
         /* VIEW B: POSITIONAL DVP MATRIX (QB / RB / WR / TE)                         */
         /* ========================================================================= */
-        <div className="intel-dvp-table-wrap">
-          <table className="intel-dvp-table">
-            <thead>
-              <tr>
-                {renderSortTh('Softness Rank', 'rank_softness', false)}
-                {renderSortTh('Defensive Team', 'team_name', false)}
+        <div style={{ position: 'relative' }}>
+          {/* Right-edge floating clickable hint badge */}
+          {canScrollRight && (
+            <div
+              onClick={() => scrollTable('right')}
+              className="intel-table-edge-curtain"
+              title="Click to reveal more stats (Pass/Rush Yds, Sacks, TDs) →"
+            >
+              <div className="intel-table-edge-badge">
+                <span>More Stats</span>
+                <span style={{ fontSize: '13px', fontWeight: 900 }}>▶</span>
+              </div>
+            </div>
+          )}
+
+          {/* Left-edge floating clickable return badge */}
+          {canScrollLeft && (
+            <div
+              onClick={() => scrollTable('left')}
+              className="intel-table-edge-curtain-left"
+              title="← Click to scroll back to Ranks & FPA"
+            >
+              <div className="intel-table-edge-badge-left">
+                <span style={{ fontSize: '13px', fontWeight: 900 }}>◀</span>
+                <span>Ranks</span>
+              </div>
+            </div>
+          )}
+
+          <div
+            ref={tableWrapRef}
+            onScroll={checkScrollState}
+            className="intel-dvp-table-wrap"
+          >
+            <table className="intel-dvp-table">
+              <thead>
+                <tr>
+                  {renderSortTh('Softness Rank', 'rank_softness', false, undefined, 'sticky-col-1')}
+                  {renderSortTh('Defensive Team', 'team_name', false, undefined, 'sticky-col-2')}
                 {renderSortTh('Matchup Tier', 'tier', false)}
                 <th>My Roster Exposure ({dvpPosition})</th>
                 {renderSortTh('Half-PPR FPA (FanDuel)', 'dk_fpa', true, 'DVP_FPA')}
@@ -1097,7 +1291,7 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
                 return (
                   <tr key={row.id} className={posFacing.length > 0 ? 'roster-facing' : ''}>
                     {/* Softness Rank */}
-                    <td>
+                    <td className="sticky-col-1">
                       <span
                         className={`pill ${
                           row.rank_softness <= 8
@@ -1115,7 +1309,7 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
                     </td>
 
                     {/* Defensive Team */}
-                    <td>
+                    <td className="sticky-col-2">
                       <div className="intel-dvp-team-cell">
                         <NFLTeamLogo team={row.pro_team} size={24} />
                         <div>
@@ -1294,6 +1488,7 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
               })}
             </tbody>
           </table>
+        </div>
         </div>
       )}
     </div>

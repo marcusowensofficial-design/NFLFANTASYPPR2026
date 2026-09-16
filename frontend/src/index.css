@@ -5419,6 +5419,163 @@ code {
   border-left: 3px solid var(--accent-cyan);
 }
 
+/* ==========================================================================
+   Horizontal Table Stat Navigator & Discovery System
+   ========================================================================== */
+
+.intel-table-scroll-helper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 14px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.intel-table-edge-curtain {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 90px;
+  background: linear-gradient(to left, rgba(15, 23, 42, 0.96) 0%, rgba(15, 23, 42, 0.5) 60%, transparent 100%);
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 12px;
+  cursor: pointer;
+  pointer-events: auto;
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  transition: opacity 0.2s ease;
+}
+
+.intel-table-edge-curtain-left {
+  position: absolute;
+  top: 0;
+  left: 255px;
+  bottom: 0;
+  width: 70px;
+  background: linear-gradient(to right, rgba(15, 23, 42, 0.96) 0%, rgba(15, 23, 42, 0.5) 60%, transparent 100%);
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 8px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: opacity 0.2s ease;
+}
+
+.intel-table-edge-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #00f0ff;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(0, 240, 255, 0.6);
+  border-radius: 20px;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.4);
+  white-space: nowrap;
+  animation: dvpPulseGlow 2.5s infinite;
+  transform: translateX(-4px);
+  user-select: none;
+}
+
+.intel-table-edge-badge-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  user-select: none;
+  transform: translateX(4px);
+}
+
+.intel-table-edge-curtain:hover .intel-table-edge-badge {
+  background: rgba(14, 165, 233, 0.25);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.7);
+  transform: translateX(-2px) scale(1.05);
+}
+
+@keyframes dvpPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.7);
+  }
+}
+
+/* Sticky Frozen Columns */
+.intel-dvp-table th.sticky-col-1,
+.intel-dvp-table td.sticky-col-1 {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #0f172a;
+  min-width: 80px;
+  width: 80px;
+}
+
+.intel-dvp-table th.sticky-col-2,
+.intel-dvp-table td.sticky-col-2 {
+  position: sticky;
+  left: 80px;
+  z-index: 10;
+  background: #0f172a;
+  min-width: 175px;
+  border-right: 1.5px solid rgba(14, 165, 233, 0.35);
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.45);
+}
+
+.intel-dvp-table th.sticky-col-1,
+.intel-dvp-table th.sticky-col-2 {
+  z-index: 15;
+  background: #1e293b;
+}
+
+.intel-dvp-table tr:hover td.sticky-col-1,
+.intel-dvp-table tr:hover td.sticky-col-2 {
+  background: #1e293b;
+}
+
+.intel-dvp-table tr.roster-facing td.sticky-col-1,
+.intel-dvp-table tr.roster-facing td.sticky-col-2 {
+  background: #14283c;
+}
+
+@media (max-width: 640px) {
+  .intel-dvp-table th.sticky-col-1,
+  .intel-dvp-table td.sticky-col-1,
+  .intel-dvp-table th.sticky-col-2,
+  .intel-dvp-table td.sticky-col-2 {
+    position: static;
+    box-shadow: none;
+    border-right: none;
+  }
+  .intel-table-edge-curtain-left {
+    left: 0;
+  }
+}
+
 .intel-dvp-team-cell {
   display: flex;
   align-items: center;
