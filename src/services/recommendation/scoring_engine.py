@@ -971,7 +971,7 @@ class StartSitScoringEngine:
                         if tier_code in ("SMASH", "FAVORABLE") or vs_avg >= 2.0:
                             vs_sign = f"+{vs_avg:.1f}" if vs_avg > 0 else f"{vs_avg:.1f}"
                             pos_reasons.append(
-                                f"[Matchup] 🎯 Soft {pos} Matchup: {opponent} allows {fpa:.1f} DK pts/G to {pos}s ({vs_sign} vs avg, #{softness} softest){base_ctx}"
+                                f"[Matchup] 🎯 Soft {pos} Matchup: {opponent} allows {fpa:.1f} Half-PPR pts/G to {pos}s ({vs_sign} vs avg, #{softness} softest){base_ctx}"
                             )
                             if pos == "QB" and supp.get("pass_yds", 0) >= 235.0:
                                 pos_reasons.append(
@@ -993,7 +993,7 @@ class StartSitScoringEngine:
                             vs_sign = f"{vs_avg:.1f}"
                             if not is_pos_stud and matchup_resilience != "MATCHUP_RESILIENT_STUD":
                                 neg_reasons.append(
-                                    f"[Matchup] 🛑 Stifling Defense vs {pos}: {opponent} holds {pos}s to {fpa:.1f} DK pts/G ({vs_sign} vs avg, #{def_rank} toughest in NFL){base_ctx}"
+                                    f"[Matchup] 🛑 Stifling Defense vs {pos}: {opponent} holds {pos}s to {fpa:.1f} Half-PPR pts/G ({vs_sign} vs avg, #{def_rank} toughest in NFL){base_ctx}"
                                 )
                                 if pos == "QB" and supp.get("sacks", 0) >= 2.4:
                                     neg_reasons.append(

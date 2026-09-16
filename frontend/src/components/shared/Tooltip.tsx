@@ -119,13 +119,22 @@ export const PPR_GLOSSARY: Record<string, GlossaryEntry> = {
       'Early season ratings are informative indicators of defensive scheme and personnel continuity, but still stabilizing. Ratings automatically blend fresh realized game data each week.',
   },
   DVP_FPA: {
-    title: 'DraftKings Fantasy Points Allowed (FPA)',
-    acronym: 'DK FPA',
+    title: 'Half-PPR Fantasy Points Allowed (FanDuel)',
+    acronym: 'Half-PPR FPA',
     category: 'MATCHUP',
     beginnerDef:
-      'The exact average fantasy points this defense concedes per game to this position group using official DraftKings PPR scoring, including 100-yard and 300-yard bonuses.',
+      'The exact average fantasy points this defense concedes per game to this position group using Half-PPR scoring (0.5 PPR / FanDuel scoring standard).',
     proStrategy:
       'Higher FPA indicates a softer, more generous defense. Compare opponent FPA against positional league mean (+/- vs Avg) to quantify matchup leverage.',
+  },
+  DVP_FULL_PPR_FPA: {
+    title: 'Full-PPR Fantasy Points Allowed (ESPN Fantasy)',
+    acronym: 'Full-PPR FPA',
+    category: 'MATCHUP',
+    beginnerDef:
+      'The exact average fantasy points this defense concedes per game to this position group using Full-PPR scoring (1.0 PPR / ESPN Fantasy scoring standard).',
+    proStrategy:
+      'Full-PPR scoring places 2x heavier weight on reception volume. Target defenses allowing high Full-PPR FPA when evaluating high-target running backs, slot receivers, and pass-catching tight ends.',
   },
   DVP_VS_AVG: {
     title: 'Positional Variance vs. League Average',

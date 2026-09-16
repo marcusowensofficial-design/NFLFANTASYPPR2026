@@ -41,8 +41,16 @@ class DvPService:
         should_close = self._external_db is None
 
         try:
-            logger.info("Starting DraftEdge DvP sync for Season %d, Week %d...", season, week)
-            all_positions = await draftedge_client.fetch_all_positions()
+            logger.info("Starting in-house first-party DvP calculation for Season %d, Week %d...", season, week)
+            try:
+                from src.services.matchup.dvp_calculator import calculate_in_house_dvp
+                all_positions = await calculate_in_house_dvp(season=season, target_week=week)
+                source_label = "In-House Proprietary Engine"
+            except Exception as calc_ex:
+                logger.warning("In-house DvP calculation failed (%s); falling back to DraftEdge adapter...", calc_ex)
+                all_positions = await draftedge_client.fetch_all_positions()
+                source_label = "DraftEdge (Fallback)"
+
             total_records = 0
 
             for pos, records in all_positions.items():
@@ -76,7 +84,7 @@ class DvPService:
                             supporting_stats_json=supp_json,
                             is_baseline=r.get("is_baseline", True),
                             sample_games_current=r.get("sample_games_current", 0),
-                            source=r.get("source", "DraftEdge"),
+                            source=r.get("source", source_label),
                             source_url=r.get("source_url", ""),
                             updated_at=utc_now(),
                         )
@@ -97,7 +105,7 @@ class DvPService:
                         existing.supporting_stats_json = supp_json
                         existing.is_baseline = r.get("is_baseline", True)
                         existing.sample_games_current = r.get("sample_games_current", 0)
-                        existing.source = r.get("source", "DraftEdge")
+                        existing.source = r.get("source", source_label)
                         existing.source_url = r.get("source_url", "")
                         existing.updated_at = utc_now()
 
@@ -333,10 +341,19 @@ class DvPService:
                 db.close()
 
     def _seed_database(self, db: Session, season: int, week: int) -> None:
-        """Seeds records from bundled JSON file if DB has not been populated."""
+        """Seeds records from in-house snapshot or bundled JSON file if DB has not been populated."""
+        from src.services.matchup.dvp_calculator import OUTPUT_PROPRIETARY_DVP_PATH
+        proprietary_data = {}
+        if OUTPUT_PROPRIETARY_DVP_PATH.exists():
+            try:
+                with open(OUTPUT_PROPRIETARY_DVP_PATH, "r", encoding="utf-8") as f:
+                    proprietary_data = json.load(f)
+            except Exception as ex:
+                logger.debug("Could not read proprietary snapshot: %s", ex)
+
         positions = ["QB", "RB", "WR", "TE"]
         for pos in positions:
-            seed_records = draftedge_client._load_seed_for_position(pos)
+            seed_records = proprietary_data.get(pos) or draftedge_client._load_seed_for_position(pos)
             for r in seed_records:
                 record_id = f"{season}_{week}_{r['pro_team']}_{pos}"
                 existing = db.execute(
@@ -365,7 +382,7 @@ class DvPService:
                         supporting_stats_json=supp_json,
                         is_baseline=r.get("is_baseline", True),
                         sample_games_current=r.get("sample_games_current", 0),
-                        source=r.get("source", "DraftEdge (Seed)"),
+                        source=r.get("source", "In-House Proprietary Engine"),
                         source_url=r.get("source_url", ""),
                         updated_at=utc_now(),
                     )

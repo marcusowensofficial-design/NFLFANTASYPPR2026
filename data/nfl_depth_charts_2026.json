@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "last_updated": "2026-09-15T22:58:04.786009+00:00",
+  "last_updated": "2026-09-16T18:48:56.754880+00:00",
   "total_teams": 32,
   "teams": {
     "ARI": {
@@ -315,19 +315,19 @@
             "id": 3918331
           },
           {
-            "name": "Kitan Crawford",
-            "rank": 2,
-            "id": 4430821
-          },
-          {
             "name": "Wydett Williams Jr.",
-            "rank": 3,
+            "rank": 2,
             "id": 5099542
           },
           {
             "name": "Joey Blount",
-            "rank": 4,
+            "rank": 3,
             "id": 4240824
+          },
+          {
+            "name": "Kitan Crawford",
+            "rank": 4,
+            "id": 4430821
           }
         ],
         "rcb": [
@@ -561,6 +561,11 @@
             "name": "Austin Hooper",
             "rank": 3,
             "id": 3043275
+          },
+          {
+            "name": "Nick Muse",
+            "rank": 4,
+            "id": 4249624
           }
         ],
         "rb": [
@@ -686,18 +691,13 @@
             "id": 4605478
           },
           {
-            "name": "Bralen Trice",
-            "rank": 3,
-            "id": 4428713
-          },
-          {
             "name": "James Pearce Jr.",
-            "rank": 4,
+            "rank": 3,
             "id": 5081394
           },
           {
             "name": "DeAngelo Malone",
-            "rank": 5,
+            "rank": 4,
             "id": 4243457
           }
         ],
@@ -1067,11 +1067,6 @@
             "name": "Jay Higgins IV",
             "rank": 2,
             "id": 4565350
-          },
-          {
-            "name": "Carl Jones",
-            "rank": 3,
-            "id": 4569428
           }
         ],
         "rilb": [
@@ -1881,13 +1876,8 @@
             "id": 4714157
           },
           {
-            "name": "Jeremiah Moon",
-            "rank": 4,
-            "id": 4034959
-          },
-          {
             "name": "Nic Scourton",
-            "rank": 5,
+            "rank": 4,
             "id": 4833355
           }
         ],
@@ -1898,14 +1888,14 @@
             "id": 4243256
           },
           {
-            "name": "Jackson Kuwatch",
+            "name": "Tyrel Dodson",
             "rank": 2,
-            "id": 4875592
+            "id": 4035232
           },
           {
-            "name": "Tyrel Dodson",
+            "name": "Jackson Kuwatch",
             "rank": 3,
-            "id": 4035232
+            "id": 4875592
           },
           {
             "name": "Bam Martin-Scott",
@@ -1923,11 +1913,6 @@
             "name": "Claudin Cherelus",
             "rank": 2,
             "id": 4256224
-          },
-          {
-            "name": "Isaiah Simmons",
-            "rank": 3,
-            "id": 4035462
           }
         ],
         "slb": [
@@ -2187,11 +2172,6 @@
             "name": "Case Keenum",
             "rank": 3,
             "id": 15168
-          },
-          {
-            "name": "Miller Moss",
-            "rank": 4,
-            "id": 4431580
           }
         ],
         "te": [
@@ -2747,11 +2727,6 @@
             "name": "Barrett Carter",
             "rank": 1,
             "id": 4431519
-          },
-          {
-            "name": "Joe Giles-Harris",
-            "rank": 2,
-            "id": 3917797
           }
         ],
         "slb": [
@@ -3168,13 +3143,8 @@
             "id": 4876017
           },
           {
-            "name": "Nathaniel Watson",
-            "rank": 2,
-            "id": 4362895
-          },
-          {
             "name": "Edefuan Ulofoshio",
-            "rank": 3,
+            "rank": 2,
             "id": 4374280
           }
         ],
@@ -3246,11 +3216,6 @@
             "name": "Mekhi Blackmon",
             "rank": 2,
             "id": 4360677
-          },
-          {
-            "name": "D'Angelo Ross",
-            "rank": 3,
-            "id": 3139389
           }
         ],
         "nb": [
@@ -3914,13 +3879,6 @@
             "rank": 4,
             "id": 4362748
           }
-        ],
-        "fb": [
-          {
-            "name": "Adam Prentice",
-            "rank": 1,
-            "id": 3929914
-          }
         ]
       },
       "defense": {
@@ -4135,21 +4093,19 @@
             "id": 4686472
           },
           {
-            "name": "Tyler Badie",
+            "name": "Jonah Coleman",
             "rank": 2,
+            "id": 4702555
+          },
+          {
+            "name": "Tyler Badie",
+            "rank": 3,
             "id": 4362748
           },
           {
             "name": "RJ Harvey",
-            "rank": 3,
+            "rank": 4,
             "id": 4568490
-          }
-        ],
-        "ls": [
-          {
-            "name": "Mitchell Fraboni",
-            "rank": 1,
-            "id": 3139166
           }
         ]
       }
@@ -4365,11 +4321,6 @@
             "name": "Skyler Gill-Howard",
             "rank": 2,
             "id": 5103940
-          },
-          {
-            "name": "Ben Stille",
-            "rank": 3,
-            "id": 4034861
           }
         ],
         "rde": [
@@ -4442,9 +4393,9 @@
             "id": 3139387
           },
           {
-            "name": "Rock Ya-Sin",
+            "name": "Keith Abney II",
             "rank": 2,
-            "id": 3910229
+            "id": 5093004
           }
         ],
         "ss": [
@@ -4478,9 +4429,9 @@
         ],
         "rcb": [
           {
-            "name": "Keith Abney II",
+            "name": "Rock Ya-Sin",
             "rank": 1,
-            "id": 5093004
+            "id": 3910229
           },
           {
             "name": "Khalil Dorsey",
@@ -4826,11 +4777,6 @@
             "name": "Ty'Ron Hopper",
             "rank": 2,
             "id": 4567406
-          },
-          {
-            "name": "Kristian Welch",
-            "rank": 3,
-            "id": 4036153
           }
         ],
         "rilb": [
@@ -4884,11 +4830,6 @@
             "name": "Evan Williams",
             "rank": 1,
             "id": 4428863
-          },
-          {
-            "name": "Trey Dean III",
-            "rank": 2,
-            "id": 4360235
           }
         ],
         "fs": [
@@ -5214,13 +5155,8 @@
             "id": 4360189
           },
           {
-            "name": "Jaden Crumedy",
-            "rank": 3,
-            "id": 4362910
-          },
-          {
             "name": "Kayden McDonald",
-            "rank": 4,
+            "rank": 3,
             "id": 4870893
           }
         ],
@@ -5234,6 +5170,11 @@
             "name": "Mario Edwards Jr.",
             "rank": 2,
             "id": 2969921
+          },
+          {
+            "name": "Jaden Crumedy",
+            "rank": 3,
+            "id": 4362910
           }
         ],
         "rde": [
@@ -5260,14 +5201,14 @@
         ],
         "wlb": [
           {
-            "name": "Henry To'oTo'o",
+            "name": "Aiden Fisher",
             "rank": 1,
-            "id": 4426350
+            "id": 4912338
           },
           {
-            "name": "Aiden Fisher",
+            "name": "Henry To'oTo'o",
             "rank": 2,
-            "id": 4912338
+            "id": 4426350
           }
         ],
         "mlb": [
@@ -5333,13 +5274,8 @@
             "id": 4685518
           },
           {
-            "name": "George Odum",
-            "rank": 3,
-            "id": 3050199
-          },
-          {
             "name": "Ja'Marcus Ingram",
-            "rank": 4,
+            "rank": 3,
             "id": 4240059
           }
         ],
@@ -5713,13 +5649,8 @@
             "id": 4427250
           },
           {
-            "name": "Kenneth Harris",
-            "rank": 2,
-            "id": 4685970
-          },
-          {
             "name": "Cameron Mitchell",
-            "rank": 3,
+            "rank": 2,
             "id": 4569607
           }
         ],
@@ -6062,19 +5993,19 @@
             "id": 3915239
           },
           {
-            "name": "B.J. Green II",
-            "rank": 2,
-            "id": 4875266
-          },
-          {
             "name": "Bryan Thomas Jr.",
-            "rank": 3,
+            "rank": 2,
             "id": 4836472
           },
           {
             "name": "Zach Durfee",
-            "rank": 4,
+            "rank": 3,
             "id": 5121433
+          },
+          {
+            "name": "B.J. Green II",
+            "rank": 4,
+            "id": 4875266
           }
         ],
         "wlb": [
@@ -6113,8 +6044,13 @@
             "id": 4334300
           },
           {
-            "name": "Jared Bartlett",
+            "name": "Jack Kiser",
             "rank": 2,
+            "id": 4427716
+          },
+          {
+            "name": "Jared Bartlett",
+            "rank": 3,
             "id": 4426646
           }
         ],
@@ -6412,14 +6348,14 @@
             "id": 4240472
           },
           {
-            "name": "Jared Wiley",
+            "name": "Jake Briningstool",
             "rank": 3,
-            "id": 4430723
+            "id": 4431196
           },
           {
-            "name": "Jake Briningstool",
+            "name": "Jared Wiley",
             "rank": 4,
-            "id": 4431196
+            "id": 4430723
           },
           {
             "name": "John Michael Gyllenborg",
@@ -6442,13 +6378,6 @@
             "name": "Brashard Smith",
             "rank": 3,
             "id": 4596602
-          }
-        ],
-        "fb": [
-          {
-            "name": "Ben VanSumeren",
-            "rank": 1,
-            "id": 4372070
           }
         ]
       },
@@ -6485,11 +6414,6 @@
             "name": "Peter Woods",
             "rank": 2,
             "id": 4871063
-          },
-          {
-            "name": "Marcus Harris",
-            "rank": 3,
-            "id": 4573152
           }
         ],
         "rdt": [
@@ -6698,9 +6622,9 @@
             "id": 4685553
           },
           {
-            "name": "Gary Jennings",
+            "name": "KeAndre Lambert-Smith",
             "rank": 3,
-            "id": 3916071
+            "id": 4430870
           }
         ],
         "wr2": [
@@ -6710,9 +6634,9 @@
             "id": 4429025
           },
           {
-            "name": "KeAndre Lambert-Smith",
+            "name": "Derius Davis",
             "rank": 2,
-            "id": 4430870
+            "id": 4362477
           }
         ],
         "wr3": [
@@ -6722,9 +6646,9 @@
             "id": 4686612
           },
           {
-            "name": "Derius Davis",
+            "name": "Gary Jennings",
             "rank": 2,
-            "id": 4362477
+            "id": 3916071
           }
         ],
         "lt": [
@@ -8097,11 +8021,6 @@
             "name": "Malik Herring",
             "rank": 2,
             "id": 4259547
-          },
-          {
-            "name": "Clelin Ferrell",
-            "rank": 3,
-            "id": 3728258
           }
         ],
         "ldt": [
@@ -8193,8 +8112,13 @@
             "id": 4432730
           },
           {
-            "name": "Darrell Baker Jr.",
+            "name": "Jaylin Simpson",
             "rank": 2,
+            "id": 4567225
+          },
+          {
+            "name": "Darrell Baker Jr.",
+            "rank": 3,
             "id": 4036660
           }
         ],
@@ -8205,14 +8129,14 @@
             "id": 4431664
           },
           {
-            "name": "Kyle Louis",
+            "name": "Julius Wood",
             "rank": 2,
-            "id": 4880273
+            "id": 4872841
           },
           {
-            "name": "Julius Wood",
+            "name": "Kyle Louis",
             "rank": 3,
-            "id": 4872841
+            "id": 4880273
           }
         ],
         "fs": [
@@ -9776,13 +9700,8 @@
             "id": 4950400
           },
           {
-            "name": "Malik Harrison",
-            "rank": 2,
-            "id": 4040615
-          },
-          {
             "name": "Jack Kelly",
-            "rank": 3,
+            "rank": 2,
             "id": 4876380
           }
         ],
@@ -10239,11 +10158,6 @@
             "name": "Azareye'h Thomas",
             "rank": 2,
             "id": 4685596
-          },
-          {
-            "name": "Jordan Clark",
-            "rank": 3,
-            "id": 4429411
           }
         ],
         "ss": [
@@ -10307,6 +10221,11 @@
             "name": "Dane Belton",
             "rank": 3,
             "id": 4426686
+          },
+          {
+            "name": "Jordan Clark",
+            "rank": 4,
+            "id": 4429411
           }
         ]
       },
@@ -10390,9 +10309,9 @@
             "id": 4241372
           },
           {
-            "name": "Johnny Wilson",
+            "name": "Britain Covey",
             "rank": 3,
-            "id": 4686104
+            "id": 3926231
           }
         ],
         "wr2": [
@@ -10405,6 +10324,11 @@
             "name": "Elijah Moore",
             "rank": 2,
             "id": 4372414
+          },
+          {
+            "name": "Johnny Wilson",
+            "rank": 3,
+            "id": 4686104
           }
         ],
         "wr3": [
@@ -10433,14 +10357,14 @@
         ],
         "lg": [
           {
-            "name": "Landon Dickerson",
+            "name": "Willie Lampkin",
             "rank": 1,
-            "id": 4035624
+            "id": 4582836
           },
           {
-            "name": "Willie Lampkin",
+            "name": "Landon Dickerson",
             "rank": 2,
-            "id": 4582836
+            "id": 4035624
           }
         ],
         "c": [
@@ -10736,13 +10660,18 @@
         ],
         "pr": [
           {
-            "name": "Makai Lemon",
+            "name": "Britain Covey",
             "rank": 1,
+            "id": 3926231
+          },
+          {
+            "name": "Makai Lemon",
+            "rank": 2,
             "id": 4870795
           },
           {
             "name": "Elijah Moore",
-            "rank": 2,
+            "rank": 3,
             "id": 4372414
           }
         ],
@@ -10756,6 +10685,11 @@
             "name": "Tank Bigsby",
             "rank": 2,
             "id": 4429013
+          },
+          {
+            "name": "Britain Covey",
+            "rank": 3,
+            "id": 3926231
           }
         ],
         "ls": [
@@ -11045,11 +10979,6 @@
             "name": "Asante Samuel Jr.",
             "rank": 2,
             "id": 4363034
-          },
-          {
-            "name": "Doneiko Slaughter",
-            "rank": 3,
-            "id": 4692628
           }
         ],
         "ss": [
@@ -11600,9 +11529,14 @@
             "id": 3043116
           },
           {
-            "name": "Christian Kirk",
+            "name": "KhaDarel Hodge",
             "rank": 3,
-            "id": 3895856
+            "id": 3047876
+          },
+          {
+            "name": "Ricky Pearsall",
+            "rank": 4,
+            "id": 4428209
           }
         ],
         "wr2": [
@@ -11617,9 +11551,9 @@
             "id": 4575665
           },
           {
-            "name": "Brandon Aiyuk",
+            "name": "Christian Kirk",
             "rank": 3,
-            "id": 4360438
+            "id": 3895856
           }
         ],
         "wr3": [
@@ -11634,9 +11568,9 @@
             "id": 4431466
           },
           {
-            "name": "Ricky Pearsall",
+            "name": "Brandon Aiyuk",
             "rank": 3,
-            "id": 4428209
+            "id": 4360438
           }
         ],
         "lt": [
@@ -11733,19 +11667,19 @@
             "id": 3040151
           },
           {
-            "name": "Jake Tonges",
-            "rank": 2,
-            "id": 4259147
-          },
-          {
             "name": "Luke Farrell",
-            "rank": 3,
+            "rank": 2,
             "id": 4040612
           },
           {
             "name": "Brayden Willis",
-            "rank": 4,
+            "rank": 3,
             "id": 4360290
+          },
+          {
+            "name": "Jake Tonges",
+            "rank": 4,
+            "id": 4259147
           }
         ],
         "rb": [
@@ -12319,11 +12253,6 @@
             "name": "Antoine Winfield Jr.",
             "rank": 1,
             "id": 4034790
-          },
-          {
-            "name": "Ifeatu Melifonwu",
-            "rank": 2,
-            "id": 4240401
           }
         ],
         "rcb": [
@@ -12663,18 +12592,13 @@
             "id": 4429834
           },
           {
-            "name": "Mohamoud Diabate",
-            "rank": 2,
-            "id": 4567403
-          },
-          {
             "name": "Owen Pappoe",
-            "rank": 3,
+            "rank": 2,
             "id": 4567219
           },
           {
             "name": "Milo Eifler",
-            "rank": 4,
+            "rank": 3,
             "id": 4371940
           }
         ],
@@ -12697,13 +12621,8 @@
             "id": 4431613
           },
           {
-            "name": "Mohamoud Diabate",
-            "rank": 2,
-            "id": 4567403
-          },
-          {
             "name": "Dorian Mausi",
-            "rank": 3,
+            "rank": 2,
             "id": 4573318
           }
         ],
@@ -12726,13 +12645,8 @@
             "id": 4036134
           },
           {
-            "name": "Erick Hallett II",
-            "rank": 2,
-            "id": 4373320
-          },
-          {
             "name": "Kendell Brooks",
-            "rank": 3,
+            "rank": 2,
             "id": 4585317
           }
         ],
@@ -12899,6 +12813,11 @@
             "name": "Tanoa Togiai",
             "rank": 2,
             "id": 4605488
+          },
+          {
+            "name": "Lucas Patrick",
+            "rank": 3,
+            "id": 2576736
           }
         ],
         "c": [
@@ -12911,11 +12830,6 @@
             "name": "Matt Gulbin",
             "rank": 2,
             "id": 4683463
-          },
-          {
-            "name": "Julian Good-Jones",
-            "rank": 3,
-            "id": 3917949
           }
         ],
         "rg": [
@@ -13070,14 +12984,14 @@
             "id": 3127273
           },
           {
-            "name": "Jordan Magee",
+            "name": "Kain Medrano",
             "rank": 2,
-            "id": 4568617
+            "id": 4427984
           },
           {
-            "name": "Kain Medrano",
+            "name": "Jordan Magee",
             "rank": 3,
-            "id": 4427984
+            "id": 4568617
           }
         ],
         "rilb": [

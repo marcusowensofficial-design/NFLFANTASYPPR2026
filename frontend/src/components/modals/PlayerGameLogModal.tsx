@@ -258,7 +258,20 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
 
   if (!isOpen) return null
 
-  const displayName = data?.player_name || playerName || String(playerIdOrName)
+  // Resolve displayName: prioritize human-readable name over raw numeric IDs
+  const isNumericString = (val?: string | number | null) =>
+    val != null && (!isNaN(Number(val)) || String(val).startsWith('Player #') || String(val).startsWith('D/ST -'))
+
+  const rawDataName = data?.player_name
+  const rawPropName = playerName
+
+  const displayName: string =
+    (!isNumericString(rawDataName) && rawDataName
+      ? rawDataName
+      : !isNumericString(rawPropName) && rawPropName
+      ? rawPropName
+      : rawDataName || rawPropName || (playerIdOrName != null ? String(playerIdOrName) : 'Player'))
+
   const displayPos = data?.position && data.position !== 'UNK' ? data.position : (position || '')
   const displayTeam = data?.pro_team && data.pro_team !== 'UNK' ? data.pro_team : (proTeam || '')
 
@@ -314,7 +327,7 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
           borderRadius: '16px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 35px rgba(56, 189, 248, 0.15)',
           width: '100%',
-          maxWidth: '850px',
+          maxWidth: '960px',
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
@@ -679,11 +692,11 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
                           letterSpacing: '0.05em',
                         }}
                       >
-                        <th style={{ padding: '10px 12px' }}>Week</th>
-                        <th style={{ padding: '10px 12px' }}>Opponent</th>
-                        <th style={{ padding: '10px 12px' }}>Result</th>
-                        <th style={{ padding: '10px 12px' }}>PPR Pts</th>
-                        <th style={{ padding: '10px 12px' }}>Stat Line Breakdown</th>
+                        <th style={{ padding: '10px 14px', whiteSpace: 'nowrap', width: '85px' }}>Week</th>
+                        <th style={{ padding: '10px 14px', whiteSpace: 'nowrap', width: '135px' }}>Opponent</th>
+                        <th style={{ padding: '10px 14px', whiteSpace: 'nowrap', width: '130px' }}>Result / Score</th>
+                        <th style={{ padding: '10px 14px', whiteSpace: 'nowrap', width: '110px' }}>PPR Pts</th>
+                        <th style={{ padding: '10px 14px', minWidth: '320px' }}>Stat Line Breakdown</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -713,20 +726,38 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
                               </div>
                             </td>
 
-                            <td style={{ padding: '12px' }}>
+                            <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                               <span
                                 style={{
-                                  padding: '3px 7px',
-                                  borderRadius: '5px',
-                                  fontSize: '11px',
-                                  fontWeight: 700,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px',
+                                  padding: '5px 12px',
+                                  minWidth: '88px',
+                                  whiteSpace: 'nowrap',
+                                  borderRadius: '7px',
+                                  fontSize: '12px',
+                                  fontWeight: 800,
+                                  letterSpacing: '0.02em',
                                   background: isWin
-                                    ? 'rgba(16, 185, 129, 0.15)'
+                                    ? 'rgba(16, 185, 129, 0.18)'
                                     : isLoss
-                                    ? 'rgba(239, 68, 68, 0.15)'
-                                    : 'rgba(255, 255, 255, 0.06)',
+                                    ? 'rgba(239, 68, 68, 0.18)'
+                                    : 'rgba(255, 255, 255, 0.08)',
                                   color: isWin ? '#34d399' : isLoss ? '#f87171' : '#cbd5e1',
-                                  border: `1px solid ${isWin ? 'rgba(16, 185, 129, 0.3)' : isLoss ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+                                  border: `1px solid ${
+                                    isWin
+                                      ? 'rgba(16, 185, 129, 0.45)'
+                                      : isLoss
+                                      ? 'rgba(239, 68, 68, 0.45)'
+                                      : 'rgba(255, 255, 255, 0.15)'
+                                  }`,
+                                  boxShadow: isWin
+                                    ? '0 2px 8px rgba(16, 185, 129, 0.15)'
+                                    : isLoss
+                                    ? '0 2px 8px rgba(239, 68, 68, 0.15)'
+                                    : 'none',
                                 }}
                               >
                                 {log.result || 'Final'}

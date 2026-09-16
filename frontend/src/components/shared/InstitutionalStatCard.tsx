@@ -123,7 +123,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
                 className={`pill ${p.dvp_fpa.tier === 'SMASH' ? 'emerald' : p.dvp_fpa.tier === 'FAVORABLE' ? 'cyan' : p.dvp_fpa.tier === 'TOUGH' ? 'amber' : p.dvp_fpa.tier === 'LOCKDOWN' ? 'rose' : 'zinc'}`}
                 style={{ fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
               >
-                🛡️ {p.dvp_fpa.dk_fpa.toFixed(1)} DK FPA ({p.dvp_fpa.vs_avg > 0 ? '+' : ''}{p.dvp_fpa.vs_avg.toFixed(1)}) • #{p.dvp_fpa.rank_softness} Softest
+                🛡️ {p.dvp_fpa.dk_fpa.toFixed(1)} Half-PPR FPA ({p.dvp_fpa.vs_avg > 0 ? '+' : ''}{p.dvp_fpa.vs_avg.toFixed(1)}) • #{p.dvp_fpa.rank_softness} Softest
               </span>
             </Tooltip>
           ) : p.opp_dvp_rank ? (
@@ -601,10 +601,20 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
             <div className="statcard-box">
               <span className="statcard-box-val emerald" style={{ fontSize: '15px' }}>
                 {p.dvp_fpa.dk_fpa.toFixed(1)}{' '}
-                <span style={{ fontSize: '11px', fontWeight: 600 }}>DK pts/G</span>
+                <span style={{ fontSize: '11px', fontWeight: 600 }}>Half-PPR pts/G</span>
               </span>
-              <span className="statcard-box-lbl">DK Fantasy Points Allowed</span>
+              <span className="statcard-box-lbl">Half-PPR Fantasy Points Allowed</span>
             </div>
+
+            {p.dvp_fpa.fd_fpa ? (
+              <div className="statcard-box">
+                <span className="statcard-box-val cyan" style={{ fontSize: '15px', color: '#38bdf8' }}>
+                  {p.dvp_fpa.fd_fpa.toFixed(1)}{' '}
+                  <span style={{ fontSize: '11px', fontWeight: 600 }}>Full-PPR pts/G</span>
+                </span>
+                <span className="statcard-box-lbl">Full-PPR Points Allowed (ESPN)</span>
+              </div>
+            ) : null}
 
             <div className="statcard-box">
               <span

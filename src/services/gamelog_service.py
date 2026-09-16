@@ -69,7 +69,21 @@ class GameLogService:
         self._cache.clear()
 
     def _resolve_athlete_by_name_or_id(self, player_id_or_name: int | str) -> tuple[int | None, str | None, str | None, str | None]:
-        """Resolves athlete ID, full name, position, and pro team from SQLite, Depth Charts, or Injury JSON."""
+        """Resolves athlete ID, full name, position, and pro team using player_resolver, SQLite, Depth Charts, or Injury JSON."""
+        # 0. High-accuracy identity resolver lookup
+        try:
+            from src.core.identity.resolver import player_resolver
+            if isinstance(player_id_or_name, int) or (isinstance(player_id_or_name, str) and player_id_or_name.lstrip("-").isdigit()):
+                res = player_resolver.resolve(espn_id=int(player_id_or_name))
+                if res and res.full_name:
+                    return res.espn_id, res.full_name, res.position, res.team
+            elif isinstance(player_id_or_name, str) and player_id_or_name.strip():
+                res = player_resolver.resolve(name=player_id_or_name.strip())
+                if res and res.full_name:
+                    return res.espn_id, res.full_name, res.position, res.team
+        except Exception as e:
+            logger.debug(f"player_resolver lookup error for {player_id_or_name}: {e}")
+
         # 1. Handle integer or numeric ID input
         if isinstance(player_id_or_name, int) or (isinstance(player_id_or_name, str) and player_id_or_name.lstrip("-").isdigit()):
             pid = int(player_id_or_name)

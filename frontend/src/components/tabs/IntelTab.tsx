@@ -907,7 +907,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
               </Tooltip>
             )}
             {p.dvp_fpa ? (
-              <Tooltip term="DVP_FPA" title={`DraftKings Fantasy Points Allowed to ${p.position}s`}>
+              <Tooltip term="DVP_FPA" title={`Half-PPR Fantasy Points Allowed to ${p.position}s (FanDuel)`}>
                 <span
                   className={`pill ${
                     p.dvp_fpa.tier === 'SMASH'
@@ -934,7 +934,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                       : {}),
                   }}
                 >
-                  🛡️ {p.dvp_fpa.dk_fpa.toFixed(1)} DK FPA (#{p.dvp_fpa.rank_softness} {p.dvp_fpa.tier_label})
+                  🛡️ {p.dvp_fpa.dk_fpa.toFixed(1)} Half-PPR FPA (#{p.dvp_fpa.rank_softness} {p.dvp_fpa.tier_label})
                 </span>
               </Tooltip>
             ) : p.opp_dvp_rank ? (
@@ -998,7 +998,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                 🛡️ {p.opponent} vs {p.position}:
               </span>
               <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                Allows <strong style={{ color: p.dvp_fpa.vs_avg >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>{p.dvp_fpa.dk_fpa.toFixed(1)} DK pts/G</strong> ({p.dvp_fpa.vs_avg >= 0 ? `+${p.dvp_fpa.vs_avg.toFixed(1)}` : p.dvp_fpa.vs_avg.toFixed(1)} vs avg)
+                Allows <strong style={{ color: p.dvp_fpa.vs_avg >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>{p.dvp_fpa.dk_fpa.toFixed(1)} Half-PPR pts/G</strong> ({p.dvp_fpa.vs_avg >= 0 ? `+${p.dvp_fpa.vs_avg.toFixed(1)}` : p.dvp_fpa.vs_avg.toFixed(1)} vs avg)
               </span>
               {p.dvp_fpa.trend && (
                 <span
@@ -2791,10 +2791,10 @@ export const IntelTab: React.FC<IntelTabProps> = ({
             <div className="intel-dvp-banner-content">
               <div className="intel-dvp-banner-title">
                 <span>🛡️ NFL Defense vs Position (DvP) Fantasy Points Allowed</span>
-                <span className="pill cyan" style={{ fontSize: '10px' }}>DraftKings & FanDuel Scoring</span>
+                <span className="pill cyan" style={{ fontSize: '10px' }}>Half-PPR & Full-PPR Scoring</span>
               </div>
               <p className="intel-dvp-banner-text">
-                Rankings evaluate defensive matchup generosity per position group. For <strong>Week {league?.current_week || 2}</strong>, defensive ratings combine Week 1 realized game data with the weighted 2025-26 baseline. As additional 2026-27 games are played, current-season data automatically expands in the blend. Higher DK FPA represents a softer, more favorable fantasy matchup.
+                Rankings evaluate defensive matchup generosity per position group. For <strong>Week {league?.current_week || 2}</strong>, defensive ratings combine Week 1 realized game data with the weighted 2025-26 baseline. As additional 2026-27 games are played, current-season data automatically expands in the blend. Higher Half-PPR and Full-PPR Fantasy Points Allowed (FPA) represent softer, more favorable fantasy matchups.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
                 <span className="pill purple" style={{ fontSize: '10.5px' }}>
@@ -2884,9 +2884,15 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                     <th>Matchup Tier</th>
                     <th>My Roster Exposure</th>
                     <th onClick={() => { setDvpSortCol('dk_fpa'); setDvpSortAsc(!dvpSortAsc) }}>
-                      DK FPA {dvpSortCol === 'dk_fpa' ? (dvpSortAsc ? '▲' : '▼') : ''}
+                      <Tooltip term="DVP_FPA">
+                        <span>Half-PPR FPA (FanDuel) {dvpSortCol === 'dk_fpa' ? (dvpSortAsc ? '▲' : '▼') : ''}</span>
+                      </Tooltip>
                     </th>
-                    <th>FD FPA</th>
+                    <th>
+                      <Tooltip term="DVP_FULL_PPR_FPA">
+                        <span>Full-PPR FPA (ESPN Fantasy)</span>
+                      </Tooltip>
+                    </th>
                     <th onClick={() => { setDvpSortCol('vs_avg'); setDvpSortAsc(!dvpSortAsc) }}>
                       vs Pos Avg {dvpSortCol === 'vs_avg' ? (dvpSortAsc ? '▲' : '▼') : ''}
                     </th>
@@ -3015,7 +3021,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                           )}
                         </td>
 
-                        {/* DK FPA */}
+                        {/* Half-PPR FPA (FanDuel) */}
                         <td>
                           <strong
                             className="intel-dvp-val-mono"

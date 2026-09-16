@@ -572,7 +572,7 @@ def calculate_start_sit_matchup_score(
         softness = dvp_fpa.get("rank_softness")
         if fpa is not None and vs_avg is not None and softness is not None:
             vs_str = f"+{vs_avg:.1f}" if vs_avg > 0 else f"{vs_avg:.1f}"
-            reasons.append(f"[Matchup] 📊 Opponent DK FPA: {fpa:.1f} pts/G ({vs_str} vs avg, #{softness} softest in NFL)")
+            reasons.append(f"[Matchup] 📊 Opponent Half-PPR FPA: {fpa:.1f} pts/G ({vs_str} vs avg, #{softness} softest in NFL)")
 
     raw_inputs = {
         "opponent": opp,
