@@ -225,7 +225,9 @@ class ESPNSyncService:
         settings_obj = data.settings
         league.name = settings_obj.name if settings_obj else f"League #{data.id}"
         league.season = data.season_id
-        league.current_week = data.scoring_period_id
+        # Guard against rolling back active week if ESPN API scoring_period_id lags behind completed games
+        eff_week = max(data.scoring_period_id, league.current_week or 1)
+        league.current_week = eff_week
         league.size = settings_obj.size if settings_obj else len(data.teams)
 
         if settings_obj and settings_obj.roster_settings:

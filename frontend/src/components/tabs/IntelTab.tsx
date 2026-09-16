@@ -101,9 +101,9 @@ export const IntelTab: React.FC<IntelTabProps> = ({
       setIsLoadingComposite(true)
       setIsLoadingTrenches(true)
       try {
-        const week = league?.current_week || 1
+        const week = league?.current_week || 3
         const [compRes, trenchRes] = await Promise.all([
-          fetch('/api/analysis/pff/composite-defense'),
+          fetch(`/api/analysis/pff/composite-defense?week=${week}`),
           fetch(`/api/analysis/pff/trenches?week=${week}`)
         ])
         if (compRes.ok) {
@@ -2145,31 +2145,38 @@ export const IntelTab: React.FC<IntelTabProps> = ({
       {subView === 'wrcb' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Sub-Mode Switcher */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => setPffSubMode('wrcb')}
-              className={`btn btn-sm ${pffSubMode === 'wrcb' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700 }}
-            >
-              🎯 WR vs CB Coverage Matrix ({filteredWrcbList.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setPffSubMode('trenches')}
-              className={`btn btn-sm ${pffSubMode === 'trenches' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700 }}
-            >
-              🛡️ Trench Warfare (O-Line vs D-Line) ({trenchMatchups.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setPffSubMode('composite')}
-              className={`btn btn-sm ${pffSubMode === 'composite' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700 }}
-            >
-              ⚖️ 32-Team Composite Defense Matrix (PFF + DvP)
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setPffSubMode('wrcb')}
+                className={`btn btn-sm ${pffSubMode === 'wrcb' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700 }}
+              >
+                🎯 WR vs CB Coverage Matrix ({filteredWrcbList.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setPffSubMode('trenches')}
+                className={`btn btn-sm ${pffSubMode === 'trenches' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700 }}
+              >
+                🛡️ Trench Warfare (O-Line vs D-Line) ({trenchMatchups.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setPffSubMode('composite')}
+                className={`btn btn-sm ${pffSubMode === 'composite' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700 }}
+              >
+                ⚖️ 32-Team Composite Defense Matrix (PFF + DvP)
+              </button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="pill emerald" style={{ fontSize: '11px', fontWeight: 800, padding: '4px 10px' }}>
+                📅 Week {league?.current_week || 3} Matchups Active
+              </span>
+            </div>
           </div>
 
           {/* MODE 1: WR VS CB COVERAGE MATRIX */}

@@ -16,7 +16,7 @@ from src.adapters.nfl.injuries_client import nfl_injuries_client
 from src.adapters.nfl.schedule_client import nfl_schedule_client
 from src.core.config import settings
 from src.services.market.sentiment_service import PlayerMarketSentiment, market_sentiment_service
-from src.db.models import LeagueModel, MatchupModel, PlayerModel, RosterEntryModel, TeamModel
+from src.db.models import DefenseVsPositionModel, LeagueModel, MatchupModel, PlayerModel, RosterEntryModel, TeamModel
 from src.db.session import get_db
 from src.services.matchup.pff_service import (
     PFFCompositeDefenseRecord,
@@ -58,7 +58,7 @@ def resolve_effective_week(db: Session | None = None, week: int | None = None) -
                 return league.current_week
     except Exception:
         pass
-    return 2
+    return 3
 
 
 class TaleOfTheTapeSlot(BaseModel):
@@ -536,9 +536,10 @@ async def get_wrcb_matrix(
 
 @router.get("/pff/composite-defense", response_model=list[PFFCompositeDefenseRecord])
 async def get_pff_composite_defense(
+    week: int | None = Query(default=None, ge=1, le=18),
     db: Session = Depends(get_db),
 ) -> list[PFFCompositeDefenseRecord]:
-    """Retrieve 32-team composite defense ranking combining PFF film grades, DvP production ranks, and live secondary inactives."""
+    """Retrieve 32-team composite defense ranking combining PFF film grades, live DvP production ranks, and live secondary inactives."""
     inactive_map: dict[str, set[str]] = {}
     try:
         injuries = await nfl_injuries_client.fetch_injuries()
@@ -549,8 +550,39 @@ async def get_pff_composite_defense(
     except Exception as e:
         logger.debug(f"Failed to fetch inactives for composite defense: {e}")
 
-    pass_ranks = {team: prof.wr_rank for team, prof in DEFAULT_DVP_PROFILES.items()}
-    rush_ranks = {team: prof.rb_rank for team, prof in DEFAULT_DVP_PROFILES.items()}
+    # Query real empirical DvP from database (2026 season)
+    target_week = week
+    if target_week is None:
+        max_w = db.execute(
+            select(DefenseVsPositionModel.week)
+            .where(DefenseVsPositionModel.season == 2026)
+            .order_by(DefenseVsPositionModel.week.desc())
+        ).scalars().first()
+        target_week = max_w or 2
+
+    wr_records = db.execute(
+        select(DefenseVsPositionModel).where(
+            DefenseVsPositionModel.season == 2026,
+            DefenseVsPositionModel.week == target_week,
+            DefenseVsPositionModel.position == "WR",
+        )
+    ).scalars().all()
+
+    rb_records = db.execute(
+        select(DefenseVsPositionModel).where(
+            DefenseVsPositionModel.season == 2026,
+            DefenseVsPositionModel.week == target_week,
+            DefenseVsPositionModel.position == "RB",
+        )
+    ).scalars().all()
+
+    pass_ranks = {r.pro_team.upper(): r.rank_defense for r in wr_records}
+    rush_ranks = {r.pro_team.upper(): r.rank_defense for r in rb_records}
+
+    # Fallback to default profiles if DB has missing teams
+    for team, prof in DEFAULT_DVP_PROFILES.items():
+        pass_ranks.setdefault(team.upper(), prof.wr_rank)
+        rush_ranks.setdefault(team.upper(), prof.rb_rank)
 
     return pff_scouting_service.get_composite_defense_matrix(
         dvp_pass_ranks=pass_ranks,

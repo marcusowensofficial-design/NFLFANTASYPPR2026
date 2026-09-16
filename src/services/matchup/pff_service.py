@@ -93,6 +93,10 @@ class PFFScoutingService:
 
     def get_team_scouting(self, team: str) -> dict[str, Any] | None:
         t = (team or "").strip().upper()
+        if t == "WAS" and "WAS" not in self._data and "WSH" in self._data:
+            t = "WSH"
+        elif t == "WSH" and "WSH" not in self._data and "WAS" in self._data:
+            t = "WAS"
         return self._data.get(t)
 
     def get_active_cb_room(
@@ -105,8 +109,7 @@ class PFFScoutingService:
         automatically promoting backups and applying live injury overrides if
         starters are inactive.
         """
-        t = (team or "").strip().upper()
-        team_data = self._data.get(t)
+        team_data = self.get_team_scouting(team)
         inactives = {n.lower().strip() for n in (inactive_player_names or set())}
 
         if not team_data:
@@ -239,8 +242,8 @@ class PFFScoutingService:
         ot = (off_team or "").strip().upper()
         dt = (def_team or "").strip().upper()
 
-        off_data = self._data.get(ot, {})
-        def_data = self._data.get(dt, {})
+        off_data = self.get_team_scouting(ot) or {}
+        def_data = self.get_team_scouting(dt) or {}
 
         oline = off_data.get("offensive_line", {"pass_block_grade": 70.0, "run_block_grade": 70.0})
         dfront = def_data.get("defensive_line_front", {"pass_rush_grade": 72.0, "run_defense_grade": 72.0, "pressure_rate_pct": 32.0, "stuffed_run_pct": 19.0})
