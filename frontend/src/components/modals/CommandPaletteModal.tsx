@@ -58,6 +58,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     { id: 'tab-waivers', title: 'Waiver Wire Upgrades', category: 'Navigation', tab: 'waivers', icon: '🔄' },
     { id: 'tab-trades', title: '2-for-1 Consolidation Trades', category: 'Navigation', tab: 'trades', icon: '🤝' },
     { id: 'tab-injuries', title: 'Injury Wire Feed', category: 'Navigation', tab: 'injuries', icon: '🩺' },
+    { id: 'tab-dvp', title: 'DEFENSES VS POSITION (DvP)', category: 'Navigation', tab: 'dvp', icon: '🛡️' },
     { id: 'tab-fantasypros', title: 'FantasyPros ECR Consensus', category: 'Navigation', tab: 'fantasypros', icon: '⭐' },
     { id: 'tab-settings', title: 'Settings & Model Weights', category: 'Navigation', tab: 'settings', icon: '⚙️' },
   ], [])

@@ -40,6 +40,7 @@ import {
   TradeIcon,
   LeagueIcon,
   InjuryIcon,
+  DefenseIcon,
   FantasyProsIcon,
   IntelIcon,
   DfsIcon,
@@ -55,6 +56,7 @@ import { TradesTab } from './components/tabs/TradesTab'
 import { InjuriesTab } from './components/tabs/InjuriesTab'
 import { LeagueTab } from './components/tabs/LeagueTab'
 import { SettingsTab } from './components/tabs/SettingsTab'
+import { DvpTab } from './components/tabs/DvpTab'
 import { FantasyProsTab } from './components/tabs/FantasyProsTab'
 import { IntelTab } from './components/tabs/IntelTab'
 import { DfsTab } from './components/tabs/DfsTab'
@@ -63,7 +65,7 @@ import { VegasTab } from './components/tabs/VegasTab'
 export function App() {
   // Navigation & View State
   const [activeTab, setActiveTab] = useState<
-    'lineup' | 'compare' | 'waivers' | 'trades' | 'injuries' | 'league' | 'settings' | 'fantasypros' | 'intel' | 'dfs' | 'vegas'
+    'lineup' | 'compare' | 'waivers' | 'trades' | 'injuries' | 'league' | 'settings' | 'dvp' | 'fantasypros' | 'intel' | 'dfs' | 'vegas'
   >('lineup')
   const [strategyMode, setStrategyMode] = useState<'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO'>(() => {
     const saved = localStorage.getItem('agy_strategy_mode')
@@ -1110,6 +1112,14 @@ export function App() {
         </button>
 
         <button
+          className={`tab-btn ${activeTab === 'dvp' ? 'active' : ''}`}
+          onClick={() => setActiveTab('dvp')}
+        >
+          <DefenseIcon size={16} />
+          <span>DEFENSES VS POSITION</span>
+        </button>
+
+        <button
           className={`tab-btn ${activeTab === 'fantasypros' ? 'active' : ''}`}
           onClick={() => setActiveTab('fantasypros')}
         >
@@ -1268,6 +1278,15 @@ export function App() {
           onRunBacktesting={handleRunBacktesting}
           tuningMessage={tuningMessage}
           backtest={backtest}
+        />
+      )}
+
+      {activeTab === 'dvp' && (
+        <DvpTab
+          league={league}
+          lineup={lineup}
+          selectedTeamId={selectedTeamId}
+          onNavigateTab={(tab) => setActiveTab(tab as any)}
         />
       )}
 
