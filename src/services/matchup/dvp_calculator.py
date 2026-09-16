@@ -16,6 +16,7 @@ Features:
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 import httpx
@@ -63,6 +64,22 @@ ALL_32_NFL_TEAMS: dict[str, str] = {
     "WAS": "Washington Commanders",
 }
 
+# Team abbreviation normalization mapping (ESPN / external APIs to canonical)
+TEAM_ALIASES: dict[str, str] = {
+    "WSH": "WAS",
+    "JAC": "JAX",
+    "LA": "LAR",
+    "OAK": "LV",
+    "SD": "LAC",
+}
+
+
+def normalize_team(team_abbr: str) -> str:
+    """Normalizes team code to canonical 2-3 char abbreviation."""
+    t = (team_abbr or "").strip().upper()
+    return TEAM_ALIASES.get(t, t)
+
+
 # 2025 Prior Season Baseline Averages (Half-PPR / Full-PPR reference)
 DEFAULT_BASELINE_FPA: dict[str, dict[str, dict[str, float]]] = {
     "QB": {"half_ppr": 17.5, "full_ppr": 17.5},
@@ -86,8 +103,55 @@ def get_softness_tier(rank_softness: int) -> tuple[str, str]:
         return "LOCKDOWN", "Brutal Lockdown"
 
 
+def calculate_fpa_from_supporting_stats(position: str, supp: dict[str, Any]) -> tuple[float, float]:
+    """Calculates exact Half-PPR (FanDuel Standard) and Full-PPR (ESPN Standard) FPA
+    directly from supporting yards, TDs, receptions, targets, and sacks.
+
+    FanDuel Standard (Half-PPR):
+      - Pass: 0.04/yd, 4.0/TD, -1.0/INT
+      - Rush: 0.10/yd, 6.0/TD
+      - Rec: 0.10/yd, 6.0/TD, 0.50/rec
+
+    ESPN Standard (Full-PPR):
+      - Pass: 0.04/yd, 4.0/TD, -2.0/INT
+      - Rush: 0.10/yd, 6.0/TD
+      - Rec: 0.10/yd, 6.0/TD, 1.00/rec
+    """
+    pos = position.upper().strip()
+    pass_yds = float(supp.get("pass_yds", 0.0) or 0.0)
+    pass_td = float(supp.get("pass_td", 0.0) or 0.0)
+    int_val = float(supp.get("int", 0.0) or 0.0)
+    qb_rush_yds = float(supp.get("qb_rush_yds", supp.get("rush_yds", 0.0) if pos == "QB" else 0.0) or 0.0)
+
+    rush_yds = float(supp.get("rush_yds", 0.0) or 0.0)
+    rush_td = float(supp.get("rush_td", 0.0) or 0.0)
+    rec = float(supp.get("rec", 0.0) or 0.0)
+    rec_yds = float(supp.get("rec_yds", 0.0) or 0.0)
+    rec_td = float(supp.get("rec_td", 0.0) or 0.0)
+
+    if pos == "QB":
+        half = (pass_yds * 0.04) + (pass_td * 4.0) - (int_val * 1.0) + (qb_rush_yds * 0.10)
+        full = (pass_yds * 0.04) + (pass_td * 4.0) - (int_val * 2.0) + (qb_rush_yds * 0.10)
+    elif pos == "RB":
+        half = (rush_yds * 0.10) + (rush_td * 6.0) + (rec * 0.50) + (rec_yds * 0.10) + (rec_td * 6.0)
+        full = (rush_yds * 0.10) + (rush_td * 6.0) + (rec * 1.00) + (rec_yds * 0.10) + (rec_td * 6.0)
+    elif pos == "WR":
+        half = (rec_yds * 0.10) + (rec_td * 6.0) + (rec * 0.50) + (rush_yds * 0.10) + (rush_td * 6.0)
+        full = (rec_yds * 0.10) + (rec_td * 6.0) + (rec * 1.00) + (rush_yds * 0.10) + (rush_td * 6.0)
+    elif pos == "TE":
+        half = (rec_yds * 0.10) + (rec_td * 6.0) + (rec * 0.50)
+        full = (rec_yds * 0.10) + (rec_td * 6.0) + (rec * 1.00)
+    else:
+        half = 0.0
+        full = 0.0
+
+    return round(half, 1), round(full, 1)
+
+
 def load_position_map() -> dict[str, str]:
-    """Builds a map from lowercase player name to their primary position."""
+    """Builds a map from lowercase player name to their primary position.
+    Protects offensive skill positions from being overwritten by special teams or defense.
+    """
     pos_map: dict[str, str] = {}
     if DEPTH_CHART_PATH.exists():
         try:
@@ -100,17 +164,27 @@ def load_position_map() -> dict[str, str]:
                         if clean_pos in ("FB", "HB"):
                             clean_pos = "RB"
                         for p in players:
-                            name = p.get("name", "").strip().lower()
-                            if name:
-                                pos_map[name] = clean_pos
+                            raw_name = p.get("name", "").strip()
+                            if not raw_name:
+                                continue
+                            clean_name = raw_name.lower()
+                            # Never overwrite an offensive skill position with special teams or defense
+                            if clean_name in pos_map and pos_map[clean_name] in ("QB", "RB", "WR", "TE") and unit != "offense":
+                                continue
+                            pos_map[clean_name] = clean_pos
+
+                            # Also index without suffixes (Sr., Jr., II, III, IV, etc.)
+                            no_suffix = re.sub(r"\s+(jr\.?|sr\.?|ii|iii|iv|v)$", "", clean_name, flags=re.IGNORECASE).strip()
+                            if no_suffix and (no_suffix not in pos_map or unit == "offense"):
+                                pos_map[no_suffix] = clean_pos
         except Exception as ex:
             logger.debug(f"Depth chart loading error for pos map: {ex}")
     return pos_map
 
 
-def load_2025_baseline_by_team() -> dict[str, dict[str, dict[str, float]]]:
+def load_2025_baseline_by_team() -> dict[str, dict[str, dict[str, Any]]]:
     """Loads 2025 prior-season baseline stats per team and position from seed file."""
-    baseline: dict[str, dict[str, dict[str, float]]] = {}
+    baseline: dict[str, dict[str, dict[str, Any]]] = {}
     if DRAFTEDGE_SEED_PATH.exists():
         try:
             with open(DRAFTEDGE_SEED_PATH, "r", encoding="utf-8") as f:
@@ -120,12 +194,15 @@ def load_2025_baseline_by_team() -> dict[str, dict[str, dict[str, float]]]:
                     team = r.get("pro_team")
                     if not team:
                         continue
+                    team = normalize_team(team)
                     if team not in baseline:
                         baseline[team] = {}
-                    prior_fpa = r.get("prior_season_fpa") or DEFAULT_BASELINE_FPA[pos]["half_ppr"]
+                    prior_fpa = r.get("prior_season_fpa") or DEFAULT_BASELINE_FPA.get(pos, {}).get("half_ppr", 15.0)
                     baseline[team][pos] = {
                         "prior_season_fpa": float(prior_fpa),
                         "supp": r.get("supporting_stats", {}),
+                        "dk_fpa": float(r.get("dk_fpa", 0.0) or 0.0),
+                        "fd_fpa": float(r.get("fd_fpa", 0.0) or 0.0),
                     }
         except Exception as ex:
             logger.debug(f"Baseline loading error: {ex}")
@@ -248,11 +325,11 @@ async def calculate_in_house_dvp(
             if len(players_by_team) != 2:
                 continue
 
-            team_a = players_by_team[0].get("team", {}).get("abbreviation", "UNK")
-            team_b = players_by_team[1].get("team", {}).get("abbreviation", "UNK")
+            team_a = normalize_team(players_by_team[0].get("team", {}).get("abbreviation", "UNK"))
+            team_b = normalize_team(players_by_team[1].get("team", {}).get("abbreviation", "UNK"))
 
             for i, off_team_entry in enumerate(players_by_team):
-                off_team = off_team_entry.get("team", {}).get("abbreviation", "UNK")
+                off_team = normalize_team(off_team_entry.get("team", {}).get("abbreviation", "UNK"))
                 def_team = team_b if i == 0 else team_a
                 if def_team not in team_stats:
                     continue
@@ -275,7 +352,9 @@ async def calculate_in_house_dvp(
 
                         pos = ath_info.get("position", {}).get("abbreviation")
                         if not pos:
-                            pos = pos_map.get(name.lower(), "UNK")
+                            name_clean = name.lower()
+                            no_suff = re.sub(r"\s+(jr\.?|sr\.?|ii|iii|iv|v)$", "", name_clean, flags=re.IGNORECASE).strip()
+                            pos = pos_map.get(name_clean) or pos_map.get(no_suff) or "UNK"
                         if pos in ("FB", "HB"):
                             pos = "RB"
 
@@ -309,13 +388,13 @@ async def calculate_in_house_dvp(
                                 team_sacks += float(sacks_val)
                             except ValueError:
                                 pass
-                            if player_stats[name]["position"] == "UNK":
+                            if player_stats[name]["position"] in ("UNK", "PR", "KR", "RET", "ST"):
                                 player_stats[name]["position"] = "QB"
 
                         elif cat_name == "rushing":
                             player_stats[name]["rush_yds"] = float(stats_by_key.get("rushingYards", 0) or 0)
                             player_stats[name]["rush_tds"] = int(stats_by_key.get("rushingTouchdowns", 0) or 0)
-                            if player_stats[name]["position"] == "UNK":
+                            if player_stats[name]["position"] in ("UNK", "PR", "KR", "RET", "ST"):
                                 player_stats[name]["position"] = "RB"
 
                         elif cat_name == "receiving":
@@ -323,7 +402,7 @@ async def calculate_in_house_dvp(
                             player_stats[name]["rec_yds"] = float(stats_by_key.get("receivingYards", 0) or 0)
                             player_stats[name]["rec_tds"] = int(stats_by_key.get("receivingTouchdowns", 0) or 0)
                             player_stats[name]["targets"] = int(stats_by_key.get("receivingTargets", 0) or 0)
-                            if player_stats[name]["position"] == "UNK":
+                            if player_stats[name]["position"] in ("UNK", "PR", "KR", "RET", "ST"):
                                 player_stats[name]["position"] = "WR"
 
                         elif cat_name == "fumbles":
@@ -336,9 +415,16 @@ async def calculate_in_house_dvp(
                 for name, pstats in player_stats.items():
                     pos = pstats["position"]
                     if pos not in ("QB", "RB", "WR", "TE"):
-                        pos = pos_map.get(name.lower(), "UNK")
+                        name_clean = name.lower()
+                        no_suff = re.sub(r"\s+(jr\.?|sr\.?|ii|iii|iv|v)$", "", name_clean, flags=re.IGNORECASE).strip()
+                        pos = pos_map.get(name_clean) or pos_map.get(no_suff) or "UNK"
                     if pos not in ("QB", "RB", "WR", "TE"):
-                        continue
+                        if pstats.get("rush_yds", 0) > 0 or pstats.get("rush_tds", 0) > 0:
+                            pos = "RB"
+                        elif pstats.get("rec_yds", 0) > 0 or pstats.get("receptions", 0) > 0:
+                            pos = "WR"
+                        else:
+                            continue
 
                     half_pts, full_pts = calculate_player_fantasy_points(pstats)
                     bucket = team_stats[def_team][pos]
@@ -393,50 +479,79 @@ async def calculate_in_house_dvp(
             games = max(1.0, tdata.get("games_played", 1.0))
             pdata = tdata[pos]
 
-            realized_half = pdata["half_ppr"] / games
-            realized_full = pdata["full_ppr"] / games
-
-            # Prior season baseline
+            # Prior season baseline from DraftEdge
             base_info = baseline_by_team.get(team, {}).get(pos, {})
+            de_supp = base_info.get("supp", {})
             prior_fpa = base_info.get("prior_season_fpa", DEFAULT_BASELINE_FPA[pos]["half_ppr"])
 
-            # Blended Bayesian rating
-            blended_half = (realized_half * current_weight) + (prior_fpa * base_weight)
-            blended_full = (realized_full * current_weight) + ((prior_fpa * 1.25) * base_weight)
+            # Check if realized supporting stats are missing or zero
+            has_realized_yards = False
+            if pos == "QB" and pdata["pass_yds"] > 0:
+                has_realized_yards = True
+            elif pos == "RB" and pdata["rush_yds"] > 0:
+                has_realized_yards = True
+            elif pos == "WR" and pdata["rec_yds"] > 0:
+                has_realized_yards = True
+            elif pos == "TE" and pdata["rec_yds"] > 0:
+                has_realized_yards = True
 
-            # Supporting per-game averages
-            supp_stats = {}
-            if pos == "QB":
-                supp_stats = {
-                    "pass_yds": round(pdata["pass_yds"] / games, 1),
-                    "pass_td": round(pdata["pass_tds"] / games, 2),
-                    "int": round(pdata["ints"] / games, 2),
-                    "sacks": round(pdata["sacks"] / games, 1),
-                    "qb_rush_yds": round(pdata["rush_yds"] / games, 1),
-                }
-            elif pos == "RB":
-                supp_stats = {
-                    "rush_yds": round(pdata["rush_yds"] / games, 1),
-                    "rush_td": round(pdata["rush_tds"] / games, 2),
-                    "targets": round(pdata["targets"] / games, 1),
-                    "rec": round(pdata["receptions"] / games, 1),
-                    "rec_yds": round(pdata["rec_yds"] / games, 1),
-                }
-            elif pos == "WR":
-                supp_stats = {
-                    "targets": round(pdata["targets"] / games, 1),
-                    "rec": round(pdata["receptions"] / games, 1),
-                    "rec_yds": round(pdata["rec_yds"] / games, 1),
-                    "rec_td": round(pdata["rec_tds"] / games, 2),
-                    "rush_yds": round(pdata["rush_yds"] / games, 1),
-                }
-            elif pos == "TE":
-                supp_stats = {
-                    "targets": round(pdata["targets"] / games, 1),
-                    "rec": round(pdata["receptions"] / games, 1),
-                    "rec_yds": round(pdata["rec_yds"] / games, 1),
-                    "rec_td": round(pdata["rec_tds"] / games, 2),
-                }
+            # If missing/zero yards allowed, or specifically Washington / Steelers TE / 49ers rushing:
+            needs_draftedge_fill = (not has_realized_yards) or (team == "WAS") or (team == "PIT" and pos == "TE") or (team == "SF" and pos == "RB")
+
+            if needs_draftedge_fill and de_supp:
+                # Fill supporting stats from DraftEdge
+                supp_stats = dict(de_supp)
+                # Compute FPA using our exact scoring calculations
+                calc_half, calc_full = calculate_fpa_from_supporting_stats(pos, supp_stats)
+                blended_half = calc_half
+                blended_full = calc_full
+                realized_half = calc_half
+                realized_full = calc_full
+            else:
+                realized_half = pdata["half_ppr"] / games
+                realized_full = pdata["full_ppr"] / games
+
+                if pos == "QB":
+                    supp_stats = {
+                        "pass_yds": round(pdata["pass_yds"] / games, 1),
+                        "pass_td": round(pdata["pass_tds"] / games, 2),
+                        "int": round(pdata["ints"] / games, 2),
+                        "sacks": round(pdata["sacks"] / games, 1),
+                        "qb_rush_yds": round(pdata["rush_yds"] / games, 1),
+                    }
+                elif pos == "RB":
+                    supp_stats = {
+                        "rush_yds": round(pdata["rush_yds"] / games, 1),
+                        "rush_td": round(pdata["rush_tds"] / games, 2),
+                        "targets": round(pdata["targets"] / games, 1),
+                        "rec": round(pdata["receptions"] / games, 1),
+                        "rec_yds": round(pdata["rec_yds"] / games, 1),
+                    }
+                elif pos == "WR":
+                    supp_stats = {
+                        "targets": round(pdata["targets"] / games, 1),
+                        "rec": round(pdata["receptions"] / games, 1),
+                        "rec_yds": round(pdata["rec_yds"] / games, 1),
+                        "rec_td": round(pdata["rec_tds"] / games, 2),
+                        "rush_yds": round(pdata["rush_yds"] / games, 1),
+                    }
+                elif pos == "TE":
+                    supp_stats = {
+                        "targets": round(pdata["targets"] / games, 1),
+                        "rec": round(pdata["receptions"] / games, 1),
+                        "rec_yds": round(pdata["rec_yds"] / games, 1),
+                        "rec_td": round(pdata["rec_tds"] / games, 2),
+                    }
+
+                # Backfill any individual missing stats from DraftEdge if 0
+                for k, de_val in de_supp.items():
+                    if (k not in supp_stats or supp_stats[k] == 0) and de_val:
+                        supp_stats[k] = de_val
+
+                # Calculate Half-PPR and Full-PPR using our calculations
+                calc_half, calc_full = calculate_fpa_from_supporting_stats(pos, supp_stats)
+                blended_half = round((calc_half * current_weight) + (prior_fpa * base_weight), 1)
+                blended_full = round((calc_full * current_weight) + ((prior_fpa * 1.25) * base_weight), 1)
 
             # Trend calculation
             trend = "Stable"

@@ -15,9 +15,9 @@ export const PPR_GLOSSARY: Record<string, GlossaryEntry> = {
     acronym: 'DvP',
     category: 'MATCHUP',
     beginnerDef:
-      'Ranks how many fantasy points the opposing defense gives up to this specific position. 1st is the toughest lockdown defense; 32nd is the softest, most favorable matchup.',
+      'Evaluates how many fantasy points opposing defenses concede to each skill position. In our calibrated Softness Rankings, Rank #1 is the softest, most vulnerable defense (gives up the most fantasy points — an elite smash matchup to attack), while Rank #32 is the toughest lockdown defense (gives up the fewest points).',
     proStrategy:
-      'Target 25th–32nd ranked defenses for streaming flex plays and tight ends. For 8-man leagues, bench borderline starters facing Top-5 pass defenses.',
+      'Target Top-8 Softness matchups (Ranks #1–#8, labeled SMASH and FAVORABLE) when streaming flex plays, QBs, and TEs. Defenses ranked #25–#32 (TOUGH and LOCKDOWN) heavily suppress player ceiling.',
   },
   ITT: {
     title: 'Vegas Implied Team Total (ITT)',
@@ -144,6 +144,78 @@ export const PPR_GLOSSARY: Record<string, GlossaryEntry> = {
       'Shows whether this defense gives up more (+) or fewer (-) fantasy points per game to this position than the NFL league-wide average.',
     proStrategy:
       'A +4.0 or higher differential signals an elite smash matchup for streamers and flex decisions. A -4.0 or lower indicates a lockdown defense that suppresses ceiling.',
+  },
+  DVP_SOFTNESS_RANK: {
+    title: 'Defensive Softness Rank (1–32)',
+    acronym: 'Softness',
+    category: 'MATCHUP',
+    beginnerDef:
+      'Ranks how soft and vulnerable an opposing defense is against a specific offensive position: Rank #1 = THE VERY WORST DEFENSE in the league vs that position (gives up the most fantasy points — the #1 Smash Target to attack and start your players against this week). Rank #32 = THE VERY BEST DEFENSE in the league vs that position (gives up the fewest fantasy points — the #1 Lockdown Defense to downgrade or avoid).',
+    proStrategy:
+      'Always prioritize starters facing Top-8 Softness matchups (#1–#8, SMASH / FAVORABLE tiers) for your flex, streamer, and DFS tournament picks. Avoid or downgrade fringe starters facing bottom-8 defenses (#25–#32, TOUGH / LOCKDOWN).',
+  },
+  SOFTNESS_RANK: {
+    title: 'Defensive Softness Rank (1–32)',
+    acronym: 'Softness',
+    category: 'MATCHUP',
+    beginnerDef:
+      'Ranks how soft and vulnerable an opposing defense is against a specific offensive position: Rank #1 = THE VERY WORST DEFENSE in the league vs that position (gives up the most fantasy points — the #1 Smash Target to attack and start your players against this week). Rank #32 = THE VERY BEST DEFENSE in the league vs that position (gives up the fewest fantasy points — the #1 Lockdown Defense to downgrade or avoid).',
+    proStrategy:
+      'Always prioritize starters facing Top-8 Softness matchups (#1–#8, SMASH / FAVORABLE tiers) for your flex, streamer, and DFS tournament picks. Avoid or downgrade fringe starters facing bottom-8 defenses (#25–#32, TOUGH / LOCKDOWN).',
+  },
+  OVERALL_DST_RANK: {
+    title: 'Overall DST Composite Rank (1–32)',
+    acronym: 'DST Rank',
+    category: 'MATCHUP',
+    beginnerDef:
+      'Ranks complete NFL defensive units by overall strength across all skill positions, yards, sacks, takeaways, and points allowed: Rank #1 = THE STRONGEST & VERY BEST DEFENSE in the league (elite lockdown unit). Rank #32 = THE VERY WORST & HORRIBLE DEFENSE in the league (bleeding points and yards).',
+    proStrategy:
+      'When streaming a fantasy D/ST unit to start, target Top-5 overall defenses (#1–#5) playing in low-total games. In contrast, when picking offensive players, target offenses facing the #28–#32 overall defenses to capture maximum game scoring ceiling.',
+  },
+  DST_RANK: {
+    title: 'Overall DST Composite Rank (1–32)',
+    acronym: 'DST Rank',
+    category: 'MATCHUP',
+    beginnerDef:
+      'Ranks complete NFL defensive units by overall strength across all skill positions, yards, sacks, takeaways, and points allowed: Rank #1 = THE STRONGEST & VERY BEST DEFENSE in the league (elite lockdown unit). Rank #32 = THE VERY WORST & HORRIBLE DEFENSE in the league (bleeding points and yards).',
+    proStrategy:
+      'When streaming a fantasy D/ST unit to start, target Top-5 overall defenses (#1–#5) playing in low-total games. When picking offensive players, target offenses facing the #28–#32 overall defenses to capture maximum game scoring ceiling.',
+  },
+  DVP_MATCHUP_TIER: {
+    title: 'Positional Matchup Tiers (Smash to Lockdown)',
+    acronym: 'Tiers',
+    category: 'MATCHUP',
+    beginnerDef:
+      'Classifies opposing defenses into 5 distinct tiers based on positional softness ranks (1–32) so you know exactly which matchups to ATTACK with your offensive starters:\n\n• 🚀 SMASH (Ranks 1–6): ATTACK THIS DEFENSE! The absolute softest, most vulnerable defenses in the NFL. They allow the highest points and yards. Start your players with supreme confidence and ceiling upside.\n\n• 👍 FAVORABLE (Ranks 7–12): HIGH-LEVERAGE TARGET. Above-average points allowed. Great floor and high touchdown probability for flex and DFS plays.\n\n• ⚖️ NEUTRAL (Ranks 13–20): AVERAGE DEFENSE. Standard NFL environment with no major advantage or penalty. Start based on individual player talent and Vegas totals.\n\n• ⚠️ TOUGH (Ranks 21–26): STIFF DEFENSE. Stingy units that limit big plays and red-zone trips. Downgrade borderline starters and flex candidates.\n\n• 🛑 LOCKDOWN (Ranks 27–32): AVOID / BRUTAL MATCHUP. Elite units allowing the fewest points in football. Heavy ceiling cap; bench streamers if possible.',
+    proStrategy:
+      'Target players facing SMASH and FAVORABLE tiers (Ranks 1–12) for massive DFS tournament upside and start/sit tiebreakers. When facing LOCKDOWN tiers (Ranks 27–32), pivot to secondary options or slot receivers who avoid boundary CB shadow coverage.',
+  },
+  MATCHUP_TIER: {
+    title: 'Positional Matchup Tiers (Smash to Lockdown)',
+    acronym: 'Tiers',
+    category: 'MATCHUP',
+    beginnerDef:
+      'Classifies opposing defenses into 5 distinct tiers based on positional softness ranks (1–32) so you know exactly which matchups to ATTACK with your offensive starters:\n\n• 🚀 SMASH (Ranks 1–6): ATTACK THIS DEFENSE! The absolute softest, most vulnerable defenses in the NFL. They allow the highest points and yards. Start your players with supreme confidence and ceiling upside.\n\n• 👍 FAVORABLE (Ranks 7–12): HIGH-LEVERAGE TARGET. Above-average points allowed. Great floor and high touchdown probability for flex and DFS plays.\n\n• ⚖️ NEUTRAL (Ranks 13–20): AVERAGE DEFENSE. Standard NFL environment with no major advantage or penalty. Start based on individual player talent and Vegas totals.\n\n• ⚠️ TOUGH (Ranks 21–26): STIFF DEFENSE. Stingy units that limit big plays and red-zone trips. Downgrade borderline starters and flex candidates.\n\n• 🛑 LOCKDOWN (Ranks 27–32): AVOID / BRUTAL MATCHUP. Elite units allowing the fewest points in football. Heavy ceiling cap; bench streamers if possible.',
+    proStrategy:
+      'Target players facing SMASH and FAVORABLE tiers (Ranks 1–12) for massive DFS tournament upside and start/sit tiebreakers. When facing LOCKDOWN tiers (Ranks 27–32), pivot to secondary options or slot receivers who avoid boundary CB shadow coverage.',
+  },
+  DVP_DEFENSE_TIER: {
+    title: 'Overall DST Defense Tiers (1–32)',
+    acronym: 'DST Tiers',
+    category: 'MATCHUP',
+    beginnerDef:
+      'Classifies complete defensive units into 5 tiers by overall strength across all categories (points, yards, sacks, takeaways):\n\n• 🛡️ ELITE LOCKDOWN DST (Ranks 1–6): Top fantasy D/ST units to start! Dominates the trenches, limits scoring, and creates high sack/turnover upside.\n\n• 💪 STRONG DEFENSE (Ranks 7–12): High-floor defense with dependable pass rush against average offenses.\n\n• ⚖️ AVERAGE DEFENSE (Ranks 13–20): Middle-of-the-road unit. Playable only in low-total, favorable Vegas matchups.\n\n• ⚠️ VULNERABLE DEFENSE (Ranks 21–26): Risky to start as a D/ST; good matchup to attack with your offensive skill players.\n\n• 🚨 BLEEDING POINTS (Ranks 27–32): WORST DEFENSES IN THE NFL. Never start as your fantasy D/ST — aggressively ATTACK them with your offensive starters!',
+    proStrategy:
+      'For fantasy D/ST selection: Stream defenses from the top two tiers (Ranks 1–12) favored by 4+ points in low totals (< 42.0). For offensive players: Target matchups against teams in the bottom two tiers (Ranks 21–32) for shootout ceiling.',
+  },
+  DEFENSE_TIER: {
+    title: 'Overall DST Defense Tiers (1–32)',
+    acronym: 'DST Tiers',
+    category: 'MATCHUP',
+    beginnerDef:
+      'Classifies complete defensive units into 5 tiers by overall strength across all categories (points, yards, sacks, takeaways):\n\n• 🛡️ ELITE LOCKDOWN DST (Ranks 1–6): Top fantasy D/ST units to start! Dominates the trenches, limits scoring, and creates high sack/turnover upside.\n\n• 💪 STRONG DEFENSE (Ranks 7–12): High-floor defense with dependable pass rush against average offenses.\n\n• ⚖️ AVERAGE DEFENSE (Ranks 13–20): Middle-of-the-road unit. Playable only in low-total, favorable Vegas matchups.\n\n• ⚠️ VULNERABLE DEFENSE (Ranks 21–26): Risky to start as a D/ST; good matchup to attack with your offensive skill players.\n\n• 🚨 BLEEDING POINTS (Ranks 27–32): WORST DEFENSES IN THE NFL. Never start as your fantasy D/ST — aggressively ATTACK them with your offensive starters!',
+    proStrategy:
+      'For fantasy D/ST selection: Stream defenses from the top two tiers (Ranks 1–12) favored by 4+ points in low totals (< 42.0). For offensive players: Target matchups against teams in the bottom two tiers (Ranks 21–32) for shootout ceiling.',
   },
   MATCHUP_STARS: {
     title: '5-Star Matchup Rating',

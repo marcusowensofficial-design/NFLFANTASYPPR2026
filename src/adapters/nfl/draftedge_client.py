@@ -57,9 +57,17 @@ FULL_TEAM_NAME_MAP: dict[str, str] = {
     "TAMPA BAY BUCCANEERS": "TB",
     "TENNESSEE TITANS": "TEN",
     "WASHINGTON COMMANDERS": "WAS",
+    "WSH": "WAS",
+    "WAS": "WAS",
 }
 
 SEED_FILE_PATH = Path(__file__).resolve().parent.parent.parent.parent / "data" / "draftedge_dvp_seed.json"
+
+
+def _calc_fpa(position: str, supporting_stats: dict[str, Any]) -> tuple[float, float]:
+    """Calculates exact Half-PPR (FanDuel Standard) and Full-PPR (ESPN Standard) FPA from supporting stats."""
+    from src.services.matchup.dvp_calculator import calculate_fpa_from_supporting_stats
+    return calculate_fpa_from_supporting_stats(position, supporting_stats)
 
 
 def get_softness_tier(rank_softness: int) -> tuple[str, str]:
@@ -209,6 +217,12 @@ class DraftEdgeClient:
             # Week 1 baseline logic: if current season per-game is not yet populated, flag as baseline
             is_baseline = current_season_fpa is None or current_season_fpa == 0.0
 
+            # Calculate Half-PPR (FanDuel Standard) and Full-PPR (ESPN Standard) using our calculations
+            calc_half, calc_full = _calc_fpa(position, supporting_stats)
+            if calc_half > 0:
+                dk_fpa = calc_half
+                fd_fpa = calc_full
+
             results.append({
                 "rank_defense": rank_defense,
                 "rank_softness": rank_softness,
@@ -255,9 +269,16 @@ class DraftEdgeClient:
                     rank_soft = 16
 
                 tier, tier_label = get_softness_tier(rank_soft)
+                supp = item.get("supporting_stats", {})
+                calc_half, calc_full = _calc_fpa(position, supp)
+                dk_fpa_val = calc_half if calc_half > 0 else (item.get("dk_fpa") or 0.0)
+                fd_fpa_val = calc_full if calc_full > 0 else (item.get("fd_fpa") or 0.0)
+
                 out.append({
                     **item,
                     "position": position,
+                    "dk_fpa": dk_fpa_val,
+                    "fd_fpa": fd_fpa_val,
                     "rank_defense": rank_def,
                     "rank_softness": rank_soft,
                     "tier": tier,

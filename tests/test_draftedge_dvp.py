@@ -107,3 +107,61 @@ def test_scoring_engine_dvp_reasons():
     # Ensure high-signal DvP reason exists
     dvp_reasons = [r for r in ev.reasons_positive if "DK pts/G" in r or "Soft QB Matchup" in r]
     assert len(dvp_reasons) > 0, f"Expected DvP reason in reasons_positive, found: {ev.reasons_positive}"
+
+
+def test_was_pit_sf_filled_in_and_calculated_fpa():
+    """Verify Washington Commanders, Steelers TE, and 49ers rushing are filled in with valid yards allowed
+    and that FPA is calculated using our exact Half-PPR and Full-PPR formulas.
+    """
+    from src.services.matchup.dvp_calculator import calculate_fpa_from_supporting_stats
+
+    # 1. Washington Commanders in QB, RB, WR, TE
+    qb_ratings = {r["pro_team"]: r for r in dvp_service.get_dvp_ratings(season=2026, week=2, position="QB")}
+    assert "WAS" in qb_ratings
+    was_qb = qb_ratings["WAS"]
+    assert was_qb["supporting_stats"]["pass_yds"] > 200.0, f"Expected WAS pass_yds > 200, got {was_qb['supporting_stats']}"
+    assert was_qb["supporting_stats"]["pass_td"] > 1.5
+    h_qb, f_qb = calculate_fpa_from_supporting_stats("QB", was_qb["supporting_stats"])
+    assert was_qb["dk_fpa"] == h_qb
+    assert was_qb["fd_fpa"] == f_qb
+
+    rb_ratings = {r["pro_team"]: r for r in dvp_service.get_dvp_ratings(season=2026, week=2, position="RB")}
+    assert "WAS" in rb_ratings
+    was_rb = rb_ratings["WAS"]
+    assert was_rb["supporting_stats"]["rush_yds"] > 90.0, f"Expected WAS rush_yds > 90, got {was_rb['supporting_stats']}"
+    assert was_rb["supporting_stats"]["rush_td"] > 0.5
+    h_rb, f_rb = calculate_fpa_from_supporting_stats("RB", was_rb["supporting_stats"])
+    assert was_rb["dk_fpa"] == h_rb
+    assert was_rb["fd_fpa"] == f_rb
+
+    wr_ratings = {r["pro_team"]: r for r in dvp_service.get_dvp_ratings(season=2026, week=2, position="WR")}
+    assert "WAS" in wr_ratings
+    was_wr = wr_ratings["WAS"]
+    assert was_wr["supporting_stats"]["rec_yds"] > 120.0
+    assert was_wr["supporting_stats"]["rec"] > 8.0
+
+    te_ratings = {r["pro_team"]: r for r in dvp_service.get_dvp_ratings(season=2026, week=2, position="TE")}
+    assert "WAS" in te_ratings
+    was_te = te_ratings["WAS"]
+    assert was_te["supporting_stats"]["rec_yds"] > 50.0
+    assert was_te["supporting_stats"]["rec_td"] > 0.5
+
+    # 2. San Francisco 49ers for rushing
+    assert "SF" in rb_ratings
+    sf_rb = rb_ratings["SF"]
+    assert sf_rb["supporting_stats"]["rush_yds"] > 80.0, f"Expected SF rush_yds > 80, got {sf_rb['supporting_stats']}"
+    assert sf_rb["supporting_stats"]["rush_td"] > 0.5
+    h_sf, f_sf = calculate_fpa_from_supporting_stats("RB", sf_rb["supporting_stats"])
+    assert sf_rb["dk_fpa"] == h_sf
+    assert sf_rb["fd_fpa"] == f_sf
+
+    # 3. Pittsburgh Steelers for TE matchups
+    assert "PIT" in te_ratings
+    pit_te = te_ratings["PIT"]
+    assert pit_te["supporting_stats"]["rec_yds"] > 40.0, f"Expected PIT TE rec_yds > 40, got {pit_te['supporting_stats']}"
+    assert pit_te["supporting_stats"]["targets"] > 5.0
+    assert pit_te["supporting_stats"]["rec"] > 3.0
+    h_pit, f_pit = calculate_fpa_from_supporting_stats("TE", pit_te["supporting_stats"])
+    assert pit_te["dk_fpa"] == h_pit
+    assert pit_te["fd_fpa"] == f_pit
+

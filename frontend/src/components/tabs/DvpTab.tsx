@@ -857,6 +857,127 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
         </div>
       </div>
 
+      {/* 4B. DYNAMIC RANKING INTERPRETATION GUIDE BANNER */}
+      {dvpPosition === 'OVERALL' ? (
+        <div className="intel-dvp-guide-card overall">
+          <div className="intel-dvp-guide-header">
+            <div className="intel-dvp-guide-title-wrap">
+              <span className="intel-dvp-guide-badge overall">🏆 OVERALL DST POWER RANKING GUIDE</span>
+              <span className="intel-dvp-guide-subtitle">
+                ⚠️ <em>Inverts from Positional Softness:</em> Evaluates defensive unit strength across all categories
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <Tooltip term="OVERALL_DST_RANK">
+                <button type="button" className="intel-dvp-guide-btn" title="Click for complete Overall DST glossary definition">
+                  <span>ℹ️</span>
+                  <span>Overall DST Rank</span>
+                </button>
+              </Tooltip>
+              <Tooltip term="DVP_DEFENSE_TIER">
+                <button type="button" className="intel-dvp-guide-btn" title="Click to view all 5 Overall Defense Tiers">
+                  <span>🛡️</span>
+                  <span>Defense Tiers Guide</span>
+                </button>
+              </Tooltip>
+            </div>
+          </div>
+
+          <div className="intel-dvp-guide-grid">
+            {/* Rank #1 Pillar */}
+            <div className="intel-dvp-guide-pillar smash">
+              <span className="pill emerald" style={{ fontSize: '11px', fontWeight: 900, minWidth: '65px', justifyContent: 'center' }}>
+                RANK #1
+              </span>
+              <div>
+                <div className="intel-dvp-guide-pillar-title" style={{ color: 'var(--accent-emerald)' }}>
+                  🛡️ THE STRONGEST &amp; VERY BEST DEFENSE IN THE LEAGUE
+                </div>
+                <p className="intel-dvp-guide-pillar-desc">
+                  Allows league-low points and yards; generates elite sacks and takeaways. <strong>The #1 Lockdown Unit to start as your fantasy D/ST.</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="intel-dvp-guide-arrow">VS</div>
+
+            {/* Rank #32 Pillar */}
+            <div className="intel-dvp-guide-pillar lockdown">
+              <span className="pill rose" style={{ fontSize: '11px', fontWeight: 900, minWidth: '65px', justifyContent: 'center' }}>
+                RANK #32
+              </span>
+              <div>
+                <div className="intel-dvp-guide-pillar-title" style={{ color: 'var(--accent-rose)' }}>
+                  🚨 THE VERY WORST &amp; HORRIBLE DEFENSE IN THE LEAGUE
+                </div>
+                <p className="intel-dvp-guide-pillar-desc">
+                  Bleeding total fantasy points and yards. <strong>Bottom defense in the NFL — never start as your D/ST, but target heavily with your offensive starters!</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="intel-dvp-guide-card positional">
+          <div className="intel-dvp-guide-header">
+            <div className="intel-dvp-guide-title-wrap">
+              <span className="intel-dvp-guide-badge positional">🎯 {dvpPosition} DEFENSIVE SOFTNESS RANKING GUIDE</span>
+              <span className="intel-dvp-guide-subtitle">
+                How to interpret matchup numbers for offensive start/sit decisions
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <Tooltip term="DVP_SOFTNESS_RANK">
+                <button type="button" className="intel-dvp-guide-btn" title="Click for complete Softness Rank glossary definition">
+                  <span>ℹ️</span>
+                  <span>Softness Rank</span>
+                </button>
+              </Tooltip>
+              <Tooltip term="DVP_MATCHUP_TIER">
+                <button type="button" className="intel-dvp-guide-btn" title="Click to view all 5 Matchup Tiers and how to ATTACK">
+                  <span>🎯</span>
+                  <span>Matchup Tiers Guide</span>
+                </button>
+              </Tooltip>
+            </div>
+          </div>
+
+          <div className="intel-dvp-guide-grid">
+            {/* Rank #1 Pillar */}
+            <div className="intel-dvp-guide-pillar smash">
+              <span className="pill emerald" style={{ fontSize: '11px', fontWeight: 900, minWidth: '65px', justifyContent: 'center' }}>
+                RANK #1
+              </span>
+              <div>
+                <div className="intel-dvp-guide-pillar-title" style={{ color: 'var(--accent-emerald)' }}>
+                  🚀 THE VERY WORST DEFENSE IN THE LEAGUE VS {dvpPosition}
+                </div>
+                <p className="intel-dvp-guide-pillar-desc">
+                  Gives up the <strong>MOST</strong> fantasy points &amp; yards. <strong>The #1 Smash Target to attack and start your {dvpPosition}s against this week!</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="intel-dvp-guide-arrow">VS</div>
+
+            {/* Rank #32 Pillar */}
+            <div className="intel-dvp-guide-pillar lockdown">
+              <span className="pill rose" style={{ fontSize: '11px', fontWeight: 900, minWidth: '65px', justifyContent: 'center' }}>
+                RANK #32
+              </span>
+              <div>
+                <div className="intel-dvp-guide-pillar-title" style={{ color: 'var(--accent-rose)' }}>
+                  🛑 THE VERY BEST DEFENSE IN THE LEAGUE VS {dvpPosition}
+                </div>
+                <p className="intel-dvp-guide-pillar-desc">
+                  Gives up the <strong>FEWEST</strong> fantasy points. <strong>The #1 Lockdown Defense to downgrade or avoid in your lineups.</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 5. INTERACTIVE HORIZONTAL STAT DISCOVERY & NAVIGATION BAR */}
       {!isLoadingDvp && (dvpPosition === 'OVERALL' ? sortedOverallRecords.length > 0 : sortedPosRatings.length > 0) && (
         <div className="intel-table-scroll-helper">
@@ -989,9 +1110,9 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
             <table className="intel-dvp-table">
               <thead>
                 <tr>
-                  {renderSortTh('Overall DST Rank', 'composite_rank', true, undefined, 'sticky-col-1')}
+                  {renderSortTh('Overall DST Rank', 'composite_rank', true, 'OVERALL_DST_RANK', 'sticky-col-1')}
                   {renderSortTh('Defensive Team', 'team_name', false, undefined, 'sticky-col-2')}
-                  {renderSortTh('Defense Tier', 'tier', false)}
+                  {renderSortTh('Defense Tier', 'tier', false, 'DVP_DEFENSE_TIER')}
                   <th>My Roster Exposure</th>
                   {renderSortTh('Total Half-PPR FPA', 'total_dk_fpa', true, 'DVP_FPA')}
                   {renderSortTh('Total Full-PPR FPA', 'total_fd_fpa', true, 'DVP_FULL_PPR_FPA')}
@@ -1001,7 +1122,23 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
                   {renderSortTh('Total TDs/G', 'total_td', true)}
                   {renderSortTh('Sacks/G', 'sacks', true)}
                   {renderSortTh('Turnovers/G', 'turnovers', true)}
-                  <th style={{ whiteSpace: 'nowrap' }}>Positional Softness (QB / RB / WR / TE)</th>
+                  <th style={{ whiteSpace: 'nowrap' }}>
+                    <Tooltip term="DVP_SOFTNESS_RANK">
+                      <span
+                        style={{
+                          borderBottom: '1px dotted rgba(6, 182, 212, 0.65)',
+                          cursor: 'help',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                        }}
+                        title="Click to learn what Positional Softness ranks mean"
+                      >
+                        <span>Positional Softness (QB / RB / WR / TE)</span>
+                        <span style={{ fontSize: '9px', opacity: 0.75, color: '#38bdf8' }}>ℹ</span>
+                      </span>
+                    </Tooltip>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -1017,22 +1154,25 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
                     <tr key={row.id} className={isFacing ? 'roster-facing' : ''}>
                       {/* Overall DST Composite Rank */}
                       <td className="sticky-col-1">
-                        <span
-                          className={`pill ${
-                            row.composite_rank <= 6
-                              ? 'emerald'
-                              : row.composite_rank <= 14
-                              ? 'cyan'
-                              : row.composite_rank <= 22
-                              ? 'zinc'
-                              : row.composite_rank <= 28
-                              ? 'amber'
-                              : 'rose'
-                          }`}
-                          style={{ fontWeight: 800, fontSize: '11px', minWidth: '46px', justifyContent: 'center' }}
-                        >
-                          #{row.composite_rank}
-                        </span>
+                        <Tooltip term="OVERALL_DST_RANK" title={`#${row.composite_rank} Overall DST in NFL`}>
+                          <span
+                            className={`pill ${
+                              row.composite_rank <= 6
+                                ? 'emerald'
+                                : row.composite_rank <= 14
+                                ? 'cyan'
+                                : row.composite_rank <= 22
+                                ? 'zinc'
+                                : row.composite_rank <= 28
+                                ? 'amber'
+                                : 'rose'
+                            }`}
+                            style={{ fontWeight: 800, fontSize: '11px', minWidth: '46px', justifyContent: 'center', cursor: 'pointer' }}
+                            title={`Overall DST Rank #${row.composite_rank}. Click to learn what this means.`}
+                          >
+                            #{row.composite_rank}
+                          </span>
+                        </Tooltip>
                       </td>
 
                       {/* Defensive Team */}
@@ -1052,22 +1192,25 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
 
                     {/* Matchup Tier */}
                     <td>
-                      <span
-                        className={`pill ${
-                          row.tier === 'LOCKDOWN'
-                            ? 'emerald'
-                            : row.tier === 'FAVORABLE'
-                            ? 'cyan'
-                            : row.tier === 'NEUTRAL'
-                            ? 'zinc'
-                            : row.tier === 'TOUGH'
-                            ? 'amber'
-                            : 'rose'
-                        }`}
-                        style={{ fontSize: '10px', fontWeight: 800 }}
-                      >
-                        {row.tier_label}
-                      </span>
+                      <Tooltip term="DVP_DEFENSE_TIER" title={`${row.tier_label} (Rank #${row.composite_rank})`}>
+                        <span
+                          className={`pill ${
+                            row.tier === 'LOCKDOWN'
+                              ? 'emerald'
+                              : row.tier === 'FAVORABLE'
+                              ? 'cyan'
+                              : row.tier === 'NEUTRAL'
+                              ? 'zinc'
+                              : row.tier === 'TOUGH'
+                              ? 'amber'
+                              : 'rose'
+                          }`}
+                          style={{ fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                          title={`Defense Tier: ${row.tier_label} (#${row.composite_rank}). Click to view Tier Guide.`}
+                        >
+                          {row.tier_label}
+                        </span>
+                      </Tooltip>
                     </td>
 
                     {/* My Roster Exposure (Overall DST) */}
@@ -1127,32 +1270,32 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
                     {/* Total Yds/G (Pass + Rush) */}
                     <td>
                       <span className="intel-dvp-val-mono" style={{ color: 'var(--text-primary)' }}>
-                        {row.total_yds ? `${row.total_yds.toFixed(0)} yds` : '—'}
+                        {typeof row.total_yds === 'number' ? `${row.total_yds.toFixed(0)} yds` : '—'}
                       </span>
                     </td>
 
                     {/* Pass Yds/G */}
-                    <td>{row.pass_yds ? `${row.pass_yds.toFixed(0)} yds` : '—'}</td>
+                    <td>{typeof row.pass_yds === 'number' ? `${row.pass_yds.toFixed(0)} yds` : '—'}</td>
 
                     {/* Rush Yds/G */}
-                    <td>{row.rush_yds ? `${row.rush_yds.toFixed(0)} yds` : '—'}</td>
+                    <td>{typeof row.rush_yds === 'number' ? `${row.rush_yds.toFixed(0)} yds` : '—'}</td>
 
                     {/* Total TDs/G */}
                     <td>
                       <span style={{ fontWeight: 700 }}>
-                        {row.total_td ? row.total_td.toFixed(1) : '—'}
+                        {typeof row.total_td === 'number' ? row.total_td.toFixed(1) : '—'}
                       </span>
                     </td>
 
                     {/* Sacks/G */}
                     <td>
                       <span style={{ color: row.sacks >= 2.5 ? 'var(--accent-emerald)' : 'inherit', fontWeight: row.sacks >= 2.5 ? 700 : 400 }}>
-                        {row.sacks ? row.sacks.toFixed(1) : '—'}
+                        {typeof row.sacks === 'number' ? row.sacks.toFixed(1) : '—'}
                       </span>
                     </td>
 
                     {/* Turnovers/G */}
-                    <td>{row.turnovers ? row.turnovers.toFixed(1) : '—'}</td>
+                    <td>{typeof row.turnovers === 'number' ? row.turnovers.toFixed(1) : '—'}</td>
 
                     {/* Positional Softness Matrix (QB, RB, WR, TE) */}
                     <td>
@@ -1235,9 +1378,9 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
             <table className="intel-dvp-table">
               <thead>
                 <tr>
-                  {renderSortTh('Softness Rank', 'rank_softness', false, undefined, 'sticky-col-1')}
+                  {renderSortTh('Softness Rank', 'rank_softness', false, 'DVP_SOFTNESS_RANK', 'sticky-col-1')}
                   {renderSortTh('Defensive Team', 'team_name', false, undefined, 'sticky-col-2')}
-                {renderSortTh('Matchup Tier', 'tier', false)}
+                {renderSortTh('Matchup Tier', 'tier', false, 'DVP_MATCHUP_TIER')}
                 <th>My Roster Exposure ({dvpPosition})</th>
                 {renderSortTh('Half-PPR FPA (FanDuel)', 'dk_fpa', true, 'DVP_FPA')}
                 {renderSortTh('Full-PPR FPA (ESPN Fantasy)', 'fd_fpa', true, 'DVP_FULL_PPR_FPA')}
@@ -1292,20 +1435,23 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
                   <tr key={row.id} className={posFacing.length > 0 ? 'roster-facing' : ''}>
                     {/* Softness Rank */}
                     <td className="sticky-col-1">
-                      <span
-                        className={`pill ${
-                          row.rank_softness <= 8
-                            ? 'emerald'
-                            : row.rank_softness <= 16
-                            ? 'cyan'
-                            : row.rank_softness <= 24
-                            ? 'amber'
-                            : 'rose'
-                        }`}
-                        style={{ fontWeight: 800, fontSize: '11px', minWidth: '46px', justifyContent: 'center' }}
-                      >
-                        #{row.rank_softness}
-                      </span>
+                      <Tooltip term="DVP_SOFTNESS_RANK" title={`#${row.rank_softness} Softest vs ${dvpPosition}`}>
+                        <span
+                          className={`pill ${
+                            row.rank_softness <= 8
+                              ? 'emerald'
+                              : row.rank_softness <= 16
+                              ? 'cyan'
+                              : row.rank_softness <= 24
+                              ? 'amber'
+                              : 'rose'
+                          }`}
+                          style={{ fontWeight: 800, fontSize: '11px', minWidth: '46px', justifyContent: 'center', cursor: 'pointer' }}
+                          title={`Softness Rank #${row.rank_softness} vs ${dvpPosition}. Click to learn what this means.`}
+                        >
+                          #{row.rank_softness}
+                        </span>
+                      </Tooltip>
                     </td>
 
                     {/* Defensive Team */}
@@ -1325,22 +1471,25 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
 
                     {/* Tier */}
                     <td>
-                      <span
-                        className={`pill ${
-                          row.tier === 'SMASH'
-                            ? 'emerald'
-                            : row.tier === 'FAVORABLE'
-                            ? 'cyan'
-                            : row.tier === 'TOUGH'
-                            ? 'amber'
-                            : row.tier === 'LOCKDOWN'
-                            ? 'rose'
-                            : 'zinc'
-                        }`}
-                        style={{ fontSize: '10px', fontWeight: 800 }}
-                      >
-                        {row.tier_label}
-                      </span>
+                      <Tooltip term="DVP_MATCHUP_TIER" title={`${row.tier_label} (Rank #${row.rank_softness})`}>
+                        <span
+                          className={`pill ${
+                            row.tier === 'SMASH'
+                              ? 'emerald'
+                              : row.tier === 'FAVORABLE'
+                              ? 'cyan'
+                              : row.tier === 'TOUGH'
+                              ? 'amber'
+                              : row.tier === 'LOCKDOWN'
+                              ? 'rose'
+                              : 'zinc'
+                          }`}
+                          style={{ fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                          title={`Matchup Tier: ${row.tier_label} (#${row.rank_softness}). Click to view Tier Guide.`}
+                        >
+                          {row.tier_label}
+                        </span>
+                      </Tooltip>
                     </td>
 
                     {/* My Roster Exposure (Position-Specific Only) */}
@@ -1447,13 +1596,13 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
                     {/* Position-Specific Key Allowed Stats */}
                     {dvpPosition === 'QB' && (
                       <>
-                        <td>{row.supporting_stats?.pass_yds ? `${row.supporting_stats.pass_yds.toFixed(0)} yds` : '—'}</td>
-                        <td>{row.supporting_stats?.pass_td ? row.supporting_stats.pass_td.toFixed(2) : '—'}</td>
-                        <td>{row.supporting_stats?.sacks ? row.supporting_stats.sacks.toFixed(1) : '—'}</td>
+                        <td>{typeof row.supporting_stats?.pass_yds === 'number' ? `${row.supporting_stats.pass_yds.toFixed(0)} yds` : '—'}</td>
+                        <td>{typeof row.supporting_stats?.pass_td === 'number' ? row.supporting_stats.pass_td.toFixed(2) : '—'}</td>
+                        <td>{typeof row.supporting_stats?.sacks === 'number' ? row.supporting_stats.sacks.toFixed(1) : '—'}</td>
                         <td>
-                          {row.supporting_stats?.qb_rush_yds !== undefined
+                          {typeof row.supporting_stats?.qb_rush_yds === 'number'
                             ? `${row.supporting_stats.qb_rush_yds.toFixed(0)} yds`
-                            : row.supporting_stats?.rush_yds !== undefined
+                            : typeof row.supporting_stats?.rush_yds === 'number'
                             ? `${row.supporting_stats.rush_yds.toFixed(0)} yds`
                             : '—'}
                         </td>
@@ -1461,26 +1610,26 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
                     )}
                     {dvpPosition === 'RB' && (
                       <>
-                        <td>{row.supporting_stats?.rush_yds ? `${row.supporting_stats.rush_yds.toFixed(0)} yds` : '—'}</td>
-                        <td>{row.supporting_stats?.rush_td ? row.supporting_stats.rush_td.toFixed(2) : '—'}</td>
-                        <td>{row.supporting_stats?.targets ? row.supporting_stats.targets.toFixed(1) : '—'}</td>
-                        <td>{row.supporting_stats?.rec_yds ? `${row.supporting_stats.rec_yds.toFixed(0)} yds` : '—'}</td>
+                        <td>{typeof row.supporting_stats?.rush_yds === 'number' ? `${row.supporting_stats.rush_yds.toFixed(0)} yds` : '—'}</td>
+                        <td>{typeof row.supporting_stats?.rush_td === 'number' ? row.supporting_stats.rush_td.toFixed(2) : '—'}</td>
+                        <td>{typeof row.supporting_stats?.targets === 'number' ? row.supporting_stats.targets.toFixed(1) : '—'}</td>
+                        <td>{typeof row.supporting_stats?.rec_yds === 'number' ? `${row.supporting_stats.rec_yds.toFixed(0)} yds` : '—'}</td>
                       </>
                     )}
                     {dvpPosition === 'WR' && (
                       <>
-                        <td>{row.supporting_stats?.rec_yds ? `${row.supporting_stats.rec_yds.toFixed(0)} yds` : '—'}</td>
-                        <td>{row.supporting_stats?.rec_td ? row.supporting_stats.rec_td.toFixed(2) : '—'}</td>
-                        <td>{row.supporting_stats?.targets ? row.supporting_stats.targets.toFixed(1) : '—'}</td>
-                        <td>{row.supporting_stats?.rec ? row.supporting_stats.rec.toFixed(1) : '—'}</td>
+                        <td>{typeof row.supporting_stats?.rec_yds === 'number' ? `${row.supporting_stats.rec_yds.toFixed(0)} yds` : '—'}</td>
+                        <td>{typeof row.supporting_stats?.rec_td === 'number' ? row.supporting_stats.rec_td.toFixed(2) : '—'}</td>
+                        <td>{typeof row.supporting_stats?.targets === 'number' ? row.supporting_stats.targets.toFixed(1) : '—'}</td>
+                        <td>{typeof row.supporting_stats?.rec === 'number' ? row.supporting_stats.rec.toFixed(1) : '—'}</td>
                       </>
                     )}
                     {dvpPosition === 'TE' && (
                       <>
-                        <td>{row.supporting_stats?.rec_yds ? `${row.supporting_stats.rec_yds.toFixed(0)} yds` : '—'}</td>
-                        <td>{row.supporting_stats?.rec_td ? row.supporting_stats.rec_td.toFixed(2) : '—'}</td>
-                        <td>{row.supporting_stats?.targets ? row.supporting_stats.targets.toFixed(1) : '—'}</td>
-                        <td>{row.supporting_stats?.rec ? row.supporting_stats.rec.toFixed(1) : '—'}</td>
+                        <td>{typeof row.supporting_stats?.rec_yds === 'number' ? `${row.supporting_stats.rec_yds.toFixed(0)} yds` : '—'}</td>
+                        <td>{typeof row.supporting_stats?.rec_td === 'number' ? row.supporting_stats.rec_td.toFixed(2) : '—'}</td>
+                        <td>{typeof row.supporting_stats?.targets === 'number' ? row.supporting_stats.targets.toFixed(1) : '—'}</td>
+                        <td>{typeof row.supporting_stats?.rec === 'number' ? row.supporting_stats.rec.toFixed(1) : '—'}</td>
                       </>
                     )}
                   </tr>
