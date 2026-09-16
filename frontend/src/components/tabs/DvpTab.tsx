@@ -15,6 +15,29 @@ export interface DvpTabProps {
   onNavigateTab?: (tab: string) => void
 }
 
+const TEAM_ALIASES: Record<string, string> = {
+  ARZ: 'ARI',
+  BLT: 'BAL',
+  CLV: 'CLE',
+  HST: 'HOU',
+  JAC: 'JAX',
+  KAN: 'KC',
+  LVR: 'LV',
+  OAK: 'LV',
+  NEP: 'NE',
+  NOS: 'NO',
+  SFO: 'SF',
+  TAM: 'TB',
+  OTI: 'TEN',
+  WAS: 'WSH',
+}
+
+function normalizeTeamKey(team?: string | null): string {
+  if (!team) return ''
+  const t = team.toUpperCase().trim()
+  return TEAM_ALIASES[t] || t
+}
+
 export const DvpTab: React.FC<DvpTabProps> = ({
   league,
   lineup,
@@ -90,14 +113,14 @@ export const DvpTab: React.FC<DvpTabProps> = ({
     if (!lineup) return map
     for (const s of lineup.starters) {
       const p = s.recommended_player
-      const opp = p.opponent?.toUpperCase().trim()
+      const opp = normalizeTeamKey(p.opponent)
       if (!opp) continue
       const list = map.get(opp) || []
       list.push({ full_name: p.full_name, position: p.position, is_starter: true })
       map.set(opp, list)
     }
     for (const b of lineup.bench) {
-      const opp = b.opponent?.toUpperCase().trim()
+      const opp = normalizeTeamKey(b.opponent)
       if (!opp) continue
       const list = map.get(opp) || []
       list.push({ full_name: b.full_name, position: b.position, is_starter: false })
@@ -131,7 +154,11 @@ export const DvpTab: React.FC<DvpTabProps> = ({
     } else if (tierFilter === 'LOCKDOWN') {
       list = list.filter((r) => r.tier === 'LOCKDOWN')
     } else if (tierFilter === 'ROSTER') {
-      list = list.filter((r) => (rosterOpponents.get(r.pro_team.toUpperCase()) || []).length > 0)
+      list = list.filter((r) => {
+        const norm = normalizeTeamKey(r.pro_team)
+        const facing = rosterOpponents.get(norm) || []
+        return facing.some((p) => p.position === dvpPosition)
+      })
     }
 
     // Sort column
@@ -168,7 +195,8 @@ export const DvpTab: React.FC<DvpTabProps> = ({
     let smashCount = 0
     for (const r of dvpRatings) {
       if (r.rank_softness <= 8) {
-        const facing = rosterOpponents.get(r.pro_team.toUpperCase()) || []
+        const norm = normalizeTeamKey(r.pro_team)
+        const facing = rosterOpponents.get(norm) || []
         const posFacing = facing.filter((p) => p.position === dvpPosition)
         smashCount += posFacing.length
       }
@@ -346,7 +374,7 @@ export const DvpTab: React.FC<DvpTabProps> = ({
                   ? '⚠️ Tough'
                   : t === 'LOCKDOWN'
                   ? '🛑 Lockdown'
-                  : '⚔️ My Matchups'}
+                  : `⚔️ My ${dvpPosition} Matchups`}
               </button>
             ))}
           </div>
@@ -387,7 +415,7 @@ export const DvpTab: React.FC<DvpTabProps> = ({
                   Defensive Team {dvpSortCol === 'team_name' ? (dvpSortAsc ? '▲' : '▼') : ''}
                 </th>
                 <th>Matchup Tier</th>
-                <th>My Roster Exposure</th>
+                <th>My Roster Exposure ({dvpPosition})</th>
                 <th onClick={() => { setDvpSortCol('dk_fpa'); setDvpSortAsc(!dvpSortAsc) }}>
                   <Tooltip term="DVP_FPA">
                     <span>Half-PPR FPA (FanDuel) {dvpSortCol === 'dk_fpa' ? (dvpSortAsc ? '▲' : '▼') : ''}</span>
@@ -442,14 +470,15 @@ export const DvpTab: React.FC<DvpTabProps> = ({
             </thead>
             <tbody>
               {sortedDvpRatings.map((row) => {
-                const facingPlayers = rosterOpponents.get(row.pro_team.toUpperCase()) || []
-                const isFacingMyTeam = facingPlayers.length > 0
+                const normProTeam = normalizeTeamKey(row.pro_team)
+                const facingPlayers = rosterOpponents.get(normProTeam) || []
+                // Strictly filter to only roster players matching the current position category
                 const posFacing = facingPlayers.filter((p) => p.position === dvpPosition)
 
                 return (
                   <tr
                     key={row.id}
-                    className={isFacingMyTeam ? 'roster-facing' : ''}
+                    className={posFacing.length > 0 ? 'roster-facing' : ''}
                   >
                     {/* Softness Rank */}
                     <td>
@@ -504,24 +533,32 @@ export const DvpTab: React.FC<DvpTabProps> = ({
                       </span>
                     </td>
 
-                    {/* My Roster Exposure */}
+                    {/* My Roster Exposure (Position-Specific Only) */}
                     <td>
                       {posFacing.length > 0 ? (
-                        <span
-                          className="pill cyan"
-                          style={{ fontSize: '10px', fontWeight: 700 }}
-                          title={`Facing your active ${dvpPosition}: ${posFacing.map((p) => p.full_name).join(', ')}`}
-                        >
-                          ⚔️ Faces Your {dvpPosition} ({posFacing.map((p) => p.full_name.split(' ').pop()).join(', ')})
-                        </span>
-                      ) : isFacingMyTeam ? (
-                        <span
-                          className="pill zinc"
-                          style={{ fontSize: '9.5px' }}
-                          title={`Facing other roster players: ${facingPlayers.map((p) => `${p.full_name} (${p.position})`).join(', ')}`}
-                        >
-                          Facing {facingPlayers[0].full_name.split(' ').pop()} ({facingPlayers[0].position})
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {posFacing.map((p) => (
+                            <span
+                              key={`${p.full_name}-${p.is_starter ? 'start' : 'bench'}`}
+                              className={`pill ${p.is_starter ? 'cyan' : 'zinc'}`}
+                              style={{
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                width: 'fit-content',
+                              }}
+                              title={`${p.full_name} (${p.is_starter ? 'Active Starter' : 'Bench'}) vs ${row.team_name}`}
+                            >
+                              <span>{p.is_starter ? '⚔️' : '🪑'}</span>
+                              <span>{p.full_name}</span>
+                              <span style={{ fontSize: '9px', opacity: 0.85, fontWeight: 800 }}>
+                                [{p.is_starter ? 'STARTER' : 'BENCH'}]
+                              </span>
+                            </span>
+                          ))}
+                        </div>
                       ) : (
                         <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>—</span>
                       )}
