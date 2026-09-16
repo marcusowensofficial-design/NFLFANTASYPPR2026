@@ -59,6 +59,21 @@ FULL_TEAM_NAME_MAP: dict[str, str] = {
     "WASHINGTON COMMANDERS": "WAS",
     "WSH": "WAS",
     "WAS": "WAS",
+    "JAC": "JAX",
+    "LA": "LAR",
+    "OAK": "LV",
+    "SD": "LAC",
+    "HST": "HOU",
+    "CLV": "CLE",
+    "BLT": "BAL",
+    "ARZ": "ARI",
+    "KAN": "KC",
+    "LVR": "LV",
+    "NEP": "NE",
+    "NOS": "NO",
+    "SFO": "SF",
+    "TAM": "TB",
+    "OTI": "TEN",
 }
 
 SEED_FILE_PATH = Path(__file__).resolve().parent.parent.parent.parent / "data" / "draftedge_dvp_seed.json"
@@ -164,7 +179,15 @@ class DraftEdgeClient:
             if team_label:
                 team_name = team_label.get_text(strip=True)
 
-            pro_team = FULL_TEAM_NAME_MAP.get(team_name.upper())
+            abbr_span = tds[1].find("span", class_="dvp-team-abbr")
+            pro_team = None
+            if abbr_span:
+                raw_abbr = abbr_span.get_text(strip=True).upper()
+                pro_team = FULL_TEAM_NAME_MAP.get(raw_abbr, raw_abbr)
+
+            if not pro_team:
+                pro_team = FULL_TEAM_NAME_MAP.get(team_name.upper())
+
             if not pro_team:
                 # Fallback: check logo image src filename, e.g. /images/logos/nfl/dal.png
                 img = tds[1].find("img")

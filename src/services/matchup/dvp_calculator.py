@@ -66,11 +66,56 @@ ALL_32_NFL_TEAMS: dict[str, str] = {
 
 # Team abbreviation normalization mapping (ESPN / external APIs to canonical)
 TEAM_ALIASES: dict[str, str] = {
+    # Alternate abbreviations
     "WSH": "WAS",
     "JAC": "JAX",
     "LA": "LAR",
     "OAK": "LV",
     "SD": "LAC",
+    "HST": "HOU",
+    "CLV": "CLE",
+    "BLT": "BAL",
+    "ARZ": "ARI",
+    "KAN": "KC",
+    "LVR": "LV",
+    "NEP": "NE",
+    "NOS": "NO",
+    "SFO": "SF",
+    "TAM": "TB",
+    "OTI": "TEN",
+    # Full names
+    "ARIZONA CARDINALS": "ARI",
+    "ATLANTA FALCONS": "ATL",
+    "BALTIMORE RAVENS": "BAL",
+    "BUFFALO BILLS": "BUF",
+    "CAROLINA PANTHERS": "CAR",
+    "CHICAGO BEARS": "CHI",
+    "CINCINNATI BENGALS": "CIN",
+    "CLEVELAND BROWNS": "CLE",
+    "DALLAS COWBOYS": "DAL",
+    "DENVER BRONCOS": "DEN",
+    "DETROIT LIONS": "DET",
+    "GREEN BAY PACKERS": "GB",
+    "HOUSTON TEXANS": "HOU",
+    "INDIANAPOLIS COLTS": "IND",
+    "JACKSONVILLE JAGUARS": "JAX",
+    "KANSAS CITY CHIEFS": "KC",
+    "LAS VEGAS RAIDERS": "LV",
+    "LOS ANGELES CHARGERS": "LAC",
+    "LOS ANGELES RAMS": "LAR",
+    "MIAMI DOLPHINS": "MIA",
+    "MINNESOTA VIKINGS": "MIN",
+    "NEW ENGLAND PATRIOTS": "NE",
+    "NEW ORLEANS SAINTS": "NO",
+    "NEW YORK GIANTS": "NYG",
+    "NEW YORK JETS": "NYJ",
+    "PHILADELPHIA EAGLES": "PHI",
+    "PITTSBURGH STEELERS": "PIT",
+    "SAN FRANCISCO 49ERS": "SF",
+    "SEATTLE SEAHAWKS": "SEA",
+    "TAMPA BAY BUCCANEERS": "TB",
+    "TENNESSEE TITANS": "TEN",
+    "WASHINGTON COMMANDERS": "WAS",
 }
 
 
@@ -495,8 +540,14 @@ async def calculate_in_house_dvp(
             elif pos == "TE" and pdata["rec_yds"] > 0:
                 has_realized_yards = True
 
-            # If missing/zero yards allowed, or specifically Washington / Steelers TE / 49ers rushing:
-            needs_draftedge_fill = (not has_realized_yards) or (team == "WAS") or (team == "PIT" and pos == "TE") or (team == "SF" and pos == "RB")
+            # If missing/zero yards allowed, or abnormally sparse box score stats:
+            sparse_yards = (
+                (pos == "QB" and pdata["pass_yds"] < 50.0)
+                or (pos == "RB" and pdata["rush_yds"] < 25.0)
+                or (pos == "WR" and pdata["rec_yds"] < 30.0)
+                or (pos == "TE" and pdata["rec_yds"] < 15.0)
+            )
+            needs_draftedge_fill = (not has_realized_yards) or sparse_yards or (team == "WAS") or (team == "PIT" and pos == "TE") or (team == "SF" and pos == "RB")
 
             if needs_draftedge_fill and de_supp:
                 # Fill supporting stats from DraftEdge

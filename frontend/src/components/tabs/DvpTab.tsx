@@ -48,14 +48,16 @@ const TEAM_ALIASES: Record<string, string> = {
   HST: 'HOU',
   JAC: 'JAX',
   KAN: 'KC',
+  LA: 'LAR',
   LVR: 'LV',
   OAK: 'LV',
   NEP: 'NE',
   NOS: 'NO',
+  SD: 'LAC',
   SFO: 'SF',
   TAM: 'TB',
   OTI: 'TEN',
-  WAS: 'WSH',
+  WSH: 'WAS',
 }
 
 function normalizeTeamKey(team?: string | null): string {
@@ -214,7 +216,7 @@ export const DvpTab: React.FC<DvpTabProps> = ({
     const teamMap = new Map<string, { pro_team: string; team_name: string; positions: Record<string, DvPRecordItem> }>()
 
     for (const r of allDvpRatings) {
-      const t = r.pro_team.toUpperCase().trim()
+      const t = normalizeTeamKey(r.pro_team)
       if (!teamMap.has(t)) {
         teamMap.set(t, { pro_team: t, team_name: r.team_name, positions: {} })
       }

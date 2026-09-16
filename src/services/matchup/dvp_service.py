@@ -20,9 +20,56 @@ def utc_now() -> datetime:
 
 
 TEAM_ALIASES: dict[str, str] = {
+    # Common alternate abbreviations
     "WSH": "WAS",
     "JAC": "JAX",
     "LA": "LAR",
+    "OAK": "LV",
+    "SD": "LAC",
+    "HST": "HOU",
+    "CLV": "CLE",
+    "BLT": "BAL",
+    "ARZ": "ARI",
+    "KAN": "KC",
+    "LVR": "LV",
+    "NEP": "NE",
+    "NOS": "NO",
+    "SFO": "SF",
+    "TAM": "TB",
+    "OTI": "TEN",
+    # Full franchise names to canonical 2-3 char abbreviations
+    "ARIZONA CARDINALS": "ARI",
+    "ATLANTA FALCONS": "ATL",
+    "BALTIMORE RAVENS": "BAL",
+    "BUFFALO BILLS": "BUF",
+    "CAROLINA PANTHERS": "CAR",
+    "CHICAGO BEARS": "CHI",
+    "CINCINNATI BENGALS": "CIN",
+    "CLEVELAND BROWNS": "CLE",
+    "DALLAS COWBOYS": "DAL",
+    "DENVER BRONCOS": "DEN",
+    "DETROIT LIONS": "DET",
+    "GREEN BAY PACKERS": "GB",
+    "HOUSTON TEXANS": "HOU",
+    "INDIANAPOLIS COLTS": "IND",
+    "JACKSONVILLE JAGUARS": "JAX",
+    "KANSAS CITY CHIEFS": "KC",
+    "LAS VEGAS RAIDERS": "LV",
+    "LOS ANGELES CHARGERS": "LAC",
+    "LOS ANGELES RAMS": "LAR",
+    "MIAMI DOLPHINS": "MIA",
+    "MINNESOTA VIKINGS": "MIN",
+    "NEW ENGLAND PATRIOTS": "NE",
+    "NEW ORLEANS SAINTS": "NO",
+    "NEW YORK GIANTS": "NYG",
+    "NEW YORK JETS": "NYJ",
+    "PHILADELPHIA EAGLES": "PHI",
+    "PITTSBURGH STEELERS": "PIT",
+    "SAN FRANCISCO 49ERS": "SF",
+    "SEATTLE SEAHAWKS": "SEA",
+    "TAMPA BAY BUCCANEERS": "TB",
+    "TENNESSEE TITANS": "TEN",
+    "WASHINGTON COMMANDERS": "WAS",
 }
 
 
@@ -162,9 +209,9 @@ class DvPService:
                 )
             ).scalars().all()
 
-            if not count:
+            if not count or len(count) < 128:
                 # Seed from bundled snapshot
-                logger.info("DvP table empty for Season %d Week %d; seeding from bundled file...", season, week)
+                logger.info("DvP table incomplete (%d records) for Season %d Week %d; seeding/refreshing from bundled file...", len(count) if count else 0, season, week)
                 self._seed_database(db, season, week)
                 db.commit()
 
@@ -387,6 +434,26 @@ class DvPService:
                         updated_at=utc_now(),
                     )
                     db.add(entry)
+                else:
+                    supp_json = json.dumps(r.get("supporting_stats", {}))
+                    existing.team_name = r["team_name"]
+                    existing.rank_softness = r["rank_softness"]
+                    existing.rank_defense = r["rank_defense"]
+                    existing.tier = r["tier"]
+                    existing.tier_label = r["tier_label"]
+                    existing.dk_fpa = r["dk_fpa"]
+                    existing.fd_fpa = r.get("fd_fpa")
+                    existing.vs_avg = r["vs_avg"]
+                    existing.prior_season_fpa = r["prior_season_fpa"]
+                    existing.current_season_fpa = r.get("current_season_fpa")
+                    existing.last4_fpa = r.get("last4_fpa")
+                    existing.trend = r.get("trend", "Stable")
+                    existing.supporting_stats_json = supp_json
+                    existing.is_baseline = r.get("is_baseline", True)
+                    existing.sample_games_current = r.get("sample_games_current", 0)
+                    existing.source = r.get("source", "In-House Proprietary Engine")
+                    existing.source_url = r.get("source_url", "")
+                    existing.updated_at = utc_now()
 
                 # Also update in-memory dvp_client
                 rank_kwargs = {}
