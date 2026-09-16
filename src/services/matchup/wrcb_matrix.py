@@ -181,7 +181,7 @@ KNOWN_WR_ALIGNMENTS: dict[str, WRAlignmentProfile] = {
     "a.j. brown": WRAlignmentProfile(pct_slot=0.24, pct_wide=0.76, target_share=0.28, route_win_rate=0.87),
     "dk metcalf": WRAlignmentProfile(pct_slot=0.16, pct_wide=0.84, target_share=0.26, route_win_rate=0.83),
     "tee higgins": WRAlignmentProfile(pct_slot=0.18, pct_wide=0.82, target_share=0.22, route_win_rate=0.82),
-    "ceedee lamb": WRAlignmentProfile(pct_slot=0.48, pct_wide=0.52, target_share=0.31, route_win_rate=0.87),
+    "ceedee lamb": WRAlignmentProfile(pct_slot=0.55, pct_wide=0.45, target_share=0.31, route_win_rate=0.87),
     "jerry jeudy": WRAlignmentProfile(pct_slot=0.38, pct_wide=0.62, target_share=0.22, route_win_rate=0.78),
     "devonta smith": WRAlignmentProfile(pct_slot=0.34, pct_wide=0.66, target_share=0.27, route_win_rate=0.85),
     "christian watson": WRAlignmentProfile(pct_slot=0.16, pct_wide=0.84, target_share=0.19, route_win_rate=0.77),

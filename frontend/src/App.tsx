@@ -598,7 +598,7 @@ export function App() {
     const seq = ++intelReqSeq.current
     try {
       setIsLoadingIntel(true)
-      const effWeek = targetWeek || league?.current_week || 3
+      const effWeek = targetWeek || league?.current_week || 2
       const [wrcbRes, vegasRes] = await Promise.all([
         fetch(`/api/analysis/wrcb-matrix?team_id=${teamId}&week=${effWeek}`),
         fetch(`/api/analysis/vegas-environments?team_id=${teamId}&week=${effWeek}`),

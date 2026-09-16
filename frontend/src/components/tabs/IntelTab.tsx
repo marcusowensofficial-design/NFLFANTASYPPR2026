@@ -101,7 +101,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
       setIsLoadingComposite(true)
       setIsLoadingTrenches(true)
       try {
-        const week = league?.current_week || 3
+        const week = league?.current_week || 2
         const [compRes, trenchRes] = await Promise.all([
           fetch(`/api/analysis/pff/composite-defense?week=${week}`),
           fetch(`/api/analysis/pff/trenches?week=${week}`)
@@ -2174,7 +2174,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span className="pill emerald" style={{ fontSize: '11px', fontWeight: 800, padding: '4px 10px' }}>
-                📅 Week {league?.current_week || 3} Matchups Active
+                📅 Week {league?.current_week || 2} Matchups Active
               </span>
             </div>
           </div>

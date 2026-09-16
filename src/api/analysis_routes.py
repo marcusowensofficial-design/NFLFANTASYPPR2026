@@ -58,7 +58,7 @@ def resolve_effective_week(db: Session | None = None, week: int | None = None) -
                 return league.current_week
     except Exception:
         pass
-    return 3
+    return 2
 
 
 class TaleOfTheTapeSlot(BaseModel):
@@ -551,14 +551,7 @@ async def get_pff_composite_defense(
         logger.debug(f"Failed to fetch inactives for composite defense: {e}")
 
     # Query real empirical DvP from database (2026 season)
-    target_week = week
-    if target_week is None:
-        max_w = db.execute(
-            select(DefenseVsPositionModel.week)
-            .where(DefenseVsPositionModel.season == 2026)
-            .order_by(DefenseVsPositionModel.week.desc())
-        ).scalars().first()
-        target_week = max_w or 2
+    target_week = resolve_effective_week(db, week)
 
     wr_records = db.execute(
         select(DefenseVsPositionModel).where(
