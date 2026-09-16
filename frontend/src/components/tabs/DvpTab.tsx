@@ -77,9 +77,9 @@ export const DvpTab: React.FC<DvpTabProps> = ({
   const [isLoadingDvp, setIsLoadingDvp] = useState<boolean>(false)
   const [isSyncingDvp, setIsSyncingDvp] = useState<boolean>(false)
 
-  // Universal column sorting state
+  // Universal column sorting state (default OVERALL to #32 weakest defense at the top)
   const [dvpSortCol, setDvpSortCol] = useState<string>('composite_rank')
-  const [dvpSortAsc, setDvpSortAsc] = useState<boolean>(true)
+  const [dvpSortAsc, setDvpSortAsc] = useState<boolean>(false)
 
   const [dvpSyncMsg, setDvpSyncMsg] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -462,14 +462,14 @@ export const DvpTab: React.FC<DvpTabProps> = ({
       }
 
       return {
-        title1: '🛡️ #1 Toughest Overall Defense',
-        val1: toughest ? `${toughest.team_name}` : '—',
-        desc1: toughest ? `Allows league-low ${toughest.total_dk_fpa.toFixed(1)} Total FPA/g (${toughest.total_yds.toFixed(0)} yds/g)` : '',
-        team1: toughest?.pro_team || null,
-        title2: '🚨 #32 Most Vulnerable Defense',
-        val2: mostGenerous ? `${mostGenerous.team_name}` : '—',
-        desc2: mostGenerous ? `Allows league-high ${mostGenerous.total_dk_fpa.toFixed(1)} Total FPA/g (${mostGenerous.total_yds.toFixed(0)} yds/g)` : '',
-        team2: mostGenerous?.pro_team || null,
+        title1: '🚨 #32 Most Vulnerable Defense',
+        val1: mostGenerous ? `${mostGenerous.team_name}` : '—',
+        desc1: mostGenerous ? `Allows league-high ${mostGenerous.total_dk_fpa.toFixed(1)} Total FPA/g (${mostGenerous.total_yds.toFixed(0)} yds/g)` : '',
+        team1: mostGenerous?.pro_team || null,
+        title2: '🛡️ #1 Toughest Lockdown Defense',
+        val2: toughest ? `${toughest.team_name}` : '—',
+        desc2: toughest ? `Restricts to league-low ${toughest.total_dk_fpa.toFixed(1)} Total FPA/g (${toughest.total_yds.toFixed(0)} yds/g)` : '',
+        team2: toughest?.pro_team || null,
         title3: '📊 Avg Total FPA Allowed',
         val3: `${avgFpa.toFixed(1)} pts/g`,
         desc3: 'League baseline fantasy points allowed across all positions',
@@ -748,7 +748,7 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
                   setDvpPosition(pos)
                   if (pos === 'OVERALL') {
                     setDvpSortCol('composite_rank')
-                    setDvpSortAsc(true)
+                    setDvpSortAsc(false)
                   } else {
                     setDvpSortCol('rank_softness')
                     setDvpSortAsc(true)
@@ -829,7 +829,7 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
           <table className="intel-dvp-table">
             <thead>
               <tr>
-                {renderSortTh('Overall DST Rank', 'composite_rank', false)}
+                {renderSortTh('Overall DST Rank', 'composite_rank', true)}
                 {renderSortTh('Defensive Team', 'team_name', false)}
                 {renderSortTh('Defense Tier', 'tier', false)}
                 <th>My Roster Exposure</th>
