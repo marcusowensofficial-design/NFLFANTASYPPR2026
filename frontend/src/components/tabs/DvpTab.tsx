@@ -15,6 +15,32 @@ export interface DvpTabProps {
   onNavigateTab?: (tab: string) => void
 }
 
+export type DvpPositionMode = 'OVERALL' | 'QB' | 'RB' | 'WR' | 'TE'
+
+export interface OverallDSTRecord {
+  id: string
+  pro_team: string
+  team_name: string
+  composite_rank: number // 1 (Best/Toughest Defense) to 32 (Most Vulnerable)
+  rank_softness: number  // 1 (Softest Matchup) to 32 (Toughest Matchup)
+  tier: string
+  tier_label: string
+  total_dk_fpa: number
+  total_fd_fpa: number
+  total_yds: number
+  pass_yds: number
+  rush_yds: number
+  total_td: number
+  pass_td: number
+  rush_td: number
+  sacks: number
+  turnovers: number
+  qb_rank: number
+  rb_rank: number
+  wr_rank: number
+  te_rank: number
+}
+
 const TEAM_ALIASES: Record<string, string> = {
   ARZ: 'ARI',
   BLT: 'BAL',
@@ -45,42 +71,46 @@ export const DvpTab: React.FC<DvpTabProps> = ({
   onNavigateTab: _onNavigateTab,
 }) => {
   // Defense vs Position (DvP) state
-  const [dvpPosition, setDvpPosition] = useState<'QB' | 'RB' | 'WR' | 'TE'>('QB')
-  const [dvpRatings, setDvpRatings] = useState<DvPRecordItem[]>([])
+  const [dvpPosition, setDvpPosition] = useState<DvpPositionMode>('OVERALL')
+  const [allDvpRatings, setAllDvpRatings] = useState<DvPRecordItem[]>([])
   const [dvpStatus, setDvpStatus] = useState<DvPStatusResponse | null>(null)
   const [isLoadingDvp, setIsLoadingDvp] = useState<boolean>(false)
   const [isSyncingDvp, setIsSyncingDvp] = useState<boolean>(false)
-  const [dvpSortCol, setDvpSortCol] = useState<'rank_softness' | 'rank_defense' | 'dk_fpa' | 'vs_avg' | 'team_name'>('rank_softness')
+
+  // Universal column sorting state
+  const [dvpSortCol, setDvpSortCol] = useState<string>('composite_rank')
   const [dvpSortAsc, setDvpSortAsc] = useState<boolean>(true)
+
   const [dvpSyncMsg, setDvpSyncMsg] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [tierFilter, setTierFilter] = useState<'ALL' | 'SMASH' | 'FAVORABLE' | 'TOUGH' | 'LOCKDOWN' | 'ROSTER'>('ALL')
 
-  // Fetch DvP Fantasy Points Allowed ratings and sync status
-  useEffect(() => {
-    const fetchDvp = async () => {
-      setIsLoadingDvp(true)
-      try {
-        const [ratingsRes, statusRes] = await Promise.all([
-          fetch(`/api/analysis/dvp-ratings?position=${dvpPosition}`),
-          fetch('/api/analysis/dvp-status'),
-        ])
-        if (ratingsRes.ok) {
-          const data: DvPRecordItem[] = await ratingsRes.json()
-          setDvpRatings(data)
-        }
-        if (statusRes.ok) {
-          const sData: DvPStatusResponse = await statusRes.json()
-          setDvpStatus(sData)
-        }
-      } catch (err) {
-        console.error('Failed to load DvP data:', err)
-      } finally {
-        setIsLoadingDvp(false)
+  // Fetch all 128 DvP records (all 32 teams x 4 positions)
+  const fetchAllDvpData = async () => {
+    setIsLoadingDvp(true)
+    try {
+      const [ratingsRes, statusRes] = await Promise.all([
+        fetch('/api/analysis/dvp-ratings?position=ALL'),
+        fetch('/api/analysis/dvp-status'),
+      ])
+      if (ratingsRes.ok) {
+        const data: DvPRecordItem[] = await ratingsRes.json()
+        setAllDvpRatings(data)
       }
+      if (statusRes.ok) {
+        const sData: DvPStatusResponse = await statusRes.json()
+        setDvpStatus(sData)
+      }
+    } catch (err) {
+      console.error('Failed to load DvP data:', err)
+    } finally {
+      setIsLoadingDvp(false)
     }
-    fetchDvp()
-  }, [dvpPosition])
+  }
+
+  useEffect(() => {
+    fetchAllDvpData()
+  }, [])
 
   const handleSyncDvp = async () => {
     setIsSyncingDvp(true)
@@ -89,13 +119,8 @@ export const DvpTab: React.FC<DvpTabProps> = ({
       const res = await fetch('/api/analysis/dvp-sync', { method: 'POST' })
       if (res.ok) {
         const result = await res.json()
-        setDvpSyncMsg(`✅ Synced ${result.records_updated} teams across all 4 positions!`)
-        const [ratingsRes, statusRes] = await Promise.all([
-          fetch(`/api/analysis/dvp-ratings?position=${dvpPosition}`),
-          fetch('/api/analysis/dvp-status'),
-        ])
-        if (ratingsRes.ok) setDvpRatings(await ratingsRes.json())
-        if (statusRes.ok) setDvpStatus(await statusRes.json())
+        setDvpSyncMsg(`✅ Synced ${result.records_updated} teams across all positions!`)
+        await fetchAllDvpData()
       } else {
         setDvpSyncMsg('⚠️ Sync completed with cached baseline.')
       }
@@ -107,7 +132,24 @@ export const DvpTab: React.FC<DvpTabProps> = ({
     }
   }
 
-  // Map opponent teams faced by active roster to highlight DvP rows
+  // Identify user's rostered D/ST team if present
+  const { rosteredDstTeam, rosteredDstIsStarter } = useMemo(() => {
+    if (!lineup) return { rosteredDstTeam: null, rosteredDstIsStarter: false }
+    for (const s of lineup.starters) {
+      const p = s.recommended_player
+      if (p.position === 'DST' || p.position === 'D/ST' || s.slot_name === 'DST') {
+        return { rosteredDstTeam: normalizeTeamKey(p.pro_team), rosteredDstIsStarter: true }
+      }
+    }
+    for (const b of lineup.bench) {
+      if (b.position === 'DST' || b.position === 'D/ST') {
+        return { rosteredDstTeam: normalizeTeamKey(b.pro_team), rosteredDstIsStarter: false }
+      }
+    }
+    return { rosteredDstTeam: null, rosteredDstIsStarter: false }
+  }, [lineup])
+
+  // Map opponent teams faced by active roster
   const rosterOpponents = useMemo(() => {
     const map = new Map<string, Array<{ full_name: string; position: string; is_starter: boolean }>>()
     if (!lineup) return map
@@ -129,11 +171,176 @@ export const DvpTab: React.FC<DvpTabProps> = ({
     return map
   }, [lineup])
 
-  // Filtered and sorted DvP ratings
-  const sortedDvpRatings = useMemo(() => {
-    let list = [...dvpRatings]
+  // Aggregate all 4 positions into 32 Composite Overall DST Records
+  const overallDstRecords = useMemo(() => {
+    if (allDvpRatings.length === 0) return []
 
-    // Search query filter
+    const teamMap = new Map<string, { pro_team: string; team_name: string; positions: Record<string, DvPRecordItem> }>()
+
+    for (const r of allDvpRatings) {
+      const t = r.pro_team.toUpperCase().trim()
+      if (!teamMap.has(t)) {
+        teamMap.set(t, { pro_team: t, team_name: r.team_name, positions: {} })
+      }
+      teamMap.get(t)!.positions[r.position] = r
+    }
+
+    const aggregated: Array<{
+      pro_team: string
+      team_name: string
+      total_dk_fpa: number
+      total_fd_fpa: number
+      total_yds: number
+      pass_yds: number
+      rush_yds: number
+      total_td: number
+      pass_td: number
+      rush_td: number
+      sacks: number
+      turnovers: number
+      qb_rank: number
+      rb_rank: number
+      wr_rank: number
+      te_rank: number
+    }> = []
+
+    teamMap.forEach((val) => {
+      const qb = val.positions['QB']
+      const rb = val.positions['RB']
+      const wr = val.positions['WR']
+      const te = val.positions['TE']
+
+      const qbFpa = qb?.dk_fpa ?? 0
+      const rbFpa = rb?.dk_fpa ?? 0
+      const wrFpa = wr?.dk_fpa ?? 0
+      const teFpa = te?.dk_fpa ?? 0
+      const totalDk = qbFpa + rbFpa + wrFpa + teFpa
+
+      const qbFd = qb?.fd_fpa ?? qbFpa
+      const rbFd = rb?.fd_fpa ?? rbFpa
+      const wrFd = wr?.fd_fpa ?? wrFpa
+      const teFd = te?.fd_fpa ?? teFpa
+      const totalFd = qbFd + rbFd + wrFd + teFd
+
+      const qbSupp = qb?.supporting_stats || {}
+      const rbSupp = rb?.supporting_stats || {}
+      const wrSupp = wr?.supporting_stats || {}
+
+      const passYds = qbSupp.pass_yds ?? 0
+      const rushYds = (rbSupp.rush_yds ?? 0) + (qbSupp.qb_rush_yds ?? qbSupp.rush_yds ?? 0) + (wrSupp.rush_yds ?? 0)
+      const totalYds = passYds + rushYds
+
+      const passTd = qbSupp.pass_td ?? 0
+      const rushTd = rbSupp.rush_td ?? 0
+      const totalTd = passTd + rushTd
+
+      const sacks = qbSupp.sacks ?? 0
+      const turnovers = qbSupp.int ?? 0
+
+      aggregated.push({
+        pro_team: val.pro_team,
+        team_name: val.team_name,
+        total_dk_fpa: totalDk,
+        total_fd_fpa: totalFd,
+        total_yds: totalYds,
+        pass_yds: passYds,
+        rush_yds: rushYds,
+        total_td: totalTd,
+        pass_td: passTd,
+        rush_td: rushTd,
+        sacks,
+        turnovers,
+        qb_rank: qb?.rank_softness ?? 16,
+        rb_rank: rb?.rank_softness ?? 16,
+        wr_rank: wr?.rank_softness ?? 16,
+        te_rank: te?.rank_softness ?? 16,
+      })
+    })
+
+    // Sort by total_dk_fpa ascending: Lowest points allowed = Rank #1 (Toughest defense)
+    aggregated.sort((a, b) => a.total_dk_fpa - b.total_dk_fpa)
+
+    const totalCount = aggregated.length
+    return aggregated.map((item, index) => {
+      const compositeRank = index + 1 // #1 Toughest to #32 Most Vulnerable
+      const softnessRank = totalCount - index // #1 Softest to #32 Toughest
+
+      let tier = 'NEUTRAL'
+      let tierLabel = '⚖️ Average Defense'
+      if (compositeRank <= 6) {
+        tier = 'LOCKDOWN'
+        tierLabel = '🛡️ Elite Lockdown DST'
+      } else if (compositeRank <= 14) {
+        tier = 'FAVORABLE'
+        tierLabel = '💪 Strong Defense'
+      } else if (compositeRank <= 22) {
+        tier = 'NEUTRAL'
+        tierLabel = '⚖️ Average Defense'
+      } else if (compositeRank <= 28) {
+        tier = 'TOUGH'
+        tierLabel = '⚠️ Vulnerable Defense'
+      } else {
+        tier = 'SMASH'
+        tierLabel = '🚨 Bleeding Points'
+      }
+
+      return {
+        id: `overall_${item.pro_team}`,
+        pro_team: item.pro_team,
+        team_name: item.team_name,
+        composite_rank: compositeRank,
+        rank_softness: softnessRank,
+        tier,
+        tier_label: tierLabel,
+        total_dk_fpa: item.total_dk_fpa,
+        total_fd_fpa: item.total_fd_fpa,
+        total_yds: item.total_yds,
+        pass_yds: item.pass_yds,
+        rush_yds: item.rush_yds,
+        total_td: item.total_td,
+        pass_td: item.pass_td,
+        rush_td: item.rush_td,
+        sacks: item.sacks,
+        turnovers: item.turnovers,
+        qb_rank: item.qb_rank,
+        rb_rank: item.rb_rank,
+        wr_rank: item.wr_rank,
+        te_rank: item.te_rank,
+      } as OverallDSTRecord
+    })
+  }, [allDvpRatings])
+
+  // Current single-position ratings (when viewing QB, RB, WR, or TE)
+  const currentPosRatings = useMemo(() => {
+    if (dvpPosition === 'OVERALL') return []
+    return allDvpRatings.filter((r) => r.position === dvpPosition)
+  }, [allDvpRatings, dvpPosition])
+
+  // Universal helper to resolve sort value
+  const getSortValue = (row: any, col: string): any => {
+    if (col.startsWith('supp_')) {
+      const key = col.replace('supp_', '')
+      return row.supporting_stats?.[key] ?? 0
+    }
+    return row[col] ?? 0
+  }
+
+  // Universal column header sort toggle
+  const handleSort = (colKey: string, defaultDesc: boolean = false) => {
+    if (dvpSortCol === colKey) {
+      // Toggle sort direction
+      setDvpSortAsc(!dvpSortAsc)
+    } else {
+      // New column selected: use designated default direction
+      setDvpSortCol(colKey)
+      setDvpSortAsc(!defaultDesc)
+    }
+  }
+
+  // Filtered and sorted records for Positional view
+  const sortedPosRatings = useMemo(() => {
+    let list = [...currentPosRatings]
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase().trim()
       list = list.filter(
@@ -144,7 +351,6 @@ export const DvpTab: React.FC<DvpTabProps> = ({
       )
     }
 
-    // Tier filter
     if (tierFilter === 'SMASH') {
       list = list.filter((r) => r.tier === 'SMASH')
     } else if (tierFilter === 'FAVORABLE') {
@@ -161,39 +367,145 @@ export const DvpTab: React.FC<DvpTabProps> = ({
       })
     }
 
-    // Sort column
     list.sort((a, b) => {
-      const aVal: any = a[dvpSortCol]
-      const bVal: any = b[dvpSortCol]
+      const aVal = getSortValue(a, dvpSortCol)
+      const bVal = getSortValue(b, dvpSortCol)
       if (typeof aVal === 'string') {
         return dvpSortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
       }
-      const numA = aVal ?? 0
-      const numB = bVal ?? 0
+      const numA = Number(aVal) || 0
+      const numB = Number(bVal) || 0
       return dvpSortAsc ? numA - numB : numB - numA
     })
-    return list
-  }, [dvpRatings, searchQuery, tierFilter, dvpSortCol, dvpSortAsc, rosterOpponents])
 
-  // KPI Quick Calculations for the current position
-  const positionKpis = useMemo(() => {
-    if (dvpRatings.length === 0) {
+    return list
+  }, [currentPosRatings, searchQuery, tierFilter, dvpSortCol, dvpSortAsc, rosterOpponents, dvpPosition])
+
+  // Filtered and sorted records for Overall DST view
+  const sortedOverallRecords = useMemo(() => {
+    let list = [...overallDstRecords]
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase().trim()
+      list = list.filter(
+        (r) =>
+          r.team_name.toLowerCase().includes(q) ||
+          r.pro_team.toLowerCase().includes(q) ||
+          r.tier_label.toLowerCase().includes(q)
+      )
+    }
+
+    if (tierFilter === 'SMASH') {
+      list = list.filter((r) => r.tier === 'SMASH')
+    } else if (tierFilter === 'FAVORABLE') {
+      list = list.filter((r) => r.tier === 'FAVORABLE')
+    } else if (tierFilter === 'TOUGH') {
+      list = list.filter((r) => r.tier === 'TOUGH')
+    } else if (tierFilter === 'LOCKDOWN') {
+      list = list.filter((r) => r.tier === 'LOCKDOWN')
+    } else if (tierFilter === 'ROSTER') {
+      list = list.filter((r) => {
+        const norm = normalizeTeamKey(r.pro_team)
+        const facing = rosterOpponents.get(norm) || []
+        return facing.length > 0 || rosteredDstTeam === norm
+      })
+    }
+
+    list.sort((a, b) => {
+      const aVal = getSortValue(a, dvpSortCol)
+      const bVal = getSortValue(b, dvpSortCol)
+      if (typeof aVal === 'string') {
+        return dvpSortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+      }
+      const numA = Number(aVal) || 0
+      const numB = Number(bVal) || 0
+      return dvpSortAsc ? numA - numB : numB - numA
+    })
+
+    return list
+  }, [overallDstRecords, searchQuery, tierFilter, dvpSortCol, dvpSortAsc, rosterOpponents, rosteredDstTeam])
+
+  // KPI Quick Calculations
+  const pulseKpis = useMemo(() => {
+    if (dvpPosition === 'OVERALL') {
+      if (overallDstRecords.length === 0) {
+        return {
+          title1: '🛡️ #1 Toughest Defense',
+          val1: '—',
+          desc1: 'Calculating composite defense...',
+          team1: null as string | null,
+          title2: '🚨 #32 Most Vulnerable DST',
+          val2: '—',
+          desc2: 'Calculating...',
+          team2: null as string | null,
+          title3: '📊 Avg Total FPA Allowed',
+          val3: '0.0',
+          desc3: 'Across all 4 offensive skill positions',
+          title4: '⚔️ Starters Facing Top-8 Soft',
+          val4: '0 Starters',
+          desc4: 'Offensive starters with soft composite matchups',
+        }
+      }
+
+      const toughest = overallDstRecords[0] // Lowest FPA
+      const mostGenerous = overallDstRecords[overallDstRecords.length - 1] // Highest FPA
+      const avgFpa = overallDstRecords.reduce((acc, r) => acc + r.total_dk_fpa, 0) / (overallDstRecords.length || 1)
+
+      // Count starters facing bottom-8 defenses (rank_softness <= 8)
+      let softStartersCount = 0
+      for (const r of overallDstRecords) {
+        if (r.rank_softness <= 8) {
+          const norm = normalizeTeamKey(r.pro_team)
+          const facing = rosterOpponents.get(norm) || []
+          softStartersCount += facing.filter((p) => p.is_starter && p.position !== 'DST').length
+        }
+      }
+
       return {
-        softestTeam: null as DvPRecordItem | null,
-        toughestTeam: null as DvPRecordItem | null,
-        avgFpa: 0,
-        rosterFacingSmashCount: 0,
+        title1: '🛡️ #1 Toughest Overall Defense',
+        val1: toughest ? `${toughest.team_name}` : '—',
+        desc1: toughest ? `Allows league-low ${toughest.total_dk_fpa.toFixed(1)} Total FPA/g (${toughest.total_yds.toFixed(0)} yds/g)` : '',
+        team1: toughest?.pro_team || null,
+        title2: '🚨 #32 Most Vulnerable Defense',
+        val2: mostGenerous ? `${mostGenerous.team_name}` : '—',
+        desc2: mostGenerous ? `Allows league-high ${mostGenerous.total_dk_fpa.toFixed(1)} Total FPA/g (${mostGenerous.total_yds.toFixed(0)} yds/g)` : '',
+        team2: mostGenerous?.pro_team || null,
+        title3: '📊 Avg Total FPA Allowed',
+        val3: `${avgFpa.toFixed(1)} pts/g`,
+        desc3: 'League baseline fantasy points allowed across all positions',
+        title4: '⚔️ Starters Facing Soft DSTs',
+        val4: `${softStartersCount} Starters`,
+        desc4: 'Active roster starters facing bottom-8 composite defenses',
       }
     }
 
-    const sortedBySoftness = [...dvpRatings].sort((a, b) => a.rank_softness - b.rank_softness)
-    const softest = sortedBySoftness[0] || null
-    const toughest = sortedBySoftness[sortedBySoftness.length - 1] || null
-    const avg = dvpRatings.reduce((acc, r) => acc + r.dk_fpa, 0) / (dvpRatings.length || 1)
+    // Positional View KPIs
+    if (currentPosRatings.length === 0) {
+      return {
+        title1: `🔥 #1 Softest ${dvpPosition} Matchup`,
+        val1: '—',
+        desc1: 'Calculating...',
+        team1: null as string | null,
+        title2: `🛑 #32 Toughest ${dvpPosition} Defense`,
+        val2: '—',
+        desc2: 'Calculating...',
+        team2: null as string | null,
+        title3: '📊 Positional Avg FPA',
+        val3: '0.0',
+        desc3: `NFL baseline fantasy scoring environment for ${dvpPosition}s`,
+        title4: `⚔️ My Roster ${dvpPosition} Smash`,
+        val4: '0',
+        desc4: `Rostered ${dvpPosition}s facing top-8 soft defenses`,
+      }
+    }
 
-    // Count active roster players facing top-8 defenses for this position
+    const sortedBySoft = [...currentPosRatings].sort((a, b) => a.rank_softness - b.rank_softness)
+    const softest = sortedBySoft[0] || null
+    const toughest = sortedBySoft[sortedBySoft.length - 1] || null
+    const avg = currentPosRatings.reduce((acc, r) => acc + r.dk_fpa, 0) / (currentPosRatings.length || 1)
+
     let smashCount = 0
-    for (const r of dvpRatings) {
+    for (const r of currentPosRatings) {
       if (r.rank_softness <= 8) {
         const norm = normalizeTeamKey(r.pro_team)
         const facing = rosterOpponents.get(norm) || []
@@ -203,12 +515,61 @@ export const DvpTab: React.FC<DvpTabProps> = ({
     }
 
     return {
-      softestTeam: softest,
-      toughestTeam: toughest,
-      avgFpa: avg,
-      rosterFacingSmashCount: smashCount,
+      title1: `🔥 #1 Softest ${dvpPosition} Matchup`,
+      val1: softest ? `${softest.team_name}` : '—',
+      desc1: softest ? `Allows ${softest.dk_fpa.toFixed(1)} Half-PPR / ${softest.fd_fpa ? softest.fd_fpa.toFixed(1) : '—'} Full-PPR FPA` : '',
+      team1: softest?.pro_team || null,
+      title2: `🛑 #32 Toughest ${dvpPosition} Defense`,
+      val2: toughest ? `${toughest.team_name}` : '—',
+      desc2: toughest ? `Restricts to ${toughest.dk_fpa.toFixed(1)} FPA (${toughest.vs_avg.toFixed(1)} vs avg)` : '',
+      team2: toughest?.pro_team || null,
+      title3: '📊 Positional Avg FPA',
+      val3: `${avg.toFixed(1)} pts/g`,
+      desc3: `NFL baseline fantasy scoring environment for ${dvpPosition}s`,
+      title4: `⚔️ My Roster ${dvpPosition} Smash`,
+      val4: `${smashCount} ${dvpPosition}s`,
+      desc4: `Rostered ${dvpPosition}s facing top-8 soft defenses (Rank ≤ 8)`,
     }
-  }, [dvpRatings, dvpPosition, rosterOpponents])
+  }, [dvpPosition, overallDstRecords, currentPosRatings, rosterOpponents])
+
+  // Helper to render interactive sortable table header
+  const renderSortTh = (title: string, colKey: string, defaultDesc: boolean = false, tooltipTerm?: string) => {
+    const isActive = dvpSortCol === colKey
+    const indicator = isActive ? (dvpSortAsc ? ' ▲' : ' ▼') : ' ↕'
+
+    const headerContent = (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+        <span>{title}</span>
+        <span
+          style={{
+            fontSize: '10.5px',
+            color: isActive ? 'var(--accent-cyan)' : 'var(--text-muted)',
+            opacity: isActive ? 1 : 0.4,
+            fontWeight: isActive ? 800 : 400,
+          }}
+        >
+          {indicator}
+        </span>
+      </span>
+    )
+
+    return (
+      <th
+        key={colKey}
+        onClick={() => handleSort(colKey, defaultDesc)}
+        style={{
+          cursor: 'pointer',
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+          color: isActive ? 'var(--accent-cyan)' : undefined,
+          transition: 'color 0.15s ease',
+        }}
+        title={`Click to sort by ${title} ${isActive ? (dvpSortAsc ? '(Low to High)' : '(High to Low)') : defaultDesc ? '(High to Low first)' : '(Low to High first)'}`}
+      >
+        {tooltipTerm ? <Tooltip term={tooltipTerm}>{headerContent}</Tooltip> : headerContent}
+      </th>
+    )
+  }
 
   return (
     <div className="intel-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -222,7 +583,7 @@ export const DvpTab: React.FC<DvpTabProps> = ({
             <div>
               <h2 className="intel-heading">DEFENSES VS POSITION (DvP)</h2>
               <p className="intel-subtitle">
-                32-team defensive matchup generosity, Fantasy Points Allowed (Half-PPR & Full-PPR), and active roster leverage.
+                32-team composite defensive rankings, positional Fantasy Points Allowed (Half-PPR & Full-PPR), and active roster leverage.
               </p>
             </div>
           </div>
@@ -238,7 +599,7 @@ export const DvpTab: React.FC<DvpTabProps> = ({
               className="btn btn-primary btn-sm"
               style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700 }}
             >
-              {isSyncingDvp ? '⏳ Syncing DraftEdge...' : '🔄 Sync DvP Feed'}
+              {isSyncingDvp ? '⏳ Syncing Feed...' : '🔄 Sync DvP Feed'}
             </button>
           </div>
         </div>
@@ -252,7 +613,7 @@ export const DvpTab: React.FC<DvpTabProps> = ({
             <span className="pill cyan" style={{ fontSize: '10px' }}>Half-PPR (FanDuel) & Full-PPR (ESPN)</span>
           </div>
           <p className="intel-dvp-banner-text">
-            Rankings evaluate defensive generosity per position group. For <strong>Week {league?.current_week || 2}</strong>, ratings blend realized game data with the weighted 2025-26 baseline. As additional 2026-27 games conclude, current-season sample weights expand dynamically. Higher Fantasy Points Allowed (FPA) indicates softer, high-ceiling fantasy matchups.
+            Rankings evaluate defensive generosity per position group and overall as a composite unit. For <strong>Week {league?.current_week || 2}</strong>, ratings blend realized game data with the weighted 2025-26 baseline. Click any column header to sort high-to-low or low-to-high.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
             <span className="pill purple" style={{ fontSize: '10.5px' }}>
@@ -275,81 +636,82 @@ export const DvpTab: React.FC<DvpTabProps> = ({
         </div>
       </div>
 
-      {/* 3. POSITIONAL KPI PULSE STRIP */}
+      {/* 3. POSITIONAL / OVERALL KPI PULSE STRIP */}
       <div className="intel-pulse-grid">
         <div className="intel-pulse-card">
           <div className="intel-pulse-label">
-            <span>🔥 #1 Softest {dvpPosition} Matchup</span>
+            <span>{pulseKpis.title1}</span>
           </div>
           <div className="intel-pulse-val" style={{ color: 'var(--accent-emerald)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {positionKpis.softestTeam ? (
-              <>
-                <NFLTeamLogo team={positionKpis.softestTeam.pro_team} size={22} />
-                <span>{positionKpis.softestTeam.team_name}</span>
-              </>
-            ) : (
-              '—'
-            )}
+            {pulseKpis.team1 && <NFLTeamLogo team={pulseKpis.team1} size={22} />}
+            <span>{pulseKpis.val1}</span>
           </div>
-          <div className="intel-pulse-desc">
-            Allows {positionKpis.softestTeam ? `${positionKpis.softestTeam.dk_fpa.toFixed(1)} Half-PPR / ${positionKpis.softestTeam.fd_fpa ? positionKpis.softestTeam.fd_fpa.toFixed(1) : '—'} Full-PPR FPA` : 'Calculating...'}
-          </div>
+          <div className="intel-pulse-desc">{pulseKpis.desc1}</div>
         </div>
 
         <div className="intel-pulse-card">
           <div className="intel-pulse-label">
-            <span>🛑 #32 Toughest {dvpPosition} Defense</span>
+            <span>{pulseKpis.title2}</span>
           </div>
           <div className="intel-pulse-val" style={{ color: 'var(--accent-rose)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {positionKpis.toughestTeam ? (
-              <>
-                <NFLTeamLogo team={positionKpis.toughestTeam.pro_team} size={22} />
-                <span>{positionKpis.toughestTeam.team_name}</span>
-              </>
-            ) : (
-              '—'
-            )}
+            {pulseKpis.team2 && <NFLTeamLogo team={pulseKpis.team2} size={22} />}
+            <span>{pulseKpis.val2}</span>
           </div>
-          <div className="intel-pulse-desc">
-            Restricts to {positionKpis.toughestTeam ? `${positionKpis.toughestTeam.dk_fpa.toFixed(1)} FPA (${positionKpis.toughestTeam.vs_avg.toFixed(1)} vs avg)` : 'Calculating...'}
-          </div>
+          <div className="intel-pulse-desc">{pulseKpis.desc2}</div>
         </div>
 
         <div className="intel-pulse-card">
           <div className="intel-pulse-label">
-            <span>📊 Positional Average FPA</span>
+            <span>{pulseKpis.title3}</span>
           </div>
           <div className="intel-pulse-val" style={{ color: 'var(--accent-cyan)' }}>
-            {positionKpis.avgFpa.toFixed(1)} <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>pts/game</span>
+            {pulseKpis.val3}
           </div>
-          <div className="intel-pulse-desc">NFL baseline fantasy scoring environment for {dvpPosition}s</div>
+          <div className="intel-pulse-desc">{pulseKpis.desc3}</div>
         </div>
 
         <div className="intel-pulse-card">
           <div className="intel-pulse-label">
-            <span>⚔️ My Roster Smash Matchups</span>
+            <span>{pulseKpis.title4}</span>
           </div>
-          <div className="intel-pulse-val" style={{ color: positionKpis.rosterFacingSmashCount > 0 ? 'var(--accent-emerald)' : 'var(--text-secondary)' }}>
-            {positionKpis.rosterFacingSmashCount} <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{dvpPosition}s</span>
+          <div className="intel-pulse-val" style={{ color: 'var(--accent-amber)' }}>
+            {pulseKpis.val4}
           </div>
-          <div className="intel-pulse-desc">Rostered players facing top-8 softest defenses (Rank ≤ 8)</div>
+          <div className="intel-pulse-desc">{pulseKpis.desc4}</div>
         </div>
       </div>
 
-      {/* 4. CONTROLS: POSITION SELECTOR, TIER FILTERS & SEARCH */}
+      {/* 4. CONTROLS: POSITION SELECTOR (OVERALL + QB/RB/WR/TE), TIER FILTERS & SEARCH */}
       <div className="intel-filter-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          {/* Position Selector */}
+          {/* Position Selector with OVERALL DST */}
           <div className="intel-dvp-pos-selector">
-            {(['QB', 'RB', 'WR', 'TE'] as const).map((pos) => (
+            {(['OVERALL', 'QB', 'RB', 'WR', 'TE'] as const).map((pos) => (
               <button
                 key={pos}
                 type="button"
-                onClick={() => setDvpPosition(pos)}
+                onClick={() => {
+                  setDvpPosition(pos)
+                  if (pos === 'OVERALL') {
+                    setDvpSortCol('composite_rank')
+                    setDvpSortAsc(true)
+                  } else {
+                    setDvpSortCol('rank_softness')
+                    setDvpSortAsc(true)
+                  }
+                }}
                 className={`intel-dvp-pos-btn ${dvpPosition === pos ? 'active' : ''}`}
-                style={{ fontSize: '13px', padding: '8px 16px' }}
+                style={{ fontSize: '13px', padding: '8px 16px', fontWeight: dvpPosition === pos ? 800 : 600 }}
               >
-                {pos === 'QB' ? '🎯 QB Matchups' : pos === 'RB' ? '🏃 RB Matchups' : pos === 'WR' ? '⚡ WR Matchups' : '🛡️ TE Matchups'}
+                {pos === 'OVERALL'
+                  ? '🏆 OVERALL DST'
+                  : pos === 'QB'
+                  ? '🎯 QB Matchups'
+                  : pos === 'RB'
+                  ? '🏃 RB Matchups'
+                  : pos === 'WR'
+                  ? '⚡ WR Matchups'
+                  : '🛡️ TE Matchups'}
               </button>
             ))}
           </div>
@@ -369,11 +731,13 @@ export const DvpTab: React.FC<DvpTabProps> = ({
                   : t === 'SMASH'
                   ? '🚀 Smash'
                   : t === 'FAVORABLE'
-                  ? '👍 Favorable'
+                  ? '👍 Strong'
                   : t === 'TOUGH'
                   ? '⚠️ Tough'
                   : t === 'LOCKDOWN'
                   ? '🛑 Lockdown'
+                  : dvpPosition === 'OVERALL'
+                  ? '⚔️ My Matchups'
                   : `⚔️ My ${dvpPosition} Matchups`}
               </button>
             ))}
@@ -393,93 +757,291 @@ export const DvpTab: React.FC<DvpTabProps> = ({
         </div>
       </div>
 
-      {/* 5. DVP FULL INTERACTIVE MATRIX TABLE */}
+      {/* 5. INTERACTIVE SORTABLE MATRIX TABLE */}
       {isLoadingDvp ? (
         <div className="card" style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
           <div style={{ fontSize: '32px', marginBottom: '12px' }}>⏳</div>
-          Loading {dvpPosition} Defense vs Position ratings and projections...
+          Loading Defense vs Position ratings and composite rankings...
         </div>
-      ) : sortedDvpRatings.length === 0 ? (
+      ) : (dvpPosition === 'OVERALL' ? sortedOverallRecords.length === 0 : sortedPosRatings.length === 0) ? (
         <div className="card" style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
           No defensive teams found matching your filter criteria.
         </div>
-      ) : (
+      ) : dvpPosition === 'OVERALL' ? (
+        /* ========================================================================= */
+        /* VIEW A: OVERALL COMPOSITE DST LEADERBOARD                                 */
+        /* ========================================================================= */
         <div className="intel-dvp-table-wrap">
           <table className="intel-dvp-table">
             <thead>
               <tr>
-                <th onClick={() => { setDvpSortCol('rank_softness'); setDvpSortAsc(!dvpSortAsc) }}>
-                  Softness Rank {dvpSortCol === 'rank_softness' ? (dvpSortAsc ? '▲' : '▼') : ''}
-                </th>
-                <th onClick={() => { setDvpSortCol('team_name'); setDvpSortAsc(!dvpSortAsc) }}>
-                  Defensive Team {dvpSortCol === 'team_name' ? (dvpSortAsc ? '▲' : '▼') : ''}
-                </th>
-                <th>Matchup Tier</th>
-                <th>My Roster Exposure ({dvpPosition})</th>
-                <th onClick={() => { setDvpSortCol('dk_fpa'); setDvpSortAsc(!dvpSortAsc) }}>
-                  <Tooltip term="DVP_FPA">
-                    <span>Half-PPR FPA (FanDuel) {dvpSortCol === 'dk_fpa' ? (dvpSortAsc ? '▲' : '▼') : ''}</span>
-                  </Tooltip>
-                </th>
-                <th>
-                  <Tooltip term="DVP_FULL_PPR_FPA">
-                    <span>Full-PPR FPA (ESPN Fantasy)</span>
-                  </Tooltip>
-                </th>
-                <th onClick={() => { setDvpSortCol('vs_avg'); setDvpSortAsc(!dvpSortAsc) }}>
-                  vs Pos Avg {dvpSortCol === 'vs_avg' ? (dvpSortAsc ? '▲' : '▼') : ''}
-                </th>
-                <th>2025-26 Base</th>
-                <th>2026-27 Curr</th>
-                <th>L4 Trend</th>
+                {renderSortTh('Overall DST Rank', 'composite_rank', false)}
+                {renderSortTh('Defensive Team', 'team_name', false)}
+                {renderSortTh('Defense Tier', 'tier', false)}
+                <th>My Roster Exposure</th>
+                {renderSortTh('Total Half-PPR FPA', 'total_dk_fpa', true, 'DVP_FPA')}
+                {renderSortTh('Total Full-PPR FPA', 'total_fd_fpa', true, 'DVP_FULL_PPR_FPA')}
+                {renderSortTh('Total Yds/G', 'total_yds', true)}
+                {renderSortTh('Pass Yds/G', 'pass_yds', true)}
+                {renderSortTh('Rush Yds/G', 'rush_yds', true)}
+                {renderSortTh('Total TDs/G', 'total_td', true)}
+                {renderSortTh('Sacks/G', 'sacks', true)}
+                {renderSortTh('Turnovers/G', 'turnovers', true)}
+                <th style={{ whiteSpace: 'nowrap' }}>Positional Softness (QB / RB / WR / TE)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedOverallRecords.map((row) => {
+                const normProTeam = normalizeTeamKey(row.pro_team)
+                const facingPlayers = rosterOpponents.get(normProTeam) || []
+                const hasRosteredDst = rosteredDstTeam === normProTeam
+                const facingStarters = facingPlayers.filter((p) => p.is_starter && p.position !== 'DST')
+                const facingBench = facingPlayers.filter((p) => !p.is_starter && p.position !== 'DST')
+                const isFacing = facingStarters.length > 0 || hasRosteredDst
 
-                {/* Position-Specific Stat Columns */}
+                return (
+                  <tr key={row.id} className={isFacing ? 'roster-facing' : ''}>
+                    {/* Overall DST Composite Rank */}
+                    <td>
+                      <span
+                        className={`pill ${
+                          row.composite_rank <= 6
+                            ? 'emerald'
+                            : row.composite_rank <= 14
+                            ? 'cyan'
+                            : row.composite_rank <= 22
+                            ? 'zinc'
+                            : row.composite_rank <= 28
+                            ? 'amber'
+                            : 'rose'
+                        }`}
+                        style={{ fontWeight: 800, fontSize: '11px', minWidth: '46px', justifyContent: 'center' }}
+                      >
+                        #{row.composite_rank}
+                      </span>
+                    </td>
+
+                    {/* Defensive Team */}
+                    <td>
+                      <div className="intel-dvp-team-cell">
+                        <NFLTeamLogo team={row.pro_team} size={24} />
+                        <div>
+                          <strong style={{ color: 'var(--text-primary)', fontSize: '13px' }}>
+                            {row.team_name}
+                          </strong>
+                          <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginLeft: '4px' }}>
+                            ({row.pro_team})
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Matchup Tier */}
+                    <td>
+                      <span
+                        className={`pill ${
+                          row.tier === 'LOCKDOWN'
+                            ? 'emerald'
+                            : row.tier === 'FAVORABLE'
+                            ? 'cyan'
+                            : row.tier === 'NEUTRAL'
+                            ? 'zinc'
+                            : row.tier === 'TOUGH'
+                            ? 'amber'
+                            : 'rose'
+                        }`}
+                        style={{ fontSize: '10px', fontWeight: 800 }}
+                      >
+                        {row.tier_label}
+                      </span>
+                    </td>
+
+                    {/* My Roster Exposure (Overall DST) */}
+                    <td>
+                      {hasRosteredDst ? (
+                        <span
+                          className="pill emerald"
+                          style={{ fontSize: '10px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          🛡️ YOUR D/ST {rosteredDstIsStarter ? '[STARTER]' : '[BENCH]'}
+                        </span>
+                      ) : facingStarters.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span
+                            className="pill cyan"
+                            style={{ fontSize: '10px', fontWeight: 700 }}
+                            title={`Active Starters facing this defense: ${facingStarters.map((p) => `${p.full_name} (${p.position})`).join(', ')}`}
+                          >
+                            ⚔️ {facingStarters.length} Starter{facingStarters.length > 1 ? 's' : ''} ({facingStarters.map((p) => `${p.full_name.split(' ').pop()} ${p.position}`).join(', ')})
+                          </span>
+                          {facingBench.length > 0 && (
+                            <span style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>
+                              +{facingBench.length} Bench ({facingBench.map((p) => `${p.full_name.split(' ').pop()} ${p.position}`).join(', ')})
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>—</span>
+                      )}
+                    </td>
+
+                    {/* Total Half-PPR FPA (FanDuel) */}
+                    <td>
+                      <strong
+                        className="intel-dvp-val-mono"
+                        style={{
+                          color:
+                            row.composite_rank <= 6
+                              ? 'var(--accent-emerald)'
+                              : row.composite_rank >= 27
+                              ? 'var(--accent-rose)'
+                              : 'var(--text-primary)',
+                          fontSize: '13.5px',
+                        }}
+                      >
+                        {row.total_dk_fpa.toFixed(1)}
+                      </strong>
+                    </td>
+
+                    {/* Total Full-PPR FPA (ESPN) */}
+                    <td>
+                      <span className="intel-dvp-val-mono" style={{ color: 'var(--text-secondary)' }}>
+                        {row.total_fd_fpa ? row.total_fd_fpa.toFixed(1) : '—'}
+                      </span>
+                    </td>
+
+                    {/* Total Yds/G (Pass + Rush) */}
+                    <td>
+                      <span className="intel-dvp-val-mono" style={{ color: 'var(--text-primary)' }}>
+                        {row.total_yds ? `${row.total_yds.toFixed(0)} yds` : '—'}
+                      </span>
+                    </td>
+
+                    {/* Pass Yds/G */}
+                    <td>{row.pass_yds ? `${row.pass_yds.toFixed(0)} yds` : '—'}</td>
+
+                    {/* Rush Yds/G */}
+                    <td>{row.rush_yds ? `${row.rush_yds.toFixed(0)} yds` : '—'}</td>
+
+                    {/* Total TDs/G */}
+                    <td>
+                      <span style={{ fontWeight: 700 }}>
+                        {row.total_td ? row.total_td.toFixed(1) : '—'}
+                      </span>
+                    </td>
+
+                    {/* Sacks/G */}
+                    <td>
+                      <span style={{ color: row.sacks >= 2.5 ? 'var(--accent-emerald)' : 'inherit', fontWeight: row.sacks >= 2.5 ? 700 : 400 }}>
+                        {row.sacks ? row.sacks.toFixed(1) : '—'}
+                      </span>
+                    </td>
+
+                    {/* Turnovers/G */}
+                    <td>{row.turnovers ? row.turnovers.toFixed(1) : '—'}</td>
+
+                    {/* Positional Softness Matrix (QB, RB, WR, TE) */}
+                    <td>
+                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        <span
+                          className={`pill ${row.qb_rank <= 8 ? 'emerald' : row.qb_rank >= 25 ? 'rose' : 'zinc'}`}
+                          style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 700 }}
+                          title={`QB Softness Rank #${row.qb_rank} (${row.qb_rank <= 8 ? 'Soft' : row.qb_rank >= 25 ? 'Tough' : 'Neutral'})`}
+                        >
+                          QB #{row.qb_rank}
+                        </span>
+                        <span
+                          className={`pill ${row.rb_rank <= 8 ? 'emerald' : row.rb_rank >= 25 ? 'rose' : 'zinc'}`}
+                          style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 700 }}
+                          title={`RB Softness Rank #${row.rb_rank} (${row.rb_rank <= 8 ? 'Soft' : row.rb_rank >= 25 ? 'Tough' : 'Neutral'})`}
+                        >
+                          RB #{row.rb_rank}
+                        </span>
+                        <span
+                          className={`pill ${row.wr_rank <= 8 ? 'emerald' : row.wr_rank >= 25 ? 'rose' : 'zinc'}`}
+                          style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 700 }}
+                          title={`WR Softness Rank #${row.wr_rank} (${row.wr_rank <= 8 ? 'Soft' : row.wr_rank >= 25 ? 'Tough' : 'Neutral'})`}
+                        >
+                          WR #{row.wr_rank}
+                        </span>
+                        <span
+                          className={`pill ${row.te_rank <= 8 ? 'emerald' : row.te_rank >= 25 ? 'rose' : 'zinc'}`}
+                          style={{ fontSize: '9.5px', padding: '1px 5px', fontWeight: 700 }}
+                          title={`TE Softness Rank #${row.te_rank} (${row.te_rank <= 8 ? 'Soft' : row.te_rank >= 25 ? 'Tough' : 'Neutral'})`}
+                        >
+                          TE #{row.te_rank}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        /* ========================================================================= */
+        /* VIEW B: POSITIONAL DVP MATRIX (QB / RB / WR / TE)                         */
+        /* ========================================================================= */
+        <div className="intel-dvp-table-wrap">
+          <table className="intel-dvp-table">
+            <thead>
+              <tr>
+                {renderSortTh('Softness Rank', 'rank_softness', false)}
+                {renderSortTh('Defensive Team', 'team_name', false)}
+                {renderSortTh('Matchup Tier', 'tier', false)}
+                <th>My Roster Exposure ({dvpPosition})</th>
+                {renderSortTh('Half-PPR FPA (FanDuel)', 'dk_fpa', true, 'DVP_FPA')}
+                {renderSortTh('Full-PPR FPA (ESPN Fantasy)', 'fd_fpa', true, 'DVP_FULL_PPR_FPA')}
+                {renderSortTh('vs Pos Avg', 'vs_avg', true)}
+                {renderSortTh('2025-26 Base', 'prior_season_fpa', true)}
+                {renderSortTh('2026-27 Curr', 'current_season_fpa', true)}
+                {renderSortTh('L4 Trend', 'trend', false)}
+
+                {/* Position-Specific Stat Columns with universal bidirectional sorting */}
                 {dvpPosition === 'QB' && (
                   <>
-                    <th>Pass Yds/G</th>
-                    <th>Pass TD/G</th>
-                    <th>Sacks/G</th>
-                    <th>Rush Yds/G</th>
+                    {renderSortTh('Pass Yds/G', 'supp_pass_yds', true)}
+                    {renderSortTh('Pass TD/G', 'supp_pass_td', true)}
+                    {renderSortTh('Sacks/G', 'supp_sacks', true)}
+                    {renderSortTh('Rush Yds/G', 'supp_qb_rush_yds', true)}
                   </>
                 )}
                 {dvpPosition === 'RB' && (
                   <>
-                    <th>Rush Yds/G</th>
-                    <th>Rush TD/G</th>
-                    <th>Targets/G</th>
-                    <th>Rec Yds/G</th>
+                    {renderSortTh('Rush Yds/G', 'supp_rush_yds', true)}
+                    {renderSortTh('Rush TD/G', 'supp_rush_td', true)}
+                    {renderSortTh('Targets/G', 'supp_targets', true)}
+                    {renderSortTh('Rec Yds/G', 'supp_rec_yds', true)}
                   </>
                 )}
                 {dvpPosition === 'WR' && (
                   <>
-                    <th>Rec Yds/G</th>
-                    <th>Rec TD/G</th>
-                    <th>Targets/G</th>
-                    <th>Rec/G</th>
+                    {renderSortTh('Rec Yds/G', 'supp_rec_yds', true)}
+                    {renderSortTh('Rec TD/G', 'supp_rec_td', true)}
+                    {renderSortTh('Targets/G', 'supp_targets', true)}
+                    {renderSortTh('Rec/G', 'supp_rec', true)}
                   </>
                 )}
                 {dvpPosition === 'TE' && (
                   <>
-                    <th>Rec Yds/G</th>
-                    <th>Rec TD/G</th>
-                    <th>Targets/G</th>
-                    <th>Rec/G</th>
+                    {renderSortTh('Rec Yds/G', 'supp_rec_yds', true)}
+                    {renderSortTh('Rec TD/G', 'supp_rec_td', true)}
+                    {renderSortTh('Targets/G', 'supp_targets', true)}
+                    {renderSortTh('Rec/G', 'supp_rec', true)}
                   </>
                 )}
               </tr>
             </thead>
             <tbody>
-              {sortedDvpRatings.map((row) => {
+              {sortedPosRatings.map((row) => {
                 const normProTeam = normalizeTeamKey(row.pro_team)
                 const facingPlayers = rosterOpponents.get(normProTeam) || []
                 // Strictly filter to only roster players matching the current position category
                 const posFacing = facingPlayers.filter((p) => p.position === dvpPosition)
 
                 return (
-                  <tr
-                    key={row.id}
-                    className={posFacing.length > 0 ? 'roster-facing' : ''}
-                  >
+                  <tr key={row.id} className={posFacing.length > 0 ? 'roster-facing' : ''}>
                     {/* Softness Rank */}
                     <td>
                       <span
@@ -640,7 +1202,13 @@ export const DvpTab: React.FC<DvpTabProps> = ({
                         <td>{row.supporting_stats?.pass_yds ? `${row.supporting_stats.pass_yds.toFixed(0)} yds` : '—'}</td>
                         <td>{row.supporting_stats?.pass_td ? row.supporting_stats.pass_td.toFixed(2) : '—'}</td>
                         <td>{row.supporting_stats?.sacks ? row.supporting_stats.sacks.toFixed(1) : '—'}</td>
-                        <td>{row.supporting_stats?.rush_yds ? `${row.supporting_stats.rush_yds.toFixed(0)} yds` : '—'}</td>
+                        <td>
+                          {row.supporting_stats?.qb_rush_yds !== undefined
+                            ? `${row.supporting_stats.qb_rush_yds.toFixed(0)} yds`
+                            : row.supporting_stats?.rush_yds !== undefined
+                            ? `${row.supporting_stats.rush_yds.toFixed(0)} yds`
+                            : '—'}
+                        </td>
                       </>
                     )}
                     {dvpPosition === 'RB' && (
