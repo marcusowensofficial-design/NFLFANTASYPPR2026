@@ -781,14 +781,25 @@ export const IntelTab: React.FC<IntelTabProps> = ({
 
         {/* Primary Matchup Rating Strip */}
         <div className="intel-matchup-strip">
-          <div className="intel-stars-group">
-            <MatchupStarRating stars={stars} oppDvpRank={p.opp_dvp_rank} position={p.position} />
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {tier.label}
-            </span>
+          <div className="intel-matchup-top-row">
+            <div className="intel-stars-group">
+              <MatchupStarRating stars={stars} oppDvpRank={p.opp_dvp_rank} position={p.position} />
+              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                {tier.label}
+              </span>
+            </div>
+            {p.opp_def_rank !== undefined && p.opp_def_rank !== null && (
+              <span
+                className="pill zinc intel-opp-def-rank"
+                style={{ fontSize: '10.5px', padding: '2px 7px', fontWeight: 700, marginLeft: 'auto' }}
+                title={`FantasyPros Consensus: Overall Opponent Defense Rank #${p.opp_def_rank}`}
+              >
+                Def #{p.opp_def_rank}
+              </span>
+            )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="intel-matchup-badges">
             {p.boris_chen_tier && (
               <Tooltip term="BORIS_TIER" title={`Boris Chen GMM Tier ${p.boris_chen_tier}`}>
                 <span className={`boris-tier-badge tier-${p.boris_chen_tier}`}>
@@ -797,7 +808,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
               </Tooltip>
             )}
             {p.dvp_fpa ? (
-              <Tooltip term="DVP_FPA" title={`Half-PPR Fantasy Points Allowed to ${p.position}s (FanDuel)`}>
+              <Tooltip term="DVP_FPA" title={`Half-PPR Fantasy Points Allowed to ${p.position}s: ${p.dvp_fpa.dk_fpa.toFixed(1)} pts/G (Rank #${p.dvp_fpa.rank_softness} ${p.dvp_fpa.tier_label})`}>
                 <span
                   className={`pill ${
                     p.dvp_fpa.tier === 'SMASH'
@@ -824,7 +835,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                       : {}),
                   }}
                 >
-                  🛡️ {p.dvp_fpa.dk_fpa.toFixed(1)} Half-PPR FPA (#{p.dvp_fpa.rank_softness} {p.dvp_fpa.tier_label})
+                  🛡️ {p.dvp_fpa.dk_fpa.toFixed(1)} Half-PPR FPA (#{p.dvp_fpa.rank_softness} {p.dvp_fpa.tier === 'SMASH' ? 'Smash' : p.dvp_fpa.tier === 'FAVORABLE' ? 'Favorable' : p.dvp_fpa.tier === 'TOUGH' ? 'Tough' : p.dvp_fpa.tier === 'LOCKDOWN' ? 'Lockdown' : 'Neutral'})
                 </span>
               </Tooltip>
             ) : p.opp_dvp_rank ? (
@@ -842,11 +853,6 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                 </span>
               </Tooltip>
             ) : null}
-            {p.opp_def_rank && (
-              <span className="pill zinc" style={{ fontSize: '10.5px' }} title="Overall Team Defense Rank">
-                Def #{p.opp_def_rank}
-              </span>
-            )}
             {sentiment?.has_starter_controversy && (
               <Tooltip term="MARKET_STARTER" title={sentiment.tactical_advice}>
                 <span
