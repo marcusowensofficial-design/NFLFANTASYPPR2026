@@ -5,6 +5,7 @@ for any NFL player or D/ST unit across the 2026 season.
 """
 
 import asyncio
+import json
 import logging
 import sqlite3
 from datetime import datetime, timezone
@@ -15,7 +16,10 @@ import httpx
 logger = logging.getLogger(__name__)
 
 ESPN_GAMELOG_URL = "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/{athlete_id}/gamelog"
-DB_PATH = Path("data/fantasy.db")
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+DB_PATH = BASE_DIR / "data" / "fantasy.db"
+DEPTH_CHART_PATH = BASE_DIR / "data" / "nfl_depth_charts_2026.json"
+INJURIES_PATH = BASE_DIR / "data" / "injuries_live_2026.json"
 
 NFL_DST_MAP: dict[str, tuple[str, str, int]] = {
     "ARI": ("Cardinals D/ST", "ARI", -16001),
@@ -65,76 +69,133 @@ class GameLogService:
         self._cache.clear()
 
     def _resolve_athlete_by_name_or_id(self, player_id_or_name: int | str) -> tuple[int | None, str | None, str | None, str | None]:
-        """Resolves athlete ID, full name, position, and pro team from SQLite database."""
-        if not DB_PATH.exists():
-            return None, None, None, None
+        """Resolves athlete ID, full name, position, and pro team from SQLite, Depth Charts, or Injury JSON."""
+        # 1. Handle integer or numeric ID input
+        if isinstance(player_id_or_name, int) or (isinstance(player_id_or_name, str) and player_id_or_name.lstrip("-").isdigit()):
+            pid = int(player_id_or_name)
+            # If negative ID, check if it's a D/ST
+            if pid < 0:
+                for abbr, (t_name, t_abbr, d_id) in NFL_DST_MAP.items():
+                    if d_id == pid:
+                        return d_id, t_name, "D/ST", t_abbr
+                return pid, f"D/ST {pid}", "D/ST", "DEF"
 
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        try:
-            # Check by integer ID
-            if isinstance(player_id_or_name, int) or (isinstance(player_id_or_name, str) and player_id_or_name.lstrip("-").isdigit()):
-                pid = int(player_id_or_name)
+            # Check SQLite if DB exists
+            if DB_PATH.exists():
+                try:
+                    conn = sqlite3.connect(DB_PATH)
+                    cursor = conn.cursor()
+                    row = cursor.execute(
+                        "SELECT id, full_name, position, pro_team FROM players WHERE id = ?", (pid,)
+                    ).fetchone()
+                    conn.close()
+                    if row:
+                        return row[0], row[1], row[2], row[3]
+                except Exception as e:
+                    logger.debug(f"DB lookup failed for ID {pid}: {e}")
+
+            # Fallback to Depth Chart JSON
+            if DEPTH_CHART_PATH.exists():
+                try:
+                    with open(DEPTH_CHART_PATH, "r", encoding="utf-8") as f:
+                        dc_data = json.load(f)
+                    for team_abbr, tdata in dc_data.get("teams", {}).items():
+                        for unit in ["offense", "defense", "special_teams"]:
+                            for slot, players in tdata.get(unit, {}).items():
+                                for p in players:
+                                    if p.get("id") == pid:
+                                        pos = slot.upper().rstrip("12345")
+                                        return pid, p.get("name"), pos, team_abbr
+                except Exception as e:
+                    logger.debug(f"Depth chart lookup failed for ID {pid}: {e}")
+
+            return pid, None, None, None
+
+        # 2. Check by Name or D/ST alias
+        name_query = str(player_id_or_name).strip()
+        clean_q = name_query.lower().replace(" d/st", "").replace(" defense", "").replace("dst", "").strip()
+
+        alias_map: dict[str, str] = {
+            "bills": "BUF", "buffalo": "BUF", "buffalo bills": "BUF",
+            "vikings": "MIN", "minnesota": "MIN", "minnesota vikings": "MIN",
+            "49ers": "SF", "niners": "SF", "san francisco": "SF", "san francisco 49ers": "SF",
+            "packers": "GB", "green bay": "GB", "green bay packers": "GB",
+            "cowboys": "DAL", "dallas": "DAL", "dallas cowboys": "DAL",
+            "lions": "DET", "detroit": "DET", "detroit lions": "DET",
+            "chiefs": "KC", "kansas city": "KC", "kansas city chiefs": "KC",
+            "eagles": "PHI", "philadelphia": "PHI", "philadelphia eagles": "PHI",
+            "steelers": "PIT", "pittsburgh": "PIT", "pittsburgh steelers": "PIT",
+            "ravens": "BAL", "baltimore": "BAL", "baltimore ravens": "BAL",
+            "texans": "HOU", "houston": "HOU", "houston texans": "HOU",
+            "bengals": "CIN", "cincinnati": "CIN", "cincinnati bengals": "CIN",
+            "bears": "CHI", "chicago": "CHI", "chicago bears": "CHI",
+            "falcons": "ATL", "atlanta": "ATL", "atlanta falcons": "ATL",
+            "panthers": "CAR", "carolina": "CAR", "carolina panthers": "CAR",
+            "saints": "NO", "new orleans": "NO", "new orleans saints": "NO",
+            "buccaneers": "TB", "bucs": "TB", "tampa": "TB", "tampa bay": "TB", "tampa bay buccaneers": "TB",
+            "commanders": "WAS", "washington": "WAS", "washington commanders": "WAS",
+            "cardinals": "ARI", "arizona": "ARI", "arizona cardinals": "ARI",
+            "seahawks": "SEA", "seattle": "SEA", "seattle seahawks": "SEA",
+            "rams": "LAR", "los angeles rams": "LAR", "la rams": "LAR",
+            "chargers": "LAC", "los angeles chargers": "LAC", "la chargers": "LAC",
+            "raiders": "LV", "las vegas": "LV", "las vegas raiders": "LV",
+            "broncos": "DEN", "denver": "DEN", "denver broncos": "DEN",
+            "colts": "IND", "indianapolis": "IND", "indianapolis colts": "IND",
+            "jaguars": "JAX", "jacksonville": "JAX", "jacksonville jaguars": "JAX",
+            "titans": "TEN", "tennessee": "TEN", "tennessee titans": "TEN",
+            "jets": "NYJ", "new york jets": "NYJ", "ny jets": "NYJ",
+            "giants": "NYG", "new york giants": "NYG", "ny giants": "NYG",
+            "patriots": "NE", "new england": "NE", "new england patriots": "NE",
+            "browns": "CLE", "cleveland": "CLE", "cleveland browns": "CLE",
+            "dolphins": "MIA", "miami": "MIA", "miami dolphins": "MIA",
+        }
+        resolved_abbr = alias_map.get(clean_q) or (clean_q.upper() if clean_q.upper() in NFL_DST_MAP else None)
+        if resolved_abbr and resolved_abbr in NFL_DST_MAP:
+            t_name, t_abbr, d_id = NFL_DST_MAP[resolved_abbr]
+            return d_id, t_name, "D/ST", t_abbr
+
+        # 3. Check SQLite by Name if DB exists
+        if DB_PATH.exists():
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
                 row = cursor.execute(
-                    "SELECT id, full_name, position, pro_team FROM players WHERE id = ?", (pid,)
+                    "SELECT id, full_name, position, pro_team FROM players WHERE LOWER(full_name) = LOWER(?) LIMIT 1",
+                    (name_query,),
                 ).fetchone()
+                conn.close()
                 if row:
                     return row[0], row[1], row[2], row[3]
-                return pid, None, None, None
+            except Exception as e:
+                logger.debug(f"DB lookup failed for name {name_query}: {e}")
 
-            # Check by Name
-            name_query = str(player_id_or_name).strip()
-            row = cursor.execute(
-                "SELECT id, full_name, position, pro_team FROM players WHERE LOWER(full_name) = LOWER(?) LIMIT 1",
-                (name_query,),
-            ).fetchone()
-            if row:
-                return row[0], row[1], row[2], row[3]
+        # 4. Check Depth Charts JSON by Name
+        if DEPTH_CHART_PATH.exists():
+            try:
+                with open(DEPTH_CHART_PATH, "r", encoding="utf-8") as f:
+                    dc_data = json.load(f)
+                for team_abbr, tdata in dc_data.get("teams", {}).items():
+                    for unit in ["offense", "defense", "special_teams"]:
+                        for slot, players in tdata.get(unit, {}).items():
+                            for p in players:
+                                if p.get("name", "").lower() == name_query.lower():
+                                    pos = slot.upper().rstrip("12345")
+                                    return p.get("id"), p.get("name"), pos, team_abbr
+            except Exception as e:
+                logger.debug(f"Depth chart lookup failed for name {name_query}: {e}")
 
-            # If still not found, check if this is an NFL Team Defense (D/ST) for any of the 32 NFL franchises
-            clean_q = name_query.lower().replace(" d/st", "").replace(" defense", "").replace("dst", "").strip()
-            alias_map: dict[str, str] = {
-                "bills": "BUF", "buffalo": "BUF", "buffalo bills": "BUF",
-                "vikings": "MIN", "minnesota": "MIN", "minnesota vikings": "MIN",
-                "49ers": "SF", "niners": "SF", "san francisco": "SF", "san francisco 49ers": "SF",
-                "packers": "GB", "green bay": "GB", "green bay packers": "GB",
-                "cowboys": "DAL", "dallas": "DAL", "dallas cowboys": "DAL",
-                "lions": "DET", "detroit": "DET", "detroit lions": "DET",
-                "chiefs": "KC", "kansas city": "KC", "kansas city chiefs": "KC",
-                "eagles": "PHI", "philadelphia": "PHI", "philadelphia eagles": "PHI",
-                "steelers": "PIT", "pittsburgh": "PIT", "pittsburgh steelers": "PIT",
-                "ravens": "BAL", "baltimore": "BAL", "baltimore ravens": "BAL",
-                "texans": "HOU", "houston": "HOU", "houston texans": "HOU",
-                "bengals": "CIN", "cincinnati": "CIN", "cincinnati bengals": "CIN",
-                "bears": "CHI", "chicago": "CHI", "chicago bears": "CHI",
-                "falcons": "ATL", "atlanta": "ATL", "atlanta falcons": "ATL",
-                "panthers": "CAR", "carolina": "CAR", "carolina panthers": "CAR",
-                "saints": "NO", "new orleans": "NO", "new orleans saints": "NO",
-                "buccaneers": "TB", "bucs": "TB", "tampa": "TB", "tampa bay": "TB", "tampa bay buccaneers": "TB",
-                "commanders": "WAS", "washington": "WAS", "washington commanders": "WAS",
-                "cardinals": "ARI", "arizona": "ARI", "arizona cardinals": "ARI",
-                "seahawks": "SEA", "seattle": "SEA", "seattle seahawks": "SEA",
-                "rams": "LAR", "los angeles rams": "LAR", "la rams": "LAR",
-                "chargers": "LAC", "los angeles chargers": "LAC", "la chargers": "LAC",
-                "raiders": "LV", "las vegas": "LV", "las vegas raiders": "LV",
-                "broncos": "DEN", "denver": "DEN", "denver broncos": "DEN",
-                "colts": "IND", "indianapolis": "IND", "indianapolis colts": "IND",
-                "jaguars": "JAX", "jacksonville": "JAX", "jacksonville jaguars": "JAX",
-                "titans": "TEN", "tennessee": "TEN", "tennessee titans": "TEN",
-                "jets": "NYJ", "new york jets": "NYJ", "ny jets": "NYJ",
-                "giants": "NYG", "new york giants": "NYG", "ny giants": "NYG",
-                "patriots": "NE", "new england": "NE", "new england patriots": "NE",
-                "browns": "CLE", "cleveland": "CLE", "cleveland browns": "CLE",
-                "dolphins": "MIA", "miami": "MIA", "miami dolphins": "MIA",
-            }
-            resolved_abbr = alias_map.get(clean_q) or (clean_q.upper() if clean_q.upper() in NFL_DST_MAP else None)
-            if resolved_abbr and resolved_abbr in NFL_DST_MAP:
-                t_name, t_abbr, d_id = NFL_DST_MAP[resolved_abbr]
-                return d_id, t_name, "D/ST", t_abbr
+        # 5. Check Injuries JSON by Name
+        if INJURIES_PATH.exists():
+            try:
+                with open(INJURIES_PATH, "r", encoding="utf-8") as f:
+                    inj_data = json.load(f)
+                for inj in inj_data.get("injuries", []):
+                    if inj.get("name", "").lower() == name_query.lower():
+                        return inj.get("athlete_id"), inj.get("name"), inj.get("position"), inj.get("team_abbr") or inj.get("team")
+            except Exception as e:
+                logger.debug(f"Injuries lookup failed for name {name_query}: {e}")
 
-            return None, name_query, None, None
-        finally:
-            conn.close()
+        return None, name_query, None, None
 
     async def get_player_gamelog(
         self,

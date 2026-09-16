@@ -93,7 +93,7 @@ def test_client_cookies_and_credentials():
     assert cookies["espn_s2"] == "TEST-ESPN-S2-TOKEN"
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_client_401_unauthorized_error():
     """Test that HTTP 401 raises ESPNUnauthorizedError with actionable message."""
     client = ESPNClient(league_id=99999999)
@@ -113,7 +113,7 @@ async def test_client_401_unauthorized_error():
         assert exc_info.value.status_code == 401
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_client_404_not_found_error():
     """Test that HTTP 404 raises ESPNNotFoundError."""
     client = ESPNClient(league_id=99999999)
@@ -133,7 +133,7 @@ async def test_client_404_not_found_error():
         assert exc_info.value.status_code == 404
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_client_429_rate_limit_error():
     """Test that HTTP 429 raises ESPNRateLimitError."""
     client = ESPNClient(league_id=123)
@@ -152,7 +152,7 @@ async def test_client_429_rate_limit_error():
         assert "Rate Limited" in str(exc_info.value)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_client_test_connection_success(mock_league_payload):
     """Test test_connection returns success and formatted summary."""
     client = ESPNClient(league_id=84920174)
@@ -183,7 +183,7 @@ def test_athlete_projection_extraction(mock_league_payload):
     assert athlete.get_projection_for_week(2) == 0.0
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_client_execute_roster_transaction():
     """Test execute_roster_transaction dry-run, missing creds, and successful POST."""
     # 1. Missing credentials

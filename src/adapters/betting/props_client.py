@@ -8,14 +8,102 @@ Extracts and calculates consensus sports betting player proposition markets:
 - Resilient mathematical synthesis fallback based on Vegas game scripts and team implied totals
 """
 
+import json
 import logging
 import math
+import re
+import statistics
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 import httpx
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+_live_props_cache: dict[str, Any] = {"mtime": 0, "players": {}}
+
+
+def _load_live_props_cache() -> None:
+    global _live_props_cache
+    props_file = Path(__file__).resolve().parent.parent.parent.parent / "data" / "player_props_live.json"
+    if not props_file.exists():
+        return
+    mtime = props_file.stat().st_mtime
+    if _live_props_cache.get("mtime") == mtime:
+        return
+    try:
+        with open(props_file, encoding="utf-8") as f:
+            data = json.load(f)
+
+        parsed: dict[str, dict[str, Any]] = {}
+
+        def parse_odds(val: Any) -> int | None:
+            if isinstance(val, dict):
+                if "odds" in val:
+                    try:
+                        return int(val["odds"])
+                    except Exception:
+                        pass
+                if "raw" in val:
+                    try:
+                        return int(str(val["raw"]).strip())
+                    except Exception:
+                        pass
+            return None
+
+        for cat, items in data.get("categories", {}).items():
+            for it in items:
+                pl = it.get("player", "")
+                norm = re.sub(r"[^\w\s]", "", pl.lower()).strip()
+                if not norm:
+                    continue
+                if norm not in parsed:
+                    parsed[norm] = {
+                        "player": pl,
+                        "rec_yds": None,
+                        "rush_yds": None,
+                        "pass_yds": None,
+                        "td_odds": None,
+                        "td_prob": None,
+                    }
+                books = it.get("books", {})
+                if cat == "Receiving Yards":
+                    lines = [float(b["line"]) for b in books.values() if isinstance(b, dict) and b.get("line") is not None]
+                    if it.get("consensus_line") is not None:
+                        parsed[norm]["rec_yds"] = float(it["consensus_line"])
+                    elif lines:
+                        parsed[norm]["rec_yds"] = round(statistics.median(lines), 1)
+                elif cat == "Rushing Yards":
+                    lines = [float(b["line"]) for b in books.values() if isinstance(b, dict) and b.get("line") is not None]
+                    if it.get("consensus_line") is not None:
+                        parsed[norm]["rush_yds"] = float(it["consensus_line"])
+                    elif lines:
+                        parsed[norm]["rush_yds"] = round(statistics.median(lines), 1)
+                elif cat == "Passing Yards":
+                    lines = [float(b["line"]) for b in books.values() if isinstance(b, dict) and b.get("line") is not None]
+                    if it.get("consensus_line") is not None:
+                        parsed[norm]["pass_yds"] = float(it["consensus_line"])
+                    elif lines:
+                        parsed[norm]["pass_yds"] = round(statistics.median(lines), 1)
+                elif cat == "Touchdowns":
+                    odds_list = []
+                    for b in books.values():
+                        o = parse_odds(b)
+                        if o is not None:
+                            odds_list.append(o)
+                    if odds_list:
+                        med_odds = int(statistics.median(odds_list))
+                        parsed[norm]["td_odds"] = med_odds
+                        if med_odds < 0:
+                            prob = abs(med_odds) / (abs(med_odds) + 100)
+                        else:
+                            prob = 100 / (med_odds + 100)
+                        parsed[norm]["td_prob"] = round(prob, 3)
+
+        _live_props_cache = {"mtime": mtime, "players": parsed}
+    except Exception as e:
+        logger.debug(f"Failed to load live player props cache: {e}")
 
 
 def american_odds_to_prob(odds: int | None) -> float:
@@ -82,7 +170,92 @@ class VegasPropsClient:
     def _get_cache_key(self, player_id: int, week: int) -> str:
         return f"{player_id}_{week}"
 
-    async def get_player_props(
+    def _get_live_sportsbook_props(
+        self, player_name: str, position: str, team: str
+    ) -> PlayerPropsData | None:
+        """Fetch real multi-book consensus betting lines from ingested sportsbook feeds."""
+        _load_live_props_cache()
+        p_map = _live_props_cache.get("players", {})
+        if not p_map:
+            return None
+
+        norm = re.sub(r"[^\w\s]", "", (player_name or "").lower()).strip()
+        match = p_map.get(norm)
+        if not match:
+            # Check prefix/suffix alias matches (e.g. Kenneth Walker vs Kenneth Walker III)
+            for k, v in p_map.items():
+                if k in norm or norm in k:
+                    match = v
+                    break
+
+        if not match:
+            return None
+
+        pos = (position or "").upper().strip()
+        rec_yds = match.get("rec_yds")
+        rush_yds = match.get("rush_yds")
+        pass_yds = match.get("pass_yds")
+        td_odds = match.get("td_odds")
+        td_prob = match.get("td_prob") or 0.0
+
+        if rec_yds is None and rush_yds is None and pass_yds is None and td_odds is None:
+            return None
+
+        sharp_notes: list[str] = []
+        receptions_ou: float | None = None
+        rush_att_ou: float | None = None
+        pass_tds_ou: float | None = 1.5 if pass_yds is not None else None
+
+        if rec_yds is not None:
+            sharp_notes.append(f"Sportsbook Consensus: {rec_yds} Rec Yds O/U across major books")
+            if pos == "WR":
+                receptions_ou = max(1.5, min(9.5, round((rec_yds / 12.5) * 2) / 2))
+            elif pos == "TE":
+                receptions_ou = max(1.5, min(7.5, round((rec_yds / 10.5) * 2) / 2))
+            elif pos in ("RB", "FB"):
+                receptions_ou = max(1.0, min(6.5, round((rec_yds / 7.5) * 2) / 2))
+
+        if rush_yds is not None:
+            sharp_notes.append(f"Sportsbook Consensus: {rush_yds} Rush Yds O/U across major books")
+            if pos in ("RB", "FB"):
+                rush_att_ou = max(5.5, round((rush_yds / 4.2) * 2) / 2)
+
+        if pass_yds is not None:
+            sharp_notes.append(f"Sportsbook Consensus: {pass_yds} Pass Yds O/U across major books")
+
+        if td_odds is not None:
+            pct = int(td_prob * 100)
+            sharp_notes.append(f"Anytime TD Market: {td_odds:+d} ({pct}% implied probability)")
+
+        # Market sentiment from sharp numbers
+        sentiment = "NEUTRAL"
+        if td_prob >= 0.50 or (receptions_ou and receptions_ou >= 5.5) or (rush_yds and rush_yds >= 75.0) or (rec_yds and rec_yds >= 70.0):
+            sentiment = "HEAVY_OVER"
+        elif td_prob >= 0.38 or (rec_yds and rec_yds >= 50.0) or (rush_yds and rush_yds >= 55.0):
+            sentiment = "SLIGHT_OVER"
+
+        return PlayerPropsData(
+            player_id=0,
+            player_name=match.get("player", player_name),
+            position=pos,
+            team=team,
+            opponent="",
+            receptions_ou=receptions_ou,
+            receptions_over_juice=-115,
+            receptions_under_juice=-115,
+            rec_yards_ou=rec_yds,
+            rush_yards_ou=rush_yds,
+            rush_att_ou=rush_att_ou,
+            pass_yards_ou=pass_yds,
+            pass_tds_ou=pass_tds_ou,
+            anytime_td_odds=td_odds,
+            anytime_td_prob=td_prob,
+            source="SPORTSBOOK_CONSENSUS",
+            market_sentiment=sentiment,
+            sharp_notes=sharp_notes,
+        )
+
+    def get_player_props_sync(
         self,
         player_id: int,
         player_name: str,
@@ -95,23 +268,25 @@ class VegasPropsClient:
         spread: float = 0.0,
         over_under: float = 44.0,
         projected_points: float = 12.0,
+        force_synthetic: bool = False,
     ) -> PlayerPropsData:
-        """Fetch or synthesize sportsbook consensus player prop lines."""
+        """Fetch real sportsbook consensus or synthesize sharp Vegas player prop lines synchronously."""
         cache_key = self._get_cache_key(player_id, week)
         now = datetime.now(timezone.utc)
-        if cache_key in self._cache:
+        if not force_synthetic and cache_key in self._cache:
             ts, cached_data = self._cache[cache_key]
             if (now - ts).total_seconds() < self._ttl_seconds:
                 return cached_data
 
-        # 1. Attempt live sportsbook web feed extraction if available
-        live_props = await self._try_fetch_live_sportsbook_props(player_name, position, team, week)
-        if live_props:
-            live_props.player_id = player_id
-            live_props.opponent = opponent
-            self._calculate_implied_ppr(live_props, implied_team_total=implied_team_total)
-            self._cache[cache_key] = (now, live_props)
-            return live_props
+        # 1. Attempt live sportsbook feed extraction unless synthetic is forced
+        if not force_synthetic:
+            live_props = self._get_live_sportsbook_props(player_name, position, team)
+            if live_props:
+                live_props.player_id = player_id
+                live_props.opponent = opponent
+                self._calculate_implied_ppr(live_props, implied_team_total=implied_team_total)
+                self._cache[cache_key] = (now, live_props)
+                return live_props
 
         # 2. Resilient mathematical synthesis from Vegas Game Script
         synthesized = self._synthesize_props_from_vegas(
@@ -126,16 +301,40 @@ class VegasPropsClient:
             projected_points=projected_points,
         )
         self._calculate_implied_ppr(synthesized, implied_team_total=implied_team_total)
-        self._cache[cache_key] = (now, synthesized)
+        if not force_synthetic:
+            self._cache[cache_key] = (now, synthesized)
         return synthesized
 
-    async def _try_fetch_live_sportsbook_props(
-        self, player_name: str, position: str, team: str, week: int
-    ) -> PlayerPropsData | None:
-        """Attempt to fetch live public consensus betting lines if online endpoints are available."""
-        # Lightweight non-blocking check: can query public odds endpoints or fallback
-        # Structured to gracefully return None and fallback to mathematical synthesis
-        return None
+    async def get_player_props(
+        self,
+        player_id: int,
+        player_name: str,
+        position: str,
+        team: str,
+        opponent: str,
+        week: int = 1,
+        season: int = 2026,
+        implied_team_total: float = 22.0,
+        spread: float = 0.0,
+        over_under: float = 44.0,
+        projected_points: float = 12.0,
+        force_synthetic: bool = False,
+    ) -> PlayerPropsData:
+        """Fetch or synthesize sportsbook consensus player prop lines asynchronously."""
+        return self.get_player_props_sync(
+            player_id=player_id,
+            player_name=player_name,
+            position=position,
+            team=team,
+            opponent=opponent,
+            week=week,
+            season=season,
+            implied_team_total=implied_team_total,
+            spread=spread,
+            over_under=over_under,
+            projected_points=projected_points,
+            force_synthetic=force_synthetic,
+        )
 
     def _synthesize_props_from_vegas(
         self,

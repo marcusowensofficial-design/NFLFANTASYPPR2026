@@ -32,7 +32,7 @@ def test_american_odds_conversion():
     assert prob_to_american_odds(0.40) > 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_vegas_props_synthesis_and_implied_ppr():
     """Verify Vegas player props synthesis and market-implied PPR points."""
     client = VegasPropsClient()
@@ -49,6 +49,7 @@ async def test_vegas_props_synthesis_and_implied_ppr():
         spread=-2.5,
         over_under=47.5,
         projected_points=18.5,
+        force_synthetic=True,
     )
     assert wr_props.player_name == "Justin Jefferson"
     assert wr_props.position == "WR"
@@ -75,6 +76,7 @@ async def test_vegas_props_synthesis_and_implied_ppr():
         spread=-6.5,
         over_under=48.0,
         projected_points=21.0,
+        force_synthetic=True,
     )
     assert rb_props.position == "RB"
     assert rb_props.rush_yards_ou is not None
@@ -86,7 +88,25 @@ async def test_vegas_props_synthesis_and_implied_ppr():
     assert rb_props.vegas_grade_label == "🔥 VERY ELITE"
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
+async def test_real_sportsbook_consensus_props():
+    """Verify live multi-book sportsbooks props ingestion for real NFL athletes."""
+    client = VegasPropsClient()
+    gibbs_props = await client.get_player_props(
+        player_id=201,
+        player_name="Jahmyr Gibbs",
+        position="RB",
+        team="DET",
+        opponent="TB",
+    )
+    assert gibbs_props.source == "SPORTSBOOK_CONSENSUS"
+    assert gibbs_props.rush_yards_ou is not None
+    assert gibbs_props.rush_yards_ou > 50.0
+    assert gibbs_props.anytime_td_prob > 0.50
+    assert gibbs_props.implied_ppr_points > 14.0
+
+
+@pytest.mark.anyio
 async def test_vegas_grade_buckets_across_positions():
     """Verify position-specific Vegas grade calibration across QB, RB, WR, TE, and fades."""
     client = VegasPropsClient()
@@ -206,7 +226,7 @@ def test_scoring_engine_populates_props_and_tiers():
     assert any("[Boris Chen]" in r for r in all_reasons)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_api_analysis_props_and_tiers(client):
     """Verify that /api/analysis/player-props and /api/analysis/boris-chen-tiers return 200."""
     res_props = client.get("/api/analysis/player-props?week=1")

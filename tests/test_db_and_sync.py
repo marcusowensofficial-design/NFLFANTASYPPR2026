@@ -12,7 +12,7 @@ from src.main import app
 from src.services.espn_sync import ESPNSyncService
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_sync_mock_league_to_db(db_session):
     """Verify that ESPNSyncService accurately stores the 8-team PPR mock data into SQLite."""
     service = ESPNSyncService(db=db_session)
@@ -64,7 +64,7 @@ async def test_sync_mock_league_to_db(db_session):
     assert marvin.projected_points == 16.8
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_cache_freshness_check(db_session):
     """Verify that is_cache_stale correctly recognizes fresh vs expired cache."""
     service = ESPNSyncService(db=db_session)

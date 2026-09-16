@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "last_updated": "2026-09-15T20:19:52.465499+00:00",
+  "last_updated": "2026-09-15T22:58:04.786009+00:00",
   "total_teams": 32,
   "teams": {
     "ARI": {
@@ -85,14 +85,14 @@
         ],
         "rg": [
           {
-            "name": "Jon Gaines II",
+            "name": "Isaiah Adams",
             "rank": 1,
-            "id": 4367199
+            "id": 5084939
           },
           {
-            "name": "Isaiah Adams",
+            "name": "Jon Gaines II",
             "rank": 2,
-            "id": 5084939
+            "id": 4367199
           },
           {
             "name": "Chase Bisontis",
@@ -1636,14 +1636,9 @@
             "id": 4685472
           },
           {
-            "name": "Jimmy Horn Jr.",
+            "name": "Brycen Tremayne",
             "rank": 2,
-            "id": 4708486
-          },
-          {
-            "name": "Chris Brazzell II",
-            "rank": 3,
-            "id": 5091739
+            "id": 4360763
           }
         ],
         "wr2": [
@@ -1653,9 +1648,9 @@
             "id": 4695883
           },
           {
-            "name": "Brycen Tremayne",
+            "name": "John Metchie III",
             "rank": 2,
-            "id": 4360763
+            "id": 4567096
           }
         ],
         "wr3": [
@@ -1665,9 +1660,9 @@
             "id": 4430034
           },
           {
-            "name": "John Metchie III",
+            "name": "Chris Brazzell II",
             "rank": 2,
-            "id": 4567096
+            "id": 5091739
           }
         ],
         "lt": [
@@ -2027,9 +2022,9 @@
         ],
         "pr": [
           {
-            "name": "Jimmy Horn Jr.",
+            "name": "John Metchie III",
             "rank": 1,
-            "id": 4708486
+            "id": 4567096
           },
           {
             "name": "Xavier Legette",
@@ -2049,9 +2044,9 @@
         ],
         "kr": [
           {
-            "name": "Jimmy Horn Jr.",
+            "name": "John Metchie III",
             "rank": 1,
-            "id": 4708486
+            "id": 4567096
           },
           {
             "name": "Xavier Legette",
@@ -3385,11 +3380,6 @@
             "name": "Drew Shelton",
             "rank": 2,
             "id": 4685554
-          },
-          {
-            "name": "Broderick Jones",
-            "rank": 3,
-            "id": 4428990
           }
         ],
         "lg": [
@@ -3399,13 +3389,8 @@
             "id": 4685120
           },
           {
-            "name": "Nick Leverett",
-            "rank": 2,
-            "id": 3920591
-          },
-          {
             "name": "Tyler Smith",
-            "rank": 3,
+            "rank": 2,
             "id": 4568652
           }
         ],
@@ -3416,9 +3401,9 @@
             "id": 4426663
           },
           {
-            "name": "T.J. Bass",
+            "name": "Nick Leverett",
             "rank": 2,
-            "id": 4685120
+            "id": 3920591
           },
           {
             "name": "Matt Hennessy",
@@ -3448,11 +3433,6 @@
             "name": "Broderick Jones",
             "rank": 2,
             "id": 4428990
-          },
-          {
-            "name": "Drew Shelton",
-            "rank": 3,
-            "id": 4685554
           }
         ],
         "qb": [
@@ -3636,8 +3616,13 @@
             "id": 5095865
           },
           {
-            "name": "Devin Moore",
+            "name": "Ameer Speed",
             "rank": 3,
+            "id": 4259546
+          },
+          {
+            "name": "Devin Moore",
+            "rank": 4,
             "id": 4702577
           }
         ],
@@ -3677,13 +3662,8 @@
             "id": 4248911
           },
           {
-            "name": "Ameer Speed",
-            "rank": 2,
-            "id": 4259546
-          },
-          {
             "name": "Caelen Carson",
-            "rank": 3,
+            "rank": 2,
             "id": 4431006
           }
         ],
@@ -6574,14 +6554,14 @@
         ],
         "lcb": [
           {
-            "name": "L'Jarius Sneed",
+            "name": "Nohl Williams",
             "rank": 1,
-            "id": 4040432
+            "id": 4610705
           },
           {
-            "name": "Nohl Williams",
+            "name": "Chris Roland-Wallace",
             "rank": 2,
-            "id": 4610705
+            "id": 4428383
           }
         ],
         "ss": [
@@ -6622,14 +6602,14 @@
         ],
         "nb": [
           {
-            "name": "Jadon Canady",
+            "name": "L'Jarius Sneed",
             "rank": 1,
-            "id": 4710706
+            "id": 4040432
           },
           {
-            "name": "Chris Roland-Wallace",
+            "name": "Jadon Canady",
             "rank": 2,
-            "id": 4428383
+            "id": 4710706
           }
         ]
       },

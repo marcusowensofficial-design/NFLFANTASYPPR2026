@@ -14,7 +14,7 @@ from src.db.models import PlayerModel
 from src.services.matchup.vegas_gamescript import vegas_gamescript_analyzer
 from src.services.matchup.wrcb_matrix import wrcb_analyzer
 from src.services.matchup.dvp_service import dvp_service
-from src.services.recommendation.projection_engine import quant_projection_engine
+from src.services.recommendation.projection_engine import quant_projection_engine, get_receiver_micro_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +129,16 @@ class StartSitEvaluation(BaseModel):
     fp_itemized_stats: dict[str, float] = Field(default_factory=dict)  # Itemized stats from FantasyPros
     sleeper_itemized_stats: dict[str, float] = Field(default_factory=dict)  # Itemized stats from Sleeper
     floor_points: float | None = None                # Projected fantasy points floor (20th percentile)
+    ceiling_points: float | None = None              # Projected fantasy points ceiling (80th percentile)
+    separation_score: float | None = None            # Next Gen Stats / film charted separation score
+    first_read_pct: float | None = None              # First-read target progression share
+    regression_index: float | None = None            # Buy-low / coiled-spring regression indicator
+    tprr: float | None = None                        # Targets per route run
+    scoring_format: str = "PPR"                      # PPR or HALF_PPR
+    projected_half_ppr_points: float | None = None   # Half-PPR equivalent projection
+    milestone_bonus_points: float | None = None      # FanDuel 100+ rush/rec, 300+ pass milestone equity
+    hvt_inside_5: float | None = None                # High-Value Touches inside opponent 5-yard line
+    hvt_inside_10: float | None = None               # High-Value Touches/Targets inside opponent 10-yard line
     model_provenance: dict[str, Any] = Field(default_factory=dict)  # Transparent breakdown of sources
     comparator_factors: dict[str, Any] | None = None  # Enriched factor transparency for Start/Sit Comparator
     wrcb_advantage_score: float | None = None        # Advantage delta % vs primary CB (-30 to +30)
@@ -273,6 +283,8 @@ def sort_factor_reasons(reasons: list[str]) -> list[str]:
         "[8-Man PPR Leverage]": 2,
         "[Volume]": 3,
         "[Red Zone]": 4,
+        "[Separation]": 4,
+        "[Regression]": 5,
         "[Script]": 5,
         "[Game Script]": 5,
         "[Vegas Props]": 5,
@@ -319,6 +331,7 @@ class StartSitScoringEngine:
         projection_source: str = "MODEL",
         actual_points: float | None = None,
         lineup_locked: bool = False,
+        scoring_format: str = "PPR",
     ) -> StartSitEvaluation:
         eff_size = league_size or self.league_size
         baselines = LEAGUE_SIZE_BASELINES.get(eff_size, LEAGUE_SIZE_BASELINES[8])
@@ -329,13 +342,24 @@ class StartSitScoringEngine:
 
         # 0. Institutional Quant Projection Engine: Macro-Micro Reconciled Ensemble
         q_proj = quant_projection_engine.calculate_player_projection(
-            player, nfl_game=nfl_game, weather=weather, projection_source=projection_source
+            player,
+            nfl_game=nfl_game,
+            weather=weather,
+            projection_source=projection_source,
+            scoring_format=scoring_format,
         )
         if q_proj.projected_points > 0.0:
             proj = q_proj.projected_points
             stats = q_proj.itemized_stats.model_dump()
         elif proj <= 0.0 and stats.get("calculated_ppr", 0.0) > 0.0:
             proj = float(stats["calculated_ppr"])
+
+        # Ingest Next Gen Stats & Micro-Metrics (Separation Score, First-Read %, Regression Index)
+        micro = get_receiver_micro_metrics(player.full_name)
+        separation_score = micro.get("separation_score") if micro else None
+        first_read_pct = micro.get("first_read_pct") if micro else None
+        regression_index = micro.get("regression_index") if micro else None
+        tprr_val = micro.get("tprr") if micro else None
 
         pos_baseline = baselines.get(pos, 12.0)
         pos_reasons: list[str] = []
@@ -412,10 +436,12 @@ class StartSitScoringEngine:
 
         # Multi-Source Bayesian Ensembling Agreement / Disagreement
         if q_proj and q_proj.model_points > 0 and q_proj.fp_points > 0 and q_proj.espn_points > 0:
-            if q_proj.consensus_spread <= 1.4:
-                pos_reasons.append(f"[Consensus] 🎯 Multi-Source Convergence: Model, FantasyPros, and ESPN align within ±{q_proj.consensus_spread:.1f} pts (high projection fidelity)")
-            elif q_proj.consensus_spread >= 4.2:
-                neg_reasons.append(f"[Risk] ⚠️ Multi-Source Model Divergence: {q_proj.consensus_spread:.1f}-pt spread across projection sources indicates wide outcome range")
+            core_signals = [q_proj.model_points, q_proj.fp_points, q_proj.espn_points]
+            core_spread = max(core_signals) - min(core_signals)
+            if core_spread <= 1.4:
+                pos_reasons.append(f"[Consensus] 🎯 Multi-Source Convergence: Model, FantasyPros, and ESPN align within ±{core_spread:.1f} pts (high projection fidelity)")
+            elif core_spread >= 4.2:
+                neg_reasons.append(f"[Risk] ⚠️ Multi-Source Model Divergence: {core_spread:.1f}-pt spread across projection sources indicates wide outcome range")
 
         if fp_inj_note:
             neg_reasons.append(f"[Health] 🏥 Beat reporter injury note: {fp_inj_note}")
@@ -577,6 +603,32 @@ class StartSitScoringEngine:
                 neg_reasons.append(f"[Red Zone] ⚠️ Capped TD Upside: only {rec_td:.2f} projected TDs despite target volume; limited end-zone usage")
                 floor_penalty += 3.0
 
+            # Next Gen Stats Separation & First Read Integration
+            if separation_score is not None:
+                if separation_score >= 0.78:
+                    pos_reasons.append(
+                        f"[Separation] 🚀 Elite Separation Score ({separation_score:.2f}): High individual route win rate vs single coverage"
+                    )
+                    opp_score = min(100.0, opp_score + 3.0)
+                    ceiling_boost += 3.0
+                elif separation_score <= 0.40:
+                    neg_reasons.append(
+                        f"[Efficiency] ⚠️ Low Separation Score ({separation_score:.2f}): Struggles to create separation against physical man coverage"
+                    )
+                    floor_penalty += 3.0
+
+            if first_read_pct is not None and first_read_pct >= 0.28:
+                pos_reasons.append(
+                    f"[Volume] 🎯 Scheme Priority First-Read Rate ({first_read_pct * 100:.0f}%): Primary target on designed progression reads"
+                )
+                opp_score = min(100.0, opp_score + 2.5)
+
+            if regression_index is not None and regression_index >= 0.75:
+                pos_reasons.append(
+                    f"[Regression] 📈 Coiled Spring Candidate (Index {regression_index:.2f}): Elite underlying separation and target earning without Week 1 box score inflation"
+                )
+                opp_score = min(100.0, opp_score + 2.5)
+
         elif pos == "TE":
             weighted_targets = (targets * 11.5) + (rec_td * 10.0)
             opp_score = min(100.0, max(20.0, 25.0 + (weighted_targets * 1.05)))
@@ -608,6 +660,18 @@ class StartSitScoringEngine:
             elif rec_td <= 0.15 and targets >= 4.0:
                 neg_reasons.append(f"[Red Zone] ⚠️ Low red-zone conversion: only {rec_td:.2f} projected TDs")
                 floor_penalty += 2.0
+
+            # Next Gen Stats Separation & First Read Integration
+            if separation_score is not None and separation_score >= 0.75:
+                pos_reasons.append(
+                    f"[Separation] 🚀 Elite Separation Score ({separation_score:.2f}): Creates wide separation against linebackers and safeties"
+                )
+                opp_score = min(100.0, opp_score + 2.5)
+                ceiling_boost += 2.0
+            if first_read_pct is not None and first_read_pct >= 0.20:
+                pos_reasons.append(
+                    f"[Volume] 🎯 Focal TE Progression Read ({first_read_pct * 100:.0f}% first reads)"
+                )
 
         elif pos == "QB":
             # Konami Code QB rushing multiplier: 1 QB rush is worth 3.5 pass attempts in PPR/4pt pass TD
@@ -1516,6 +1580,15 @@ class StartSitScoringEngine:
             boris_chen_tier_label=boris_tier_label,
             boris_chen_is_dropoff=boris_is_dropoff,
             dvp_fpa=dvp_info,
+            separation_score=separation_score,
+            first_read_pct=first_read_pct,
+            regression_index=regression_index,
+            tprr=tprr_val,
+            scoring_format=scoring_format,
+            projected_half_ppr_points=q_proj.projected_half_ppr_points if q_proj else None,
+            milestone_bonus_points=q_proj.milestone_bonus_points if q_proj else 0.0,
+            hvt_inside_5=q_proj.hvt_inside_5 if q_proj else None,
+            hvt_inside_10=q_proj.hvt_inside_10 if q_proj else None,
         )
 
 

@@ -19,6 +19,12 @@ import pandas as pd
 
 from src.adapters.nfl.schedule_client import nfl_schedule_client
 from src.adapters.nfl.dvp_client import dvp_client
+from src.services.recommendation.projection_engine import (
+    quant_projection_engine,
+    get_receiver_micro_metrics,
+    get_team_trench_metrics,
+)
+from src.db.models import PlayerModel
 
 logger = logging.getLogger(__name__)
 
@@ -356,6 +362,8 @@ class DFSSlateLoader:
             is_beneficiary = False
             beneficiary_of = None
             vacated_note = None
+            milestone_bonus = 0.0
+            wr_micro = get_receiver_micro_metrics(name)
 
             if is_out:
                 base_proj = 0.0
@@ -413,16 +421,27 @@ class DFSSlateLoader:
                         else:
                             base_proj = 4.0 if pos != "D" else 5.0
                 else:
-                    # MODEL
-                    val = db_info.get("proj_model")
-                    if val is not None and pd.notna(val) and float(val) > 0:
-                        base_proj = float(val)
-                    elif db_info.get("db_proj") and pd.notna(db_info.get("db_proj")) and float(db_info["db_proj"]) > 0:
-                        base_proj = float(db_info["db_proj"])
-                    elif fppg > 0:
-                        base_proj = fppg
-                    else:
-                        base_proj = 4.0 if pos != "D" else 5.0
+                    # MODEL: Institutional Quant Engine in HALF_PPR mode
+                    temp_player = PlayerModel(
+                        id=0,
+                        full_name=name,
+                        position=pos,
+                        pro_team=team,
+                        projected_points_espn=float(db_info.get("proj_espn") or fppg or 0.0),
+                        projected_points_fp=float(db_info.get("proj_fp") or 0.0),
+                        projected_points_model=float(db_info.get("proj_model") or 0.0),
+                        fp_rank_ecr=int(db_info.get("consensus_rank")) if db_info.get("consensus_rank") else None,
+                        fp_pos_rank=str(db_info.get("fp_pos_rank") or ""),
+                        injury_status="OUT" if is_out else db_status,
+                    )
+                    model_res = quant_projection_engine.calculate_player_projection(
+                        temp_player,
+                        scoring_format="HALF_PPR",
+                        projection_source="MODEL",
+                    )
+                    base_proj = model_res.projected_points
+                    final_proj = model_res.projected_points
+                    milestone_bonus = model_res.milestone_bonus_points
 
                 # Check beneficiary mapping for elevated vacated workload
                 b_match = live_beneficiaries.get(norm_name)
@@ -436,36 +455,31 @@ class DFSSlateLoader:
                     beneficiary_of = b_match["injured_name"]
                     vacated_note = b_match["note"]
                     boost = float(b_match.get("baseline_boost", 10.5))
-                    base_proj = max(base_proj, boost)
+                    # Convert boost to Half-PPR if needed
+                    base_proj = max(base_proj, boost * 0.88)
+                    final_proj = max(final_proj, base_proj)
 
-                # Algorithm Adjusted Fantasy Projection
-                if pos == "D":
-                    if base_proj > 0 and base_proj not in (4.0, 5.0):
-                        final_proj = round(max(3.0, base_proj), 2)
-                    else:
-                        opp_imp = v.get("opp_implied", 22.0)
-                        is_fav = v.get("is_fav", False)
-                        margin = v.get("fav_margin", 0.0)
-                        dst_score = (25.0 - opp_imp) * 0.4 + (3.0 if is_fav else 0.0) + (margin * 0.2) + (fppg * 0.4)
-                        final_proj = round(max(3.0, dst_score), 2)
-                else:
-                    if source_clean == "MODEL":
-                        # If base_proj came from our calibrated Quant Model, it already has macro Vegas + DvP applied
-                        if db_info.get("proj_model") and float(db_info["proj_model"]) > 0 and not is_beneficiary:
-                            final_proj = round(max(1.0, base_proj), 2)
+                # Algorithm Adjusted Fantasy Projection for non-MODEL sources
+                if source_clean != "MODEL":
+                    if pos == "D":
+                        if base_proj > 0 and base_proj not in (4.0, 5.0):
+                            final_proj = round(max(3.0, base_proj), 2)
                         else:
-                            matchup_adj = (16.5 - soft_rank) * 0.14
-                            implied_adj = (v.get("team_implied", 22.0) - 22.0) * 0.25
-                            script_adj = 0.0
-                            if pos == "RB":
-                                if v.get("is_fav") and v.get("fav_margin", 0) >= 3.0:
-                                    script_adj = 1.2
-                                elif not v.get("is_fav") and abs(v.get("spread", 0)) >= 6.0:
-                                    script_adj = -0.8
-                            final_proj = round(max(1.0, base_proj + matchup_adj + implied_adj + script_adj), 2)
+                            opp_imp = v.get("opp_implied", 22.0)
+                            is_fav = v.get("is_fav", False)
+                            margin = v.get("fav_margin", 0.0)
+                            dst_score = (25.0 - opp_imp) * 0.4 + (3.0 if is_fav else 0.0) + (margin * 0.2) + (fppg * 0.4)
+                            final_proj = round(max(3.0, dst_score), 2)
                     else:
-                        # Provider direct projections
-                        final_proj = round(max(1.0, base_proj), 2)
+                        matchup_adj = (16.5 - soft_rank) * 0.14
+                        implied_adj = (v.get("team_implied", 22.0) - 22.0) * 0.25
+                        script_adj = 0.0
+                        if pos == "RB":
+                            if v.get("is_fav") and v.get("fav_margin", 0) >= 3.0:
+                                script_adj = 1.2
+                            elif not v.get("is_fav") and abs(v.get("spread", 0)) >= 6.0:
+                                script_adj = -0.8
+                        final_proj = round(max(1.0, base_proj + matchup_adj + implied_adj + script_adj), 2)
 
                 # Check for user-defined custom projection overrides
                 if custom_projections:
@@ -523,6 +537,10 @@ class DFSSlateLoader:
                 "ceiling_proj": ceiling_proj,
                 "floor_proj": floor_proj,
                 "value_ratio": value_ratio,
+                "milestone_bonus": milestone_bonus,
+                "separation_score": wr_micro.get("separation_score"),
+                "first_read_pct": wr_micro.get("first_read_pct"),
+                "regression_index": wr_micro.get("regression_index"),
                 # Vegas Metrics
                 "game": v.get("game"),
                 "is_home": v.get("is_home"),

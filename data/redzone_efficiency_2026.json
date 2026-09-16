@@ -1,36 +1,134 @@
 {
   "season": 2026,
-  "description": "Red-zone trip rate, touchdown conversion efficiency, and defensive red-zone stop rate for kicker & TD modeling.",
+  "description": "32-Team Red-zone trip rate, touchdown conversion efficiency, field goal attempt frequency, and defensive red-zone stop rate.",
   "teams": {
-    "SF": {
-      "offense": {
-        "rz_trips_per_game": 3.8,
-        "rz_td_conversion_pct": 64.5,
-        "rz_fg_attempt_rate_pct": 28.0,
-        "inside_5_run_pct": 68.0,
-        "cmc_goal_line_share_pct": 82.0
-      },
-      "defense": {
-        "rz_trips_allowed_per_game": 3.1,
-        "rz_td_allowed_pct": 51.5,
-        "rz_stop_rate_pct": 48.5,
-        "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK"
-      }
+    "ARI": {
+      "offense": { "rz_trips_per_game": 3.2, "rz_td_conversion_pct": 52.0, "rz_fg_attempt_rate_pct": 38.0, "inside_5_run_pct": 55.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.8, "rz_td_allowed_pct": 65.0, "rz_stop_rate_pct": 35.0, "defensive_stiff_rating": "PERMEABLE" }
+    },
+    "ATL": {
+      "offense": { "rz_trips_per_game": 3.4, "rz_td_conversion_pct": 50.0, "rz_fg_attempt_rate_pct": 42.0, "inside_5_run_pct": 68.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.0, "rz_td_allowed_pct": 54.0, "rz_stop_rate_pct": 46.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "BAL": {
+      "offense": { "rz_trips_per_game": 4.3, "rz_td_conversion_pct": 72.0, "rz_fg_attempt_rate_pct": 22.0, "inside_5_run_pct": 74.0 },
+      "defense": { "rz_trips_allowed_per_game": 2.8, "rz_td_allowed_pct": 48.0, "rz_stop_rate_pct": 52.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
+    },
+    "BUF": {
+      "offense": { "rz_trips_per_game": 4.4, "rz_td_conversion_pct": 69.5, "rz_fg_attempt_rate_pct": 24.5, "inside_5_run_pct": 62.0 },
+      "defense": { "rz_trips_allowed_per_game": 2.9, "rz_td_allowed_pct": 50.0, "rz_stop_rate_pct": 50.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
+    },
+    "CAR": {
+      "offense": { "rz_trips_per_game": 2.9, "rz_td_conversion_pct": 58.0, "rz_fg_attempt_rate_pct": 32.0, "inside_5_run_pct": 52.0 },
+      "defense": { "rz_trips_allowed_per_game": 4.6, "rz_td_allowed_pct": 74.0, "rz_stop_rate_pct": 26.0, "defensive_stiff_rating": "PERMEABLE" }
+    },
+    "CHI": {
+      "offense": { "rz_trips_per_game": 4.1, "rz_td_conversion_pct": 68.0, "rz_fg_attempt_rate_pct": 25.0, "inside_5_run_pct": 64.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.1, "rz_td_allowed_pct": 52.0, "rz_stop_rate_pct": 48.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
+    },
+    "CIN": {
+      "offense": { "rz_trips_per_game": 3.8, "rz_td_conversion_pct": 42.0, "rz_fg_attempt_rate_pct": 52.0, "inside_5_run_pct": 45.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.2, "rz_td_allowed_pct": 48.0, "rz_stop_rate_pct": 52.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
+    },
+    "CLE": {
+      "offense": { "rz_trips_per_game": 2.7, "rz_td_conversion_pct": 44.0, "rz_fg_attempt_rate_pct": 45.0, "inside_5_run_pct": 58.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.0, "rz_td_allowed_pct": 50.0, "rz_stop_rate_pct": 50.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "DAL": {
+      "offense": { "rz_trips_per_game": 3.7, "rz_td_conversion_pct": 54.0, "rz_fg_attempt_rate_pct": 38.0, "inside_5_run_pct": 48.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.5, "rz_td_allowed_pct": 58.0, "rz_stop_rate_pct": 42.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "DEN": {
+      "offense": { "rz_trips_per_game": 2.5, "rz_td_conversion_pct": 40.0, "rz_fg_attempt_rate_pct": 48.0, "inside_5_run_pct": 52.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.6, "rz_td_allowed_pct": 62.0, "rz_stop_rate_pct": 38.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "DET": {
+      "offense": { "rz_trips_per_game": 4.6, "rz_td_conversion_pct": 71.0, "rz_fg_attempt_rate_pct": 21.0, "inside_5_run_pct": 70.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.1, "rz_td_allowed_pct": 55.0, "rz_stop_rate_pct": 45.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "GB": {
+      "offense": { "rz_trips_per_game": 3.9, "rz_td_conversion_pct": 64.0, "rz_fg_attempt_rate_pct": 28.0, "inside_5_run_pct": 58.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.3, "rz_td_allowed_pct": 56.0, "rz_stop_rate_pct": 44.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "HOU": {
+      "offense": { "rz_trips_per_game": 3.8, "rz_td_conversion_pct": 61.0, "rz_fg_attempt_rate_pct": 32.0, "inside_5_run_pct": 54.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.0, "rz_td_allowed_pct": 49.0, "rz_stop_rate_pct": 51.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
+    },
+    "IND": {
+      "offense": { "rz_trips_per_game": 3.8, "rz_td_conversion_pct": 63.0, "rz_fg_attempt_rate_pct": 30.0, "inside_5_run_pct": 66.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.7, "rz_td_allowed_pct": 62.0, "rz_stop_rate_pct": 38.0, "defensive_stiff_rating": "PERMEABLE" }
+    },
+    "JAX": {
+      "offense": { "rz_trips_per_game": 3.5, "rz_td_conversion_pct": 57.0, "rz_fg_attempt_rate_pct": 36.0, "inside_5_run_pct": 56.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.1, "rz_td_allowed_pct": 51.0, "rz_stop_rate_pct": 49.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "KC": {
+      "offense": { "rz_trips_per_game": 4.4, "rz_td_conversion_pct": 68.0, "rz_fg_attempt_rate_pct": 26.0, "inside_5_run_pct": 65.0 },
+      "defense": { "rz_trips_allowed_per_game": 2.6, "rz_td_allowed_pct": 44.0, "rz_stop_rate_pct": 56.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
+    },
+    "LV": {
+      "offense": { "rz_trips_per_game": 3.3, "rz_td_conversion_pct": 55.0, "rz_fg_attempt_rate_pct": 39.0, "inside_5_run_pct": 62.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.2, "rz_td_allowed_pct": 52.0, "rz_stop_rate_pct": 48.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "LAC": {
+      "offense": { "rz_trips_per_game": 3.9, "rz_td_conversion_pct": 46.0, "rz_fg_attempt_rate_pct": 48.0, "inside_5_run_pct": 60.0 },
+      "defense": { "rz_trips_allowed_per_game": 2.8, "rz_td_allowed_pct": 47.0, "rz_stop_rate_pct": 53.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
     },
     "LAR": {
-      "offense": {
-        "rz_trips_per_game": 4.1,
-        "rz_td_conversion_pct": 58.0,
-        "rz_fg_attempt_rate_pct": 34.5,
-        "inside_5_run_pct": 54.0,
-        "kyren_goal_line_share_pct": 78.0
-      },
-      "defense": {
-        "rz_trips_allowed_per_game": 3.4,
-        "rz_td_allowed_pct": 61.0,
-        "rz_stop_rate_pct": 39.0,
-        "defensive_stiff_rating": "AVERAGE"
-      }
+      "offense": { "rz_trips_per_game": 3.4, "rz_td_conversion_pct": 52.0, "rz_fg_attempt_rate_pct": 40.0, "inside_5_run_pct": 54.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.5, "rz_td_allowed_pct": 60.0, "rz_stop_rate_pct": 40.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "MIA": {
+      "offense": { "rz_trips_per_game": 3.6, "rz_td_conversion_pct": 59.0, "rz_fg_attempt_rate_pct": 33.0, "inside_5_run_pct": 50.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.3, "rz_td_allowed_pct": 55.0, "rz_stop_rate_pct": 45.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "MIN": {
+      "offense": { "rz_trips_per_game": 3.8, "rz_td_conversion_pct": 65.0, "rz_fg_attempt_rate_pct": 28.0, "inside_5_run_pct": 52.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.2, "rz_td_allowed_pct": 53.0, "rz_stop_rate_pct": 47.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "NE": {
+      "offense": { "rz_trips_per_game": 2.6, "rz_td_conversion_pct": 42.0, "rz_fg_attempt_rate_pct": 50.0, "inside_5_run_pct": 65.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.2, "rz_td_allowed_pct": 54.0, "rz_stop_rate_pct": 46.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "NO": {
+      "offense": { "rz_trips_per_game": 3.3, "rz_td_conversion_pct": 56.0, "rz_fg_attempt_rate_pct": 36.0, "inside_5_run_pct": 58.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.8, "rz_td_allowed_pct": 64.0, "rz_stop_rate_pct": 36.0, "defensive_stiff_rating": "PERMEABLE" }
+    },
+    "NYG": {
+      "offense": { "rz_trips_per_game": 3.4, "rz_td_conversion_pct": 60.0, "rz_fg_attempt_rate_pct": 32.0, "inside_5_run_pct": 62.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.4, "rz_td_allowed_pct": 52.0, "rz_stop_rate_pct": 48.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "NYJ": {
+      "offense": { "rz_trips_per_game": 2.8, "rz_td_conversion_pct": 45.0, "rz_fg_attempt_rate_pct": 48.0, "inside_5_run_pct": 60.0 },
+      "defense": { "rz_trips_allowed_per_game": 2.8, "rz_td_allowed_pct": 48.0, "rz_stop_rate_pct": 52.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
+    },
+    "PHI": {
+      "offense": { "rz_trips_per_game": 4.2, "rz_td_conversion_pct": 70.0, "rz_fg_attempt_rate_pct": 23.0, "inside_5_run_pct": 72.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.1, "rz_td_allowed_pct": 53.0, "rz_stop_rate_pct": 47.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "PIT": {
+      "offense": { "rz_trips_per_game": 3.1, "rz_td_conversion_pct": 48.0, "rz_fg_attempt_rate_pct": 46.0, "inside_5_run_pct": 64.0 },
+      "defense": { "rz_trips_allowed_per_game": 2.7, "rz_td_allowed_pct": 45.0, "rz_stop_rate_pct": 55.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
+    },
+    "SF": {
+      "offense": { "rz_trips_per_game": 4.1, "rz_td_conversion_pct": 66.0, "rz_fg_attempt_rate_pct": 28.0, "inside_5_run_pct": 68.0 },
+      "defense": { "rz_trips_allowed_per_game": 2.9, "rz_td_allowed_pct": 49.0, "rz_stop_rate_pct": 51.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
+    },
+    "SEA": {
+      "offense": { "rz_trips_per_game": 3.2, "rz_td_conversion_pct": 50.0, "rz_fg_attempt_rate_pct": 42.0, "inside_5_run_pct": 56.0 },
+      "defense": { "rz_trips_allowed_per_game": 2.8, "rz_td_allowed_pct": 46.0, "rz_stop_rate_pct": 54.0, "defensive_stiff_rating": "ELITE_BEND_DONT_BREAK" }
+    },
+    "TB": {
+      "offense": { "rz_trips_per_game": 3.7, "rz_td_conversion_pct": 54.0, "rz_fg_attempt_rate_pct": 39.0, "inside_5_run_pct": 52.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.4, "rz_td_allowed_pct": 58.0, "rz_stop_rate_pct": 42.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "TEN": {
+      "offense": { "rz_trips_per_game": 3.1, "rz_td_conversion_pct": 52.0, "rz_fg_attempt_rate_pct": 40.0, "inside_5_run_pct": 58.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.2, "rz_td_allowed_pct": 54.0, "rz_stop_rate_pct": 46.0, "defensive_stiff_rating": "NEUTRAL" }
+    },
+    "WAS": {
+      "offense": { "rz_trips_per_game": 3.5, "rz_td_conversion_pct": 58.0, "rz_fg_attempt_rate_pct": 34.0, "inside_5_run_pct": 60.0 },
+      "defense": { "rz_trips_allowed_per_game": 3.7, "rz_td_allowed_pct": 63.0, "rz_stop_rate_pct": 37.0, "defensive_stiff_rating": "PERMEABLE" }
     }
   }
 }

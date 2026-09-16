@@ -8,6 +8,8 @@ description: >-
 
 # FanDuel Main Slate (Sunday Classic) Championship Playbook
 
+> **The Unified Predictive Engine Axiom**: Single Game Showdown, Main Slate Classic, and Season-Long Fantasy all share the **exact same fundamental football predictive foundation**: game pace, trench pass-protection collision physics, coverage shells (MOFC vs MOFO), High-Value Touches (HVTs: carries inside the 5, targets inside the 10, red-zone personnel packages 11 vs 12/21), and optical route separation (ASS) with first-read progression tracking. The formats diverge purely at scoring rules (Half-PPR vs Full-PPR) and roster knapsack mechanics (1.5x MVP Showdown vs 3-Game Matrix Classic).
+
 This skill encapsulates the professional methodology and mathematical principles (derived from Establish The Run, FantasyLabs, LineStar, and high-stakes tournament winners) for winning large-field GPP tournaments on FanDuel NFL Main Slates.
 
 ---
@@ -139,4 +141,74 @@ Whenever entering a new slate in Week 2 and beyond, NEVER rely on speculative pr
 5. **Solve 3-Game Matrix with Cap Buffer:**
    * Enforce the 3-Game Matrix architecture: 1 Primary Game Stack (3-4 players) + 2 Secondary Mini-Stacks (2 players each) + 1 Cheap Disruption Defense.
    * Enforce **$200 to $900 unspent cap buffer** to eliminate split/chopped tournament prize pools.
+
+---
+
+## 7. Institutional Quant Hedge Fund Metric Taxonomy & Stability Horizons
+
+Top NFL quantitative analysts, hedge funds, and high-stakes DFS syndicates do not forecast based on lagging fantasy points or raw box scores. They operate on **fast-stabilizing leading indicators** and **Bayesian shrinkage models**.
+
+### A. The Metric Stability Horizons Table (Signal vs. Noise)
+
+In single-game and early-season forecasting, metrics stabilize at radically different rates. Overfitting occurs when an analyst overweights slow-stabilizing noise:
+
+| Metric Category | Metric Symbol | Sample Size to Stabilize | Bayesian Week 2 Weight ($w$) | Predictive Rationale |
+| :--- | :--- | :--- | :--- | :--- |
+| **Route Participation %** | `Route_Part%` | **$N = 1$ Game** | **$w = 0.45$** | Reflects offensive personnel grouping and coaching trust. |
+| **First-Read Target Share** | `1st_Read%` | **$N = 1$ Game** | **$w = 0.40$** | Isolates scripted offensive play design. |
+| **Average Separation Score** | `ASS` | **$N = 1-2$ Games** | **$w = 0.35$** | Optical camera tracking of individual route-running win rate. |
+| **High-Value Touches** | `HVT` | **$N = 1-2$ Games** | **$w = 0.40$** | Carries inside the 5 + targets inside the 10. |
+| **Pressure-to-Sack Rate** | `P2S%` | **$N = 2$ Games** | **$w = 0.35$** | QB-driven metric; sticky year-over-year. |
+| **Weighted Opportunity (WOPR)**| `WOPR` | **$N = 2$ Games** | **$w = 0.30$** | $1.5 \times \text{TargetShare} + 0.7 \times \text{AirYardShare}$. |
+| **Yards After Contact/Att** | `YCO/A` | **$N = 2-3$ Games** | **$w = 0.30$** | Isolates running back burst from offensive line blocking. |
+| **Completion % Over Expected** | `CPOE` | **$N = 3$ Games** | **$w = 0.20$** | True passing accuracy adjusted for depth and pressure. |
+| **Touchdown Rate (TD/Tgt)** | `TD_Rate` | **$N \ge 8$ Games** | **$w \le 0.05$** | **PURE NOISE.** Highly volatile Poisson distribution. Regress to mean! |
+| **Contested Catch Rate** | `Contest%` | **$N \ge 10$ Games** | **$w \le 0.05$** | 50/50 jump-ball variance; regression candidate. |
+
+### B. The 5 Positional Quant Laws
+
+#### 1. Running Backs: The Usurper & High-Value Touch (HVT) Axiom
+* **High-Value Touches (HVTs):** $HVT = Carries_{\le 5} + Targets$. Empty between-the-20s carries average $0.55$ FP, while HVTs average $1.85$ FP (over **3.3x more valuable**).
+* **The Usurper Breakout Indicator:** When a backup RB records $>3.8$ YCO/A and $>25\%$ HVT share on $<50\%$ snap share (e.g., Bucky Irving, Kyle Monangai), a workload usurpation is imminent. Acquire them before the public box-score breakout.
+* **Expected Fantasy Points (xFP) vs. FPOE:** Target RBs with high $xFP$ and negative $FPOE$ (e.g., Christian McCaffrey, Saquon Barkley). Unlucky touchdown variance creates massive buy-low leverage.
+
+#### 2. Quarterbacks: The Pressure-to-Sack (P2S) & Scramble Paradox
+* Sacks are predominantly a **Quarterback metric, not an offensive line metric**.
+* When targeting a D/ST, cross-reference the opposing QB's **P2S Rate**:
+  * QBs with $P2S \ge 22.0\%$ (Deshaun Watson, Bo Nix, Joe Burrow) convert pressure into drive-killing sacks and strip-fumbles.
+  * QBs with $P2S \le 12.0\%$ (Josh Allen, Patrick Mahomes) slide in the pocket, scramble for rushing yards, and avoid negative plays.
+
+#### 3. Wide Receivers: The Separation Precedes Volume Rule
+* Optical tracking data proves that **Separation precedes targets; targets precede fantasy points**.
+* **The Coiled-Spring Score:** Receivers with high positive Average Separation Scores ($ASS \ge +0.10$) and suppressed early target shares (Josh Downs, AD Mitchell, Ja'Marr Chase, Marvin Harrison Jr.) are mathematical coiled springs. The public box-score panic creates elite tournament GPP leverage.
+
+#### 4. Tight Ends: The "Slot / Wide" Filter
+* Never roster an inline blocking tight end.
+* Require starting TEs to achieve:
+  * **$\ge 75\%$ Route Participation** on team dropbacks.
+  * **$\ge 50\%$ Slot or Wide pre-snap alignment** (e.g., Isaiah Likely, Trey McBride, Dalton Kincaid).
+
+#### 5. Defenses & Secondaries: The MOFC vs. MOFO Coverage Funnel
+* **Middle-Field Closed (MOFC = Cover 1 + Cover 3):** Single-high safety shell. Funnels targets to **Alpha Boundary (X/Z) Wideouts on 1-on-1 isolations** (target against Texans, Browns, Panthers, Raiders).
+* **Middle-Field Open (MOFO = Cover 2 + Cover 4 + Cover 6):** Two-high safety umbrella. Clamps deep boundary shots; funnels targets to **Slot WRs, Tight Ends, and Running Back checkdowns** (target against Steelers, Cardinals, Giants, Seahawks).
+
+---
+
+## 8. Dynamic Late-Swap Portfolio Management (The Mid-Day Decision Engine)
+
+Winning large-field GPPs is an active, multi-window process. When early window games (11:00 AM MST) conclude, evaluate live tournament leaderboard pacing before the afternoon window (2:05/2:25 PM MST) locks:
+
+### Mode A: "Floor-Preservation Mode" (Early Stack Hits 90th+ Percentile)
+* **Trigger:** Primary stack and early pieces beat median projections by $+15.0$ or more points; lineup is pacing in top 1-2% of the tournament.
+* **Late-Swap Action:**
+  * Pivot late-window FLEX and secondary pieces to **high-floor "Good Chalk" bellcow running backs**.
+  * Block the field by matching consensus ownership on the highest-floor assets. Eliminate volatile, low-floor boom/bust receivers.
+  * Protect the lead and minimize downside variance.
+
+### Mode B: "Ceiling-Hunting Mode" (Early Stack Stalls / Trailing the Field)
+* **Trigger:** Primary stack or early chalk fails to reach 20th-percentile output; lineup is trailing cash/GPP cutlines.
+* **Late-Swap Action:**
+  * Pivot late-window FLEX to **sub-5% projected ownership high-variance ceiling plays** (e.g. boundary deep threat WR, high-total underdog pass funnel).
+  * Duplicate or high-owned plays are mathematically worthless in this scenario; aggressive differentiation is the only path to a cash/podium comeback.
+
 

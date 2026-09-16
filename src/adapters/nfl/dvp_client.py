@@ -60,10 +60,12 @@ DEFAULT_DVP_PROFILES: dict[str, DvPProfile] = {
 class DvPClient:
     """Manages Defense vs Position (DvP) calculations and matchup scoring with role splits."""
 
-    def __init__(self, profiles: dict[str, DvPProfile] | None = None):
-        self.profiles = dict(profiles or DEFAULT_DVP_PROFILES)
-        self.hydrate_from_draftedge()
-        self.hydrate_from_db()
+    def __init__(self, profiles: dict[str, DvPProfile] | None = None, auto_hydrate: bool = False):
+        import copy
+        self.profiles = {k: copy.deepcopy(v) for k, v in (profiles or DEFAULT_DVP_PROFILES).items()}
+        if auto_hydrate:
+            self.hydrate_from_draftedge()
+            self.hydrate_from_db()
 
     def hydrate_from_draftedge(self) -> None:
         """Hydrate team DvP ranks with DraftEdge calibrated baseline rankings."""
@@ -78,9 +80,12 @@ class DvPClient:
                 for pos, attr in pos_attr_map.items():
                     for item in seed_data.get(pos, []):
                         team = item.get("pro_team")
-                        softness = item.get("rank_softness")
-                        if team and softness and team in self.profiles:
-                            setattr(self.profiles[team], attr, 33 - int(softness))
+                        # 1 = toughest/stingiest, 32 = softest/worst defense
+                        def_rank = item.get("rank_defense")
+                        if def_rank is None and item.get("rank_softness"):
+                            def_rank = 33 - int(item.get("rank_softness"))
+                        if team and def_rank and team in self.profiles:
+                            setattr(self.profiles[team], attr, int(def_rank))
         except Exception:
             pass
 
@@ -125,15 +130,28 @@ class DvPClient:
     def update_team_profile(self, pro_team: str, **kwargs) -> None:
         """Dynamically update a team's defensive or offensive metrics from live 2026 data."""
         team = pro_team.upper().strip()
-        if team in self.profiles:
-            curr = self.profiles[team]
-            for k, v in kwargs.items():
-                if hasattr(curr, k):
-                    setattr(curr, k, v)
+        teams_to_update = [team]
+        if team == "WAS":
+            teams_to_update.append("WSH")
+        elif team == "WSH":
+            teams_to_update.append("WAS")
+        elif team == "JAX":
+            teams_to_update.append("JAC")
+        elif team == "JAC":
+            teams_to_update.append("JAX")
+        for t in teams_to_update:
+            if t in self.profiles:
+                curr = self.profiles[t]
+                for k, v in kwargs.items():
+                    if hasattr(curr, k):
+                        setattr(curr, k, v)
 
     def get_position_rank(self, opponent_team: str, position: str) -> int:
         """Returns rank 1-32 (1 = toughest vs position, 32 = softest vs position)."""
         opp = opponent_team.upper().strip()
+        if opp not in self.profiles:
+            alias_map = {"WAS": "WSH", "WSH": "WAS", "JAC": "JAX", "LA": "LAR"}
+            opp = alias_map.get(opp, opp)
         profile = self.profiles.get(opp)
         if not profile:
             return 16  # Neutral middle rank fallback

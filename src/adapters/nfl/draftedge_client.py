@@ -146,7 +146,8 @@ class DraftEdgeClient:
 
             td_texts = [td.get_text(strip=True) for td in tds]
             try:
-                rank_softness = int(td_texts[0])
+                # Column 0 on DraftEdge is Rank: 1 = hardest/strongest defense (fewest points allowed), 32 = worst defense (most points allowed)
+                rank_defense = int(td_texts[0])
             except ValueError:
                 continue
 
@@ -200,15 +201,17 @@ class DraftEdgeClient:
                     "rec_20_plus": parse_clean_float(td_texts[12]) or 0.0,
                 }
 
+            # rank_defense: 1 = hardest/strongest defense vs position, 32 = worst defense vs position
+            # rank_softness: 1 = softest matchup (SMASH, rank_defense=32), 32 = hardest matchup (LOCKDOWN, rank_defense=1)
+            rank_softness = 33 - rank_defense
             tier, tier_label = get_softness_tier(rank_softness)
-            rank_defense = 33 - rank_softness  # Invert so 1=toughest, 32=softest
 
             # Week 1 baseline logic: if current season per-game is not yet populated, flag as baseline
             is_baseline = current_season_fpa is None or current_season_fpa == 0.0
 
             results.append({
-                "rank_softness": rank_softness,
                 "rank_defense": rank_defense,
+                "rank_softness": rank_softness,
                 "team_name": team_name,
                 "pro_team": pro_team,
                 "position": position,
@@ -241,16 +244,26 @@ class DraftEdgeClient:
             raw_list = seed_data.get(position, [])
             out = []
             for item in raw_list:
-                tier, tier_label = get_softness_tier(item["rank_softness"])
-                rank_def = 33 - item["rank_softness"]
+                rank_def = item.get("rank_defense")
+                rank_soft = item.get("rank_softness")
+                if rank_def is None and rank_soft is not None:
+                    rank_def = 33 - rank_soft
+                elif rank_soft is None and rank_def is not None:
+                    rank_soft = 33 - rank_def
+                elif rank_def is None and rank_soft is None:
+                    rank_def = 16
+                    rank_soft = 16
+
+                tier, tier_label = get_softness_tier(rank_soft)
                 out.append({
                     **item,
                     "position": position,
                     "rank_defense": rank_def,
+                    "rank_softness": rank_soft,
                     "tier": tier,
                     "tier_label": tier_label,
                     "is_baseline": item.get("current_season_fpa") is None,
-                    "sample_games_current": 0,
+                    "sample_games_current": item.get("sample_games_current", 0),
                     "source": "DraftEdge (Seed)",
                     "source_url": f"{self.BASE_URL}?pos={position.lower()}",
                 })

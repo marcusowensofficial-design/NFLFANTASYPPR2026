@@ -1297,12 +1297,21 @@ async def get_market_sentiment_buzz(
 from src.services.gamelog_service import gamelog_service
 
 
-@router.get("/player/{player_id}/gamelog")
+@router.get("/player/{player_id:path}/gamelog")
+@router.get("/player-gamelog")
 async def get_player_gamelog_endpoint(
-    player_id: str,
+    player_id: str | None = None,
     season: int = Query(default=2026),
 ) -> dict[str, Any]:
     """Retrieve complete 2026 regular season game logs and itemized stats for any player."""
+    if not player_id:
+        return {
+            "success": False,
+            "player_id": None,
+            "message": "Missing player_id or athlete name parameter.",
+            "logs": [],
+            "season_totals": {},
+        }
     return await gamelog_service.get_player_gamelog(player_id_or_name=player_id, season=season)
 
 

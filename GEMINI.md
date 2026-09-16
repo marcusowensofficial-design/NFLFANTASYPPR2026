@@ -2,16 +2,20 @@
 
 ## Core Operational Directives
 
-1. **Persistent Analytical Memory:**
+1. **Persistent Analytical Memory & Unified Predictive Truth:**
    * Treat all research, mathematical modeling, and strategic game theory developed in this workspace as persistent institutional knowledge.
-   * Whenever addressing DFS or season-long fantasy questions, automatically apply the established frameworks without requiring re-explanation.
+   * **The Universal Football Prediction Engine:** Recognize that Single Game Showdown, Sunday Main Slate Classic, and Season-Long Fantasy all share the **exact same fundamental football predictive truth**:
+     * Game pace, play volume, and pass/run play selection.
+     * Trench Pass-Protection collision physics (OL PBWR vs. DL Pressure %).
+     * Coverage shells (MOFC Cover 1/3 single-high vs. MOFO Cover 2/4/6 two-high).
+     * High-Value Touches (HVTs: carries inside the 5-yard line, targets inside the 10-yard line, and red-zone personnel packages 11 vs. 12/21).
+     * Optical Route-Running Separation Scores (ASS), TPRR, and Scheme First-Read Progression Shares.
+     * Line Movement Velocity (detecting sharp syndicate steam moves in the final 4 hours before lock).
+   * **The Strategic Divergence Layer:** The predictive engine is format-invariant; divergence occurs strictly at:
+     * *Scoring Engine:* Full-PPR (1.0 rec, -2.0 INT, 6.0 TD) vs. Half-PPR (0.5 rec, -1.0 INT, +3.0 100/300-yd milestone bonuses).
+     * *Portfolio Roster Architecture:* 6-slot 1.5x MVP Showdown vs. 9-slot 3-Game Matrix Classic vs. 8-team Season-Long VORP.
 
 2. **FanDuel Single Game (Showdown) Strategy Standards:**
-   * **Format Engine:** Always operate on the updated **6-slot roster** (1 MVP + 5 AnyFLEX) with a **$60,000 salary cap**.
-   * **1.5x MVP Pricing Rule & Strategic Regimes:** Factor in that placing a player in the MVP slot costs **1.5x their base salary**, requiring true mathematical trade-off analysis between **"Multiplier Equity"** and **"FLEX Cap Relief"**:
-     * *Alpha Outlier Slate:* When a player has an elite separated ceiling (e.g. JSN 30% target share), pay up at MVP and use injury vacancies to subsidize the roster.
-     * *Compressed Slate:* In low-total, committee games, pay down at MVP ($9k–$11k) to upgrade to an all-starter FLEX and eliminate low-floor punts.
-   * **Official Scoring Nuance:** FanDuel awards **4.0 pts per passing TD (6.0 at MVP)**, **0.5 PPR (0.75 at MVP)**, **-1.0 per INT thrown (-1.5 at MVP)**, **+2.0 per INT made by D/ST (+3.0 at MVP)**, **6.0 per rush/rec TD (9.0 at MVP)**, and **+3.0 milestone bonuses for 100+ rush/rec yards and 300+ passing yards (+4.5 at MVP)**. Recognize that in competitive, mid-total games (O/U 40–46), **"Zero-QB" builds that monopolize both teams' WR1s and RB1s** offer a massive structural edge over casual QB-heavy lineups.
    * **Format Engine:** Always operate on the updated **6-slot roster** (1 MVP + 5 AnyFLEX) with a **$60,000 salary cap**.
    * **1.5x MVP Pricing Rule & Strategic Regimes:** Factor in that placing a player in the MVP slot costs **1.5x their base salary**, requiring true mathematical trade-off analysis between **"Multiplier Equity"** and **"FLEX Cap Relief"**:
      * *Alpha Outlier Slate (40% of slates):* When a player has an elite separated ceiling (e.g. Josh Allen 57.99, Swift 52.35, Gibbs 51.15, Jeanty 49.05, Bijan 40.95, JSN 37.80), pay up at MVP ($18k–$20.4k) to capture the 9.0-pt TD multiplier.
@@ -22,9 +26,9 @@
         * **Low Totals (O/U $\le$ 42.0):** Allow and embrace leaving **$1,500 to $3,500 unspent** ($56,500–$58,500 spent). Never force salary spending by dropping high-scoring Kickers or D/STs for overpriced low-ceiling receivers.
         * **Mid Totals (O/U 42.1–46.5):** Target **$800 to $2,500 unspent** ($57,500–$59,200 spent).
         * **High Totals (O/U $\ge$ 47.0):** Target **$200 to $1,000 unspent** ($59,000–$59,800 spent).
-   * **The 4-2 / 5-1 Stacking Hegemony (Ban Default 3-3 Builds):**
+   * **The 4-2 / 5-1 Stacking Hegemony & 3-3 Asymmetric Threshold:**
       * **87.5% (14 of 16)** of optimal showdown lineups were either **4-2 (50.0%)** or **5-1 (37.5%)** (e.g. KC 5-1 Onslaught).
-      * Strictly ban default 3-3 builds unless the game is a Pick'em (Spread 0.0) with an ultra-low total ($\le 42.0$). Single game fantasy production is almost always asymmetrically concentrated on one team.
+      * Apply a probabilistic threshold: Do not default to 3-3 builds unless the game is a true Pick'em (Spread $\le 1.5$) with an ultra-low total ($\le 42.0$), or the projected EV of the 3-3 build exceeds the best 4-2/5-1 build by $\ge 3.5$ fantasy points.
    * **Kicker & D/ST Structural Edge:**
       * **75.0% (12 of 16)** of optimal lineups contained at least one Kicker or D/ST (62.5% Kicker, 37.5% D/ST, 25.0% BOTH).
       * In games with O/U $\le 44.0$, rostering Kickers and D/STs in the FLEX provides a massive point-per-dollar advantage over volatile WR3/TE2 punts.
@@ -41,6 +45,10 @@
        * **NEVER roster 3 or more pass-catchers (WR/TE) from the same team without their Quarterback.** If 3+ receivers from Team A have ceiling games, their QB aggregates all their yards and TDs and will mathematically outscore the 3rd and 4th receiver, knocking them out of the optimal lineup.
        * If a team's QB is NOT in the lineup (e.g. Zero-QB builds), **strictly cap that team to at most 2 pass-catchers**.
        * If rostering 3 or more pass-catchers from Team A, **Team A's QB MUST be rostered** (either at MVP or in the FLEX).
+   * **The Verified Role & Route Participation Floor (Replacing Arbitrary Salary Bans):**
+     * In Single-Entry contests, taking a 0.0 point score is mathematically fatal.
+     * Never roster pure-blocking fullbacks or rotational blockers with zero route participation.
+     * **The Role Floor:** Require all rostered players to command $\ge 35\%$ projected route participation or $\ge 4$ designated high-value opportunities, regardless of salary tag. If an official 90-minute inactive vaults a sub-$3,500 player into a verified starting role ($\ge 65\%$ route share), allow the knapsack solver to utilize that cap-relief.
    * **Specialized Skill Link:** Reference and follow [.agents/skills/fanduel-single-game/SKILL.md](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/.agents/skills/fanduel-single-game/SKILL.md) for full algorithmic guidelines.
 
 3. **NFL DFS Contest Slate Taxonomy & Multi-Game Formats (MST Reference):**
@@ -137,3 +145,25 @@
    * **Dedicated Engine & Skill Links:**
      * Reference [.agents/skills/fanduel-main-slate/SKILL.md](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/.agents/skills/fanduel-main-slate/SKILL.md) for full algorithmic guidelines.
      * Run `python scripts/solve_main_slate_matrix.py` to optimize Main Slate lineups through the 3-Game Matrix.
+
+7. **Institutional Master Table of Contents & File Map:**
+   * **Full Catalog Reference:** Master directory is persistently maintained in [TABLE_OF_CONTENTS.md](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/TABLE_OF_CONTENTS.md).
+   * **Core Quant Projection Engines:**
+     * [`src/services/recommendation/projection_engine.py`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/src/services/recommendation/projection_engine.py): Decoupled Full-PPR (`PPR`) vs. FanDuel DFS (`HALF_PPR`) quant engine with Next Gen micro-metrics, Trench Pass-Protection collision physics, and cross-positional vacancy logic.
+     * [`src/services/recommendation/scoring_engine.py`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/src/services/recommendation/scoring_engine.py): 0–100 Start/Sit composite engine with factor provenance, 8-man PPR leverage, and Boris Chen GMM tiers.
+     * [`scripts/generate_quant_projections.py`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/scripts/generate_quant_projections.py): CLI projection generator with Format Arbitrage comparison (`--mode ppr`, `--mode half-ppr`, `--mode both`).
+     * [`src/dfs/loader.py`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/src/dfs/loader.py): Ingests and enriches FanDuel CSVs with live Vegas odds, DvP rankings, milestone bonuses, and tracking metrics.
+   * **Lineup Solvers & Optimization Engines:**
+     * [`scripts/run_showdown_optimizer.py`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/scripts/run_showdown_optimizer.py): 4-script single-game solver (Team A dominant, Team B dominant, Balanced 4-2/3-3, Zero-QB Touchdown Monopoly).
+     * [`scripts/solve_main_slate_matrix.py`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/scripts/solve_main_slate_matrix.py): Classic 9-slot 3-Game Matrix solver ($200–$900 unspent buffer).
+     * [`scripts/optimize_fanduel_lineup.py`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/scripts/optimize_fanduel_lineup.py): Knapsack integer programming solver with strict $\ge \$3,500$ single-entry punt floor.
+     * [`scripts/simulate_showdown_monte_carlo.py`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/scripts/simulate_showdown_monte_carlo.py): 10,000-iteration Monte Carlo game simulator.
+   * **Scouting, Next Gen Stats & Historical Archives:**
+     * [`data/week_1_receiver_micro_metrics_2026.json`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/week_1_receiver_micro_metrics_2026.json): 63 receivers with Separation Scores, First-Read %, TPRR, and Regression Index.
+     * [`data/pff_scouting_2026.json`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/pff_scouting_2026.json): All 32 NFL teams with OL pass/run block grades, DL pressure rates, and trench grades.
+     * [`data/nfl_depth_charts_2026.json`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/nfl_depth_charts_2026.json): Verified official 2026 32-team depth charts.
+     * [`data/injuries_live_2026.json`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/injuries_live_2026.json): Live injury tracker & 90-minute inactive status wire.
+     * [`data/single_game_slate_outcomes.json`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/single_game_slate_outcomes.json) & [`data/SHOWDOWN_SLATE_RESULTS_ARCHIVE.md`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/SHOWDOWN_SLATE_RESULTS_ARCHIVE.md): 16-slate Week 1 historical archive.
+   * **Specialized Tactical Skills:**
+     * Single Game Showdown: [`.agents/skills/fanduel-single-game/SKILL.md`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/.agents/skills/fanduel-single-game/SKILL.md)
+     * Main Slate Classic: [`.agents/skills/fanduel-main-slate/SKILL.md`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/.agents/skills/fanduel-main-slate/SKILL.md)

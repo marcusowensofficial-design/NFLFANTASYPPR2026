@@ -10,7 +10,7 @@ from src.main import app
 from src.services.market.sentiment_service import MarketSentimentService, market_sentiment_service
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_polymarket_client_nfl_events_and_fallback():
     """Verify Polymarket client returns structured events with binary markets."""
     client = PolymarketClient(timeout=3.0)
@@ -27,7 +27,7 @@ async def test_polymarket_client_nfl_events_and_fallback():
     assert 0.0 <= fields_market.yes_probability <= 1.0
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_polymarket_player_matching():
     """Verify fuzzy matching maps players like Justin Fields and Jayden Daniels to markets."""
     client = PolymarketClient(timeout=3.0)
@@ -43,7 +43,7 @@ async def test_polymarket_player_matching():
     assert any("daniels" in m.question.lower() for m in daniels_markets)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_sentiment_service_starter_controversy():
     """Verify MarketSentimentService calculates starter confidence and tactical advice."""
     service = MarketSentimentService()
@@ -64,7 +64,7 @@ async def test_sentiment_service_starter_controversy():
     assert len(sentiment.tactical_advice) > 10
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_sentiment_service_injury_decoy_risk():
     """Verify injury practice trends generate high decoy risk tags."""
     service = MarketSentimentService()
@@ -99,7 +99,7 @@ async def test_sentiment_service_injury_decoy_risk():
     assert "DNP" in sentiment.tactical_advice or "snap count" in sentiment.tactical_advice
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_sentiment_service_thursday_kickoff_alert():
     """Verify Thursday Night Football kickoff triggers urgency and FLEX warning."""
     service = MarketSentimentService()
@@ -138,7 +138,7 @@ async def test_sentiment_service_thursday_kickoff_alert():
     assert "FLEX" in sentiment.tactical_advice
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_sentiment_service_rookie_breakout_tier():
     """Verify top rookies receive Day-1 Alpha pedigree ratings."""
     service = MarketSentimentService()
@@ -158,7 +158,7 @@ async def test_sentiment_service_rookie_breakout_tier():
     assert "Rookie Pedigree" in sentiment.market_headline
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_market_sentiment_buzz_api_endpoint():
     """Test GET /api/analysis/market-sentiment/buzz endpoint."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:

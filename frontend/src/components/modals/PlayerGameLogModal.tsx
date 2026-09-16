@@ -190,6 +190,7 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
   const [data, setData] = useState<PlayerGameLogResponse | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState<number>(0)
 
   useEffect(() => {
     if (!isOpen || !playerIdOrName) {
@@ -205,7 +206,17 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
     const fetchGameLog = async () => {
       try {
         const queryParam = encodeURIComponent(String(playerIdOrName).trim())
-        const res = await fetch(`/api/analysis/player/${queryParam}/gamelog?season=2026`)
+        // Attempt query parameter endpoint first (bulletproof against slashes), fallback to path endpoint
+        let res: Response
+        try {
+          res = await fetch(`/api/analysis/player-gamelog?player_id=${queryParam}&season=2026`)
+          if (!res.ok) {
+            res = await fetch(`/api/analysis/player/${queryParam}/gamelog?season=2026`)
+          }
+        } catch {
+          res = await fetch(`/api/analysis/player/${queryParam}/gamelog?season=2026`)
+        }
+
         if (!res.ok) {
           throw new Error(`Failed to load game log (${res.status})`)
         }
@@ -215,7 +226,14 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
         }
       } catch (err: any) {
         if (isMounted) {
-          setError(err.message || 'Could not retrieve player game log')
+          const rawMsg = String(err?.message || '')
+          if (rawMsg.toLowerCase().includes('failed to fetch')) {
+            setError(
+              'Backend server connection failed. FastAPI on port 8000 is unreachable or cloud deployment is still starting up. If running locally, please ensure run_backend.bat is running.'
+            )
+          } else {
+            setError(rawMsg || 'Could not retrieve player game log')
+          }
         }
       } finally {
         if (isMounted) {
@@ -236,7 +254,7 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
       isMounted = false
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen, playerIdOrName])
+  }, [isOpen, playerIdOrName, retryCount])
 
   if (!isOpen) return null
 
@@ -475,27 +493,49 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
               }}
             >
               <div>⚠️ {error}</div>
-              <a
-                href={getEspnUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: 'rgba(235, 33, 46, 0.2)',
-                  border: '1px solid rgba(235, 33, 46, 0.5)',
-                  color: '#ffffff',
-                  borderRadius: '6px',
-                  padding: '6px 14px',
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                }}
-              >
-                <span>🏈 VIEW GAMELOGS DIRECTLY ON ESPN</span>
-                <span>↗</span>
-              </a>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setRetryCount((c) => c + 1)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'rgba(56, 189, 248, 0.2)',
+                    border: '1px solid rgba(56, 189, 248, 0.5)',
+                    color: '#38bdf8',
+                    borderRadius: '6px',
+                    padding: '6px 14px',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span>🔄</span>
+                  <span>RETRY CONNECTION</span>
+                </button>
+                <a
+                  href={getEspnUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'rgba(235, 33, 46, 0.2)',
+                    border: '1px solid rgba(235, 33, 46, 0.5)',
+                    color: '#ffffff',
+                    borderRadius: '6px',
+                    padding: '6px 14px',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span>🏈 VIEW GAMELOGS DIRECTLY ON ESPN</span>
+                  <span>↗</span>
+                </a>
+              </div>
             </div>
           )}
 

@@ -21,7 +21,9 @@ from scipy.optimize import milp, LinearConstraint, Bounds
 def load_and_enrich_slate(csv_path=None,
                           vegas_path="data/vegas_movement_2026.json",
                           pff_path="data/pff_scouting_2026.json",
-                          dvp_path="data/draftedge_dvp_seed.json"):
+                          dvp_path="data/draftedge_dvp_seed.json",
+                          wr_metrics_path="data/week_1_receiver_micro_metrics_2026.json",
+                          coverage_path="data/week_1_defensive_coverage_2026.json"):
     if csv_path is None:
         if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
             csv_path = sys.argv[1]
@@ -88,6 +90,24 @@ def load_and_enrich_slate(csv_path=None,
         with open(pff_path, 'r') as f:
             pff_dict = json.load(f).get('teams', {})
 
+    # Load Week 1 WR Forensic Micro-Metrics (Separation, First-Read, TPRR, 1D/RR)
+    wr_metrics_dict = {}
+    if os.path.exists(wr_metrics_path):
+        with open(wr_metrics_path, 'r') as f:
+            wr_data = json.load(f)
+            for p in wr_data.get('players', []):
+                wr_metrics_dict[p['name']] = p
+
+    # Load Week 1 Defensive Coverage Usage & Pass Efficiency
+    coverage_dict = {}
+    if os.path.exists(coverage_path):
+        with open(coverage_path, 'r') as f:
+            cov_data = json.load(f)
+            for t in cov_data.get('teams', []):
+                coverage_dict[t['team']] = t
+                for alias in t.get('aliases', []):
+                    coverage_dict[alias] = t
+
     # Calculate GPP Tournament Projections with Multipliers
     gpp_projs = []
     ceiling_factors = []
@@ -151,6 +171,55 @@ def load_and_enrich_slate(csv_path=None,
             opp_pass_blk = opp_trench.get('offensive_line', {}).get('pass_block_grade', 70.0)
             if ou <= 40.0 and d_pass_rush >= 80.0 and opp_pass_blk <= 70.0:
                 mult += 0.25 # Elite disruption vs incompetent offense in low-total game
+
+        # 7. WR Forensic Separation & First-Read Multipliers (FantasyPoints Tracking Data)
+        if pos == 'WR' and name in wr_metrics_dict:
+            wr_m = wr_metrics_dict[name]
+            gpp_tag = wr_m.get('gpp_tag', '')
+            reg_idx = wr_m.get('regression_index', 0.0) or 0.0
+
+            if gpp_tag == 'CORE_PAY_UP':
+                mult += 0.10 # Proven stratospheric alpha (JSN, Jefferson, Lamb, St. Brown)
+            elif gpp_tag == 'CHEAT_CODE_VALUE':
+                mult += 0.14 # Elite separation / chain mover priced as secondary flex (Jalen Coker, McConkey, Shakir)
+            elif gpp_tag == 'PRIORITY_TARGET':
+                mult += 0.08 # Rejuvenated alphas (Diggs, Wilson, Olave)
+
+            # Coiled-Spring Buy-Lows: High separation (+0.07 to +0.21) with suppressed Week 1 volume
+            if reg_idx >= 1.5:
+                mult += 0.12 # Regression to the mean will ignite target funnels (Chase, MHJ, Downs, Mitchell)
+
+            # Deceleration Traps & Bad Chalk: Negative separation, low chain-moving efficiency
+            if gpp_tag == 'FADE_BAD_CHALK' or 'Trap' in wr_m.get('archetype', ''):
+                mult -= 0.15 # Filter out deceleration traps (Kupp, Godwin, Worthy, Rice)
+            elif gpp_tag == 'AVOID':
+                mult -= 0.20
+
+        # 8. Defensive Pass EPA/DB & Coverage Shell Matchup Multipliers
+        opp_cov = coverage_dict.get(opp, {})
+        if opp_cov and pos in ['QB', 'WR', 'TE']:
+            opp_epa = opp_cov.get('epa_per_db', 0.0)
+            opp_mofc = opp_cov.get('mofc_pct', 50.0)
+            opp_mofo = opp_cov.get('mofo_pct', 50.0)
+            opp_man = opp_cov.get('total_man_pct', 20.0)
+
+            # Pass Defense Quality Multiplier (EPA/DB)
+            if opp_epa >= 0.45:
+                mult += 0.10 # Attack priority turnstiles (Browns, Cowboys, Texans, Panthers)
+            elif opp_epa >= 0.20:
+                mult += 0.04 # Vulnerable pass defense
+            elif opp_epa <= -0.25:
+                mult -= 0.08 # Downgrade vs elite shutdown fortresses (Steelers, Chiefs, Ravens, 49ers)
+
+            # Scheme-Specific Multipliers
+            if pos == 'WR':
+                # Man-Beaters feasting vs heavy man defenses
+                if opp_man >= 35.0 and name in wr_metrics_dict and wr_metrics_dict[name].get('separation_score', 0.0) >= 0.10:
+                    mult += 0.06 # High-separation wideout facing single man coverage (Coker, Diggs, JSN)
+                # Boundary Alphas feasting vs MOFC (Single-High Cover 1/3)
+                if opp_mofc >= 60.0 and name in wr_metrics_dict and wr_metrics_dict[name].get('first_read_pct', 0.0) and wr_metrics_dict[name]['first_read_pct'] >= 0.25:
+                    mult += 0.05 # Boundary first-read alpha with 1-on-1 boundary isolations
+
 
         gpp_proj = round(base * mult, 2)
         gpp_projs.append(gpp_proj)

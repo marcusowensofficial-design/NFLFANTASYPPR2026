@@ -8,6 +8,8 @@ description: >-
 
 # FanDuel Single Game (Showdown) Championship Playbook
 
+> **The Unified Predictive Engine Axiom**: Single Game Showdown, Main Slate Classic, and Season-Long Fantasy all share the **exact same fundamental football predictive foundation**: game pace, trench pass-protection collision physics, coverage shells (MOFC vs MOFO), High-Value Touches (HVTs: carries inside the 5, targets inside the 10, red-zone personnel packages 11 vs 12/21), and optical route separation (ASS) with first-read progression tracking. The formats diverge purely at scoring rules (Half-PPR vs Full-PPR) and roster knapsack mechanics (1.5x MVP Showdown vs 3-Game Matrix Classic).
+
 This skill encapsulates the professional methodology and mathematical principles (derived from Establish The Run, FantasyLabs, LineStar, and high-stakes tournament winners) for winning FanDuel NFL Single Game contests.
 
 ---
@@ -84,11 +86,14 @@ In tight or moderate-scoring games (O/U 40–46), QBs often fail to crack the to
 * If a Quarterback IS rostered (especially at MVP), he **MUST be paired with at least 1 (or 2) of his pass-catchers** (WR1, WR2, or TE).
 * Never roster a "naked" non-scrambling pocket QB.
 
-### Rule C: Game Script Identification (LineStar Framework)
-* **Tight Spreads (<= 4.0 pts) & Mid Totals (41–46):**
-  * **3–3 Balanced Build** or **4–2 Build** is optimal.
-  * Fade both defenses.
-  * Focus on the top 4 skill touchdown scorers + favored home kicker + primary slot value.
+### Rule C: Game Script Identification & Stacking Distribution
+* **The 4-2 / 5-1 Stacking Hegemony (87.5% Empirical Frequency):**
+  * 14 of 16 winning lineups in Week 1 were either **4-2 (50.0%)** or **5-1 (37.5%)**.
+  * Single-game fantasy production is almost always concentrated asymmetrically on the dominant offense.
+* **The 3-3 Probabilistic Knapsack Threshold:**
+  * Do not default to 3-3 balanced builds unless:
+    1. The game is a true Pick'em (Spread $\le 1.5$) in an ultra-low total ($\le 42.0$), OR
+    2. The solver's projected EV for the 3-3 build exceeds the best 4-2/5-1 build by $\ge 3.5$ fantasy points.
 * **Blowout Spreads (>= 7.0 pts):**
   * **5–1 Onslaught Build** (5 players from favored team + 1 lone-wolf pass-catcher or trailing QB from underdog).
 
@@ -235,7 +240,10 @@ Before locking or recommending any single-game DFS lineup, execute this verifica
 ### The Permanent Safeguards:
 1. **Zero Yes-Man Rule:** An analytical assistant must NEVER validate an entered lineup simply because the user asks for confirmation. It is mandatory to present the exact counter-script and how the lineup dies.
 2. **The Knapsack Solution Rule:** In FanDuel single-game, evaluate the **cap relief of the MVP slot**. Purdy at $15,900 at MVP was $1,200 to $3,600 cheaper than Stafford, Puka, or CMC, allowing the 1st-place winner to roster five verified $5,400+ players without taking on a zero-point punt.
-3. **The Sub-$3,500 Punt Ban in Single-Entry:** Taking a 0.0 in single-entry is fatal. All players rostered in single-entry must have a verified 60%+ snap share or multi-target role.
+3. **The Verified Role & Route Participation Floor (Replacing Arbitrary Salary Bans):**
+   * Taking a 0.0 in single-entry is fatal. Never roster pure-blocking fullbacks or rotational depth assets with zero route participation.
+   * Require all rostered players to command $\ge 35\%$ projected route participation or $\ge 4$ designated high-value opportunities.
+   * If an official 90-minute inactive vaults a sub-$3,500 player into a verified starting role ($\ge 65\%$ route share), allow the knapsack solver to utilize that cap-relief.
 4. **Algorithmic Solver Tool:** Always execute `python scripts/run_showdown_optimizer.py --slate <path>` to review all 4 script options mathematically before selecting a lineup.
 
 ---

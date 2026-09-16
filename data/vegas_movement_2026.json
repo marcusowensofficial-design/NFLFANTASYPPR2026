@@ -1,7 +1,7 @@
 {
   "season": 2026,
   "week": 2,
-  "last_updated": "2026-09-15T20:19:51.632895+00:00",
+  "last_updated": "2026-09-15T22:58:04.245067+00:00",
   "total_games": 16,
   "games": [
     {
@@ -82,10 +82,10 @@
       "away_team": "PIT",
       "home_score": 0,
       "away_score": 0,
-      "spread": -4.5,
+      "spread": -5.5,
       "over_under": 41.5,
-      "home_implied_total": 23.0,
-      "away_implied_total": 18.5,
+      "home_implied_total": 23.5,
+      "away_implied_total": 18.0,
       "is_started": false,
       "is_final": false
     },
@@ -134,9 +134,9 @@
       "home_score": 0,
       "away_score": 0,
       "spread": -8.5,
-      "over_under": 46.5,
-      "home_implied_total": 27.5,
-      "away_implied_total": 19.0,
+      "over_under": 47.5,
+      "home_implied_total": 28.0,
+      "away_implied_total": 19.5,
       "is_started": false,
       "is_final": false
     },
@@ -184,10 +184,10 @@
       "away_team": "LV",
       "home_score": 0,
       "away_score": 0,
-      "spread": -7.0,
+      "spread": -6.5,
       "over_under": 43.5,
-      "home_implied_total": 25.25,
-      "away_implied_total": 18.25,
+      "home_implied_total": 25.0,
+      "away_implied_total": 18.5,
       "is_started": false,
       "is_final": false
     },
@@ -253,9 +253,9 @@
       "home_score": 0,
       "away_score": 0,
       "spread": -6.5,
-      "over_under": 47.5,
-      "home_implied_total": 27.0,
-      "away_implied_total": 20.5,
+      "over_under": 46.5,
+      "home_implied_total": 26.5,
+      "away_implied_total": 20.0,
       "is_started": false,
       "is_final": false
     },
