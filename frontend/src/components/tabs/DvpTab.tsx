@@ -532,26 +532,32 @@ export const DvpTab: React.FC<DvpTabProps> = ({
     }
   }, [dvpPosition, overallDstRecords, currentPosRatings, rosterOpponents])
 
-  // Helper to render interactive sortable table header
+// Prominent, high-contrast SVG sort indicator icon
+const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActive, isAsc }) => {
+  if (isActive) {
+    return isAsc ? (
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ display: 'block' }}>
+        <path d="M6 1.5L10.5 8.5H1.5L6 1.5Z" fill="#00f0ff" />
+      </svg>
+    ) : (
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ display: 'block' }}>
+        <path d="M6 10.5L1.5 3.5H10.5L6 10.5Z" fill="#00f0ff" />
+      </svg>
+    )
+  }
+
+  // Inactive state: Both UP and DOWN arrows clearly visible and distinct
+  return (
+    <svg width="10" height="14" viewBox="0 0 10 14" fill="none" style={{ display: 'block' }}>
+      <path d="M5 1L9 5.5H1L5 1Z" fill="#cbd5e1" />
+      <path d="M5 13L1 8.5H9L5 13Z" fill="#cbd5e1" />
+    </svg>
+  )
+}
+
+  // Helper to render interactive sortable table header with prominent, dedicated sort arrows
   const renderSortTh = (title: string, colKey: string, defaultDesc: boolean = false, tooltipTerm?: string) => {
     const isActive = dvpSortCol === colKey
-    const indicator = isActive ? (dvpSortAsc ? ' ▲' : ' ▼') : ' ↕'
-
-    const headerContent = (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-        <span>{title}</span>
-        <span
-          style={{
-            fontSize: '10.5px',
-            color: isActive ? 'var(--accent-cyan)' : 'var(--text-muted)',
-            opacity: isActive ? 1 : 0.4,
-            fontWeight: isActive ? 800 : 400,
-          }}
-        >
-          {indicator}
-        </span>
-      </span>
-    )
 
     return (
       <th
@@ -562,11 +568,59 @@ export const DvpTab: React.FC<DvpTabProps> = ({
           userSelect: 'none',
           whiteSpace: 'nowrap',
           color: isActive ? 'var(--accent-cyan)' : undefined,
-          transition: 'color 0.15s ease',
+          transition: 'all 0.15s ease',
         }}
-        title={`Click to sort by ${title} ${isActive ? (dvpSortAsc ? '(Low to High)' : '(High to Low)') : defaultDesc ? '(High to Low first)' : '(Low to High first)'}`}
+        title={`Click anywhere to sort by ${title} ${
+          isActive
+            ? dvpSortAsc
+              ? '(Currently Low to High, click for High to Low)'
+              : '(Currently High to Low, click for Low to High)'
+            : defaultDesc
+            ? '(High to Low first)'
+            : '(Low to High first)'
+        }`}
       >
-        {tooltipTerm ? <Tooltip term={tooltipTerm}>{headerContent}</Tooltip> : headerContent}
+        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '6px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+            {tooltipTerm ? (
+              <Tooltip term={tooltipTerm}>
+                <span
+                  style={{
+                    borderBottom: '1px dotted rgba(6, 182, 212, 0.65)',
+                    cursor: 'help',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                  }}
+                  title="Click metric name for definition"
+                >
+                  <span>{title}</span>
+                  <span style={{ fontSize: '9px', opacity: 0.75, color: '#38bdf8' }}>ℹ</span>
+                </span>
+              </Tooltip>
+            ) : (
+              <span>{title}</span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className={`intel-dvp-sort-btn ${isActive ? 'active' : ''}`}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              handleSort(colKey, defaultDesc)
+            }}
+            title={
+              isActive
+                ? `Sorted ${dvpSortAsc ? '▲ (Low to High)' : '▼ (High to Low)'}. Click to reverse.`
+                : `Click to sort by ${title} ${defaultDesc ? '▼ (High to Low)' : '▲ (Low to High)'}`
+            }
+            aria-label={`Sort by ${title}`}
+          >
+            <SortArrowIcon isActive={isActive} isAsc={dvpSortAsc} />
+          </button>
+        </div>
       </th>
     )
   }
@@ -993,8 +1047,8 @@ export const DvpTab: React.FC<DvpTabProps> = ({
                 <th>My Roster Exposure ({dvpPosition})</th>
                 {renderSortTh('Half-PPR FPA (FanDuel)', 'dk_fpa', true, 'DVP_FPA')}
                 {renderSortTh('Full-PPR FPA (ESPN Fantasy)', 'fd_fpa', true, 'DVP_FULL_PPR_FPA')}
-                {renderSortTh('vs Pos Avg', 'vs_avg', true)}
-                {renderSortTh('2025-26 Base', 'prior_season_fpa', true)}
+                {renderSortTh('vs Pos Avg', 'vs_avg', true, 'DVP_VS_AVG')}
+                {renderSortTh('2025-26 Base', 'prior_season_fpa', true, 'DVP_BASELINE')}
                 {renderSortTh('2026-27 Curr', 'current_season_fpa', true)}
                 {renderSortTh('L4 Trend', 'trend', false)}
 
