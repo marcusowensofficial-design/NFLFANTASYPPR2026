@@ -8,17 +8,26 @@ interface FantasyProsTabProps {
   onSyncSuccess?: () => void
 }
 
+export type FpViewMode = 'rankings' | 'projections_ppr' | 'projections_half'
+
 export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
   currentWeek = 1,
   onSyncSuccess,
 }) => {
   const [selectedFpWeek, setSelectedFpWeek] = useState<number>(currentWeek)
-  const [fpViewMode, setFpViewMode] = useState<'rankings' | 'projections'>('rankings')
+  const [fpViewMode, setFpViewMode] = useState<FpViewMode>('rankings')
   const [fpRankings, setFpRankings] = useState<any[]>([])
   const [fpPosFilter, setFpPosFilter] = useState<string>('TOP 100')
   const [fpAllRankings, setFpAllRankings] = useState<Record<string, any[]> | null>(null)
+
+  // Full PPR Projections
   const [fpProjections, setFpProjections] = useState<any[]>([])
   const [fpAllProjections, setFpAllProjections] = useState<Record<string, any[]> | null>(null)
+
+  // Half-PPR Projections
+  const [fpProjectionsHalf, setFpProjectionsHalf] = useState<any[]>([])
+  const [fpAllProjectionsHalf, setFpAllProjectionsHalf] = useState<Record<string, any[]> | null>(null)
+
   const [isLoadingFpProj, setIsLoadingFpProj] = useState<boolean>(false)
   const [fpStreamers, setFpStreamers] = useState<StreamerRecommendation[]>([])
   const [fpStreamerPos, setFpStreamerPos] = useState<'DST' | 'K'>('DST')
@@ -54,22 +63,35 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
     }
   }
 
-  const loadFantasyProsProjections = async (pos: string = 'RB', week: number = selectedFpWeek) => {
+  const loadFantasyProsProjections = async (
+    pos: string = 'RB',
+    week: number = selectedFpWeek,
+    scoring: 'PPR' | 'HALF' = fpViewMode === 'projections_half' ? 'HALF' : 'PPR'
+  ) => {
     setIsLoadingFpProj(true)
     const cleanPos = pos === 'TOP 100' ? 'RB' : pos
     try {
-      const res = await fetch(`/api/fantasypros/projections?position=${cleanPos}&week=${week}&scoring=PPR`)
+      const res = await fetch(`/api/fantasypros/projections?position=${cleanPos}&week=${week}&scoring=${scoring}`)
       if (res.ok) {
         const data = await res.json()
-        if (cleanPos === 'ALL') {
-          setFpAllProjections(data.projections)
-          setFpProjections([])
+        if (scoring === 'HALF') {
+          if (cleanPos === 'ALL') {
+            setFpAllProjectionsHalf(data.projections)
+            setFpProjectionsHalf([])
+          } else {
+            setFpProjectionsHalf(data.players || [])
+          }
         } else {
-          setFpProjections(data.players || [])
+          if (cleanPos === 'ALL') {
+            setFpAllProjections(data.projections)
+            setFpProjections([])
+          } else {
+            setFpProjections(data.players || [])
+          }
         }
       }
     } catch (err) {
-      console.error('Failed to load FantasyPros projections:', err)
+      console.error(`Failed to load FantasyPros ${scoring} projections:`, err)
     } finally {
       setIsLoadingFpProj(false)
     }
@@ -100,8 +122,10 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
         }
         if (fpViewMode === 'rankings') {
           loadFantasyProsRankings(fpPosFilter, selectedFpWeek)
+        } else if (fpViewMode === 'projections_half') {
+          loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, selectedFpWeek, 'HALF')
         } else {
-          loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, selectedFpWeek)
+          loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, selectedFpWeek, 'PPR')
         }
       }
     } catch (err) {
@@ -114,8 +138,10 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
   useEffect(() => {
     if (fpViewMode === 'rankings') {
       loadFantasyProsRankings(fpPosFilter, selectedFpWeek)
+    } else if (fpViewMode === 'projections_half') {
+      loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, selectedFpWeek, 'HALF')
     } else {
-      loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, selectedFpWeek)
+      loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, selectedFpWeek, 'PPR')
     }
     loadFantasyProsStreamers(fpStreamerPos, selectedFpWeek)
   }, [selectedFpWeek, fpViewMode])
@@ -128,9 +154,15 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
           <div>
             <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <span>⭐ FantasyPros Expert Consensus & Projections</span>
-              <span className="pill emerald" style={{ fontSize: '11px', padding: '2px 8px', fontWeight: 800 }}>
-                🏈 Pure PPR Scoring (1.0 Pt/Rec)
-              </span>
+              {fpViewMode === 'projections_half' ? (
+                <span className="pill cyan" style={{ fontSize: '11px', padding: '2px 8px', fontWeight: 800 }}>
+                  🏈 Half-PPR Scoring (0.5 Pt/Rec)
+                </span>
+              ) : (
+                <span className="pill emerald" style={{ fontSize: '11px', padding: '2px 8px', fontWeight: 800 }}>
+                  🏈 Pure PPR Scoring (1.0 Pt/Rec)
+                </span>
+              )}
               <span className="pill cyan" style={{ fontSize: '11px', padding: '2px 8px' }}>
                 Week {selectedFpWeek} Active
               </span>
@@ -139,7 +171,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
               </span>
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '6px', maxWidth: '750px' }}>
-              Aggregated weekly rankings, standard deviations, start/sit letter grades, and projections from over 110+ verified fantasy analysts. Filtered strictly for <strong>Full PPR</strong> scoring (not Half-PPR) for the selected NFL week.
+              Aggregated weekly rankings, standard deviations, start/sit letter grades, and projections from over 110+ verified fantasy analysts. Toggle between <strong>Full PPR</strong> (1.0 pt/rec) and <strong>Half-PPR</strong> (0.5 pt/rec) projections for the selected NFL week.
             </p>
           </div>
 
@@ -155,8 +187,10 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                   setSelectedFpWeek(w)
                   if (fpViewMode === 'rankings') {
                     loadFantasyProsRankings(fpPosFilter, w)
+                  } else if (fpViewMode === 'projections_half') {
+                    loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, w, 'HALF')
                   } else {
-                    loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, w)
+                    loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, w, 'PPR')
                   }
                   loadFantasyProsStreamers(fpStreamerPos, w)
                 }}
@@ -187,8 +221,8 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
           </div>
         )}
 
-        {/* Sub-view Navigation: Rankings vs Projections */}
-        <div style={{ display: 'flex', gap: '8px', marginTop: '18px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        {/* Sub-view Navigation: Rankings vs Projections (PPR) vs Projections (Half-PPR) */}
+        <div style={{ display: 'flex', gap: '8px', marginTop: '18px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)', flexWrap: 'wrap' }}>
           <button
             className={`btn btn-sm ${fpViewMode === 'rankings' ? 'btn-primary' : 'btn-secondary'}`}
             style={fpViewMode === 'rankings' ? { background: '#0284c7', borderColor: '#38bdf8' } : {}}
@@ -200,14 +234,24 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
             📋 Consensus Rankings (PPR)
           </button>
           <button
-            className={`btn btn-sm ${fpViewMode === 'projections' ? 'btn-primary' : 'btn-secondary'}`}
-            style={fpViewMode === 'projections' ? { background: '#0284c7', borderColor: '#38bdf8' } : {}}
+            className={`btn btn-sm ${fpViewMode === 'projections_ppr' ? 'btn-primary' : 'btn-secondary'}`}
+            style={fpViewMode === 'projections_ppr' ? { background: '#0284c7', borderColor: '#38bdf8' } : {}}
             onClick={() => {
-              setFpViewMode('projections')
-              loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, selectedFpWeek)
+              setFpViewMode('projections_ppr')
+              loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, selectedFpWeek, 'PPR')
             }}
           >
-            📊 Weekly Stat Projections (PPR)
+            📊 FantasyPros Weekly Stat Projections (PPR)
+          </button>
+          <button
+            className={`btn btn-sm ${fpViewMode === 'projections_half' ? 'btn-primary' : 'btn-secondary'}`}
+            style={fpViewMode === 'projections_half' ? { background: '#0284c7', borderColor: '#38bdf8' } : {}}
+            onClick={() => {
+              setFpViewMode('projections_half')
+              loadFantasyProsProjections(fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter, selectedFpWeek, 'HALF')
+            }}
+          >
+            📊 FantasyPros Weekly Stat Projections (Half-PPR)
           </button>
         </div>
       </div>
@@ -462,234 +506,279 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
         </div>
       )}
 
-      {/* VIEW 2: WEEKLY STATISTICAL PROJECTIONS */}
-      {fpViewMode === 'projections' && (
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-            <div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>📊 Weekly Statistical Projections</span>
-                <span className="pill emerald" style={{ fontSize: '11px', padding: '1px 6px' }}>PPR Output</span>
-              </h3>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                Week {selectedFpWeek} FantasyPros model projections with itemized box-score stats
-              </div>
-            </div>
+      {/* VIEW 2: WEEKLY STATISTICAL PROJECTIONS (PPR & HALF-PPR) */}
+      {(fpViewMode === 'projections_ppr' || fpViewMode === 'projections_half') && (() => {
+        const isHalf = fpViewMode === 'projections_half'
+        const activeProjections = isHalf ? fpProjectionsHalf : fpProjections
+        const activeAllProjections = isHalf ? fpAllProjectionsHalf : fpAllProjections
+        const scoring = isHalf ? 'HALF' : 'PPR'
+        const ptsColLabel = isHalf ? 'Projected Half-PPR Pts' : 'Projected PPR Pts'
+        const pillColor = isHalf ? 'cyan' : 'emerald'
 
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {['ALL', 'QB', 'RB', 'WR', 'TE', 'K', 'DST'].map((pos) => (
-                <button
-                  key={pos}
-                  className={`btn btn-sm ${fpPosFilter === pos ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => {
-                    setFpPosFilter(pos)
-                    loadFantasyProsProjections(pos, selectedFpWeek)
-                  }}
-                >
-                  {pos}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {isLoadingFpProj ? (
-            <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
-              Loading FantasyPros Week {selectedFpWeek} projections...
-            </div>
-          ) : fpPosFilter === 'ALL' && fpAllProjections ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {Object.entries(fpAllProjections).map(([posKey, posProjs]) => (
-                <div key={posKey}>
-                  <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--accent-cyan)', marginBottom: '8px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '4px' }}>
-                    {posKey} Projections ({posProjs.length} Players)
-                  </h4>
-                  <div className="table-responsive">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Player</th>
-                          <th>Pos</th>
-                          <th>Team</th>
-                          <th>Projected PPR Pts</th>
-                          <th>Stat Details</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {posProjs.map((p: any, idx: number) => {
-                          const s = p.stats || {}
-                          let statSummary = ''
-                          if (p.position === 'QB') {
-                            statSummary = `${s.pass_yds || 0} pass yds, ${s.pass_tds || 0} TD, ${s.rush_yds || 0} rush yds`
-                          } else if (p.position === 'RB') {
-                            statSummary = `${s.rush_att || 0} att, ${s.rush_yds || 0} rush yds, ${s.rec_rec || 0} rec, ${s.rec_yds || 0} rec yds`
-                          } else if (p.position === 'WR' || p.position === 'TE') {
-                            statSummary = `${s.rec_rec || 0} rec, ${s.rec_yds || 0} rec yds, ${s.rec_tds || 0} TD`
-                          } else if (p.position === 'K') {
-                            statSummary = `${s.fg || 0} FG, ${s.xpt || 0} XP`
-                          } else if (p.position === 'DST') {
-                            statSummary = `${s.def_sack || 0} sacks, ${s.def_int || 0} INT, ${s.def_pa || 0} PA`
-                          }
-
-                          return (
-                            <tr key={idx}>
-                              <td style={{ fontWeight: 800, color: '#38bdf8' }}>#{idx + 1}</td>
-                              <td style={{ fontWeight: 700 }}>{p.player_name}</td>
-                              <td><span className="pill cyan">{p.position}</span></td>
-                              <td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <NFLTeamLogo team={p.team} size={18} />
-                                  <span>{p.team || 'FA'}</span>
-                                </div>
-                              </td>
-                              <td style={{ fontWeight: 800, color: '#facc15', fontSize: '14px' }}>
-                                {p.projected_points ? `${Number(p.projected_points).toFixed(1)} pts` : '—'}
-                              </td>
-                              <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                {statSummary || 'Model consensus projection'}
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+        return (
+          <div className="card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <h3 style={{ fontSize: '17px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📊 {isHalf ? 'FantasyPros Weekly Stat Projections (Half-PPR)' : 'FantasyPros Weekly Stat Projections (PPR)'}</span>
+                  <span className={`pill ${pillColor}`} style={{ fontSize: '11px', padding: '1px 6px' }}>
+                    {isHalf ? 'Half-PPR (0.5 Pt/Rec)' : 'Full PPR (1.0 Pt/Rec)'}
+                  </span>
+                </h3>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Week {selectedFpWeek} FantasyPros model consensus projections with itemized box-score stats ({isHalf ? 'Half-PPR' : 'Full PPR'})
                 </div>
-              ))}
-            </div>
-          ) : fpProjections.length > 0 ? (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--accent-cyan)' }}>
-                  📊 {fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter} Statistical Projections (Week {selectedFpWeek} • Full PPR)
-                </h4>
-                <span className="pill emerald">PPR Validated</span>
               </div>
-              <div className="table-responsive">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Player</th>
-                      <th>Pos</th>
-                      <th>Team</th>
-                      <th>Projected PPR Pts</th>
-                      {fpPosFilter === 'QB' && (
-                        <>
-                          <th>Pass Cmp / Att</th>
-                          <th>Pass Yds</th>
-                          <th>Pass TDs</th>
-                          <th>Pass INTs</th>
-                          <th>Rush Yds / TD</th>
-                        </>
-                      )}
-                      {(fpPosFilter === 'RB' || fpPosFilter === 'TOP 100') && (
-                        <>
-                          <th>Rush Carries</th>
-                          <th>Rush Yds</th>
-                          <th>Rush TDs</th>
-                          <th>Receptions</th>
-                          <th>Rec Yds</th>
-                          <th>Rec TDs</th>
-                        </>
-                      )}
-                      {(fpPosFilter === 'WR' || fpPosFilter === 'TE' || fpPosFilter === 'FLX') && (
-                        <>
-                          <th>Receptions</th>
-                          <th>Rec Yds</th>
-                          <th>Rec TDs</th>
-                          <th>Rush Yds</th>
-                          <th>Rush TDs</th>
-                        </>
-                      )}
-                      {fpPosFilter === 'K' && (
-                        <>
-                          <th>Field Goals</th>
-                          <th>FG Attempts</th>
-                          <th>Extra Points</th>
-                        </>
-                      )}
-                      {fpPosFilter === 'DST' && (
-                        <>
-                          <th>Sacks</th>
-                          <th>Interceptions</th>
-                          <th>Fumble Rec</th>
-                          <th>Def TDs</th>
-                          <th>Points Allowed</th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fpProjections.map((p: any, idx: number) => {
-                      const s = p.stats || {}
-                      return (
-                        <tr key={idx}>
-                          <td style={{ fontWeight: 800, color: '#38bdf8' }}>#{idx + 1}</td>
-                          <td style={{ fontWeight: 700 }}>{p.player_name}</td>
-                          <td><span className="pill cyan">{p.position}</span></td>
-                          <td>{p.team || 'FA'}</td>
-                          <td style={{ fontWeight: 800, color: '#facc15', fontSize: '14px' }}>
-                            {p.projected_points ? `${Number(p.projected_points).toFixed(1)} pts` : '—'}
-                          </td>
-                          {fpPosFilter === 'QB' && (
-                            <>
-                              <td>{s.pass_cmp ? `${s.pass_cmp.toFixed(1)} / ${s.pass_att?.toFixed(1)}` : '—'}</td>
-                              <td>{s.pass_yds ? `${s.pass_yds.toFixed(1)}` : '—'}</td>
-                              <td style={{ color: '#34d399', fontWeight: 600 }}>{s.pass_tds ? `${s.pass_tds.toFixed(1)}` : '—'}</td>
-                              <td style={{ color: '#f87171' }}>{s.pass_ints ? `${s.pass_ints.toFixed(1)}` : '—'}</td>
-                              <td>{s.rush_yds ? `${s.rush_yds.toFixed(1)} yds (${s.rush_tds?.toFixed(1)} TD)` : '—'}</td>
-                            </>
-                          )}
-                          {(fpPosFilter === 'RB' || fpPosFilter === 'TOP 100') && (
-                            <>
-                              <td>{s.rush_att ? `${s.rush_att.toFixed(1)}` : '—'}</td>
-                              <td>{s.rush_yds ? `${s.rush_yds.toFixed(1)}` : '—'}</td>
-                              <td style={{ color: '#34d399', fontWeight: 600 }}>{s.rush_tds ? `${s.rush_tds.toFixed(1)}` : '—'}</td>
-                              <td style={{ color: '#38bdf8', fontWeight: 700 }}>{s.rec_rec ? `${s.rec_rec.toFixed(1)}` : '—'}</td>
-                              <td>{s.rec_yds ? `${s.rec_yds.toFixed(1)}` : '—'}</td>
-                              <td style={{ color: '#34d399', fontWeight: 600 }}>{s.rec_tds ? `${s.rec_tds.toFixed(1)}` : '—'}</td>
-                            </>
-                          )}
-                          {(fpPosFilter === 'WR' || fpPosFilter === 'TE' || fpPosFilter === 'FLX') && (
-                            <>
-                              <td style={{ color: '#38bdf8', fontWeight: 700 }}>{s.rec_rec ? `${s.rec_rec.toFixed(1)}` : '—'}</td>
-                              <td>{s.rec_yds ? `${s.rec_yds.toFixed(1)}` : '—'}</td>
-                              <td style={{ color: '#34d399', fontWeight: 600 }}>{s.rec_tds ? `${s.rec_tds.toFixed(1)}` : '—'}</td>
-                              <td>{s.rush_yds ? `${s.rush_yds.toFixed(1)}` : '0.0'}</td>
-                              <td>{s.rush_tds ? `${s.rush_tds.toFixed(1)}` : '0.0'}</td>
-                            </>
-                          )}
-                          {fpPosFilter === 'K' && (
-                            <>
-                              <td>{s.fg ? `${s.fg.toFixed(1)}` : '—'}</td>
-                              <td>{s.fga ? `${s.fga.toFixed(1)}` : '—'}</td>
-                              <td>{s.xpt ? `${s.xpt.toFixed(1)}` : '—'}</td>
-                            </>
-                          )}
-                          {fpPosFilter === 'DST' && (
-                            <>
-                              <td>{s.def_sack ? `${s.def_sack.toFixed(1)}` : '—'}</td>
-                              <td>{s.def_int ? `${s.def_int.toFixed(1)}` : '—'}</td>
-                              <td>{s.def_fr ? `${s.def_fr.toFixed(1)}` : '—'}</td>
-                              <td style={{ color: '#34d399', fontWeight: 600 }}>{s.def_td ? `${s.def_td.toFixed(1)}` : '—'}</td>
-                              <td>{s.def_pa ? `${s.def_pa.toFixed(1)}` : '—'}</td>
-                            </>
-                          )}
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {['ALL', 'QB', 'RB', 'WR', 'TE', 'FLX', 'K', 'DST'].map((pos) => (
+                  <button
+                    key={pos}
+                    className={`btn btn-sm ${fpPosFilter === pos ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => {
+                      setFpPosFilter(pos)
+                      loadFantasyProsProjections(pos, selectedFpWeek, scoring)
+                    }}
+                  >
+                    {pos}
+                  </button>
+                ))}
               </div>
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
-              No projections loaded for this position.
-            </div>
-          )}
-        </div>
-      )}
+
+            {isLoadingFpProj ? (
+              <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                Loading FantasyPros Week {selectedFpWeek} {isHalf ? 'Half-PPR' : 'Full PPR'} stat projections...
+              </div>
+            ) : fpPosFilter === 'ALL' && activeAllProjections ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {Object.entries(activeAllProjections).map(([posKey, posProjs]) => (
+                  <div key={posKey}>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--accent-cyan)', marginBottom: '8px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '4px' }}>
+                      {posKey} Projections ({posProjs.length} Players • {isHalf ? 'Half-PPR' : 'PPR'})
+                    </h4>
+                    <div className="table-responsive">
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Player</th>
+                            <th>Pos</th>
+                            <th>Team</th>
+                            <th>{ptsColLabel}</th>
+                            <th>Stat Details</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {posProjs.map((p: any, idx: number) => {
+                            const s = p.stats || {}
+                            let statSummary = ''
+                            if (p.position === 'QB') {
+                              statSummary = `${s.pass_yds || 0} pass yds, ${s.pass_tds || 0} TD, ${s.rush_yds || 0} rush yds`
+                            } else if (p.position === 'RB') {
+                              statSummary = `${s.rush_att || 0} att, ${s.rush_yds || 0} rush yds, ${s.rec_rec || 0} rec, ${s.rec_yds || 0} rec yds`
+                            } else if (p.position === 'WR' || p.position === 'TE' || p.position === 'FLX') {
+                              statSummary = `${s.rec_rec || 0} rec, ${s.rec_yds || 0} rec yds, ${s.rec_tds || 0} TD`
+                            } else if (p.position === 'K') {
+                              statSummary = `${s.fg || 0} FG, ${s.xpt || 0} XP`
+                            } else if (p.position === 'DST') {
+                              statSummary = `${s.def_sack || 0} sacks, ${s.def_int || 0} INT, ${s.def_pa || 0} PA`
+                            }
+
+                            return (
+                              <tr key={idx}>
+                                <td style={{ fontWeight: 800, color: '#38bdf8' }}>#{idx + 1}</td>
+                                <td style={{ fontWeight: 700 }}>{p.player_name}</td>
+                                <td><span className="pill cyan">{p.position}</span></td>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <NFLTeamLogo team={p.team} size={18} />
+                                    <span>{p.team || 'FA'}</span>
+                                  </div>
+                                </td>
+                                <td style={{ fontWeight: 800, color: '#facc15', fontSize: '14px' }}>
+                                  {p.projected_points ? `${Number(p.projected_points).toFixed(1)} pts` : '—'}
+                                </td>
+                                <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                  {statSummary || 'Model consensus projection'}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : activeProjections.length > 0 ? (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--accent-cyan)' }}>
+                    📊 {fpPosFilter === 'TOP 100' ? 'RB' : fpPosFilter} Statistical Projections (Week {selectedFpWeek} • {isHalf ? 'Half-PPR' : 'Full PPR'})
+                  </h4>
+                  <span className={`pill ${pillColor}`}>
+                    {isHalf ? 'Half-PPR Calibrated' : 'PPR Validated'}
+                  </span>
+                </div>
+                <div className="table-responsive">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>Pos</th>
+                        <th>Team / Opp</th>
+                        <th>{ptsColLabel}</th>
+                        {fpPosFilter === 'QB' && (
+                          <>
+                            <th>Pass Cmp / Att</th>
+                            <th>Pass Yds</th>
+                            <th>Pass TDs</th>
+                            <th>Pass INTs</th>
+                            <th>Rush Yds / TD</th>
+                          </>
+                        )}
+                        {(fpPosFilter === 'RB' || fpPosFilter === 'TOP 100') && (
+                          <>
+                            <th>Rush Carries</th>
+                            <th>Rush Yds</th>
+                            <th>Rush TDs</th>
+                            <th>Receptions</th>
+                            <th>Rec Yds</th>
+                            <th>Rec TDs</th>
+                          </>
+                        )}
+                        {(fpPosFilter === 'WR' || fpPosFilter === 'TE' || fpPosFilter === 'FLX') && (
+                          <>
+                            <th>Receptions</th>
+                            <th>Rec Yds</th>
+                            <th>Rec TDs</th>
+                            <th>Rush Yds</th>
+                            <th>Rush TDs</th>
+                          </>
+                        )}
+                        {fpPosFilter === 'K' && (
+                          <>
+                            <th>Field Goals</th>
+                            <th>FG Attempts</th>
+                            <th>Extra Points</th>
+                          </>
+                        )}
+                        {fpPosFilter === 'DST' && (
+                          <>
+                            <th>Sacks</th>
+                            <th>Interceptions</th>
+                            <th>Fumble Rec</th>
+                            <th>Def TDs</th>
+                            <th>Points Allowed</th>
+                          </>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeProjections.map((p: any, idx: number) => {
+                        const s = p.stats || {}
+                        return (
+                          <tr key={idx}>
+                            <td style={{ fontWeight: 800, color: '#38bdf8' }}>#{idx + 1}</td>
+                            <td style={{ fontWeight: 700 }}>
+                              <div>{p.player_name}</div>
+                              {p.start_sit_grade && (
+                                <span
+                                  className={`grade-pill ${p.start_sit_grade.startsWith('A') ? 'grade-a' : p.start_sit_grade.startsWith('B') ? 'grade-b' : 'grade-c'}`}
+                                  style={{ fontSize: '9px', padding: '0 4px', marginTop: '2px', display: 'inline-block' }}
+                                  title={`Grade: ${p.start_sit_grade}`}
+                                >
+                                  {p.start_sit_grade}
+                                </span>
+                              )}
+                            </td>
+                            <td><span className="pill cyan">{p.position}</span></td>
+                            <td>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                  <NFLTeamLogo team={p.team} size={16} />
+                                  <span style={{ fontWeight: 600 }}>{p.team || 'FA'}</span>
+                                </div>
+                                {(p.opponent || p.player_opponent) && (
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                    {p.opponent || p.player_opponent}
+                                  </div>
+                                )}
+                                {p.opp_dvp_rank && (
+                                  <span
+                                    className={`pill ${p.opp_dvp_rank <= 10 ? 'rose' : p.opp_dvp_rank >= 21 ? 'emerald' : 'amber'}`}
+                                    style={{ fontSize: '9px', padding: '0 4px', fontWeight: 700, width: 'fit-content' }}
+                                    title={`Opponent ranks #${p.opp_dvp_rank} in fantasy points allowed`}
+                                  >
+                                    DvP #{p.opp_dvp_rank}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td style={{ fontWeight: 800, color: '#facc15', fontSize: '14px' }}>
+                              {p.projected_points ? `${Number(p.projected_points).toFixed(1)} pts` : '—'}
+                            </td>
+                            {fpPosFilter === 'QB' && (
+                              <>
+                                <td>{s.pass_cmp ? `${s.pass_cmp.toFixed(1)} / ${s.pass_att?.toFixed(1)}` : '—'}</td>
+                                <td>{s.pass_yds ? `${s.pass_yds.toFixed(1)}` : '—'}</td>
+                                <td style={{ color: '#34d399', fontWeight: 600 }}>{s.pass_tds ? `${s.pass_tds.toFixed(1)}` : '—'}</td>
+                                <td style={{ color: '#f87171' }}>{s.pass_ints ? `${s.pass_ints.toFixed(1)}` : '—'}</td>
+                                <td>{s.rush_yds ? `${s.rush_yds.toFixed(1)} yds (${s.rush_tds?.toFixed(1)} TD)` : '—'}</td>
+                              </>
+                            )}
+                            {(fpPosFilter === 'RB' || fpPosFilter === 'TOP 100') && (
+                              <>
+                                <td>{s.rush_att ? `${s.rush_att.toFixed(1)}` : '—'}</td>
+                                <td>{s.rush_yds ? `${s.rush_yds.toFixed(1)}` : '—'}</td>
+                                <td style={{ color: '#34d399', fontWeight: 600 }}>{s.rush_tds ? `${s.rush_tds.toFixed(1)}` : '—'}</td>
+                                <td style={{ color: '#38bdf8', fontWeight: 700 }}>{s.rec_rec ? `${s.rec_rec.toFixed(1)}` : '—'}</td>
+                                <td>{s.rec_yds ? `${s.rec_yds.toFixed(1)}` : '—'}</td>
+                                <td style={{ color: '#34d399', fontWeight: 600 }}>{s.rec_tds ? `${s.rec_tds.toFixed(1)}` : '—'}</td>
+                              </>
+                            )}
+                            {(fpPosFilter === 'WR' || fpPosFilter === 'TE' || fpPosFilter === 'FLX') && (
+                              <>
+                                <td style={{ color: '#38bdf8', fontWeight: 700 }}>{s.rec_rec ? `${s.rec_rec.toFixed(1)}` : '—'}</td>
+                                <td>{s.rec_yds ? `${s.rec_yds.toFixed(1)}` : '—'}</td>
+                                <td style={{ color: '#34d399', fontWeight: 600 }}>{s.rec_tds ? `${s.rec_tds.toFixed(1)}` : '—'}</td>
+                                <td>{s.rush_yds ? `${s.rush_yds.toFixed(1)}` : '0.0'}</td>
+                                <td>{s.rush_tds ? `${s.rush_tds.toFixed(1)}` : '0.0'}</td>
+                              </>
+                            )}
+                            {fpPosFilter === 'K' && (
+                              <>
+                                <td>{s.fg ? `${s.fg.toFixed(1)}` : '—'}</td>
+                                <td>{s.fga ? `${s.fga.toFixed(1)}` : '—'}</td>
+                                <td>{s.xpt ? `${s.xpt.toFixed(1)}` : '—'}</td>
+                              </>
+                            )}
+                            {fpPosFilter === 'DST' && (
+                              <>
+                                <td>{s.def_sack ? `${s.def_sack.toFixed(1)}` : '—'}</td>
+                                <td>{s.def_int ? `${s.def_int.toFixed(1)}` : '—'}</td>
+                                <td>{s.def_fr ? `${s.def_fr.toFixed(1)}` : '—'}</td>
+                                <td style={{ color: '#34d399', fontWeight: 600 }}>{s.def_td ? `${s.def_td.toFixed(1)}` : '—'}</td>
+                                <td>{s.def_pa ? `${s.def_pa.toFixed(1)}` : '—'}</td>
+                              </>
+                            )}
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                No projections loaded for this position.
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* 8-MAN STREAMING CHEAT SHEET */}
       <div className="card" style={{ border: '1px solid rgba(16, 185, 129, 0.35)', background: 'rgba(6, 78, 59, 0.12)' }}>

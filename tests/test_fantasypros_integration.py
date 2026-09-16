@@ -256,3 +256,27 @@ def test_api_fantasypros_top_100_and_projections(client):
         assert p_data["players"][0]["player_name"] == "Jahmyr Gibbs"
         assert p_data["players"][0]["projected_points"] == 20.92
 
+    mock_half_projections = [
+        {
+            "player_id": 22968,
+            "player_name": "Jahmyr Gibbs",
+            "position": "RB",
+            "team": "DET",
+            "projected_points": 18.92,
+            "scoring": "HALF",
+            "stats": {"points_half": 18.92, "points_ppr": 20.92, "rush_yds": 81.1, "receptions": 4.0},
+        }
+    ]
+
+    with patch("src.adapters.fantasypros.client.fantasypros_client.fetch_projections", new=AsyncMock(return_value=mock_half_projections)):
+        resp_half = client.get("/api/fantasypros/projections?position=RB&week=1&scoring=HALF")
+        assert resp_half.status_code == 200
+        h_data = resp_half.json()
+        assert h_data["position"] == "RB"
+        assert h_data["week"] == 1
+        assert h_data["scoring"] == "HALF"
+        assert len(h_data["players"]) == 1
+        assert h_data["players"][0]["player_name"] == "Jahmyr Gibbs"
+        assert h_data["players"][0]["projected_points"] == 18.92
+
+

@@ -159,7 +159,7 @@ class FantasyProsClient:
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         }
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
                 resp = await client.get(url, headers=headers)
                 if resp.status_code == 200:
                     m = re.search(r"var ecrData\s*=\s*(\{.*?\});", resp.text)
@@ -175,6 +175,8 @@ class FantasyProsClient:
     ) -> list[dict[str, Any]]:
         """Fetch weekly statistical projections from official FantasyPros web projections table."""
         pos_clean = position.lower().replace("dst", "dst")
+        if pos_clean in ("flx", "flex"):
+            pos_clean = "flex"
         scoring_clean = scoring.upper()
         url = f"https://www.fantasypros.com/nfl/projections/{pos_clean}.php?week={week}&scoring={scoring_clean}"
         headers = {
@@ -183,7 +185,7 @@ class FantasyProsClient:
         }
         try:
             from bs4 import BeautifulSoup
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
                 resp = await client.get(url, headers=headers)
                 if resp.status_code == 200:
                     soup = BeautifulSoup(resp.text, "html.parser")
@@ -228,50 +230,93 @@ class FantasyProsClient:
                                     "rush_tds": float(cell_texts[8]),
                                     "fumbles": float(cell_texts[9]),
                                     "points_ppr": fpts,
+                                    "points_half": fpts,
                                 }
                             except ValueError:
                                 pass
                         elif pos_u == "RB" and len(cell_texts) >= 9:
                             # ['Player', 'ATT', 'YDS', 'TDS', 'REC', 'YDS', 'TDS', 'FL', 'FPTS']
                             try:
+                                rec_val = float(cell_texts[4])
                                 itemized_stats = {
                                     "rush_att": float(cell_texts[1]),
                                     "rush_yds": float(cell_texts[2]),
                                     "rush_tds": float(cell_texts[3]),
-                                    "rec_rec": float(cell_texts[4]),
+                                    "rec_rec": rec_val,
                                     "rec_yds": float(cell_texts[5]),
                                     "rec_tds": float(cell_texts[6]),
                                     "fumbles": float(cell_texts[7]),
-                                    "points_ppr": fpts,
                                 }
+                                if scoring_clean == "HALF":
+                                    itemized_stats["points_half"] = fpts
+                                    itemized_stats["points_ppr"] = round(fpts + (rec_val * 0.5), 2)
+                                else:
+                                    itemized_stats["points_ppr"] = fpts
+                                    itemized_stats["points_half"] = round(fpts - (rec_val * 0.5), 2)
                             except ValueError:
                                 pass
                         elif pos_u == "WR" and len(cell_texts) >= 9:
                             # ['Player', 'REC', 'YDS', 'TDS', 'ATT', 'YDS', 'TDS', 'FL', 'FPTS']
                             try:
+                                rec_val = float(cell_texts[1])
                                 itemized_stats = {
-                                    "rec_rec": float(cell_texts[1]),
+                                    "rec_rec": rec_val,
                                     "rec_yds": float(cell_texts[2]),
                                     "rec_tds": float(cell_texts[3]),
                                     "rush_att": float(cell_texts[4]),
                                     "rush_yds": float(cell_texts[5]),
                                     "rush_tds": float(cell_texts[6]),
                                     "fumbles": float(cell_texts[7]),
-                                    "points_ppr": fpts,
                                 }
+                                if scoring_clean == "HALF":
+                                    itemized_stats["points_half"] = fpts
+                                    itemized_stats["points_ppr"] = round(fpts + (rec_val * 0.5), 2)
+                                else:
+                                    itemized_stats["points_ppr"] = fpts
+                                    itemized_stats["points_half"] = round(fpts - (rec_val * 0.5), 2)
                             except ValueError:
                                 pass
                         elif pos_u == "TE" and len(cell_texts) >= 6:
                             # ['Player', 'REC', 'YDS', 'TDS', 'FL', 'FPTS']
                             try:
+                                rec_val = float(cell_texts[1])
                                 itemized_stats = {
-                                    "rec_rec": float(cell_texts[1]),
+                                    "rec_rec": rec_val,
                                     "rec_yds": float(cell_texts[2]),
                                     "rec_tds": float(cell_texts[3]),
                                     "fumbles": float(cell_texts[4]),
-                                    "points_ppr": fpts,
                                 }
+                                if scoring_clean == "HALF":
+                                    itemized_stats["points_half"] = fpts
+                                    itemized_stats["points_ppr"] = round(fpts + (rec_val * 0.5), 2)
+                                else:
+                                    itemized_stats["points_ppr"] = fpts
+                                    itemized_stats["points_half"] = round(fpts - (rec_val * 0.5), 2)
                             except ValueError:
+                                pass
+                        elif pos_u in ("FLX", "FLEX") and len(cell_texts) >= 10:
+                            # ['Player', 'POS', 'ATT', 'YDS', 'TDS', 'REC', 'YDS', 'TDS', 'FL', 'FPTS']
+                            try:
+                                raw_pos = cell_texts[1].upper()
+                                parsed_pos = "RB" if "RB" in raw_pos else "WR" if "WR" in raw_pos else "TE" if "TE" in raw_pos else "FLX"
+                                rec_val = float(cell_texts[5])
+                                itemized_stats = {
+                                    "rush_att": float(cell_texts[2]),
+                                    "rush_yds": float(cell_texts[3]),
+                                    "rush_tds": float(cell_texts[4]),
+                                    "rec_rec": rec_val,
+                                    "rec_yds": float(cell_texts[6]),
+                                    "rec_tds": float(cell_texts[7]),
+                                    "fumbles": float(cell_texts[8]),
+                                }
+                                if scoring_clean == "HALF":
+                                    itemized_stats["points_half"] = fpts
+                                    itemized_stats["points_ppr"] = round(fpts + (rec_val * 0.5), 2)
+                                else:
+                                    itemized_stats["points_ppr"] = fpts
+                                    itemized_stats["points_half"] = round(fpts - (rec_val * 0.5), 2)
+                                pos_u = parsed_pos
+                            except (ValueError, IndexError):
                                 pass
                         elif pos_u == "K" and len(cell_texts) >= 5:
                             # ['Player', 'FG', 'FGA', 'XPT', 'FPTS']
@@ -281,6 +326,7 @@ class FantasyProsClient:
                                     "fga": float(cell_texts[2]),
                                     "xpt": float(cell_texts[3]),
                                     "points_ppr": fpts,
+                                    "points_half": fpts,
                                 }
                             except ValueError:
                                 pass
@@ -297,6 +343,7 @@ class FantasyProsClient:
                                     "def_pa": float(cell_texts[7]),
                                     "def_tyda": float(cell_texts[8]),
                                     "points_ppr": fpts,
+                                    "points_half": fpts,
                                 }
                             except ValueError:
                                 pass
@@ -519,6 +566,28 @@ class FantasyProsClient:
             if cached is not None:
                 return cached
 
+            # FLX Synthesis: combine full RB, WR, and TE projection pools
+            if pos_clean in ("FLX", "FLEX"):
+                rbs, wrs, tes = await asyncio.gather(
+                    self.fetch_projections(season=season, week=week, position="RB", scoring=scoring_clean),
+                    self.fetch_projections(season=season, week=week, position="WR", scoring=scoring_clean),
+                    self.fetch_projections(season=season, week=week, position="TE", scoring=scoring_clean),
+                    return_exceptions=True,
+                )
+                flex_pool: list[dict[str, Any]] = []
+                seen_flx: set[str] = set()
+                for res_list in (rbs, wrs, tes):
+                    if isinstance(res_list, list):
+                        for p in res_list:
+                            n = normalize_player_name(p.get("player_name"))
+                            if n and n not in seen_flx:
+                                seen_flx.add(n)
+                                flex_pool.append(p)
+                flex_pool.sort(key=lambda x: x.get("projected_points", 0.0), reverse=True)
+                if flex_pool:
+                    self._set_cached(cache_key, flex_pool)
+                    return flex_pool
+
             # 1. First attempt: Official REST API
             api_players: list[dict[str, Any]] = []
             if self.is_configured:
@@ -579,35 +648,52 @@ class FantasyProsClient:
                     # Enrich existing API player with any extra web stats if needed
                     pass
 
+            # 3. Supplement with ECR consensus rankings r2p_pts so deep rosters are fully projected
+            if len(merged) < 40:
+                try:
+                    ecr_list = await self.fetch_consensus_rankings(
+                        season=season, week=week, position=pos_clean, scoring=scoring_clean
+                    )
+                    for p in ecr_list:
+                        p_name = p.get("player_name") or p.get("name")
+                        norm = normalize_player_name(p_name)
+                        if norm and norm not in seen_names:
+                            r2p = p.get("r2p_pts")
+                            if r2p is not None:
+                                try:
+                                    pts = float(r2p)
+                                except (ValueError, TypeError):
+                                    pts = 0.0
+                                if pts > 0.0:
+                                    seen_names.add(norm)
+                                    stats_dict = {
+                                        "points_ppr": pts if scoring_clean == "PPR" else round(pts + (float(p.get("rank_ave", 0) or 0) * 0.1), 2),
+                                        "points_half": pts if scoring_clean == "HALF" else round(max(0.0, pts - 1.5), 2),
+                                        "r2p_pts": pts,
+                                    }
+                                    merged.append({
+                                        "player_id": p.get("player_id"),
+                                        "player_name": p_name,
+                                        "position": p.get("player_position_id") or p.get("position") or pos_clean,
+                                        "team": normalize_team(p.get("player_team_id") or p.get("team_id")),
+                                        "projected_points": pts,
+                                        "scoring": scoring_clean,
+                                        "stats": stats_dict,
+                                        "rank_ecr": p.get("rank_ecr"),
+                                        "pos_rank": p.get("pos_rank"),
+                                        "start_sit_grade": p.get("start_sit_grade"),
+                                        "matchup_stars": p.get("matchup_stars"),
+                                        "opp_dvp_rank": p.get("opp_dvp_rank"),
+                                        "opponent": p.get("player_opponent"),
+                                    })
+                except Exception as e:
+                    logger.debug("FantasyPros ECR fallback for projections failed: %s", e)
+
             if merged:
+                # Sort by projected points descending
+                merged.sort(key=lambda x: x.get("projected_points", 0.0), reverse=True)
                 self._set_cached(cache_key, merged)
                 return merged
-
-            # 3. Third attempt: Derive projections from ECR consensus table r2p_pts
-            ecr_list = await self.fetch_consensus_rankings(
-                season=season, week=week, position=pos_clean, scoring=scoring_clean
-            )
-            derived = []
-            for p in ecr_list:
-                r2p = p.get("r2p_pts")
-                if r2p is not None:
-                    try:
-                        pts = float(r2p)
-                    except ValueError:
-                        pts = 0.0
-                    derived.append({
-                        "player_id": p.get("player_id"),
-                        "player_name": p.get("player_name") or p.get("name"),
-                        "position": p.get("player_position_id") or pos_clean,
-                        "team": normalize_team(p.get("player_team_id") or p.get("team_id")),
-                        "projected_points": pts,
-                        "scoring": scoring_clean,
-                        "stats": {"points_ppr": pts, "r2p_pts": pts},
-                    })
-
-            if derived:
-                self._set_cached(cache_key, derived)
-                return derived
 
             return []
 
@@ -617,8 +703,8 @@ class FantasyProsClient:
         week: int = 2,
         scoring: str = "PPR",
     ) -> dict[str, list[dict[str, Any]]]:
-        """Fetch weekly projections across QB, RB, WR, TE, K, and DST concurrently."""
-        positions = ["QB", "RB", "WR", "TE", "K", "DST"]
+        """Fetch weekly projections across QB, RB, WR, TE, FLX, K, and DST concurrently."""
+        positions = ["QB", "RB", "WR", "TE", "FLX", "K", "DST"]
         results = await asyncio.gather(
             *(
                 self.fetch_projections(

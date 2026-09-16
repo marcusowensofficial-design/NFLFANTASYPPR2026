@@ -148,7 +148,7 @@ async def get_rankings(
 async def get_projections(
     position: str = Query(default="ALL", description="Position: ALL, QB, RB, WR, TE, FLX, K, DST"),
     week: int | None = Query(default=None, description="NFL Week number"),
-    scoring: str = Query(default="PPR", description="Scoring format: strictly PPR"),
+    scoring: str = Query(default="PPR", description="Scoring format: strictly PPR or HALF"),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """Retrieve weekly statistical projections from FantasyPros for the selected week."""
@@ -162,6 +162,10 @@ async def get_projections(
         projections = await fantasypros_client.fetch_all_projections(
             season=season, week=eff_week, scoring=scoring_upper
         )
+        if isinstance(projections, dict):
+            for pos_key, p_list in projections.items():
+                if isinstance(p_list, list):
+                    _enrich_players_with_dvp(p_list, default_pos=pos_key)
         return {
             "season": season,
             "week": eff_week,
@@ -172,6 +176,8 @@ async def get_projections(
         players = await fantasypros_client.fetch_projections(
             season=season, week=eff_week, position=pos_upper, scoring=scoring_upper
         )
+        if isinstance(players, list):
+            _enrich_players_with_dvp(players, default_pos=pos_upper)
         return {
             "season": season,
             "week": eff_week,
