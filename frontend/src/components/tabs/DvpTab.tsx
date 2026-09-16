@@ -738,9 +738,9 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
       {/* 4. CONTROLS: POSITION SELECTOR (OVERALL + QB/RB/WR/TE), TIER FILTERS & SEARCH */}
       <div className="intel-filter-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          {/* Position Selector with OVERALL DST */}
+          {/* Position Selector with OVERALL DST on far right */}
           <div className="intel-dvp-pos-selector">
-            {(['OVERALL', 'QB', 'RB', 'WR', 'TE'] as const).map((pos) => (
+            {(['QB', 'RB', 'WR', 'TE', 'OVERALL'] as const).map((pos) => (
               <button
                 key={pos}
                 type="button"
