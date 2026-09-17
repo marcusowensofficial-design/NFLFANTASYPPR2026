@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -11,6 +12,7 @@ from src.dfs.engine import dfs_engine
 from src.dfs.loader import dfs_loader
 from src.dfs.optimizer import dfs_optimizer
 from src.dfs.analyzer import dfs_analyzer
+from src.dfs.showdown_optimizer import FanDuelShowdownOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -30,62 +32,84 @@ def _np_default(o: Any) -> Any:
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
-SLATES_MAP = {
+SLATES_MAP: dict[str, dict[str, Any]] = {
+    "main": {
+        "id": "main",
+        "name": "Week 2 Main Slate ($60k Classic)",
+        "games_count": 13,
+        "platform": "FanDuel ($60k Cap)",
+        "is_showdown": False,
+        "default_csv": str(DATA_DIR / "9-20-26-main-slate-rosters-salaries-fd-week2.csv"),
+    },
     "showdown_tnf": {
         "id": "showdown_tnf",
         "name": "Week 2 TNF: Detroit at Buffalo ($60k Showdown)",
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
+        "is_showdown": True,
         "default_csv": str(DATA_DIR / "detvsbuffalosinglegameslaterostersnsalaries.csv"),
     },
-    "main": {
-        "id": "main",
+    "main_week1": {
+        "id": "main_week1",
         "name": "Week 1 Main Slate Archive ($60k Classic)",
         "games_count": 13,
         "platform": "FanDuel ($60k Cap)",
+        "is_showdown": False,
         "default_csv": str(DATA_DIR / "mainslate9-13-2026.csv") if (DATA_DIR / "mainslate9-13-2026.csv").exists() else str(DATA_DIR / "FanDuel-NFL-2026 MDT-09 MDT-13 MDT-133104-players-list.csv"),
     },
-    "early": {
-        "id": "early",
+    "early_week1": {
+        "id": "early_week1",
         "name": "Week 1 Early-Only Archive (8 Games)",
         "games_count": 8,
         "platform": "FanDuel ($60k Cap)",
+        "is_showdown": False,
         "default_csv": str(DATA_DIR / "earlyonlysalariesandrosters.csv") if (DATA_DIR / "earlyonlysalariesandrosters.csv").exists() else str(PROJECT_ROOT / "earlyonlysalariesandrosters.csv"),
     },
 }
 
 
 def _resolve_csv_path(slate_id: str) -> str:
-    if slate_id.lower() == "uploaded":
+    sid = slate_id.lower().strip()
+    if sid == "uploaded":
         uploaded_path = DATA_DIR / "uploaded_fanduel.csv"
         if uploaded_path.exists():
             return str(uploaded_path)
         raise HTTPException(status_code=404, detail="No uploaded FanDuel CSV found. Please upload one first.")
 
     # Check for TNF showdown variants
-    if slate_id.lower() in ("showdown_tnf", "det_buf", "tnf"):
+    if sid in ("showdown_tnf", "det_buf", "tnf", "showdown"):
         tnf_path = DATA_DIR / "detvsbuffalosinglegameslaterostersnsalaries.csv"
         if tnf_path.exists():
             return str(tnf_path)
 
-    slate_info = SLATES_MAP.get(slate_id.lower())
+    # Week 2 Main Slate checks
+    if sid in ("main", "week2", "week2_main", "main_week2"):
+        week2_main = DATA_DIR / "9-20-26-main-slate-rosters-salaries-fd-week2.csv"
+        if week2_main.exists():
+            return str(week2_main)
+
+    # Week 1 Archives checks
+    if sid in ("main_week1", "week1", "week1_main"):
+        w1_path = DATA_DIR / "mainslate9-13-2026.csv"
+        if w1_path.exists():
+            return str(w1_path)
+
+    if sid in ("early", "early_week1"):
+        root_early = PROJECT_ROOT / "earlyonlysalariesandrosters.csv"
+        if root_early.exists():
+            return str(root_early)
+        data_early = DATA_DIR / "earlyonlysalariesandrosters.csv"
+        if data_early.exists():
+            return str(data_early)
+
+    slate_info = SLATES_MAP.get(sid)
     if slate_info and os.path.exists(slate_info["default_csv"]):
         return slate_info["default_csv"]
-
-    # Check root for earlyonlysalariesandrosters.csv
-    root_early = PROJECT_ROOT / "earlyonlysalariesandrosters.csv"
-    if slate_id.lower() == "early" and root_early.exists():
-        return str(root_early)
 
     # Fallback to latest fanduel CSV
     latest = dfs_loader.find_latest_fanduel_csv()
     if latest and os.path.exists(latest):
         return latest
-
-    # Secondary check in src/dfs/
-    alt_early = PROJECT_ROOT / "src" / "dfs" / "earlyonlysalariesandrosters.csv"
-    if slate_id.lower() == "early" and alt_early.exists():
-        return str(alt_early)
 
     raise HTTPException(status_code=404, detail=f"No CSV data found for slate '{slate_id}'.")
 
@@ -157,11 +181,19 @@ async def upload_slate(payload: DFSUploadSlateRequest) -> dict[str, Any]:
                 "proj": float(r.get("proj", 0.0)),
             })
 
+    is_showdown = (
+        len(games) == 1
+        or "MVP 1.5x Salary" in enriched_df.columns
+        or "MVP" in str(enriched_df.columns)
+    )
+    platform = "FanDuel Showdown (1.5x MVP + 5 FLEX)" if is_showdown else "FanDuel ($60k Cap)"
+
     SLATES_MAP["uploaded"] = {
         "id": "uploaded",
         "name": f"Uploaded: {payload.filename}",
         "games_count": len(games),
-        "platform": "FanDuel ($60k Cap)",
+        "platform": platform,
+        "is_showdown": is_showdown,
         "default_csv": str(target_path),
     }
 
@@ -172,6 +204,7 @@ async def upload_slate(payload: DFSUploadSlateRequest) -> dict[str, Any]:
         "total_players": len(enriched_df),
         "teams": teams,
         "games_count": len(games),
+        "is_showdown": is_showdown,
         "salary_min": salary_min,
         "salary_max": salary_max,
         "top_stars": top_stars,
@@ -194,16 +227,25 @@ async def export_lineups(payload: DFSExportRequest) -> dict[str, Any]:
 
 @router.get("/slates")
 async def get_available_slates() -> list[dict[str, Any]]:
-    """Returns available DFS slates with file status and game counts."""
+    """Returns available DFS slates with file status, game counts, and modification times."""
     available = []
     for sid, info in SLATES_MAP.items():
         exists = os.path.exists(info["default_csv"])
+        last_modified = None
+        if exists:
+            try:
+                mtime = os.path.getmtime(info["default_csv"])
+                last_modified = datetime.datetime.fromtimestamp(mtime).strftime("%b %d, %I:%M %p")
+            except OSError:
+                pass
         available.append({
             "id": info["id"],
             "name": info["name"],
             "games_count": info["games_count"],
             "platform": info["platform"],
+            "is_showdown": info.get("is_showdown", False),
             "is_available": exists,
+            "last_modified": last_modified,
         })
     return available
 
@@ -212,15 +254,32 @@ async def get_available_slates() -> list[dict[str, Any]]:
 async def get_slate_data(
     slate_id: str = Query(default="main"),
     projection_source: str = Query(default="MODEL", description="Projection source: MODEL, CONSENSUS, FANTASYPROS, SLEEPER, ESPN"),
+    force_reload: bool = Query(default=False, description="Force re-reading CSV from disk"),
 ) -> dict[str, Any]:
     """Returns enriched player pool, top game stacks, chalk radar, and tournament leverage targets."""
     csv_path = _resolve_csv_path(slate_id)
     source_str = projection_source if isinstance(projection_source, str) else "MODEL"
     try:
-        slate_df = await dfs_engine.get_slate(csv_path=csv_path, projection_source=source_str)
+        slate_df = await dfs_engine.get_slate(csv_path=csv_path, projection_source=source_str, force_reload=force_reload)
     except Exception as e:
         logger.error(f"Failed to load slate data for {slate_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load slate: {e}")
+
+    last_modified = None
+    if csv_path and os.path.exists(csv_path):
+        try:
+            mtime = os.path.getmtime(csv_path)
+            last_modified = datetime.datetime.fromtimestamp(mtime).strftime("%b %d, %I:%M %p")
+        except OSError:
+            pass
+
+    slate_info = SLATES_MAP.get(slate_id.lower(), {})
+    is_showdown = (
+        slate_info.get("is_showdown", False)
+        or slate_id.lower() in ("showdown_tnf", "det_buf", "tnf", "showdown")
+        or (slate_df is not None and "game" in slate_df.columns and len(slate_df["game"].dropna().unique()) == 1)
+        or (slate_df is not None and "MVP 1.5x Salary" in slate_df.columns)
+    )
 
     import json
 
@@ -247,7 +306,7 @@ async def get_slate_data(
     # Player pool catalog (sorted by salary desc)
     clean_pool = slate_df[
         ~slate_df["injury"].isin(["IR", "O", "OUT"])
-        & (slate_df["proj"] >= 3.0)
+        & (slate_df["proj"] >= 1.0)
     ].sort_values(by="salary", ascending=False)
 
     player_items = _to_clean_records(clean_pool[[
@@ -257,6 +316,8 @@ async def get_slate_data(
 
     raw_resp = {
         "slate_id": slate_id,
+        "is_showdown": is_showdown,
+        "last_modified": last_modified,
         "projection_source": source_str.upper(),
         "total_players": len(player_items),
         "top_stacks": top_stacks,
@@ -270,7 +331,8 @@ async def get_slate_data(
 
 @router.post("/optimize")
 async def optimize_dfs_lineup(payload: DFSOptimizeRequest) -> dict[str, Any]:
-    """Solves globally optimal FanDuel lineup(s) under linear constraints and performs live forensic audit."""
+    """Solves globally optimal FanDuel lineup(s) under linear constraints and performs live forensic audit.
+    Dynamically routes to 6-slot Showdown solver (1 MVP + 5 FLEX) or 9-slot Classic solver based on slate type."""
     csv_path = _resolve_csv_path(payload.slate_id)
     try:
         if payload.custom_projections:
@@ -288,6 +350,106 @@ async def optimize_dfs_lineup(payload: DFSOptimizeRequest) -> dict[str, Any]:
         logger.error(f"Failed to load slate for optimizer: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load slate: {e}")
 
+    slate_info = SLATES_MAP.get(payload.slate_id.lower(), {})
+    is_showdown = (
+        slate_info.get("is_showdown", False)
+        or payload.slate_id.lower() in ("showdown_tnf", "det_buf", "tnf", "showdown")
+        or (slate_df is not None and "game" in slate_df.columns and len(slate_df["game"].dropna().unique()) == 1)
+        or (slate_df is not None and "MVP 1.5x Salary" in slate_df.columns)
+    )
+
+    # -------------------------------------------------------------
+    # 1. SHOWDOWN / SINGLE GAME SOLVER (1 MVP @ 1.5x + 5 AnyFLEX)
+    # -------------------------------------------------------------
+    if is_showdown:
+        solver = FanDuelShowdownOptimizer(
+            salary_cap=60000,
+            max_salary=payload.max_salary or 59800,
+            min_salary=payload.min_salary or 57000,
+        )
+
+        lock_mvp = None
+        regular_locks = []
+        for lp in (payload.lock_players or []):
+            if "mvp" in lp.lower() or "(1.5x)" in lp.lower():
+                lock_mvp = lp.split(" (")[0].replace("MVP:", "").strip()
+            else:
+                regular_locks.append(lp)
+
+        mode_str = "GPP" if "GPP" in (payload.mode or "GPP").upper() else "CASH"
+
+        if payload.num_lineups > 1:
+            all_scripts = solver.generate_all_scripts(
+                df_slate=slate_df,
+                mode=mode_str,
+                lock_mvp=lock_mvp,
+                lock_players=regular_locks if regular_locks else None,
+                exclude_players=payload.exclude_players if payload.exclude_players else None,
+            )
+            valid_lineups = [l for l in all_scripts.values() if l is not None]
+            if not valid_lineups:
+                # Fallback to pure solve
+                sol = solver.solve(
+                    df_slate=slate_df,
+                    mode=mode_str,
+                    lock_mvp=lock_mvp,
+                    lock_players=regular_locks if regular_locks else None,
+                    exclude_players=payload.exclude_players if payload.exclude_players else None,
+                )
+                if sol:
+                    valid_lineups = [sol]
+
+            if not valid_lineups:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Unable to find feasible 6-slot FanDuel Showdown lineup under current constraints.",
+                )
+
+            primary_lineup = valid_lineups[0]
+            audit = await dfs_engine.audit_roster(primary_lineup["roster"])
+            for l in valid_lineups:
+                l["slate_id"] = payload.slate_id
+                l["is_showdown"] = True
+                l["audit"] = audit
+                l["total_proj"] = l.get("total_projected_pts", 0.0)
+                l["total_ceiling"] = l.get("total_ceiling_pts", 0.0)
+
+            exposure = dfs_optimizer.calculate_portfolio_exposure(valid_lineups[: payload.num_lineups])
+            resp = dict(primary_lineup)
+            resp["lineups"] = valid_lineups[: payload.num_lineups]
+            resp["exposure"] = exposure
+            resp["is_showdown"] = True
+            resp["projection_source"] = (payload.projection_source or "MODEL").upper()
+            return json.loads(json.dumps(resp, default=_np_default))
+
+        sol = solver.solve(
+            df_slate=slate_df,
+            mode=mode_str,
+            lock_mvp=lock_mvp,
+            lock_players=regular_locks if regular_locks else None,
+            exclude_players=payload.exclude_players if payload.exclude_players else None,
+        )
+        if not sol:
+            raise HTTPException(
+                status_code=400,
+                detail="Unable to find feasible 6-slot FanDuel Showdown lineup under current constraints. Try relaxing salary bounds or removing player locks.",
+            )
+
+        audit = await dfs_engine.audit_roster(sol["roster"])
+        sol["audit"] = audit
+        sol["slate_id"] = payload.slate_id
+        sol["is_showdown"] = True
+        sol["total_proj"] = sol.get("total_projected_pts", 0.0)
+        sol["total_ceiling"] = sol.get("total_ceiling_pts", 0.0)
+        sol["projection_source"] = (payload.projection_source or "MODEL").upper()
+        sol_copy = dict(sol)
+        sol["lineups"] = [sol_copy]
+        sol["exposure"] = dfs_optimizer.calculate_portfolio_exposure([sol_copy])
+        return json.loads(json.dumps(sol, default=_np_default))
+
+    # -------------------------------------------------------------
+    # 2. CLASSIC MAIN / EARLY SLATE SOLVER (9 SLOTS)
+    # -------------------------------------------------------------
     # If single-entry tournament without explicit stack, identify natural top game stack
     stack_qb = payload.stack_qb
     stack_team = payload.stack_team
@@ -326,6 +488,7 @@ async def optimize_dfs_lineup(payload: DFSOptimizeRequest) -> dict[str, Any]:
         audit = await dfs_engine.audit_roster(primary_lineup["roster"])
         for l in lineups:
             l["slate_id"] = payload.slate_id
+            l["is_showdown"] = False
             l["audit"] = audit
             l["active_stack"] = {
                 "qb": stack_qb,
@@ -337,6 +500,7 @@ async def optimize_dfs_lineup(payload: DFSOptimizeRequest) -> dict[str, Any]:
         resp = dict(primary_lineup)
         resp["lineups"] = lineups
         resp["exposure"] = exposure
+        resp["is_showdown"] = False
         resp["projection_source"] = (payload.projection_source or "MODEL").upper()
         return json.loads(json.dumps(resp, default=_np_default))
 

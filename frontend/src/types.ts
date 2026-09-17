@@ -1064,6 +1064,8 @@ export interface DFSSlateInfo {
   games_count: number
   platform: string
   is_available: boolean
+  is_showdown?: boolean
+  last_modified?: string | null
 }
 
 export interface DFSGameStack {
@@ -1078,15 +1080,20 @@ export interface DFSGameStack {
 }
 
 export interface DFSRosterItem {
-  slot: string
+  slot?: string
+  roster_slot?: string
   player_id: string
   name: string
   position: string
   team: string
   opponent: string
   salary: number
+  effective_salary?: number
   proj: number
-  ceiling: number
+  effective_pts?: number
+  ceiling?: number
+  ceiling_proj?: number
+  effective_ceiling?: number
   team_implied: number
   opp_soft_rank: number
   opp_tier?: string
@@ -1134,15 +1141,21 @@ export interface DFSLineupResponse {
   mode: string
   slate_id: string
   total_salary: number
-  salary_cap: number
-  salary_remaining: number
-  total_projected_points: number
-  total_ceiling_points: number
-  value_multiplier: number
-  full_ppr_projected_points: number
-  cumulative_ownership: number
-  ownership_rating: string
-  ownership_assessment: string
+  salary_cap?: number
+  salary_remaining?: number
+  total_projected_points?: number
+  total_proj?: number
+  total_ceiling_points?: number
+  total_ceiling?: number
+  value_multiplier?: number
+  full_ppr_projected_points?: number
+  cumulative_ownership?: number
+  ownership_rating?: string
+  ownership_assessment?: string
+  is_showdown?: boolean
+  script?: string
+  mvp?: any
+  flex?: any[]
   roster: DFSRosterItem[]
   active_stack?: {
     qb: string | null
@@ -1162,6 +1175,7 @@ export interface DFSUploadResponse {
   total_players: number
   teams: string[]
   games_count: number
+  is_showdown?: boolean
   salary_min: number
   salary_max: number
   top_stars: {
@@ -1196,6 +1210,8 @@ export interface DFSPlayerPoolItem {
 
 export interface DFSSlateDataResponse {
   slate_id: string
+  is_showdown?: boolean
+  last_modified?: string | null
   projection_source?: string
   total_players: number
   top_stacks: DFSGameStack[]

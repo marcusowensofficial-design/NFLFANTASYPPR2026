@@ -27,7 +27,7 @@ export interface SlotPlayer {
 
 export interface RosterSlotState {
   slotId: number
-  slotType: 'QB' | 'RB' | 'WR' | 'TE' | 'FLX' | 'DST'
+  slotType: 'QB' | 'RB' | 'WR' | 'TE' | 'FLX' | 'DST' | 'MVP'
   label: string
   player: SlotPlayer | null
 }
@@ -93,7 +93,7 @@ export const DfsRosterBoard: React.FC<DfsRosterBoardProps> = ({
   // Quick Picker Modal state for empty slots
   const [quickPickerSlot, setQuickPickerSlot] = useState<{
     slotId: number
-    slotType: 'QB' | 'RB' | 'WR' | 'TE' | 'FLX' | 'DST'
+    slotType: 'QB' | 'RB' | 'WR' | 'TE' | 'FLX' | 'DST' | 'MVP'
     label: string
   } | null>(null)
   const [quickPickerSearch, setQuickPickerSearch] = useState('')
@@ -101,9 +101,118 @@ export const DfsRosterBoard: React.FC<DfsRosterBoardProps> = ({
   // Quick Stacking Modal state
   const [showStackModal, setShowStackModal] = useState(false)
 
-  // Compute 9 Roster Slots
+  const isShowdown = useMemo(() => {
+    return Boolean(
+      currentDisplayedLineup?.is_showdown ||
+      slateData?.is_showdown ||
+      (currentDisplayedLineup?.roster && currentDisplayedLineup.roster.length === 6)
+    )
+  }, [currentDisplayedLineup, slateData])
+
+  // Compute Roster Slots (6 for Showdown, 9 for Classic)
   const rosterSlots: RosterSlotState[] = useMemo(() => {
-    // 1. If we have a solved lineup, populate directly from its 9 items
+    // 1. If Showdown Slate
+    if (isShowdown) {
+      const showdownSlots: RosterSlotState[] = [
+        { slotId: 0, slotType: 'MVP', label: 'MVP (1.5x)', player: null },
+        { slotId: 1, slotType: 'FLX', label: 'AnyFLEX', player: null },
+        { slotId: 2, slotType: 'FLX', label: 'AnyFLEX', player: null },
+        { slotId: 3, slotType: 'FLX', label: 'AnyFLEX', player: null },
+        { slotId: 4, slotType: 'FLX', label: 'AnyFLEX', player: null },
+        { slotId: 5, slotType: 'FLX', label: 'AnyFLEX', player: null },
+      ]
+
+      if (currentDisplayedLineup?.roster && currentDisplayedLineup.roster.length > 0) {
+        const rosterCopy = [...currentDisplayedLineup.roster]
+        const mvpIdx = rosterCopy.findIndex(
+          (p) => (p.roster_slot && p.roster_slot.includes('MVP')) || (p.slot && p.slot.includes('MVP'))
+        )
+        const mvpItem = mvpIdx >= 0 ? rosterCopy.splice(mvpIdx, 1)[0] : rosterCopy.shift()
+
+        if (mvpItem) {
+          showdownSlots[0].player = {
+            player_id: mvpItem.player_id,
+            name: mvpItem.name,
+            shortName: formatShortName(mvpItem.name),
+            position: mvpItem.position,
+            team: mvpItem.team,
+            opponent: mvpItem.opponent,
+            salary: mvpItem.effective_salary ?? Math.round(mvpItem.salary * 1.5),
+            proj: mvpItem.effective_pts ?? Math.round(mvpItem.proj * 1.5 * 10) / 10,
+            value_ratio: mvpItem.value_ratio,
+            ceiling: mvpItem.effective_ceiling ?? Math.round((mvpItem.ceiling ?? mvpItem.proj * 1.45) * 1.5 * 10) / 10,
+            opp_soft_rank: mvpItem.opp_soft_rank,
+            opp_tier: mvpItem.opp_tier,
+            opp_tier_label: mvpItem.opp_tier_label,
+            opp_fd_fpa: mvpItem.opp_fd_fpa,
+            proj_ownership: mvpItem.proj_ownership,
+            isLocked: lockPlayers.includes(mvpItem.name),
+          }
+        }
+
+        rosterCopy.forEach((item, idx) => {
+          if (idx < 5) {
+            showdownSlots[idx + 1].player = {
+              player_id: item.player_id,
+              name: item.name,
+              shortName: formatShortName(item.name),
+              position: item.position,
+              team: item.team,
+              opponent: item.opponent,
+              salary: item.salary,
+              proj: item.proj,
+              value_ratio: item.value_ratio,
+              ceiling: item.ceiling ?? item.ceiling_proj,
+              opp_soft_rank: item.opp_soft_rank,
+              opp_tier: item.opp_tier,
+              opp_tier_label: item.opp_tier_label,
+              opp_fd_fpa: item.opp_fd_fpa,
+              proj_ownership: item.proj_ownership,
+              isLocked: lockPlayers.includes(item.name),
+            }
+          }
+        })
+        return showdownSlots
+      }
+
+      // Showdown interactive builder mode
+      if (!slateData?.players) return showdownSlots
+      const playerMap = new Map<string, DFSPlayerPoolItem>()
+      for (const p of slateData.players) {
+        playerMap.set(p.name.toLowerCase(), p)
+      }
+
+      let fillIdx = 1
+      for (const name of lockPlayers) {
+        const p = playerMap.get(name.toLowerCase())
+        if (!p) continue
+        const slotPlayer: SlotPlayer = {
+          player_id: p.player_id,
+          name: p.name,
+          shortName: formatShortName(p.name),
+          position: p.position,
+          team: p.team,
+          opponent: p.opponent,
+          salary: p.salary,
+          proj: customProjections[p.name] ?? p.proj,
+          value_ratio: p.value_ratio,
+          ceiling: p.ceiling_proj,
+          opp_soft_rank: p.opp_soft_rank,
+          opp_tier: p.opp_tier,
+          opp_tier_label: p.opp_tier_label,
+          opp_fd_fpa: p.opp_fd_fpa,
+          proj_ownership: p.proj_ownership,
+          isLocked: true,
+        }
+        if (fillIdx < 6) {
+          showdownSlots[fillIdx].player = slotPlayer
+          fillIdx++
+        }
+      }
+      return showdownSlots
+    }
+
+    // 2. If Classic 9-Slot Slate: populate from solved roster
     if (currentDisplayedLineup?.roster && currentDisplayedLineup.roster.length > 0) {
       const defaultSlots: RosterSlotState[] = [
         { slotId: 0, slotType: 'QB', label: 'QB', player: null },
@@ -268,18 +377,22 @@ export const DfsRosterBoard: React.FC<DfsRosterBoardProps> = ({
   }, [currentDisplayedLineup, slateData, lockPlayers, customProjections])
 
   // Live Metrics calculations (Salary Rem, FP Proj, Value, pOwn)
+  // Live Metrics calculations (Salary Rem, FP Proj, Value, pOwn)
   const metrics = useMemo(() => {
     const salaryCap = 60000
 
     if (currentDisplayedLineup) {
+      const salRem = currentDisplayedLineup.salary_remaining ?? (salaryCap - currentDisplayedLineup.total_salary)
+      const fp = currentDisplayedLineup.total_projected_points ?? currentDisplayedLineup.total_proj ?? 0
+      const val = currentDisplayedLineup.value_multiplier ?? (currentDisplayedLineup.total_salary > 0 ? fp / (currentDisplayedLineup.total_salary / 1000) : 0)
       return {
-        salaryRem: currentDisplayedLineup.salary_remaining,
+        salaryRem: salRem,
         totalSalary: currentDisplayedLineup.total_salary,
         avgRemPerSlot: 0,
         emptySlotsCount: 0,
-        fpProj: currentDisplayedLineup.total_projected_points,
-        valueMultiplier: currentDisplayedLineup.value_multiplier,
-        pOwn: currentDisplayedLineup.cumulative_ownership,
+        fpProj: Math.round(fp * 10) / 10,
+        valueMultiplier: Math.round(val * 10) / 10,
+        pOwn: currentDisplayedLineup.cumulative_ownership ?? 0,
         isComplete: true,
       }
     }
@@ -320,6 +433,7 @@ export const DfsRosterBoard: React.FC<DfsRosterBoardProps> = ({
     const slotType = quickPickerSlot.slotType
 
     let eligible = slateData.players.filter((p) => {
+      if (isShowdown) return true // Showdown: All players eligible for MVP & AnyFLEX
       const pos = (p.position || '').toUpperCase()
       if (slotType === 'QB') return pos === 'QB'
       if (slotType === 'RB') return pos === 'RB'
@@ -342,7 +456,7 @@ export const DfsRosterBoard: React.FC<DfsRosterBoardProps> = ({
 
     // Sort by projected points descending
     return eligible.sort((a, b) => b.proj - a.proj).slice(0, 10)
-  }, [quickPickerSlot, slateData, quickPickerSearch])
+  }, [quickPickerSlot, slateData, quickPickerSearch, isShowdown])
 
   return (
     <div className="dfs-roster-board-container">
@@ -350,7 +464,7 @@ export const DfsRosterBoard: React.FC<DfsRosterBoardProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '13px', fontWeight: 800, color: '#ffffff' }}>
-            🎯 DFS Optimal Lineup Builder
+            {isShowdown ? '⚡ Single-Game Showdown Builder (1 MVP + 5 FLEX)' : '🎯 DFS Optimal Lineup Builder'}
           </span>
           {lockPlayers.length > 0 && (
             <span className="dfs-badge dfs-badge-emerald" style={{ fontSize: '10px' }}>
@@ -359,7 +473,7 @@ export const DfsRosterBoard: React.FC<DfsRosterBoardProps> = ({
           )}
           {metrics.isComplete && (
             <span className="dfs-badge dfs-badge-cyan" style={{ fontSize: '10px' }}>
-              ✓ Full 9-Man Roster
+              ✓ {isShowdown ? 'Full 6-Slot Showdown Roster' : 'Full 9-Man Roster'}
             </span>
           )}
         </div>
@@ -468,7 +582,7 @@ export const DfsRosterBoard: React.FC<DfsRosterBoardProps> = ({
               <span>{lineLabel}</span>
               {lineup?.lineups && lineup.lineups[idx] && (
                 <span className="dfs-roster-line-tag">
-                  {lineup.lineups[idx].total_projected_points.toFixed(1)}
+                  {((lineup.lineups[idx].total_projected_points ?? lineup.lineups[idx].total_proj ?? 0)).toFixed(1)}
                 </span>
               )}
             </button>

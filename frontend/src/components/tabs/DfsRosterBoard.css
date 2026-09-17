@@ -173,6 +173,11 @@
 .dfs-roster-pos-col.te { color: #c084fc; }
 .dfs-roster-pos-col.flx { color: #34d399; }
 .dfs-roster-pos-col.dst { color: #a78bfa; }
+.dfs-roster-pos-col.mvp {
+  color: #f59e0b;
+  font-weight: 900;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.45);
+}
 
 /* Empty Placeholder Row ("MAKE A PICK") */
 .dfs-roster-empty-btn {

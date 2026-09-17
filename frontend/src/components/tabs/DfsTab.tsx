@@ -118,7 +118,8 @@ export function DfsTab({
         const data: DFSSlateInfo[] = await res.json()
         setSlates(data)
         if (data.length > 0 && !selectedSlate) {
-          setSelectedSlate(data[0].id)
+          const mainSlate = data.find((s) => s.id === 'main')
+          setSelectedSlate(mainSlate ? mainSlate.id : data[0].id)
         }
       }
     } catch (err) {
@@ -126,11 +127,12 @@ export function DfsTab({
     }
   }
 
-  const loadSlateData = async (slateId: string, source: ProjectionSourceType = currentSource) => {
+  const loadSlateData = async (slateId: string, source: ProjectionSourceType = currentSource, forceReload: boolean = false) => {
     setIsLoadingSlate(true)
     setErrorMsg(null)
     try {
-      const res = await fetch(`/api/dfs/slate-data?slate_id=${slateId}&projection_source=${source}`)
+      const url = `/api/dfs/slate-data?slate_id=${slateId}&projection_source=${source}${forceReload ? '&force_reload=true' : ''}`
+      const res = await fetch(url)
       if (res.ok) {
         const data: DFSSlateDataResponse = await res.json()
         setSlateData(data)
@@ -177,7 +179,8 @@ export function DfsTab({
           id: 'uploaded',
           name: `Uploaded (${file.name})`,
           games_count: data.games_count,
-          platform: 'FanDuel ($60k Cap)',
+          platform: data.is_showdown ? 'FanDuel Showdown (1.5x MVP + 5 FLEX)' : 'FanDuel ($60k Cap)',
+          is_showdown: data.is_showdown,
           is_available: true,
         }
 
@@ -452,18 +455,60 @@ export function DfsTab({
           </p>
         </div>
 
-        {/* Slate Switcher Pills */}
-        <div className="dfs-slate-selector">
+        {/* Slate Switcher Pills & Live Refresh Controls */}
+        <div className="dfs-slate-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {slates.map((s) => (
             <button
               key={s.id}
               onClick={() => setSelectedSlate(s.id)}
               className={`dfs-slate-btn ${selectedSlate === s.id ? 'active' : ''}`}
+              title={s.last_modified ? `File updated on disk: ${s.last_modified}` : undefined}
             >
-              <span>{s.id.includes('showdown') || s.id.includes('tnf') ? '⚡' : s.id === 'main' ? '🏈' : s.id === 'early' ? '🌅' : '📂'}</span>
+              <span>{s.is_showdown || s.id.includes('showdown') || s.id.includes('tnf') ? '⚡' : s.id === 'main' ? '🏈' : s.id === 'early' ? '🌅' : '📂'}</span>
               <span>{s.name}</span>
+              {s.is_showdown && (
+                <span className="dfs-badge dfs-badge-gold" style={{ fontSize: '9px', padding: '1px 5px', marginLeft: '4px' }}>
+                  Showdown
+                </span>
+              )}
             </button>
           ))}
+
+          {/* Quick Refresh Slate Action */}
+          <button
+            type="button"
+            className="dfs-slate-btn"
+            onClick={() => selectedSlate && loadSlateData(selectedSlate, currentSource, true)}
+            title="Reload slate directly from disk CSV file"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', borderColor: 'rgba(56, 189, 248, 0.4)' }}
+          >
+            <span>🔄</span>
+            <span>Refresh Slate</span>
+            {slateData?.last_modified && (
+              <span style={{ fontSize: '10px', color: '#38bdf8', fontWeight: 700 }}>
+                ({slateData.last_modified})
+              </span>
+            )}
+          </button>
+
+          {/* Clear Uploaded & Reset to Defaults */}
+          {selectedSlate === 'uploaded' && (
+            <button
+              type="button"
+              className="dfs-slate-btn"
+              onClick={() => {
+                setUploadResult(null)
+                setSlates((prev) => prev.filter((s) => s.id !== 'uploaded'))
+                setSelectedSlate('main')
+              }}
+              title="Reset to default Week 2 Main Slate"
+              style={{ color: '#f87171', borderColor: 'rgba(248, 113, 113, 0.4)' }}
+            >
+              <span>✕</span>
+              <span>Reset to Defaults</span>
+            </button>
+          )}
+
           {isLoadingSlate && (
             <span className="dfs-badge dfs-badge-cyan" style={{ fontSize: '10px' }}>
               <span className="status-dot"></span> Loading...
@@ -1037,7 +1082,7 @@ export function DfsTab({
                               {item.proj.toFixed(2)}
                             </td>
                             <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--accent-amber)' }}>
-                              {item.ceiling.toFixed(2)}
+                              {(item.ceiling ?? item.ceiling_proj ?? item.proj * 1.45).toFixed(2)}
                             </td>
                             <td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>
                               {item.team_implied.toFixed(1)}

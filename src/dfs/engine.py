@@ -5,6 +5,7 @@ build tournament lineups, and audit rosters without any dependency
 on the ESPN season-long website.
 """
 
+import os
 import logging
 from typing import Any
 import pandas as pd
@@ -23,7 +24,8 @@ class DFSEngine:
     """Unified controller for Daily Fantasy Sports intelligence."""
 
     def __init__(self):
-        self._cached_slates: dict[tuple[str | None, str], pd.DataFrame] = {}
+        # Key: (csv_path, projection_source) -> (mtime, DataFrame)
+        self._cached_slates: dict[tuple[str | None, str], tuple[float, pd.DataFrame]] = {}
 
     def clear_cache(self) -> None:
         """Clears cached slate dataframes so next retrieval reloads from disk."""
@@ -35,14 +37,32 @@ class DFSEngine:
         projection_source: str = "MODEL",
         force_reload: bool = False,
     ) -> pd.DataFrame:
-        """Retrieves and caches the enriched FanDuel slate for the requested projection source."""
+        """Retrieves and caches the enriched FanDuel slate for the requested projection source,
+        automatically invalidating the cache if the CSV file on disk has been updated."""
         key = (csv_path, (projection_source or "MODEL").upper().strip())
-        if force_reload or key not in self._cached_slates:
-            self._cached_slates[key] = await dfs_loader.load_slate(
+        current_mtime = 0.0
+        if csv_path and os.path.exists(csv_path):
+            try:
+                current_mtime = os.path.getmtime(csv_path)
+            except OSError:
+                current_mtime = 0.0
+
+        cached_entry = self._cached_slates.get(key)
+        needs_reload = (
+            force_reload
+            or cached_entry is None
+            or (current_mtime > 0 and current_mtime > cached_entry[0])
+        )
+
+        if needs_reload:
+            df = await dfs_loader.load_slate(
                 csv_path=csv_path,
                 projection_source=projection_source,
             )
-        return self._cached_slates[key]
+            self._cached_slates[key] = (current_mtime, df)
+            return df
+
+        return cached_entry[1]
 
     async def get_top_running_backs(self, csv_path: str | None = None, min_salary: int = 5000, top_n: int = 15) -> pd.DataFrame:
         """Retrieves top running backs ranked by projected points and value."""
