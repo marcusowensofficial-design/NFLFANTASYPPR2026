@@ -8308,6 +8308,609 @@ code {
   padding: 10px 12px;
 }
 
+/* =============================================================================
+   Positional Needs Diagnostic & 2026 Week 2 Consensus Radar Board
+   ============================================================================= */
+
+/* Positional Needs Status Diagnostic Banner */
+.positional-needs-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+}
+
+.positional-needs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.positional-needs-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.positional-needs-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.positional-needs-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  max-width: 780px;
+  line-height: 1.45;
+}
+
+.browse-consensus-btn {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.browse-consensus-btn:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+}
+
+.positional-needs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.positional-need-tile {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.positional-need-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.positional-need-tile.tile-critical {
+  border-color: rgba(244, 63, 94, 0.5);
+  background: linear-gradient(180deg, rgba(244, 63, 94, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.12);
+}
+
+.positional-need-tile.tile-critical:hover {
+  border-color: #f43f5e;
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.28);
+}
+
+.positional-need-tile.tile-high {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+}
+
+.positional-need-tile.tile-high:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.25);
+}
+
+.positional-need-tile.tile-moderate {
+  border-color: rgba(6, 182, 212, 0.4);
+  background: linear-gradient(180deg, rgba(6, 182, 212, 0.06) 0%, rgba(15, 23, 42, 0.8) 100%);
+}
+
+.positional-need-tile.tile-moderate:hover {
+  border-color: #06b6d4;
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.2);
+}
+
+.positional-need-tile.tile-stable {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.positional-need-tile.tile-stable:hover {
+  border-color: #10b981;
+}
+
+.need-tile-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.need-tile-pos {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+.need-tile-starter {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.need-tile-driver {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.need-tile-targets {
+  font-size: 11.5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.target-label {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.target-names {
+  color: #38bdf8;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.need-tile-action {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  text-align: right;
+  margin-top: 2px;
+  transition: color 0.15s ease;
+}
+
+.positional-need-tile:hover .need-tile-action {
+  color: #f8fafc;
+}
+
+/* Nav Tab Highlight & Avail Badge */
+.consensus-tab-highlight {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.consensus-avail-badge {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.02em;
+}
+
+/* Upgrades Card: Need Tailored Banner & Gold Pill */
+.pro-upgrade-card.upgrade-tailored-need {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, var(--bg-secondary) 100%);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.1);
+}
+
+.upgrade-need-banner {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.06) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #fef08a;
+}
+
+.need-banner-icon {
+  font-size: 14px;
+}
+
+.need-banner-text strong {
+  color: #fbbf24;
+}
+
+.expert-sources-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.expert-source-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+/* 2026 Consensus Radar Board */
+.consensus-radar-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.consensus-board-header {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.consensus-controls-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.consensus-pos-pills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.consensus-pos-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.consensus-pos-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.consensus-pos-btn.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #f8fafc;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+}
+
+.pos-need-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.pos-need-dot.critical {
+  background: #f43f5e;
+  box-shadow: 0 0 6px #f43f5e;
+  animation: pulse-dot 1.5s infinite alternate;
+}
+
+.pos-need-dot.high {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
+}
+
+@keyframes pulse-dot {
+  from { opacity: 0.6; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1.15); }
+}
+
+.consensus-filter-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.consensus-avail-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #34d399;
+  cursor: pointer;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.consensus-avail-toggle:hover {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: #10b981;
+}
+
+.consensus-avail-toggle input[type="checkbox"] {
+  accent-color: #10b981;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.consensus-search-box {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 260px;
+  flex: 1;
+  max-width: 420px;
+}
+
+.consensus-search-box .search-icon {
+  position: absolute;
+  left: 10px;
+  font-size: 13px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.consensus-search-input {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 7px 32px 7px 30px;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.consensus-search-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.clear-search-btn:hover {
+  color: #f8fafc;
+}
+
+/* Consensus Players Grid & Cards */
+.consensus-players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+}
+
+.consensus-player-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.22s ease;
+}
+
+.consensus-player-card:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.consensus-player-card.card-available {
+  border-left: 4px solid #10b981;
+}
+
+.consensus-player-card.card-rostered {
+  opacity: 0.82;
+  border-left: 4px solid #64748b;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.consensus-player-card.card-need-tailored {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, var(--bg-secondary) 100%);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.consensus-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.consensus-player-lead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.consensus-rank-badge {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
+}
+
+.consensus-player-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.consensus-player-team {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.wire-status-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.wire-status-pill.available {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.wire-status-pill.user {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.wire-status-pill.opponent {
+  background: rgba(100, 116, 139, 0.18);
+  color: #94a3b8;
+  border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.consensus-tier-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.consensus-metric-box {
+  background: rgba(56, 189, 248, 0.07);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.metric-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.metric-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.consensus-rationale-box {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.rationale-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+
+.rationale-body {
+  font-size: 12.5px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.consensus-sources-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sources-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.sources-list {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.source-tag-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.consensus-card-footer {
+  margin-top: 2px;
+}
+
+
 
 
 

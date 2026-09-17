@@ -91,3 +91,42 @@ async def get_waiver_upgrades(
         current_week=league.current_week,
         next_week_games=next_week_games,
     )
+
+
+@router.get("/consensus-board")
+def get_consensus_waiver_board(
+    team_id: int | None = Query(default=None, description="Optional team ID"),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Retrieve the full 2026 Week 2 Internet Expert Consensus Waiver Board with live league availability."""
+    from src.services.waiver.expert_consensus_service import expert_consensus_service
+    league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+    if not league:
+        raw = expert_consensus_service.load_consensus_data()
+        return {"season": 2026, "week": 2, "positions": raw.get("positions", {}), "positional_needs": []}
+
+    target_team_id = team_id or league.user_team_id or 1
+    expert_consensus_service.ensure_consensus_players_in_db(db)
+
+    # Get user roster
+    entries = db.execute(
+        select(RosterEntryModel, PlayerModel)
+        .join(PlayerModel, RosterEntryModel.player_id == PlayerModel.id)
+        .where(
+            RosterEntryModel.league_id == league.id,
+            RosterEntryModel.team_id == target_team_id,
+        )
+    ).all()
+    user_evals = [scoring_engine.evaluate_player(p, league_size=league.size or 8) for _, p in entries]
+    needs = expert_consensus_service.analyze_team_positional_needs(user_evals, league_size=league.size or 8)
+    board = expert_consensus_service.get_consensus_board_with_availability(db, league.id, target_team_id, needs)
+
+    return {
+        "success": True,
+        "season": 2026,
+        "week": 2,
+        "positional_needs": [n.model_dump() for n in needs],
+        "positions": {pos: [p.model_dump() for p in players] for pos, players in board.items()},
+        "consensus_board": {pos: [p.model_dump() for p in players] for pos, players in board.items()},
+    }
+

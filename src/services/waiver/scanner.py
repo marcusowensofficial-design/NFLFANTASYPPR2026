@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from src.adapters.nfl.dvp_client import dvp_client
@@ -11,6 +11,11 @@ from src.db.models import PlayerModel, RosterEntryModel, TeamModel
 from src.services.recommendation.scoring_engine import (
     StartSitEvaluation,
     scoring_engine,
+)
+from src.services.waiver.expert_consensus_service import (
+    ExpertConsensusPlayerItem,
+    PositionalNeedItem,
+    expert_consensus_service,
 )
 
 logger = logging.getLogger(__name__)
@@ -56,6 +61,10 @@ class WaiverUpgradeRecommendation(BaseModel):
     matchup_context: str = ""
     drop_reassurance: str = ""
     action_type: str = "ADD_DROP"  # "ADD_DROP", "MOVE_TO_IR_AND_ADD"
+    consensus_rank: int | None = None
+    consensus_tier: str | None = None
+    is_need_tailored: bool = False
+    expert_sources: list[str] = Field(default_factory=list)
 
 
 class LookaheadStreamerItem(BaseModel):
@@ -104,6 +113,8 @@ class WaiverAnalysisResult(BaseModel):
     ir_recommendations: list[IRRecommendationItem] = Field(default_factory=list)
     bench_security_ledger: list[BenchSecurityItem] = Field(default_factory=list)
     executive_summary: str = ""
+    positional_needs: list[PositionalNeedItem] = Field(default_factory=list)
+    consensus_board: dict[str, list[ExpertConsensusPlayerItem]] = Field(default_factory=dict)
 
 
 class WaiverScanner:
@@ -123,6 +134,15 @@ class WaiverScanner:
         current_week: int = 1,
         next_week_games: list[Any] | None = None,
     ) -> WaiverAnalysisResult:
+        # 0. Ensure 2026 Week 2 expert consensus players are present in PlayerModel (for production/full DBs)
+        total_players_in_db = db.execute(select(func.count(PlayerModel.id))).scalar() or 0
+        if free_agent_pool is None and total_players_in_db >= 20:
+            expert_consensus_service.ensure_consensus_players_in_db(db)
+
+        # Diagnose team roster positional needs & load consensus board
+        positional_needs = expert_consensus_service.analyze_team_positional_needs(user_roster_evaluations, league_size)
+        consensus_board = expert_consensus_service.get_consensus_board_with_availability(db, league_id, user_team_id, positional_needs)
+
         # 1. Identify all rostered player IDs and normalized names across the entire league
         rostered_players_query = db.execute(
             select(PlayerModel.id, PlayerModel.full_name)
@@ -373,11 +393,145 @@ class WaiverScanner:
         priority_starters: list[WaiverUpgradeRecommendation] = []
         contingent_handcuffs: list[WaiverUpgradeRecommendation] = []
         volume_breakouts: list[WaiverUpgradeRecommendation] = []
+        consensus_need_upgrades: list[WaiverUpgradeRecommendation] = []
 
         seen_positions_starter: set[str] = set()
         seen_pids: set[int] = set()
         drop_candidate = eligible_drop_candidates[0] if eligible_drop_candidates else None
         action_type = "MOVE_TO_IR_AND_ADD" if ir_recommendations else "ADD_DROP"
+
+        # Pass 0: Need-Based Expert Consensus Waiver Upgrades (Week 2 2026 Internet Sourced)
+        eval_by_pid: dict[int, StartSitEvaluation] = {e.player_id: e for e in available_evals}
+        eval_by_name: dict[str, StartSitEvaluation] = {
+            e.full_name.lower().replace(".", "").replace("'", "").strip(): e
+            for e in available_evals
+        }
+
+        # If free_agent_pool was explicitly provided by caller, strictly constrain consensus upgrades to that pool
+        explicit_pool_pids = {p.id for p in free_agent_pool} if free_agent_pool is not None else None
+        explicit_pool_names = {
+            p.full_name.lower().replace(".", "").replace("'", "").strip()
+            for p in free_agent_pool
+        } if free_agent_pool is not None else None
+
+        # Identify user's priority need positions (scores >= 50.0)
+        priority_needs = [n for n in positional_needs if n.need_score >= 50.0]
+        if not priority_needs and positional_needs:
+            priority_needs = positional_needs[:2]
+
+        for need in priority_needs:
+            pos = need.position
+            board_players = consensus_board.get(pos, [])
+            available_consensus = [cp for cp in board_players if cp.is_available and cp.availability_status == "AVAILABLE"]
+
+            for cp in available_consensus[:2]:
+                if cp.player_id and cp.player_id in seen_pids:
+                    continue
+
+                norm_cp = cp.full_name.lower().replace(".", "").replace("'", "").strip()
+
+                # If caller passed explicit pool, respect boundary
+                if explicit_pool_pids is not None and explicit_pool_names is not None:
+                    if (cp.player_id and cp.player_id not in explicit_pool_pids) and norm_cp not in explicit_pool_names:
+                        continue
+
+                fa_eval = eval_by_pid.get(cp.player_id) if cp.player_id else None
+                if not fa_eval:
+                    fa_eval = eval_by_name.get(norm_cp)
+
+                if not fa_eval:
+                    continue
+
+                matching_starters = [
+                    s for s in starter_evals
+                    if (cp.position in ("RB", "FB", "WR", "TE") and s.position.upper() in ("RB", "FB", "WR", "TE"))
+                    or s.position.upper() == cp.position
+                ]
+                matching_starters.sort(key=lambda x: x.start_score)
+                weakest_starter = matching_starters[0] if matching_starters else None
+
+                net_pts = round(fa_eval.projected_points - (weakest_starter.projected_points if weakest_starter else (drop_candidate.projected_points if drop_candidate else 0.0)), 1)
+                net_score = round(fa_eval.start_score - (weakest_starter.start_score if weakest_starter else (drop_candidate.start_score if drop_candidate else 60.0)), 1)
+
+                is_critical = need.need_level in ("CRITICAL_NEED", "HIGH_NEED")
+                urgency = "MUST_ADD" if cp.consensus_tier == "MUST_ADD" or is_critical else "HIGH_PRIORITY"
+                bucket = "PRIORITY_STARTER" if (is_critical and cp.position in ("TE", "WR", "RB")) else ("CONTINGENT_HANDCUFF" if cp.position == "RB" else "VOLUME_BREAKOUT")
+
+                drop_reassure = (
+                    f"Move {ir_recommendations[0].full_name} to IR to add {fa_eval.full_name} with $0 drop penalty. "
+                    if ir_recommendations else
+                    f"Dropping {drop_candidate.full_name}: {drop_candidate.full_name} carries lower volume and ceiling in shallow formats. Upgrading to {fa_eval.full_name} directly addresses team {pos} vulnerability."
+                ) if drop_candidate else "Open roster slot available."
+
+                consensus_need_upgrades.append(
+                    WaiverUpgradeRecommendation(
+                        pickup_player=fa_eval,
+                        drop_player=drop_candidate,
+                        upgrade_type="STARTING_LINEUP_UPGRADE" if weakest_starter else "BENCH_STASH",
+                        replaces_slot=weakest_starter.position if weakest_starter else "BENCH",
+                        net_projected_delta=net_pts,
+                        net_start_score_delta=net_score,
+                        faab_recommended_pct=cp.faab_recommended_pct,
+                        faab_recommended_amount=cp.faab_recommended_pct,
+                        urgency_tier=urgency,
+                        tactical_bucket=bucket,
+                        catalyst=f"🎯 Tailored to Positional Need ({pos}): Ranked #{cp.rank} Consensus {cp.position} by {', '.join(cp.expert_sources[:3])}. {cp.expert_rationale}",
+                        matchup_context=f"Week 1 Benchmark: {cp.week_1_metric}. FAAB Guide: {cp.faab_range}.",
+                        drop_reassurance=drop_reassure,
+                        action_type=action_type,
+                        consensus_rank=cp.rank,
+                        consensus_tier=cp.consensus_tier,
+                        is_need_tailored=True,
+                        expert_sources=cp.expert_sources,
+                        rationale=f"Consensus #{cp.rank} {cp.position} ({cp.consensus_tier}) • Tailored to {need.need_level}. {cp.expert_rationale} {drop_reassure}",
+                    )
+                )
+                if cp.player_id:
+                    seen_pids.add(cp.player_id)
+                seen_pids.add(fa_eval.player_id)
+                if len(consensus_need_upgrades) >= 3:
+                    break
+            if len(consensus_need_upgrades) >= 3:
+                break
+
+        # Check Consensus #1 Overall Pickup (Kaelon Black) if available
+        rb_board = consensus_board.get("RB", [])
+        if rb_board:
+            k_black = rb_board[0]
+            if k_black.is_available and k_black.availability_status == "AVAILABLE" and (not k_black.player_id or k_black.player_id not in seen_pids):
+                kb_eval = eval_by_pid.get(k_black.player_id) if k_black.player_id else None
+                if not kb_eval:
+                    kb_eval = eval_by_name.get("kaelon black")
+                if not kb_eval:
+                    db_kb = db.execute(select(PlayerModel).where(PlayerModel.full_name.ilike("%kaelon black%"))).scalars().first()
+                    if db_kb:
+                        kb_eval = scoring_engine.evaluate_player(db_kb, league_size=league_size)
+                if kb_eval and kb_eval.player_id not in seen_pids:
+                    net_kb = round(kb_eval.projected_points - (drop_candidate.projected_points if drop_candidate else 0.0), 1)
+                    consensus_need_upgrades.append(
+                        WaiverUpgradeRecommendation(
+                            pickup_player=kb_eval,
+                            drop_player=drop_candidate,
+                            upgrade_type="CONTINGENT_UPSIDE_STASH",
+                            replaces_slot="BENCH",
+                            net_projected_delta=net_kb,
+                            net_start_score_delta=round(kb_eval.start_score - (drop_candidate.start_score if drop_candidate else 60.0), 1),
+                            faab_recommended_pct=k_black.faab_recommended_pct,
+                            faab_recommended_amount=k_black.faab_recommended_pct,
+                            urgency_tier="MUST_ADD",
+                            tactical_bucket="CONTINGENT_HANDCUFF",
+                            catalyst=f"🏆 Industry Consensus #1 Overall Waiver Wire Pickup: Ranked #1 Consensus RB by {', '.join(k_black.expert_sources[:3])}. {k_black.expert_rationale}",
+                            matchup_context=f"Week 1 Benchmark: {k_black.week_1_metric}. FAAB Guide: {k_black.faab_range}.",
+                            drop_reassurance=f"Dropping {drop_candidate.full_name}: Elite contingent RB stashes provide mathematically superior championship leverage." if drop_candidate else "Open roster slot available.",
+                            action_type=action_type,
+                            consensus_rank=k_black.rank,
+                            consensus_tier=k_black.consensus_tier,
+                            is_need_tailored=True,
+                            expert_sources=k_black.expert_sources,
+                            rationale=f"Consensus #1 Overall Waiver Add • RB1 Handcuff. {k_black.expert_rationale}",
+                        )
+                    )
+                    seen_pids.add(kb_eval.player_id)
 
         # 1. First pass: Identify Starting Lineup Upgrades (Max 1 per position)
         for fa in filtered_available:
@@ -525,8 +679,8 @@ class WaiverScanner:
                 if len(volume_breakouts) >= 2:
                     break
 
-        # Combine tactical buckets into top_upgrades (Priority Starters -> Contingent Handcuffs -> Volume Breakouts)
-        upgrades = priority_starters + contingent_handcuffs + volume_breakouts
+        # Combine tactical buckets into top_upgrades (Consensus Need Upgrades -> Priority Starters -> Contingent Handcuffs -> Volume Breakouts)
+        upgrades = consensus_need_upgrades + priority_starters + contingent_handcuffs + volume_breakouts
 
         # 5. Extract Streaming Options
         streaming_te = [p for p in available_evals if p.position.upper() == "TE"][:4]
@@ -708,16 +862,18 @@ class WaiverScanner:
         exec_summary = ""
         if upgrades:
             top_upg = upgrades[0]
+            top_need = positional_needs[0] if positional_needs else None
+            need_ctx = f"Tailored to {top_need.position} Need ({top_need.need_level})" if (top_need and top_upg.is_need_tailored) else "Consensus Wire Claim"
             if ir_recommendations:
                 exec_summary = (
-                    f"🚨 Priority Wire Target: {top_upg.pickup_player.full_name} ({top_upg.pickup_player.position} - {top_upg.pickup_player.pro_team}) • "
-                    f"Recommended FAAB: {top_upg.faab_recommended_pct}% (${top_upg.faab_recommended_amount}) • "
-                    f"Triage Action: Move {ir_recommendations[0].full_name} to IR Slot to add {top_upg.pickup_player.full_name} with $0 Drop Penalty."
+                    f"⚡ Priority Wire Claim: {top_upg.pickup_player.full_name} ({top_upg.pickup_player.position} - {top_upg.pickup_player.pro_team}) • "
+                    f"{need_ctx} • Recommended FAAB: {top_upg.faab_recommended_pct}% (${top_upg.faab_recommended_amount}) • "
+                    f"Triage Action: Move {ir_recommendations[0].full_name} to IR Slot to claim {top_upg.pickup_player.full_name} with $0 Drop Penalty."
                 )
             elif top_upg.drop_player:
                 exec_summary = (
-                    f"🚨 Priority Wire Target: {top_upg.pickup_player.full_name} ({top_upg.pickup_player.position}) • "
-                    f"Recommended FAAB: {top_upg.faab_recommended_pct}% (${top_upg.faab_recommended_amount}) • "
+                    f"⚡ Priority Wire Claim: {top_upg.pickup_player.full_name} ({top_upg.pickup_player.position} - {top_upg.pickup_player.pro_team}) • "
+                    f"{need_ctx} • Recommended FAAB: {top_upg.faab_recommended_pct}% (${top_upg.faab_recommended_amount}) • "
                     f"Safe Cut: {top_upg.drop_player.full_name} ({top_upg.drop_player.position})."
                 )
         else:
@@ -726,7 +882,7 @@ class WaiverScanner:
         return WaiverAnalysisResult(
             user_team_id=user_team_id,
             total_available_scanned=len(available_players),
-            top_upgrades=upgrades[:6],
+            top_upgrades=upgrades[:8],
             streaming_te=streaming_te,
             streaming_dst=streaming_dst,
             streaming_k=streaming_k,
@@ -737,6 +893,8 @@ class WaiverScanner:
             ir_recommendations=ir_recommendations,
             bench_security_ledger=bench_security_ledger,
             executive_summary=exec_summary,
+            positional_needs=positional_needs,
+            consensus_board=consensus_board,
         )
 
 

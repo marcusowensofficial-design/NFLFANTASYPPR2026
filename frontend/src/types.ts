@@ -460,6 +460,33 @@ export interface BenchSecurityItem {
   reasoning: string
 }
 
+export interface ExpertConsensusPlayerItem {
+  rank: number
+  player_id?: number | null
+  full_name: string
+  position: string
+  pro_team: string
+  consensus_tier: string
+  faab_recommended_pct: number
+  faab_range: string
+  week_1_metric: string
+  expert_rationale: string
+  expert_sources: string[]
+  is_available: boolean
+  availability_status: 'AVAILABLE' | 'ROSTERED_USER' | 'ROSTERED_OPPONENT'
+  tailored_to_need: boolean
+  projected_points: number
+}
+
+export interface PositionalNeedItem {
+  position: string
+  need_level: 'CRITICAL_NEED' | 'HIGH_NEED' | 'MODERATE_NEED' | 'LOW_NEED' | 'STABLE'
+  need_score: number
+  primary_driver: string
+  starter_summary: string
+  recommended_consensus_targets: string[]
+}
+
 export interface WaiverUpgradeRecommendation {
   pickup_player: StartSitEvaluation
   drop_player: StartSitEvaluation | null
@@ -476,6 +503,10 @@ export interface WaiverUpgradeRecommendation {
   matchup_context?: string
   drop_reassurance?: string
   action_type?: string
+  consensus_rank?: number | null
+  consensus_tier?: string | null
+  is_need_tailored?: boolean
+  expert_sources?: string[]
 }
 
 export interface WaiverAnalysisResult {
@@ -492,6 +523,8 @@ export interface WaiverAnalysisResult {
   ir_recommendations?: IRRecommendationItem[]
   bench_security_ledger?: BenchSecurityItem[]
   executive_summary?: string
+  positional_needs?: PositionalNeedItem[]
+  consensus_board?: Record<string, ExpertConsensusPlayerItem[]>
 }
 
 export interface TradePlayerSummary {

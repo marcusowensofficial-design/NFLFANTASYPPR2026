@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import type { WaiverAnalysisResult } from '../../types'
+import React, { useState, useMemo } from 'react'
+import type { WaiverAnalysisResult, PositionalNeedItem } from '../../types'
 import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 
 export interface WaiversTabProps {
@@ -7,10 +7,53 @@ export interface WaiversTabProps {
   onOpenGameLog?: (playerId: number | string, name?: string, pos?: string, team?: string) => void
 }
 
-type TacticalCategory = 'ALL' | 'PRIORITY' | 'HANDCUFFS' | 'BREAKOUTS' | 'STREAMERS' | 'LEDGER'
+type TacticalCategory = 'ALL' | 'PRIORITY' | 'CONSENSUS_RADAR' | 'HANDCUFFS' | 'BREAKOUTS' | 'STREAMERS' | 'LEDGER'
 
 export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }) => {
   const [activeCategory, setActiveCategory] = useState<TacticalCategory>('ALL')
+  const [consensusPosFilter, setConsensusPosFilter] = useState<string>('ALL')
+  const [consensusAvailOnly, setConsensusAvailOnly] = useState<boolean>(false)
+  const [consensusSearch, setConsensusSearch] = useState<string>('')
+
+  // Flatten consensus players across all positions
+  const allConsensusPlayers = useMemo(() => {
+    if (!waivers?.consensus_board) return []
+    return Object.entries(waivers.consensus_board).flatMap(([pos, players]) =>
+      players.map((p) => ({ ...p, ui_pos: pos }))
+    )
+  }, [waivers?.consensus_board])
+
+  const totalAvailableConsensus = useMemo(() => {
+    return allConsensusPlayers.filter((p) => p.availability_status === 'AVAILABLE').length
+  }, [allConsensusPlayers])
+
+  const filteredConsensusPlayers = useMemo(() => {
+    return allConsensusPlayers.filter((p) => {
+      if (consensusPosFilter !== 'ALL') {
+        const pPos = p.position.toUpperCase()
+        const filterPos = consensusPosFilter.toUpperCase()
+        if (filterPos === 'D/ST' || filterPos === 'DST') {
+          if (pPos !== 'D/ST' && pPos !== 'DST') return false
+        } else if (pPos !== filterPos) {
+          return false
+        }
+      }
+      if (consensusAvailOnly && p.availability_status !== 'AVAILABLE') {
+        return false
+      }
+      if (consensusSearch.trim()) {
+        const q = consensusSearch.toLowerCase().trim()
+        const matchesName = p.full_name.toLowerCase().includes(q)
+        const matchesTeam = p.pro_team.toLowerCase().includes(q)
+        const matchesPos = p.position.toLowerCase().includes(q)
+        const matchesSource = p.expert_sources.some((s) => s.toLowerCase().includes(q))
+        if (!matchesName && !matchesTeam && !matchesPos && !matchesSource) {
+          return false
+        }
+      }
+      return true
+    })
+  }, [allConsensusPlayers, consensusPosFilter, consensusAvailOnly, consensusSearch])
 
   if (!waivers) {
     return (
@@ -36,6 +79,26 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
     }
     return true
   })
+
+  const getNeedLevelBadge = (level: PositionalNeedItem['need_level']) => {
+    switch (level) {
+      case 'CRITICAL_NEED':
+        return <span className="pill rose" style={{ fontSize: '10.5px', fontWeight: 800 }}>🚨 CRITICAL NEED</span>
+      case 'HIGH_NEED':
+        return <span className="pill amber" style={{ fontSize: '10.5px', fontWeight: 800 }}>⚠️ HIGH NEED</span>
+      case 'MODERATE_NEED':
+        return <span className="pill cyan" style={{ fontSize: '10.5px', fontWeight: 800 }}>⚡ MODERATE NEED</span>
+      case 'LOW_NEED':
+      case 'STABLE':
+      default:
+        return <span className="pill emerald" style={{ fontSize: '10.5px', fontWeight: 800 }}>✅ STABLE</span>
+    }
+  }
+
+  const handleSelectNeedPosition = (pos: string) => {
+    setActiveCategory('CONSENSUS_RADAR')
+    setConsensusPosFilter(pos)
+  }
 
   return (
     <div className="waiver-tab-container">
@@ -76,6 +139,70 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
         </div>
       )}
 
+      {/* Positional Needs Status Diagnostic Banner */}
+      {waivers.positional_needs && waivers.positional_needs.length > 0 && (
+        <div className="positional-needs-card">
+          <div className="positional-needs-header">
+            <div>
+              <div className="positional-needs-title-row">
+                <span style={{ fontSize: '18px' }}>🎯</span>
+                <h3 className="positional-needs-title">Roster Positional Needs Diagnostic</h3>
+                <span className="pill purple" style={{ fontSize: '11px', fontWeight: 700 }}>
+                  Week 2 2026 Intelligence
+                </span>
+              </div>
+              <p className="positional-needs-desc">
+                Cross-references starter health, depth vulnerabilities, and cut candidates to target consensus pickups where your lineup needs them most.
+              </p>
+            </div>
+            <button
+              className="btn btn-secondary btn-sm browse-consensus-btn"
+              onClick={() => {
+                setActiveCategory('CONSENSUS_RADAR')
+                setConsensusPosFilter('ALL')
+              }}
+            >
+              🏆 View All 47 Consensus Plays ➔
+            </button>
+          </div>
+
+          <div className="positional-needs-grid">
+            {waivers.positional_needs.map((n) => {
+              const isCritical = n.need_level === 'CRITICAL_NEED'
+              const isHigh = n.need_level === 'HIGH_NEED'
+              const isMod = n.need_level === 'MODERATE_NEED'
+
+              return (
+                <div
+                  key={n.position}
+                  className={`positional-need-tile ${
+                    isCritical ? 'tile-critical' : isHigh ? 'tile-high' : isMod ? 'tile-moderate' : 'tile-stable'
+                  }`}
+                  onClick={() => handleSelectNeedPosition(n.position)}
+                  title={`Click to view expert consensus ${n.position} targets`}
+                >
+                  <div className="need-tile-top">
+                    <span className="need-tile-pos">{n.position}</span>
+                    {getNeedLevelBadge(n.need_level)}
+                  </div>
+                  <div className="need-tile-starter">{n.starter_summary}</div>
+                  <div className="need-tile-driver">{n.primary_driver}</div>
+                  {n.recommended_consensus_targets && n.recommended_consensus_targets.length > 0 && (
+                    <div className="need-tile-targets">
+                      <span className="target-label">Top Wire Targets:</span>
+                      <span className="target-names">{n.recommended_consensus_targets.slice(0, 2).join(', ')}</span>
+                    </div>
+                  )}
+                  <div className="need-tile-action">
+                    Explore Consensus {n.position}s ➔
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Tactical Category Filter Navigation */}
       <div className="waiver-nav-tabs">
         <button
@@ -83,6 +210,17 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
           onClick={() => setActiveCategory('ALL')}
         >
           🔥 All Upgrades ({waivers.top_upgrades.length})
+        </button>
+        <button
+          className={`waiver-nav-btn consensus-tab-highlight ${activeCategory === 'CONSENSUS_RADAR' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('CONSENSUS_RADAR')}
+        >
+          🏆 2026 Consensus Radar ({allConsensusPlayers.length || 47})
+          {totalAvailableConsensus > 0 && (
+            <span className="consensus-avail-badge">
+              {totalAvailableConsensus} on Wire
+            </span>
+          )}
         </button>
         <button
           className={`waiver-nav-btn ${activeCategory === 'PRIORITY' ? 'active' : ''}`}
@@ -119,14 +257,237 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
         </button>
       </div>
 
+      {/* 2026 EXPERT CONSENSUS RADAR BOARD (Dedicated View) */}
+      {activeCategory === 'CONSENSUS_RADAR' && (
+        <div className="card consensus-radar-card" style={{ marginBottom: '24px' }}>
+          <div className="card-header consensus-board-header">
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '22px' }}>🏆</span>
+                <h3 className="card-title" style={{ color: '#38bdf8' }}>
+                  2026 Week 2 Expert Consensus Wire Board
+                </h3>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
+                Synthesizes national consensus rankings from <strong>FantasyPros, CBS Sports, NFL.com, RotoBaller, FTN, PFF, SI, and Athlon Sports</strong> — cross-referenced live with your league wire.
+              </p>
+            </div>
+            <span className="pill emerald">Live Wire Synchronized</span>
+          </div>
+
+          {/* Controls Bar: Position Tabs, Availability Toggle, and Search */}
+          <div className="consensus-controls-container">
+            {/* Position Filter Buttons */}
+            <div className="consensus-pos-pills">
+              {['ALL', 'TE', 'WR', 'RB', 'QB', 'D/ST', 'K'].map((pos) => {
+                const count = pos === 'ALL'
+                  ? allConsensusPlayers.length
+                  : allConsensusPlayers.filter((p) => {
+                      const pPos = p.position.toUpperCase()
+                      if (pos === 'D/ST') return pPos === 'D/ST' || pPos === 'DST'
+                      return pPos === pos.toUpperCase()
+                    }).length
+
+                const need = waivers.positional_needs?.find((n) => {
+                  if (pos === 'D/ST') return n.position === 'D/ST' || n.position === 'DST'
+                  return n.position.toUpperCase() === pos.toUpperCase()
+                })
+
+                const isCrit = need?.need_level === 'CRITICAL_NEED'
+                const isHigh = need?.need_level === 'HIGH_NEED'
+
+                return (
+                  <button
+                    key={pos}
+                    className={`consensus-pos-btn ${consensusPosFilter === pos ? 'active' : ''}`}
+                    onClick={() => setConsensusPosFilter(pos)}
+                  >
+                    <span>{pos} ({count})</span>
+                    {isCrit && <span className="pos-need-dot critical" title="Diagnosed Critical Need" />}
+                    {isHigh && <span className="pos-need-dot high" title="Diagnosed High Need" />}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Secondary Filters: Wire Availability Toggle & Search Input */}
+            <div className="consensus-filter-tools">
+              <label className="consensus-avail-toggle">
+                <input
+                  type="checkbox"
+                  checked={consensusAvailOnly}
+                  onChange={(e) => setConsensusAvailOnly(e.target.checked)}
+                />
+                <span>🟢 Wire Available Only</span>
+              </label>
+
+              <div className="consensus-search-box">
+                <span className="search-icon">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search player, team, outlet..."
+                  value={consensusSearch}
+                  onChange={(e) => setConsensusSearch(e.target.value)}
+                  className="consensus-search-input"
+                />
+                {consensusSearch && (
+                  <button
+                    type="button"
+                    className="clear-search-btn"
+                    onClick={() => setConsensusSearch('')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Player Grid */}
+          <div className="consensus-players-grid">
+            {filteredConsensusPlayers.map((item, idx) => {
+              const isAvail = item.availability_status === 'AVAILABLE'
+              const isUser = item.availability_status === 'ROSTERED_USER'
+
+              return (
+                <div
+                  key={`${item.full_name}-${idx}`}
+                  className={`consensus-player-card ${isAvail ? 'card-available' : 'card-rostered'} ${
+                    item.tailored_to_need ? 'card-need-tailored' : ''
+                  }`}
+                >
+                  {/* Top Card Header */}
+                  <div className="consensus-card-header">
+                    <div className="consensus-player-lead">
+                      <div className="consensus-rank-badge">
+                        #{item.rank} {item.position}
+                      </div>
+                      <NFLTeamLogo team={item.pro_team} size={36} />
+                      <div>
+                        <h4
+                          className="consensus-player-name"
+                          style={{
+                            cursor: onOpenGameLog && item.player_id ? 'pointer' : 'default',
+                            color: onOpenGameLog && item.player_id ? 'var(--accent-cyan)' : 'inherit',
+                          }}
+                          onClick={() =>
+                            onOpenGameLog &&
+                            item.player_id &&
+                            onOpenGameLog(item.player_id, item.full_name, item.position, item.pro_team)
+                          }
+                          title={onOpenGameLog && item.player_id ? `View game log for ${item.full_name}` : undefined}
+                        >
+                          {item.full_name}
+                        </h4>
+                        <div className="consensus-player-team">
+                          {item.position} &bull; {item.pro_team} &bull; Proj: <strong>{item.projected_points} fpts</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="consensus-status-badge">
+                      {isAvail ? (
+                        <span className="wire-status-pill available">
+                          🟢 Available on Wire
+                        </span>
+                      ) : isUser ? (
+                        <span className="wire-status-pill user">
+                          👤 On Your Roster
+                        </span>
+                      ) : (
+                        <span className="wire-status-pill opponent">
+                          🔒 Rostered (Opponent)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Need Tailored & Tier Strip */}
+                  <div className="consensus-tier-strip">
+                    <span className="pill purple" style={{ fontSize: '11px', fontWeight: 800 }}>
+                      {item.consensus_tier}
+                    </span>
+                    {item.tailored_to_need && (
+                      <span className="pill amber" style={{ fontSize: '11px', fontWeight: 800 }}>
+                        🎯 Solves Diagnosed Need
+                      </span>
+                    )}
+                    <span className="pill emerald" style={{ fontSize: '11px', fontWeight: 800 }}>
+                      💰 FAAB: {item.faab_range} ({item.faab_recommended_pct}%)
+                    </span>
+                  </div>
+
+                  {/* Realized Week 1 Metric Callout */}
+                  <div className="consensus-metric-box">
+                    <div className="metric-tag">📊 WEEK 1 REALIZED METRICS:</div>
+                    <div className="metric-text">{item.week_1_metric}</div>
+                  </div>
+
+                  {/* Expert Rationale */}
+                  <div className="consensus-rationale-box">
+                    <div className="rationale-tag">🧠 EXPERT CONSENSUS RATIONALE:</div>
+                    <div className="rationale-body">{item.expert_rationale}</div>
+                  </div>
+
+                  {/* Expert Outlets Citations */}
+                  <div className="consensus-sources-box">
+                    <span className="sources-label">📰 Industry Consensus Outlets:</span>
+                    <div className="sources-list">
+                      {item.expert_sources.map((src, sIdx) => (
+                        <span key={sIdx} className="source-tag-pill">
+                          {src}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Footer with Log Button */}
+                  {onOpenGameLog && item.player_id && (
+                    <div className="consensus-card-footer">
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-xs"
+                        style={{ width: '100%', justifyContent: 'center' }}
+                        onClick={() =>
+                          onOpenGameLog(item.player_id!, item.full_name, item.position, item.pro_team)
+                        }
+                      >
+                        📊 View Week 1 Box & Target Log
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+            {filteredConsensusPlayers.length === 0 && (
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>
+                <p style={{ fontSize: '16px', fontWeight: 600 }}>No consensus players match your current filter.</p>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  style={{ marginTop: '12px' }}
+                  onClick={() => {
+                    setConsensusPosFilter('ALL')
+                    setConsensusAvailOnly(false)
+                    setConsensusSearch('')
+                  }}
+                >
+                  Reset All Filters
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Primary Waiver Upgrades Feed (Shown for ALL, PRIORITY, HANDCUFFS, BREAKOUTS) */}
-      {activeCategory !== 'STREAMERS' && activeCategory !== 'LEDGER' && (
+      {activeCategory !== 'STREAMERS' && activeCategory !== 'LEDGER' && activeCategory !== 'CONSENSUS_RADAR' && (
         <div className="card" style={{ marginBottom: '24px' }}>
           <div className="card-header">
             <div>
               <h3 className="card-title">🎯 Human-Pro Lineup Upgrades & Tactical Wire Claims</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
-                Every recommendation is cross-referenced with team depth charts, target volumes, and rest-of-season consensus value.
+                Every recommendation is tailored to diagnosed roster needs and cross-referenced with 2026 Week 2 expert consensus value.
               </p>
             </div>
             <span className="pill emerald">8-Man Depth Calibrated</span>
@@ -141,8 +502,20 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
               return (
                 <div
                   key={idx}
-                  className={`pro-upgrade-card ${isMustAdd ? 'must-add-card' : ''}`}
+                  className={`pro-upgrade-card ${isMustAdd ? 'must-add-card' : ''} ${
+                    upg.is_need_tailored ? 'upgrade-tailored-need' : ''
+                  }`}
                 >
+                  {/* Need Tailored Top Banner */}
+                  {upg.is_need_tailored && (
+                    <div className="upgrade-need-banner">
+                      <span className="need-banner-icon">🎯</span>
+                      <span className="need-banner-text">
+                        <strong>TAILORED TO ROSTER NEED: {upg.pickup_player.position}</strong> &bull; Directly targets diagnosed roster vulnerability
+                      </span>
+                    </div>
+                  )}
+
                   <div className="pro-upgrade-top-bar">
                     <div className="badge-cluster">
                       {/* Urgency Pill */}
@@ -158,6 +531,14 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                           ? '⚡ HIGH-PRIORITY CLAIM'
                           : '🎯 SPECULATIVE STASH'}
                       </span>
+
+                      {/* Consensus Rank Pill if available */}
+                      {upg.consensus_rank && (
+                        <span className="pill gold" style={{ fontSize: '11px', fontWeight: 800 }}>
+                          🏆 #{upg.consensus_rank} Consensus {upg.pickup_player.position}
+                          {upg.consensus_tier ? ` (${upg.consensus_tier})` : ''}
+                        </span>
+                      )}
 
                       {/* Tactical Bucket */}
                       <span className="pill purple" style={{ fontSize: '11px' }}>
@@ -201,7 +582,15 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                               color: onOpenGameLog ? 'var(--accent-cyan)' : 'inherit',
                               textDecoration: onOpenGameLog ? 'underline dotted' : 'none',
                             }}
-                            onClick={() => onOpenGameLog && onOpenGameLog(upg.pickup_player.player_id, upg.pickup_player.full_name, upg.pickup_player.position, upg.pickup_player.pro_team)}
+                            onClick={() =>
+                              onOpenGameLog &&
+                              onOpenGameLog(
+                                upg.pickup_player.player_id,
+                                upg.pickup_player.full_name,
+                                upg.pickup_player.position,
+                                upg.pickup_player.pro_team
+                              )
+                            }
                             title={onOpenGameLog ? `View previous game logs for ${upg.pickup_player.full_name}` : undefined}
                           >
                             {upg.pickup_player.full_name}
@@ -214,7 +603,14 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                               type="button"
                               className="btn btn-secondary btn-xs"
                               style={{ padding: '1px 6px', fontSize: '10px' }}
-                              onClick={() => onOpenGameLog(upg.pickup_player.player_id, upg.pickup_player.full_name, upg.pickup_player.position, upg.pickup_player.pro_team)}
+                              onClick={() =>
+                                onOpenGameLog(
+                                  upg.pickup_player.player_id,
+                                  upg.pickup_player.full_name,
+                                  upg.pickup_player.position,
+                                  upg.pickup_player.pro_team
+                                )
+                              }
                               title={`View game logs for ${upg.pickup_player.full_name}`}
                             >
                               📊 Log
@@ -268,7 +664,15 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                                   color: onOpenGameLog ? 'var(--accent-cyan)' : 'inherit',
                                   textDecoration: onOpenGameLog ? 'underline dotted' : 'none',
                                 }}
-                                onClick={() => onOpenGameLog && onOpenGameLog(upg.drop_player?.player_id || 0, upg.drop_player?.full_name, upg.drop_player?.position, upg.drop_player?.pro_team)}
+                                onClick={() =>
+                                  onOpenGameLog &&
+                                  onOpenGameLog(
+                                    upg.drop_player?.player_id || 0,
+                                    upg.drop_player?.full_name,
+                                    upg.drop_player?.position,
+                                    upg.drop_player?.pro_team
+                                  )
+                                }
                                 title={onOpenGameLog ? `View previous game logs for ${upg.drop_player.full_name}` : undefined}
                               >
                                 {upg.drop_player.full_name}
@@ -281,7 +685,14 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                                   type="button"
                                   className="btn btn-secondary btn-xs"
                                   style={{ padding: '1px 6px', fontSize: '10px' }}
-                                  onClick={() => onOpenGameLog(upg.drop_player?.player_id || 0, upg.drop_player?.full_name, upg.drop_player?.position, upg.drop_player?.pro_team)}
+                                  onClick={() =>
+                                    onOpenGameLog(
+                                      upg.drop_player?.player_id || 0,
+                                      upg.drop_player?.full_name,
+                                      upg.drop_player?.position,
+                                      upg.drop_player?.pro_team
+                                    )
+                                  }
                                   title={`View game logs for ${upg.drop_player.full_name}`}
                                 >
                                   📊 Log
@@ -324,6 +735,19 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                       <div className="narrative-row">
                         <span className="narrative-tag drop">🛡️ Drop Reassurance:</span>
                         <span className="narrative-body">{upg.drop_reassurance}</span>
+                      </div>
+                    )}
+
+                    {upg.expert_sources && upg.expert_sources.length > 0 && (
+                      <div className="narrative-row" style={{ marginTop: '4px' }}>
+                        <span className="narrative-tag" style={{ color: '#fbbf24' }}>📰 Verified Consensus:</span>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {upg.expert_sources.map((src, sIdx) => (
+                            <span key={sIdx} className="expert-source-chip">
+                              {src}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
