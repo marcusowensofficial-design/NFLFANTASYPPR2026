@@ -70,7 +70,7 @@ export const TradesTab: React.FC<TradesTabProps> = ({
                       Rival Team: <strong style={{ color: 'var(--text-secondary)' }}>{trade.partner_team_name}</strong>
                       {trade.target_playoff_sos && (
                         <span style={{ marginLeft: '8px', color: 'var(--accent-cyan)' }}>
-                          • Weeks 15-17 SoS: {trade.target_playoff_sos} pts ({trade.target_playoff_grade})
+                          • Weeks 15-17 SoS: {trade.target_playoff_sos} fpts ({trade.target_playoff_grade})
                         </span>
                       )}
                     </div>
@@ -80,7 +80,7 @@ export const TradesTab: React.FC<TradesTabProps> = ({
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Your Net Gain</span>
                       <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--accent-emerald)' }}>
-                        +{trade.user_net_projected_delta} pts/wk
+                        +{trade.user_net_projected_delta} fpts/wk
                       </div>
                       {trade.user_playoff_leverage_delta !== undefined && trade.user_playoff_leverage_delta !== 0 && (
                         <div style={{ fontSize: '11px', color: trade.user_playoff_leverage_delta > 0 ? 'var(--accent-emerald)' : 'var(--text-muted)', marginTop: '2px', fontWeight: 600 }}>
@@ -91,7 +91,7 @@ export const TradesTab: React.FC<TradesTabProps> = ({
                     <div style={{ textAlign: 'right', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '12px' }}>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Rival Net Gain</span>
                       <div style={{ fontSize: '20px', fontWeight: 900, color: '#38bdf8' }}>
-                        +{trade.partner_net_projected_delta} pts/wk
+                        +{trade.partner_net_projected_delta} fpts/wk
                       </div>
                     </div>
                   </div>
@@ -113,7 +113,7 @@ export const TradesTab: React.FC<TradesTabProps> = ({
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.position} • {p.pro_team}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 700 }}>{p.projected_points} pts</span>
+                          <span style={{ fontSize: '12px', fontWeight: 700 }}>{p.projected_points} fpts</span>
                           <div style={{ fontSize: '10px', color: 'var(--accent-cyan)' }}>Score {p.start_score}</div>
                         </div>
                       </div>
@@ -136,7 +136,7 @@ export const TradesTab: React.FC<TradesTabProps> = ({
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{trade.target_alpha.position} • {trade.target_alpha.pro_team}</div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 800, color: '#c084fc' }}>{trade.target_alpha.projected_points} pts</span>
+                        <span style={{ fontSize: '14px', fontWeight: 800, color: '#c084fc' }}>{trade.target_alpha.projected_points} fpts</span>
                         <div style={{ fontSize: '10px', color: '#a855f7' }}>StartScore {trade.target_alpha.start_score}</div>
                       </div>
                     </div>
@@ -159,7 +159,7 @@ export const TradesTab: React.FC<TradesTabProps> = ({
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{trade.waiver_backfill.position} • {trade.waiver_backfill.pro_team}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>{trade.waiver_backfill.projected_points} pts</span>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399' }}>{trade.waiver_backfill.projected_points} fpts</span>
                           <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Free Agent</div>
                         </div>
                       </div>

@@ -311,7 +311,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                           <th>Expert Avg</th>
                           <th>Std Dev (Spread)</th>
                           <th>Min - Max</th>
-                          <th>Proj PPR Pts</th>
+                          <th>Proj PPR FPTS</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -383,7 +383,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                               </td>
                               <td>{p.rank_min && p.rank_max ? `${p.rank_min} - ${p.rank_max}` : '—'}</td>
                               <td style={{ fontWeight: 700, color: '#facc15' }}>
-                                {p.r2p_pts ? `${Number(p.r2p_pts).toFixed(1)} pts` : '—'}
+                                {p.r2p_pts ? `${Number(p.r2p_pts).toFixed(1)} fpts` : '—'}
                               </td>
                             </tr>
                           )
@@ -416,7 +416,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                       <th>Expert Avg</th>
                       <th>Std Dev (Spread)</th>
                       <th>Min - Max</th>
-                      <th>Proj PPR Pts</th>
+                      <th>Proj PPR FPTS</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -489,7 +489,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                           </td>
                           <td>{p.rank_min && p.rank_max ? `${p.rank_min} - ${p.rank_max}` : '—'}</td>
                           <td style={{ fontWeight: 700, color: '#facc15' }}>
-                            {p.r2p_pts ? `${Number(p.r2p_pts).toFixed(1)} pts` : '—'}
+                            {p.r2p_pts ? `${Number(p.r2p_pts).toFixed(1)} fpts` : '—'}
                           </td>
                         </tr>
                       )
@@ -512,7 +512,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
         const activeProjections = isHalf ? fpProjectionsHalf : fpProjections
         const activeAllProjections = isHalf ? fpAllProjectionsHalf : fpAllProjections
         const scoring = isHalf ? 'HALF' : 'PPR'
-        const ptsColLabel = isHalf ? 'Projected Half-PPR Pts' : 'Projected PPR Pts'
+        const ptsColLabel = isHalf ? 'Projected Half-PPR FPTS' : 'Projected PPR FPTS'
         const pillColor = isHalf ? 'cyan' : 'emerald'
 
         return (
@@ -597,7 +597,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                                   </div>
                                 </td>
                                 <td style={{ fontWeight: 800, color: '#facc15', fontSize: '14px' }}>
-                                  {p.projected_points ? `${Number(p.projected_points).toFixed(1)} pts` : '—'}
+                                  {p.projected_points ? `${Number(p.projected_points).toFixed(1)} fpts` : '—'}
                                 </td>
                                 <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                                   {statSummary || 'Model consensus projection'}
@@ -718,7 +718,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                               </div>
                             </td>
                             <td style={{ fontWeight: 800, color: '#facc15', fontSize: '14px' }}>
-                              {p.projected_points ? `${Number(p.projected_points).toFixed(1)} pts` : '—'}
+                              {p.projected_points ? `${Number(p.projected_points).toFixed(1)} fpts` : '—'}
                             </td>
                             {fpPosFilter === 'QB' && (
                               <>
@@ -880,7 +880,7 @@ export const FantasyProsTab: React.FC<FantasyProsTabProps> = ({
                   <div>
                     {s.r2p_pts ? (
                       <span style={{ color: '#facc15', fontWeight: 700 }}>
-                        {s.r2p_pts.toFixed(1)} proj pts
+                        {s.r2p_pts.toFixed(1)} proj fpts
                       </span>
                     ) : (
                       <span style={{ color: 'var(--text-muted)' }}>No stat proj</span>

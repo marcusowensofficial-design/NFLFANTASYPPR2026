@@ -509,7 +509,7 @@ export const DvpTab: React.FC<DvpTabProps> = ({
         desc2: toughest ? `Restricts to league-low ${toughest.total_dk_fpa.toFixed(1)} Total FPA/g (${toughest.total_yds.toFixed(0)} yds/g)` : '',
         team2: toughest?.pro_team || null,
         title3: '📊 Avg Total FPA Allowed',
-        val3: `${avgFpa.toFixed(1)} pts/g`,
+        val3: `${avgFpa.toFixed(1)} fpts/g`,
         desc3: 'League baseline fantasy points allowed across all positions',
         title4: '⚔️ Starters Facing Soft DSTs',
         val4: `${softStartersCount} Starters`,
@@ -562,7 +562,7 @@ export const DvpTab: React.FC<DvpTabProps> = ({
       desc2: toughest ? `Restricts to ${toughest.dk_fpa.toFixed(1)} FPA (${toughest.vs_avg.toFixed(1)} vs avg)` : '',
       team2: toughest?.pro_team || null,
       title3: '📊 Positional Avg FPA',
-      val3: `${avg.toFixed(1)} pts/g`,
+      val3: `${avg.toFixed(1)} fpts/g`,
       desc3: `NFL baseline fantasy scoring environment for ${dvpPosition}s`,
       title4: `⚔️ My Roster ${dvpPosition} Smash`,
       val4: `${smashCount} ${dvpPosition}s`,
@@ -1246,27 +1246,37 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
 
                     {/* Total Half-PPR FPA (FanDuel) */}
                     <td>
-                      <strong
-                        className="intel-dvp-val-mono"
-                        style={{
-                          color:
-                            row.composite_rank <= 6
-                              ? 'var(--accent-emerald)'
-                              : row.composite_rank >= 27
-                              ? 'var(--accent-rose)'
-                              : 'var(--text-primary)',
-                          fontSize: '13.5px',
-                        }}
-                      >
-                        {row.total_dk_fpa.toFixed(1)}
-                      </strong>
+                      <div className="intel-dvp-cell-fpa" title="Total Half-PPR Fantasy Points Allowed per game across all positions">
+                        <strong
+                          className="intel-dvp-val-mono"
+                          style={{
+                            color:
+                              row.composite_rank <= 6
+                                ? 'var(--accent-emerald)'
+                                : row.composite_rank >= 27
+                                ? 'var(--accent-rose)'
+                                : 'var(--text-primary)',
+                            fontSize: '13.5px',
+                          }}
+                        >
+                          {row.total_dk_fpa.toFixed(1)}
+                        </strong>
+                        <span className="intel-dvp-fpa-unit">FPTS ALLOWED</span>
+                      </div>
                     </td>
 
                     {/* Total Full-PPR FPA (ESPN) */}
                     <td>
-                      <span className="intel-dvp-val-mono" style={{ color: 'var(--text-secondary)' }}>
-                        {row.total_fd_fpa ? row.total_fd_fpa.toFixed(1) : '—'}
-                      </span>
+                      {row.total_fd_fpa ? (
+                        <div className="intel-dvp-cell-fpa" title="Total Full-PPR Fantasy Points Allowed per game across all positions">
+                          <span className="intel-dvp-val-mono" style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+                            {row.total_fd_fpa.toFixed(1)}
+                          </span>
+                          <span className="intel-dvp-fpa-unit">FPTS ALLOWED</span>
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>—</span>
+                      )}
                     </td>
 
                     {/* Total Yds/G (Pass + Rush) */}
@@ -1527,27 +1537,37 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
 
                     {/* Half-PPR FPA (FanDuel) */}
                     <td>
-                      <strong
-                        className="intel-dvp-val-mono"
-                        style={{
-                          color:
-                            row.rank_softness <= 8
-                              ? 'var(--accent-emerald)'
-                              : row.rank_softness >= 25
-                              ? 'var(--accent-rose)'
-                              : 'var(--text-primary)',
-                          fontSize: '13.5px',
-                        }}
-                      >
-                        {row.dk_fpa.toFixed(1)}
-                      </strong>
+                      <div className="intel-dvp-cell-fpa" title={`Average Half-PPR Fantasy Points Allowed per game to ${dvpPosition}s`}>
+                        <strong
+                          className="intel-dvp-val-mono"
+                          style={{
+                            color:
+                              row.rank_softness <= 8
+                                ? 'var(--accent-emerald)'
+                                : row.rank_softness >= 25
+                                ? 'var(--accent-rose)'
+                                : 'var(--text-primary)',
+                            fontSize: '13.5px',
+                          }}
+                        >
+                          {row.dk_fpa.toFixed(1)}
+                        </strong>
+                        <span className="intel-dvp-fpa-unit">FPTS ALLOWED</span>
+                      </div>
                     </td>
 
                     {/* Full-PPR FPA (ESPN) */}
                     <td>
-                      <span className="intel-dvp-val-mono" style={{ color: 'var(--text-secondary)' }}>
-                        {row.fd_fpa ? row.fd_fpa.toFixed(1) : '—'}
-                      </span>
+                      {row.fd_fpa ? (
+                        <div className="intel-dvp-cell-fpa" title={`Average Full-PPR Fantasy Points Allowed per game to ${dvpPosition}s`}>
+                          <span className="intel-dvp-val-mono" style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+                            {row.fd_fpa.toFixed(1)}
+                          </span>
+                          <span className="intel-dvp-fpa-unit">FPTS ALLOWED</span>
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>—</span>
+                      )}
                     </td>
 
                     {/* vs Average */}

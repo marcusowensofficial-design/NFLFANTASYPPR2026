@@ -222,7 +222,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                           )}
                         </h4>
                         <div className="trans-stats">
-                          <span>Proj: <strong>{upg.pickup_player.projected_points} pts</strong></span>
+                          <span>Proj: <strong>{upg.pickup_player.projected_points} fpts</strong></span>
                           <span>StartScore: <strong>{upg.pickup_player.start_score}</strong></span>
                           {upg.pickup_player.contingency_score !== undefined && upg.pickup_player.contingency_score > 0 && (
                             <span style={{ color: 'var(--accent-amber)' }}>
@@ -241,7 +241,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                     <div className="trans-arrow">
                       <span>➔</span>
                       <div className="delta-pill">
-                        +{upg.net_projected_delta} pts net
+                        +{upg.net_projected_delta} fpts net
                       </div>
                     </div>
 
@@ -289,7 +289,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                               )}
                             </h4>
                             <div className="trans-stats">
-                              <span>Proj: <strong>{upg.drop_player.projected_points} pts</strong></span>
+                              <span>Proj: <strong>{upg.drop_player.projected_points} fpts</strong></span>
                               <span>StartScore: <strong>{upg.drop_player.start_score}</strong></span>
                               <span className="cut-pill">Safe Sacrifice</span>
                             </div>
@@ -458,7 +458,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                         <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{item.full_name} ({item.pro_team})</strong>
                       </div>
                       <span className={`pill ${item.matchup_grade === 'FAVORABLE' ? 'emerald' : 'cyan'}`}>
-                        {item.matchup_grade} ({item.matchup_score} pts)
+                        {item.matchup_grade} ({item.matchup_score} score)
                       </span>
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -488,7 +488,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                         <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{item.full_name} ({item.pro_team})</strong>
                       </div>
                       <span className={`pill ${item.matchup_grade === 'FAVORABLE' ? 'emerald' : 'cyan'}`}>
-                        {item.matchup_grade} ({item.matchup_score} pts)
+                        {item.matchup_grade} ({item.matchup_score} score)
                       </span>
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>

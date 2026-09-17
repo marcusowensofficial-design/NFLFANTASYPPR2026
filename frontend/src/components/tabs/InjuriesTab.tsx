@@ -175,7 +175,7 @@ export const InjuriesTab: React.FC<InjuriesTabProps> = ({
             <span className="vegas-kpi-number" style={{ fontSize: '20px', color: 'var(--accent-rose)' }}>
               🚨 {kpis.ruledOutCount}
             </span>
-            <span className="pill rose" style={{ fontSize: '10px' }}>0.0 Proj Pts</span>
+            <span className="pill rose" style={{ fontSize: '10px' }}>0.0 Proj FPTS</span>
           </div>
           <span className="vegas-kpi-sub">Vacated touches available</span>
         </div>

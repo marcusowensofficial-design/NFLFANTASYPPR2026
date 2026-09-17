@@ -79,7 +79,7 @@ export const renderFactorDetailBox = (
         {Object.entries(detail.contributions || {}).map(([k, v]) => (
           <div key={k} className="inspector-contrib-row">
             <span className="inspector-contrib-name">{k.replace(/_/g, ' ')}</span>
-            <span className="inspector-contrib-pts">+{v} pts</span>
+            <span className="inspector-contrib-pts">+{v} fpts</span>
           </div>
         ))}
       </div>
@@ -514,7 +514,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
                       {cand1.is_starter ? '⭐ Starter' : '🔄 Bench'}
                     </span>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginLeft: 'auto' }}>
-                      {cand1.projected_points} pts
+                      {cand1.projected_points} fpts
                     </span>
                   </div>
                 </div>
@@ -544,7 +544,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <optgroup label={`⭐ ${focusedTeamName} Starters (${myStarters.length})`}>
                 {myStarters.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Starter]
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} fpts [Starter]
                   </option>
                 ))}
               </optgroup>
@@ -553,7 +553,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <optgroup label={`🔄 ${focusedTeamName} Bench (${myBench.length})`}>
                 {myBench.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Bench]
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} fpts [Bench]
                   </option>
                 ))}
               </optgroup>
@@ -562,7 +562,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <optgroup label={`🟢 Available Free Agents (${freeAgents.length})`}>
                 {freeAgents.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Free Agent]
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} fpts [Free Agent]
                   </option>
                 ))}
               </optgroup>
@@ -571,7 +571,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <optgroup label={`👥 Other League Rosters (${otherTeams.length})`}>
                 {otherTeams.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts ({p.team_abbrev || 'League'})
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} fpts ({p.team_abbrev || 'League'})
                   </option>
                 ))}
               </optgroup>
@@ -661,7 +661,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
                       {cand2.is_starter ? '⭐ Starter' : '🔄 Bench'}
                     </span>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginLeft: 'auto' }}>
-                      {cand2.projected_points} pts
+                      {cand2.projected_points} fpts
                     </span>
                   </div>
                 </div>
@@ -692,7 +692,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <optgroup label={`🎯 Recommended Bench Challengers (${myBench.filter((p) => p.id !== cand1.id && (p.position === cand1.position || (['RB', 'WR', 'TE'].includes(cand1.position) && ['RB', 'WR', 'TE'].includes(p.position)))).length})`}>
                 {myBench.filter((p) => p.id !== cand1.id && (p.position === cand1.position || (['RB', 'WR', 'TE'].includes(cand1.position) && ['RB', 'WR', 'TE'].includes(p.position)))).map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Bench]
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} fpts [Bench]
                   </option>
                 ))}
               </optgroup>
@@ -701,7 +701,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <optgroup label={`⭐ ${focusedTeamName} Starters`}>
                 {myStarters.filter((p) => p.id !== cand1?.id).map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Starter]
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} fpts [Starter]
                   </option>
                 ))}
               </optgroup>
@@ -710,7 +710,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <optgroup label={`🔄 ${focusedTeamName} Bench`}>
                 {myBench.filter((p) => p.id !== cand1?.id).map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Bench]
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} fpts [Bench]
                   </option>
                 ))}
               </optgroup>
@@ -719,7 +719,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <optgroup label={`🟢 Available Free Agents (${freeAgents.length})`}>
                 {freeAgents.filter((p) => p.id !== cand1?.id).map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts [Free Agent]
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} fpts [Free Agent]
                   </option>
                 ))}
               </optgroup>
@@ -728,7 +728,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               <optgroup label={`👥 Other League Rosters (${otherTeams.length})`}>
                 {otherTeams.filter((p) => p.id !== cand1?.id).map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} pts ({p.team_abbrev || 'League'})
+                    {p.full_name} ({p.position} - {p.pro_team}) • {p.projected_points} fpts ({p.team_abbrev || 'League'})
                   </option>
                 ))}
               </optgroup>
@@ -759,7 +759,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
                     <div className="duel-meta-row">
                       <span className="pill cyan" style={{ fontSize: '10px', padding: '1px 6px' }}>{p.position}</span>
                       <span className="pill zinc" style={{ fontSize: '10px', padding: '1px 6px' }}>{p.pro_team}</span>
-                      <span style={{ fontSize: '12px', fontWeight: 700, marginLeft: 'auto' }}>{p.projected_points} pts</span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, marginLeft: 'auto' }}>{p.projected_points} fpts</span>
                     </div>
                   </div>
                 )}
@@ -771,7 +771,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
                 >
                   {currentTeamPlayers.map((item) => (
                     <option key={item.id} value={item.id}>
-                      {item.full_name} ({item.position}) • {item.projected_points} pts
+                      {item.full_name} ({item.position}) • {item.projected_points} fpts
                     </option>
                   ))}
                 </select>
@@ -803,7 +803,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
               key={d.id}
               className={`dilemma-chip ${d.isCloseCall ? 'close-call' : ''}`}
               onClick={() => handleSelectDilemma(d.starterId, d.benchId)}
-              title={`Compare ${d.starterName} vs ${d.benchName} (Δ ${d.delta} pts)`}
+              title={`Compare ${d.starterName} vs ${d.benchName} (Δ ${d.delta} fpts)`}
             >
               <span className="dilemma-chip-tag">{d.slotName}</span>
               <span>{d.starterName} vs {d.benchName}</span>
@@ -960,7 +960,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
                 </div>
                 <div>
                   <div className="metric-label">Projected</div>
-                  <div className="metric-val">{p.projected_points} pts</div>
+                  <div className="metric-val">{p.projected_points} fpts</div>
                 </div>
                 <div>
                   <div className="metric-label">Confidence</div>

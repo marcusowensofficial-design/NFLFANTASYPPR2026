@@ -257,7 +257,7 @@ class WaiverScanner:
                 if is_injured:
                     reasoning = f"Elite generational asset ({b.position} {getattr(b, 'fp_pos_rank', '') or ''}, {ecr_display}). Currently OUT: Move to designated IR slot; NEVER drop."
                 else:
-                    reasoning = f"Core championship foundation ({ecr_display}, {b.projected_points:.1f} proj pts). Drop-protected."
+                    reasoning = f"Core championship foundation ({ecr_display}, {b.projected_points:.1f} proj fpts). Drop-protected."
             elif b.position.upper() in ("RB", "FB") and (getattr(b, "contingency_score", 0.0) >= 65.0 or (b_ecr and b_ecr <= 42)):
                 sec_tier = "STRONG_HOLD"
                 cut_safety = 25.0
@@ -416,7 +416,7 @@ class WaiverScanner:
                     bucket = "PRIORITY_STARTER"
                     faab_pct = 15
                     faab_amt = 15
-                    catalyst = f"Immediate starting lineup upgrade over {weakest_starter.full_name} (+{net_pts} projected pts)."
+                    catalyst = f"Immediate starting lineup upgrade over {weakest_starter.full_name} (+{net_pts} projected fpts)."
                     matchup_ctx = f"Favorable Week {current_week} matchup vs {fa.opponent} ({fa.matchup_grade})."
 
                 drop_reassure = (
@@ -443,7 +443,7 @@ class WaiverScanner:
                         drop_reassurance=drop_reassure,
                         action_type=action_type,
                         rationale=(
-                            f"Priority Starting Upgrade (+{net_score} StartScore, +{net_pts} proj pts over {weakest_starter.full_name}). "
+                            f"Priority Starting Upgrade (+{net_score} StartScore, +{net_pts} proj fpts over {weakest_starter.full_name}). "
                             f"{catalyst} {drop_reassure}"
                         ),
                     )
@@ -498,7 +498,7 @@ class WaiverScanner:
                 continue
             if fa_pos == "WR" and fa.projected_points >= 9.0:
                 net_score = round(fa.start_score - (drop_candidate.start_score if drop_candidate else 60.0), 1)
-                catalyst = f"Expanding target share and route participation in an active passing attack ({fa.projected_points:.1f} proj pts)."
+                catalyst = f"Expanding target share and route participation in an active passing attack ({fa.projected_points:.1f} proj fpts)."
                 matchup_ctx = f"Solid weekly floor and flex upside vs {fa.opponent}."
                 drop_reassure = f"Superior weekly role and floor compared to {drop_candidate.full_name}." if drop_candidate else "Open slot available."
 

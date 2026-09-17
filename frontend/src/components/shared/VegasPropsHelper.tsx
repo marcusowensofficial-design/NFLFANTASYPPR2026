@@ -12,6 +12,8 @@ export interface VegasPropsCapablePlayer {
   props_rush_att_ou?: number | null
   props_pass_yds_ou?: number | null
   props_pass_tds_ou?: number | null
+  props_pass_tds_over_odds?: number | null
+  props_pass_tds_under_odds?: number | null
   props_anytime_td_odds?: number | null
   props_anytime_td_prob?: number | null
   props_implied_ppr_pts?: number | null
@@ -55,8 +57,11 @@ export const renderLineupVegasProps = (p: VegasPropsCapablePlayer, _isBench: boo
             </span>
           ) : null}
           {p.props_pass_tds_ou ? (
-            <span className="lineup-prop-chip" title="Passing Touchdowns Over/Under">
-              🏈 <strong>{p.props_pass_tds_ou}</strong> TDs
+            <span
+              className="lineup-prop-chip"
+              title={`Passing Touchdowns Over/Under: O/U ${p.props_pass_tds_ou}${p.props_pass_tds_over_odds != null ? ` (${p.props_pass_tds_over_odds > 0 ? `+${p.props_pass_tds_over_odds}` : p.props_pass_tds_over_odds})` : ''}`}
+            >
+              🏈 <strong>{p.props_pass_tds_ou}</strong> TDs{p.props_pass_tds_over_odds != null ? ` (${p.props_pass_tds_over_odds > 0 ? `+${p.props_pass_tds_over_odds}` : p.props_pass_tds_over_odds})` : ''}
             </span>
           ) : null}
           {p.props_rush_yds_ou && p.props_rush_yds_ou >= 12.0 ? (
@@ -65,8 +70,11 @@ export const renderLineupVegasProps = (p: VegasPropsCapablePlayer, _isBench: boo
             </span>
           ) : null}
           {p.props_anytime_td_prob && p.props_anytime_td_prob >= 0.35 ? (
-            <span className="lineup-prop-chip td" title="Anytime TD Probability">
-              💰 <strong>{Math.round(p.props_anytime_td_prob * 100)}%</strong> TD
+            <span
+              className="lineup-prop-chip td"
+              title="Anytime Rush/Rec TD Probability (Sportsbooks do not count passing TDs for Anytime TD scorer bets)"
+            >
+              💰 <strong>{Math.round(p.props_anytime_td_prob * 100)}%</strong> Rush TD
             </span>
           ) : null}
         </>
@@ -149,8 +157,8 @@ export const renderLineupVegasProps = (p: VegasPropsCapablePlayer, _isBench: boo
             </span>
           ) : null}
           {p.props_implied_ppr_pts ? (
-            <span className="lineup-prop-chip" title="Vegas Market Implied Points">
-              🎯 <strong>{p.props_implied_ppr_pts.toFixed(1)}</strong> Implied Pts
+            <span className="lineup-prop-chip" title="Vegas Market Implied Fantasy Points">
+              🎯 <strong>{p.props_implied_ppr_pts.toFixed(1)}</strong> Implied FPTS
             </span>
           ) : null}
         </>
@@ -173,7 +181,7 @@ export const renderLineupVegasProps = (p: VegasPropsCapablePlayer, _isBench: boo
             if (p.props_implied_ppr_pts) {
               return (
                 <span className="lineup-prop-chip itt" title="Vegas Market Implied Fantasy Points">
-                  🛡️ <strong>{p.props_implied_ppr_pts.toFixed(1)}</strong> Implied Pts
+                  🛡️ <strong>{p.props_implied_ppr_pts.toFixed(1)}</strong> Implied FPTS
                 </span>
               )
             }

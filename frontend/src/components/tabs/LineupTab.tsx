@@ -342,7 +342,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ fontWeight: 800, fontSize: '13.5px', color: '#34d399', fontFamily: 'var(--font-mono)' }}>
-              {(p.actual_points ?? 0).toFixed(1)} pts
+              {(p.actual_points ?? 0).toFixed(1)} fpts
             </span>
             <span
               className="pill emerald"
@@ -364,7 +364,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ fontWeight: 800, fontSize: '13.5px', color: '#fbbf24', fontFamily: 'var(--font-mono)' }}>
-              {(p.actual_points ?? 0).toFixed(1)} pts
+              {(p.actual_points ?? 0).toFixed(1)} fpts
             </span>
             <span
               className="pill amber"
@@ -384,7 +384,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
     return (
       <div>
         <span style={{ fontWeight: 600, fontSize: '13px' }}>
-          {p.projected_points.toFixed(1)} pts
+          {p.projected_points.toFixed(1)} fpts
         </span>
         <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
           Proj
@@ -608,9 +608,9 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                 Interactive What-If Roster Active ({Object.keys(customSubstitutions).length} Custom Swap{Object.keys(customSubstitutions).length > 1 ? 's' : ''})
               </div>
               <div className="sandbox-banner-sub">
-                Modified Roster Total: <strong style={{ color: '#ffffff' }}>{currentLineupProjectedTotal} pts</strong>{' '}
+                Modified Roster Total: <strong style={{ color: '#ffffff' }}>{currentLineupProjectedTotal} fpts</strong>{' '}
                 <span style={{ color: customGainVsOptimal >= 0 ? '#10b981' : '#f43f5e', fontWeight: 700 }}>
-                  ({customGainVsOptimal >= 0 ? `+${customGainVsOptimal}` : customGainVsOptimal} pts vs Algorithmic Optimal)
+                  ({customGainVsOptimal >= 0 ? `+${customGainVsOptimal}` : customGainVsOptimal} fpts vs Algorithmic Optimal)
                 </span>
               </div>
             </div>
@@ -674,8 +674,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                     className={`pill ${lineup.implied_matchup_spread < 0 ? 'rose' : 'emerald'}`}
                     style={{ marginLeft: '10px' }}
                   >
-                    Spread: {lineup.implied_matchup_spread > 0 ? `+${lineup.implied_matchup_spread}` : lineup.implied_matchup_spread} pts
-                    {lineup.opponent_projected_points ? ` vs ${lineup.opponent_team_name || 'Opponent'} (${lineup.opponent_projected_points} pts)` : ''}
+                    Spread: {lineup.implied_matchup_spread > 0 ? `+${lineup.implied_matchup_spread}` : lineup.implied_matchup_spread} fpts
+                    {lineup.opponent_projected_points ? ` vs ${lineup.opponent_team_name || 'Opponent'} (${lineup.opponent_projected_points} fpts)` : ''}
                   </span>
                 )}
               </div>
@@ -721,7 +721,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
         <div className="executive-banner">
           <div className="banner-metric">
             <span className="metric-label">{hasCustomSwaps ? 'Custom Lineup Total' : 'Optimal Projected Total'}</span>
-            <span className="metric-val">{hasCustomSwaps ? currentLineupProjectedTotal : (lineup.total_effective_points || lineup.total_projected_points)} pts</span>
+            <span className="metric-val">{hasCustomSwaps ? currentLineupProjectedTotal : (lineup.total_effective_points || lineup.total_projected_points)} fpts</span>
             <span className="metric-sub">
               Engine: {projectionSource === 'MODEL' ? 'Quant Model' : projectionSource === 'CONSENSUS' ? 'Multi-Source Consensus' : projectionSource === 'FANTASYPROS' ? 'FantasyPros PPR' : projectionSource === 'SLEEPER' ? 'Sleeper (RotoWire)' : 'ESPN Official'}
             </span>
@@ -730,16 +730,16 @@ export const LineupTab: React.FC<LineupTabProps> = ({
           {(lineup.total_actual_points !== undefined && lineup.total_actual_points > 0) && (
             <div className="banner-metric">
               <span className="metric-label">Live Fantasy Score</span>
-              <span className="metric-val emerald">{lineup.total_actual_points.toFixed(1)} pts</span>
+              <span className="metric-val emerald">{lineup.total_actual_points.toFixed(1)} fpts</span>
               <span className="metric-sub">
-                Live Projected: {(lineup.total_effective_points || lineup.total_projected_points).toFixed(1)} pts
+                Live Projected: {(lineup.total_effective_points || lineup.total_projected_points).toFixed(1)} fpts
               </span>
             </div>
           )}
 
           <div className="banner-metric">
             <span className="metric-label">Current ESPN Projected</span>
-            <span className="metric-val">{lineup.current_espn_projected || lineup.total_projected_points} pts</span>
+            <span className="metric-val">{lineup.current_espn_projected || lineup.total_projected_points} fpts</span>
             <span className="metric-sub">ESPN Lineup Baseline</span>
           </div>
 
@@ -747,8 +747,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
             <span className="metric-label">Immediate Lineup Advantage</span>
             <span className={`metric-val ${lineup.net_projected_gain > 0 ? 'emerald' : 'cyan'}`}>
               {hasCustomSwaps
-                ? `${customGainVsOptimal >= 0 ? '+' : ''}${customGainVsOptimal} pts vs Optimal`
-                : (lineup.net_projected_gain > 0 ? `+${lineup.net_projected_gain} pts` : 'Optimal Baseline')}
+                ? `${customGainVsOptimal >= 0 ? '+' : ''}${customGainVsOptimal} fpts vs Optimal`
+                : (lineup.net_projected_gain > 0 ? `+${lineup.net_projected_gain} fpts` : 'Optimal Baseline')}
             </span>
             <span className="metric-sub">
               {hasCustomSwaps
@@ -873,7 +873,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                 <th>StartScore</th>
                 <th>
                   <Tooltip term="POINTS_PROJ" title="Actual Fantasy Points (Final/Live) or Pre-Game Projection (PPR)">
-                    <span style={{ cursor: 'pointer' }}>Fantasy Pts</span>
+                    <span style={{ cursor: 'pointer' }}>FPTS</span>
                   </Tooltip>
                 </th>
                 <th>Matchup</th>
@@ -1131,7 +1131,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                             </span>
                           )}
                           {p.playoff_sos_grade && (
-                            <span className={`pill ${p.playoff_sos_grade === 'ELITE' ? 'emerald' : p.playoff_sos_grade === 'FAVORABLE' ? 'cyan' : p.playoff_sos_grade === 'BRUTAL' ? 'rose' : 'zinc'}`} style={{ fontSize: '9px', padding: '1px 5px' }} title={`Fantasy Playoff SoS (Weeks 15-17): ${p.playoff_sos_score ?? 70} pts`}>
+                            <span className={`pill ${p.playoff_sos_grade === 'ELITE' ? 'emerald' : p.playoff_sos_grade === 'FAVORABLE' ? 'cyan' : p.playoff_sos_grade === 'BRUTAL' ? 'rose' : 'zinc'}`} style={{ fontSize: '9px', padding: '1px 5px' }} title={`Fantasy Playoff SoS (Weeks 15-17): ${p.playoff_sos_score ?? 70} fpts`}>
                               Playoffs: {p.playoff_sos_grade}
                             </span>
                           )}
@@ -1233,7 +1233,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                 <button className="swap-popover-close" onClick={() => setActiveSwapSlotIndex(null)}>✕</button>
                               </div>
                               <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                                Current: <strong style={{ color: '#f8fafc' }}>{p.full_name}</strong> ({p.projected_points.toFixed(1)} pts)
+                                Current: <strong style={{ color: '#f8fafc' }}>{p.full_name}</strong> ({p.projected_points.toFixed(1)} fpts)
                               </div>
                               <div className="swap-candidate-list">
                                 {getEligibleBenchForSlot(slot.slot_name, effectiveBench).length === 0 ? (
@@ -1261,9 +1261,9 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                           </div>
                                         </div>
                                         <div className="swap-cand-right">
-                                          <div className="swap-cand-pts">{cand.projected_points.toFixed(1)} pts</div>
+                                          <div className="swap-cand-pts">{cand.projected_points.toFixed(1)} fpts</div>
                                           <div className={`swap-cand-delta ${delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'neutral'}`}>
-                                            {delta > 0 ? `+${delta}` : delta} pts
+                                            {delta > 0 ? `+${delta}` : delta} fpts
                                           </div>
                                         </div>
                                       </div>
@@ -1466,7 +1466,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                       <td><span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Empty Bench Spot</span></td>
                       <td style={{ color: 'var(--text-muted)' }}>—</td>
                       <td style={{ color: 'var(--text-muted)' }}>—</td>
-                      <td style={{ color: 'var(--text-muted)' }}>0.0 pts</td>
+                      <td style={{ color: 'var(--text-muted)' }}>0.0 fpts</td>
                       <td><span className="pill zinc" style={{ fontSize: '10.5px' }}>FREE SPOT</span></td>
                       <td><span className="status-pill" style={{ opacity: 0.5 }}>OPEN</span></td>
                       <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Open Spot</td>
@@ -1504,7 +1504,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                           </div>
                         </td>
                         <td><span className={`score-badge ${getScoreColorClass(p.start_score)}`}>{p.start_score}</span></td>
-                        <td style={{ fontWeight: 600 }}>{p.projected_points} pts</td>
+                        <td style={{ fontWeight: 600 }}>{p.projected_points} fpts</td>
                         <td>
                           <InjuryStatusPill
                             status={p.injury_status}
@@ -1528,7 +1528,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                       <td style={{ color: 'var(--text-muted)' }}>Any Eligible</td>
                       <td style={{ color: 'var(--text-muted)' }}>—</td>
                       <td>—</td>
-                      <td style={{ color: 'var(--text-muted)' }}>0.0 pts</td>
+                      <td style={{ color: 'var(--text-muted)' }}>0.0 fpts</td>
                       <td><span className="pill emerald" style={{ fontSize: '11px', padding: '2px 8px' }}>Open Stash</span></td>
                       <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Free Stash Spot (OUT/IR)</td>
                     </tr>
@@ -1565,7 +1565,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                     <th>StartScore</th>
                     <th>
                       <Tooltip term="POINTS_PROJ" title="Actual Fantasy Points (Final/Live) or Pre-Game Projection (PPR)">
-                        <span style={{ cursor: 'pointer' }}>Fantasy Pts</span>
+                        <span style={{ cursor: 'pointer' }}>FPTS</span>
                       </Tooltip>
                     </th>
                     <th>Status</th>
@@ -1912,7 +1912,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                       <td style={{ color: 'var(--text-muted)' }}>—</td>
                       <td style={{ color: 'var(--text-muted)' }}>—</td>
                       <td style={{ color: 'var(--text-muted)' }}>—</td>
-                      <td style={{ color: 'var(--text-muted)' }}>0.0 pts</td>
+                      <td style={{ color: 'var(--text-muted)' }}>0.0 fpts</td>
                       <td>
                         <span className="pill zinc" style={{ fontSize: '10.5px' }}>FREE SPOT</span>
                       </td>
@@ -1981,7 +1981,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                             {p.start_score}
                           </span>
                         </td>
-                        <td>{p.projected_points} pts</td>
+                        <td>{p.projected_points} fpts</td>
                         <td>
                           <InjuryStatusPill
                             status={p.injury_status}
@@ -2017,7 +2017,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                       <td style={{ color: 'var(--text-muted)' }}>Any Eligible</td>
                       <td style={{ color: 'var(--text-muted)' }}>—</td>
                       <td style={{ color: 'var(--text-muted)' }}>—</td>
-                      <td style={{ color: 'var(--text-muted)' }}>0.0 pts</td>
+                      <td style={{ color: 'var(--text-muted)' }}>0.0 fpts</td>
                       <td>
                         <span className="pill emerald" style={{ fontSize: '11px', padding: '2px 8px' }}>
                           Open Stash Spot

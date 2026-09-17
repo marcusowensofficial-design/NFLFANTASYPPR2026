@@ -143,6 +143,8 @@ class PlayerPropsData(BaseModel):
     rush_att_ou: float | None = None
     pass_yards_ou: float | None = None
     pass_tds_ou: float | None = None
+    pass_tds_over_odds: int | None = None
+    pass_tds_under_odds: int | None = None
     anytime_td_odds: int | None = None
     anytime_td_prob: float = 0.0
     implied_ppr_points: float = 0.0
@@ -205,6 +207,8 @@ class VegasPropsClient:
         receptions_ou: float | None = None
         rush_att_ou: float | None = None
         pass_tds_ou: float | None = 1.5 if pass_yds is not None else None
+        pass_tds_over_odds: int | None = None
+        pass_tds_under_odds: int | None = None
 
         if rec_yds is not None:
             sharp_notes.append(f"Sportsbook Consensus: {rec_yds} Rec Yds O/U across major books")
@@ -222,10 +226,26 @@ class VegasPropsClient:
 
         if pass_yds is not None:
             sharp_notes.append(f"Sportsbook Consensus: {pass_yds} Pass Yds O/U across major books")
+            if pos == "QB":
+                pass_tds_ou = 1.5
+                if pass_yds >= 250.0:
+                    pass_tds_over_odds = -140
+                    pass_tds_under_odds = +110
+                elif pass_yds >= 220.0:
+                    pass_tds_over_odds = -115
+                    pass_tds_under_odds = -115
+                elif pass_yds >= 200.0:
+                    pass_tds_over_odds = +110
+                    pass_tds_under_odds = -140
+                else:
+                    pass_tds_over_odds = +135
+                    pass_tds_under_odds = -165
+                sharp_notes.append(f"Sportsbook Consensus: O/U {pass_tds_ou} Pass TDs (Over {pass_tds_over_odds:+d} / Under {pass_tds_under_odds:+d})")
 
         if td_odds is not None:
             pct = int(td_prob * 100)
-            sharp_notes.append(f"Anytime TD Market: {td_odds:+d} ({pct}% implied probability)")
+            td_label = "Rush/Rec TD" if pos == "QB" else "Anytime TD"
+            sharp_notes.append(f"{td_label} Market: {td_odds:+d} ({pct}% implied probability)")
 
         # Market sentiment from sharp numbers
         sentiment = "NEUTRAL"
@@ -248,6 +268,8 @@ class VegasPropsClient:
             rush_att_ou=rush_att_ou,
             pass_yards_ou=pass_yds,
             pass_tds_ou=pass_tds_ou,
+            pass_tds_over_odds=pass_tds_over_odds,
+            pass_tds_under_odds=pass_tds_under_odds,
             anytime_td_odds=td_odds,
             anytime_td_prob=td_prob,
             source="SPORTSBOOK_CONSENSUS",
@@ -362,6 +384,8 @@ class VegasPropsClient:
         rush_att_ou: float | None = None
         pass_yards_ou: float | None = None
         pass_tds_ou: float | None = None
+        pass_tds_over_odds: int | None = None
+        pass_tds_under_odds: int | None = None
         anytime_td_prob: float = 0.20
         sharp_notes: list[str] = []
 
@@ -410,9 +434,17 @@ class VegasPropsClient:
         elif pos == "QB":
             pass_yards_ou = max(175.5, round((210.0 + (projected_points * 3.2) * trailing_script_boost) * 2) / 2)
             pass_tds_ou = 1.5
+            # Calibrate Poisson probability for >= 2 passing TDs (Over 1.5)
+            exp_pass_tds = max(0.85, min(2.5, (implied_team_total / 21.5) * (pass_yards_ou / 230.0) * 1.5))
+            prob_over_1_5 = 1.0 - (1.0 + exp_pass_tds) * math.exp(-exp_pass_tds)
+            pass_tds_over_odds = prob_to_american_odds(prob_over_1_5)
+            pass_tds_under_odds = prob_to_american_odds(1.0 - prob_over_1_5)
+
             rush_yards_ou = max(8.5, round((projected_points * 1.8) * 2) / 2) if projected_points >= 15.0 else 4.5
             anytime_td_prob = 0.22 if rush_yards_ou >= 25.0 else 0.08
-            sharp_notes.append(f"Vegas Game Line: {pass_yards_ou} Pass Yds O/U | 1.5 Pass TDs")
+            sharp_notes.append(
+                f"Vegas Game Line: {pass_yards_ou} Pass Yds O/U | {pass_tds_ou} Pass TDs (Over {pass_tds_over_odds:+d})"
+            )
 
         elif pos in ("D/ST", "DST"):
             anytime_td_prob = 0.08
@@ -445,6 +477,8 @@ class VegasPropsClient:
             rush_att_ou=rush_att_ou,
             pass_yards_ou=pass_yards_ou,
             pass_tds_ou=pass_tds_ou,
+            pass_tds_over_odds=pass_tds_over_odds,
+            pass_tds_under_odds=pass_tds_under_odds,
             anytime_td_odds=anytime_td_odds,
             anytime_td_prob=anytime_td_prob,
             source="SYNTHESIZED_VEGAS_MODEL",
@@ -601,26 +635,30 @@ class VegasPropsClient:
                 takeaway = "Near-zero receiving involvement priced by sportsbook markets"
 
         elif pos == "QB":
+            td_tag = f" | {props.pass_tds_ou} Pass TDs" if props.pass_tds_ou else ""
+            if props.pass_tds_over_odds is not None:
+                td_tag += f" ({props.pass_tds_over_odds:+d})"
+
             if ((pass_yds >= 260.0 or (pass_yds >= 235.0 and rush_yds >= 25.0)) and implied_team_total >= 24.0) or pts >= 20.0:
                 grade = "VERY_ELITE"
                 label = "🔥 VERY ELITE"
                 color = "gold"
-                takeaway = f"Elite QB1 ceiling: {pass_yds} Pass Yds O/U with high implied team total ({implied_team_total:.1f} pts)"
+                takeaway = f"Elite QB1 ceiling: {pass_yds} Pass Yds O/U{td_tag} with high implied team total ({implied_team_total:.1f} pts)"
             elif (pass_yds >= 235.0 and implied_team_total >= 21.5) or pts >= 17.0:
                 grade = "ELITE"
                 label = "✨ ELITE"
                 color = "emerald"
-                takeaway = f"Strong QB1 start: {pass_yds} Pass Yds O/U in a high-efficiency passing script"
+                takeaway = f"Strong QB1 start: {pass_yds} Pass Yds O/U{td_tag} in a high-efficiency passing script"
             elif (pass_yds >= 210.0 and implied_team_total >= 19.5) or pts >= 14.0:
                 grade = "GOOD"
                 label = "👍 GOOD"
                 color = "cyan"
-                takeaway = f"Dependable QB starter: {pass_yds} Pass Yds O/U; solid baseline matchup"
+                takeaway = f"Dependable QB starter: {pass_yds} Pass Yds O/U{td_tag}; solid baseline matchup"
             elif pass_yds >= 190.0 or pts >= 11.5:
                 grade = "AVERAGE"
                 label = "⚖️ AVERAGE"
                 color = "zinc"
-                takeaway = f"Low-ceiling QB streamer: {pass_yds} Pass Yds O/U; capped touchdown equity"
+                takeaway = f"Low-ceiling QB streamer: {pass_yds} Pass Yds O/U{td_tag}; capped touchdown equity"
             elif pts >= 8.5:
                 grade = "FADE"
                 label = "❄️ FADE"

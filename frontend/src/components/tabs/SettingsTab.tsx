@@ -49,7 +49,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               {leagueSizeSetting === 8 && <span className="pill cyan" style={{ fontSize: '10px' }}>Active</span>}
             </div>
             <div className="league-size-desc">
-              Elevated replacement thresholds (RB/WR 15.5 pts, QB 20.5 pts, TE 11.2 pts). Maximizes 90th percentile boom ceiling. Punishes roster-clogging backup QBs/TEs.
+              Elevated replacement thresholds (RB/WR 15.5 fpts, QB 20.5 fpts, TE 11.2 fpts). Maximizes 90th percentile boom ceiling. Punishes roster-clogging backup QBs/TEs.
             </div>
           </div>
 
@@ -62,7 +62,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               {leagueSizeSetting === 10 && <span className="pill cyan" style={{ fontSize: '10px' }}>Active</span>}
             </div>
             <div className="league-size-desc">
-              Balanced baselines (RB/WR 13.0 pts, QB 18.0 pts, TE 9.5 pts). Moderate bench depth tolerance.
+              Balanced baselines (RB/WR 13.0 fpts, QB 18.0 fpts, TE 9.5 fpts). Moderate bench depth tolerance.
             </div>
           </div>
 
@@ -75,7 +75,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               {leagueSizeSetting === 12 && <span className="pill cyan" style={{ fontSize: '10px' }}>Active</span>}
             </div>
             <div className="league-size-desc">
-              Scarcity baselines (RB/WR 11.5 pts, QB 16.5 pts, TE 8.0 pts). High premium on floor and volume reliability.
+              Scarcity baselines (RB/WR 11.5 fpts, QB 16.5 fpts, TE 8.0 fpts). High premium on floor and volume reliability.
             </div>
           </div>
         </div>
@@ -104,7 +104,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <div className="league-rule-item">
                 <span className="league-rule-label">High Drop Protection</span>
                 <span className="league-rule-text">
-                  Waiver drop protection is calibrated to 15.5 proj pts / 78.0 StartScore to ensure borderline studs are never accidentally cut.
+                  Waiver drop protection is calibrated to 15.5 proj fpts / 78.0 StartScore to ensure borderline studs are never accidentally cut.
                 </span>
               </div>
             </div>

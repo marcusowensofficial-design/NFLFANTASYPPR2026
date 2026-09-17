@@ -405,12 +405,12 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontWeight: 800, color: 'var(--accent-emerald, #10b981)' }}>
-                              {t.points_for.toFixed(1)} pts
+                              {t.points_for.toFixed(1)} fpts
                             </span>
                             <span
                               className="pill emerald"
                               style={{ fontSize: '9px', padding: '1px 5px', fontWeight: 800 }}
-                              title={`Live Week Actual: ${t.live_points_for?.toFixed(1)} pts scored`}
+                              title={`Live Week Actual: ${t.live_points_for?.toFixed(1)} fpts scored`}
                             >
                               LIVE
                             </span>
@@ -423,7 +423,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                         </div>
                       ) : (
                         <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
-                          {t.points_for.toFixed(1)} pts
+                          {t.points_for.toFixed(1)} fpts
                         </span>
                       )}
                     </td>
@@ -438,7 +438,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                         return (
                           <div>
                             <span style={{ fontWeight: 600, color: (t.live_points_against ?? 0) > 0 ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
-                              {t.points_against.toFixed(1)} pts
+                              {t.points_against.toFixed(1)} fpts
                             </span>
                             {oppShort && (
                               <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -648,7 +648,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                 )}
               </div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Manager: {selectedTeamSummary?.primary_owner || 'League Member'} • Record: {selectedTeamSummary?.record || '0-0'} • Standings Rank: #{selectedTeamSummary?.rank || 1} • PF: {(selectedTeamSummary?.points_for ?? 0).toFixed(1)} pts
+                Manager: {selectedTeamSummary?.primary_owner || 'League Member'} • Record: {selectedTeamSummary?.record || '0-0'} • Standings Rank: #{selectedTeamSummary?.rank || 1} • PF: {(selectedTeamSummary?.points_for ?? 0).toFixed(1)} fpts
               </div>
             </div>
 
@@ -657,12 +657,12 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                 <>
                   {(activeRosterData.total_actual_points ?? 0) > 0 && (
                     <span className="pill emerald" style={{ fontSize: '12px', fontWeight: 800, padding: '4px 10px' }}>
-                      ⚡ Live Score: {(activeRosterData.total_actual_points ?? 0).toFixed(1)} pts
+                      ⚡ Live Score: {(activeRosterData.total_actual_points ?? 0).toFixed(1)} fpts
                     </span>
                   )}
                   <span className="pill purple" style={{ fontSize: '12px', fontWeight: 700, padding: '4px 10px' }}>
                     {(activeRosterData.total_actual_points ?? 0) > 0 ? 'Projected Total: ' : 'Total Projected: '}
-                    {(activeRosterData.total_effective_points ?? activeRosterData.total_projected_points).toFixed(1)} pts
+                    {(activeRosterData.total_effective_points ?? activeRosterData.total_projected_points).toFixed(1)} fpts
                   </span>
                 </>
               )}
@@ -829,7 +829,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                 style={{ padding: '5px 10px', fontSize: '12px' }}
               >
                 <option value="SLOT">Sort: Slot Order</option>
-                <option value="PROJ_DESC">Sort: Fantasy Pts (High-Low)</option>
+                <option value="PROJ_DESC">Sort: Fantasy FPTS (High-Low)</option>
                 <option value="NAME">Sort: Player Name</option>
               </select>
             </div>
@@ -848,7 +848,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                     <th>Pos</th>
                     <th>NFL Team</th>
                     <th title="Displays actual fantasy points scored for resolved/live games, or pre-game projected points for upcoming matchups">
-                      Fantasy Pts (Actual / Proj)
+                      FPTS (Actual / Proj)
                     </th>
                     <th>Injury & Game Status</th>
                     <th style={{ textAlign: 'right' }}>Action</th>
@@ -944,7 +944,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                                           color: isFinal ? 'var(--accent-emerald, #10b981)' : 'var(--accent-amber, #f59e0b)',
                                         }}
                                       >
-                                        {(p.actual_points ?? 0).toFixed(1)} pts
+                                        {(p.actual_points ?? 0).toFixed(1)} fpts
                                       </span>
                                       <span
                                         className={`pill ${isFinal ? 'emerald' : 'amber'}`}
@@ -976,7 +976,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                                       color: 'var(--accent-cyan)',
                                     }}
                                   >
-                                    {p.projected_points.toFixed(1)} pts
+                                    {p.projected_points.toFixed(1)} fpts
                                   </span>
                                   {(((p.projected_points_espn ?? 0) > 0) || ((p.projected_points_fp ?? 0) > 0)) && (
                                     <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
@@ -1053,7 +1053,7 @@ export const LeagueTab: React.FC<LeagueTabProps> = ({
                         </td>
                         <td style={{ color: 'var(--text-muted)' }}>Any</td>
                         <td style={{ color: 'var(--text-muted)' }}>—</td>
-                        <td style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>0.0 pts</td>
+                        <td style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>0.0 fpts</td>
                         <td>
                           <span className="pill emerald" style={{ fontSize: '10px' }}>
                             Open Stash

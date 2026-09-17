@@ -153,6 +153,8 @@ class StartSitEvaluation(BaseModel):
     props_rush_att_ou: float | None = None         # Sportsbook rushing attempts O/U
     props_pass_yds_ou: float | None = None         # Sportsbook passing yards O/U
     props_pass_tds_ou: float | None = None         # Sportsbook passing TDs O/U
+    props_pass_tds_over_odds: int | None = None    # Sportsbook Over passing TDs odds (e.g. -125)
+    props_pass_tds_under_odds: int | None = None   # Sportsbook Under passing TDs odds (e.g. +105)
     props_anytime_td_odds: int | None = None       # Sportsbook American odds (e.g. -115)
     props_anytime_td_prob: float | None = None     # Market-implied touchdown probability
     props_implied_ppr_pts: float | None = None     # Fantasy points implied by betting lines
@@ -414,7 +416,7 @@ class StartSitScoringEngine:
                 pos_reasons.append(f"[Consensus] ⭐ FantasyPros Top-12 Weekly Rank ({fp_pos or pos}){avg_str}")
 
             if fp_r2p is not None and fp_r2p >= pos_baseline * 1.15:
-                pos_reasons.append(f"[Consensus] ⭐ FantasyPros expert projected output: {fp_r2p:.1f} pts")
+                pos_reasons.append(f"[Consensus] ⭐ FantasyPros expert projected output: {fp_r2p:.1f} fpts")
         else:
             if c_rank <= 5.0:
                 proj_score = min(100.0, proj_score + 4.0)
@@ -439,17 +441,17 @@ class StartSitScoringEngine:
             core_signals = [q_proj.model_points, q_proj.fp_points, q_proj.espn_points]
             core_spread = max(core_signals) - min(core_signals)
             if core_spread <= 1.4:
-                pos_reasons.append(f"[Consensus] 🎯 Multi-Source Convergence: Model, FantasyPros, and ESPN align within ±{core_spread:.1f} pts (high projection fidelity)")
+                pos_reasons.append(f"[Consensus] 🎯 Multi-Source Convergence: Model, FantasyPros, and ESPN align within ±{core_spread:.1f} fpts (high projection fidelity)")
             elif core_spread >= 4.2:
-                neg_reasons.append(f"[Risk] ⚠️ Multi-Source Model Divergence: {core_spread:.1f}-pt spread across projection sources indicates wide outcome range")
+                neg_reasons.append(f"[Risk] ⚠️ Multi-Source Model Divergence: {core_spread:.1f}-fpt spread across projection sources indicates wide outcome range")
 
         if fp_inj_note:
             neg_reasons.append(f"[Health] 🏥 Beat reporter injury note: {fp_inj_note}")
 
         if proj >= pos_baseline * 1.25:
-            pos_reasons.append(f"[Projection] 📈 High projected PPR output ({proj:.1f} pts vs {pos_baseline:.1f} positional baseline)")
+            pos_reasons.append(f"[Projection] 📈 High projected PPR output ({proj:.1f} fpts vs {pos_baseline:.1f} positional baseline)")
         elif proj <= pos_baseline * 0.75:
-            neg_reasons.append(f"[Projection] 📉 Below-average projection ({proj:.1f} pts)")
+            neg_reasons.append(f"[Projection] 📉 Below-average projection ({proj:.1f} fpts)")
 
         # 2. Mathematical Opportunity / Volume Component
         rush_att = float(stats.get("rush_att", 0.0))
@@ -685,7 +687,7 @@ class StartSitScoringEngine:
             if rush_att >= 4.0 or rush_yds >= 25.0:
                 rush_pts = (rush_yds * 0.1) + (rush_td * 6.0)
                 pos_reasons.append(
-                    f"[Volume] ⚡ Elite Konami Code rushing upside: {rush_att:.1f} carries / {rush_yds:.0f} rush yds (+{rush_pts:.1f} rushing pts)"
+                    f"[Volume] ⚡ Elite Konami Code rushing upside: {rush_att:.1f} carries / {rush_yds:.0f} rush yds (+{rush_pts:.1f} rushing fpts)"
                 )
                 opp_score = min(100.0, opp_score + 4.5)
                 ceiling_boost += 8.0
@@ -971,7 +973,7 @@ class StartSitScoringEngine:
                         if tier_code in ("SMASH", "FAVORABLE") or vs_avg >= 2.0:
                             vs_sign = f"+{vs_avg:.1f}" if vs_avg > 0 else f"{vs_avg:.1f}"
                             pos_reasons.append(
-                                f"[Matchup] 🎯 Soft {pos} Matchup: {opponent} allows {fpa:.1f} Half-PPR pts/G to {pos}s ({vs_sign} vs avg, #{softness} softest){base_ctx}"
+                                f"[Matchup] 🎯 Soft {pos} Matchup: {opponent} allows {fpa:.1f} Half-PPR fpts/G to {pos}s ({vs_sign} vs avg, #{softness} softest){base_ctx}"
                             )
                             if pos == "QB" and supp.get("pass_yds", 0) >= 235.0:
                                 pos_reasons.append(
@@ -993,7 +995,7 @@ class StartSitScoringEngine:
                             vs_sign = f"{vs_avg:.1f}"
                             if not is_pos_stud and matchup_resilience != "MATCHUP_RESILIENT_STUD":
                                 neg_reasons.append(
-                                    f"[Matchup] 🛑 Stifling Defense vs {pos}: {opponent} holds {pos}s to {fpa:.1f} Half-PPR pts/G ({vs_sign} vs avg, #{def_rank} toughest in NFL){base_ctx}"
+                                    f"[Matchup] 🛑 Stifling Defense vs {pos}: {opponent} holds {pos}s to {fpa:.1f} Half-PPR fpts/G ({vs_sign} vs avg, #{def_rank} toughest in NFL){base_ctx}"
                                 )
                                 if pos == "QB" and supp.get("sacks", 0) >= 2.4:
                                     neg_reasons.append(
@@ -1168,7 +1170,7 @@ class StartSitScoringEngine:
             health_score = 0.0
             proj = 0.0
             proj_score = 0.0
-            neg_reasons.append(f"[Risk] 🚨 Rule out: Listed as {status} (0.0 proj pts)")
+            neg_reasons.append(f"[Risk] 🚨 Rule out: Listed as {status} (0.0 proj fpts)")
             floor_penalty += 50.0
 
         # 6. Weather Component
@@ -1374,11 +1376,11 @@ class StartSitScoringEngine:
             market_diff = round(props_data.implied_ppr_points - proj, 1)
             if market_diff >= 2.5:
                 pos_reasons.append(
-                    f"[Vegas Props] 📈 Sharp Market Discrepancy: Sportsbooks imply {props_data.implied_ppr_points:.1f} PPR pts (+{market_diff:.1f} over projection) — betting markets strongly favor the over"
+                    f"[Vegas Props] 📈 Sharp Market Discrepancy: Sportsbooks imply {props_data.implied_ppr_points:.1f} PPR fpts (+{market_diff:.1f} over projection) — betting markets strongly favor the over"
                 )
             elif market_diff <= -2.5 and final_score < 72.0:
                 neg_reasons.append(
-                    f"[Vegas Props] 📉 Sharp Market Skepticism: Sportsbooks imply only {props_data.implied_ppr_points:.1f} PPR pts ({market_diff:.1f} below projection) — volume expectations are tempered"
+                    f"[Vegas Props] 📉 Sharp Market Skepticism: Sportsbooks imply only {props_data.implied_ppr_points:.1f} PPR fpts ({market_diff:.1f} below projection) — volume expectations are tempered"
                 )
 
         # 7g. Kicker & D/ST Vegas Factor Symmetry
@@ -1567,6 +1569,8 @@ class StartSitScoringEngine:
             props_rush_att_ou=props_data.rush_att_ou,
             props_pass_yds_ou=props_data.pass_yards_ou,
             props_pass_tds_ou=props_data.pass_tds_ou,
+            props_pass_tds_over_odds=props_data.pass_tds_over_odds,
+            props_pass_tds_under_odds=props_data.pass_tds_under_odds,
             props_anytime_td_odds=props_data.anytime_td_odds,
             props_anytime_td_prob=props_data.anytime_td_prob,
             props_implied_ppr_pts=props_data.implied_ppr_points,

@@ -565,7 +565,7 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
                   }}
                 >
                   <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '10px 14px' }}>
-                    <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg Fantasy Pts</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg Fantasy FPTS</div>
                     <div style={{ fontSize: '18px', fontWeight: 800, color: '#38bdf8', marginTop: '2px' }}>
                       {data.season_totals.avg_fantasy_points_ppr?.toFixed(1) || '0.0'} <span style={{ fontSize: '11px', color: '#64748b' }}>PPR</span>
                     </div>
@@ -695,7 +695,7 @@ export const PlayerGameLogModal: React.FC<PlayerGameLogModalProps> = ({
                         <th style={{ padding: '10px 14px', whiteSpace: 'nowrap', width: '85px' }}>Week</th>
                         <th style={{ padding: '10px 14px', whiteSpace: 'nowrap', width: '135px' }}>Opponent</th>
                         <th style={{ padding: '10px 14px', whiteSpace: 'nowrap', width: '130px' }}>Result / Score</th>
-                        <th style={{ padding: '10px 14px', whiteSpace: 'nowrap', width: '110px' }}>PPR Pts</th>
+                        <th style={{ padding: '10px 14px', whiteSpace: 'nowrap', width: '110px' }}>PPR FPTS</th>
                         <th style={{ padding: '10px 14px', minWidth: '320px' }}>Stat Line Breakdown</th>
                       </tr>
                     </thead>

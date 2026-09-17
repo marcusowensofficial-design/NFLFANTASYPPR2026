@@ -116,7 +116,7 @@ export const PreFlightPushModal: React.FC<PreFlightPushModalProps> = ({
                             color: move.net_gain >= 0 ? 'var(--accent-emerald)' : 'var(--text-muted)',
                           }}
                         >
-                          {move.net_gain >= 0 ? `+${move.net_gain.toFixed(1)} pts` : `${move.net_gain.toFixed(1)} pts`}
+                          {move.net_gain >= 0 ? `+${move.net_gain.toFixed(1)} fpts` : `${move.net_gain.toFixed(1)} fpts`}
                         </div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                           StartScore: {move.start_score}

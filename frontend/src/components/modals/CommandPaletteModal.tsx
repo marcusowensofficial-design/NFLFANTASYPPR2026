@@ -208,7 +208,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
                           )}
                         </div>
                         <span className="palette-item-sub">
-                          {item.proj > 0 ? `Proj: ${item.proj.toFixed(1)} pts` : 'Player Directory'}
+                          {item.proj > 0 ? `Proj: ${item.proj.toFixed(1)} fpts` : 'Player Directory'}
                         </span>
                       </div>
                       <span className="palette-action-pill">Compare ↵</span>

@@ -235,9 +235,9 @@ def calculate_start_sit_projection_score(
         reasons.append(f"[Projection] ⚠️ Sub-Baseline Projection: {proj:.1f} projected PPR points carries shallow-league bench risk")
 
     if consensus_mod > 0:
-        reasons.append(f"[Consensus] ⭐ Analyst Consensus Boost: ECR #{int(effective_rank)} confirms high projection confidence (+{consensus_mod:.1f} pts)")
+        reasons.append(f"[Consensus] ⭐ Analyst Consensus Boost: ECR #{int(effective_rank)} confirms high projection confidence (+{consensus_mod:.1f} fpts)")
     elif consensus_mod < 0:
-        reasons.append(f"[Consensus] ⚠️ Lower Expert Consensus: ECR #{int(effective_rank)} reflects cautious analyst agreement ({consensus_mod:.1f} pts)")
+        reasons.append(f"[Consensus] ⚠️ Lower Expert Consensus: ECR #{int(effective_rank)} reflects cautious analyst agreement ({consensus_mod:.1f} fpts)")
 
     raw_inputs = {
         "projected_points": proj,
@@ -572,7 +572,7 @@ def calculate_start_sit_matchup_score(
         softness = dvp_fpa.get("rank_softness")
         if fpa is not None and vs_avg is not None and softness is not None:
             vs_str = f"+{vs_avg:.1f}" if vs_avg > 0 else f"{vs_avg:.1f}"
-            reasons.append(f"[Matchup] 📊 Opponent Half-PPR FPA: {fpa:.1f} pts/G ({vs_str} vs avg, #{softness} softest in NFL)")
+            reasons.append(f"[Matchup] 📊 Opponent Half-PPR FPA: {fpa:.1f} fpts/G ({vs_str} vs avg, #{softness} softest in NFL)")
 
     raw_inputs = {
         "opponent": opp,

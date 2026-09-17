@@ -967,7 +967,7 @@ export function DfsTab({
                         <th>Team</th>
                         <th>Opp</th>
                         <th style={{ textAlign: 'right' }}>Salary</th>
-                        <th style={{ textAlign: 'right' }}>Proj Pts</th>
+                        <th style={{ textAlign: 'right' }}>Proj FPTS</th>
                         <th style={{ textAlign: 'right' }}>90th% Ceiling</th>
                         <th style={{ textAlign: 'right' }}>Implied</th>
                         <th style={{ textAlign: 'right' }}>
@@ -1274,7 +1274,7 @@ export function DfsTab({
                     <th className="sortable" onClick={() => handleSort('team')}>Team</th>
                     <th>Opp</th>
                     <th className="sortable" onClick={() => handleSort('salary')} style={{ textAlign: 'right' }}>Salary</th>
-                    <th className="sortable" onClick={() => handleSort('proj')} style={{ textAlign: 'right' }}>Proj Pts</th>
+                    <th className="sortable" onClick={() => handleSort('proj')} style={{ textAlign: 'right' }}>Proj FPTS</th>
                     <th className="sortable" onClick={() => handleSort('ceiling_proj')} style={{ textAlign: 'right' }}>Ceiling</th>
                     <th className="sortable" onClick={() => handleSort('value_ratio')} style={{ textAlign: 'right' }}>Value</th>
                     <th className="sortable" onClick={() => handleSort('opp_soft_rank')} style={{ textAlign: 'right' }}>
@@ -1561,7 +1561,7 @@ export function DfsTab({
                   </div>
                   <div>
                     <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Combined Proj</div>
-                    <strong style={{ color: 'var(--accent-cyan)' }}>{st.total_proj.toFixed(1)} pts</strong>
+                    <strong style={{ color: 'var(--accent-cyan)' }}>{st.total_proj.toFixed(1)} fpts</strong>
                   </div>
                   <div>
                     <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Value Rate</div>

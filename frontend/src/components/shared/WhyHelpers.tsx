@@ -76,7 +76,7 @@ export const renderFactorDetailBox = (
         {Object.entries(detail.contributions || {}).map(([k, v]) => (
           <div key={k} className="inspector-contrib-row">
             <span className="inspector-contrib-name">{k.replace(/_/g, ' ')}</span>
-            <span className="inspector-contrib-pts">+{v} pts</span>
+            <span className="inspector-contrib-pts">+{v} fpts</span>
           </div>
         ))}
       </div>

@@ -5,11 +5,11 @@ export const MatchupRatingKey: React.FC<{
   onToggle: () => void
 }> = ({ isOpen, onToggle }) => {
   const tiers = [
-    { stars: 1, label: 'Bad Matchup', dvp: 'DvP #1–6', desc: 'Stifling Opponent (Fewest Pts Conceded)' },
+    { stars: 1, label: 'Bad Matchup', dvp: 'DvP #1–6', desc: 'Stifling Opponent (Fewest FPTS Conceded)' },
     { stars: 2, label: 'Tough', dvp: 'DvP #7–12', desc: 'Below Average Matchup' },
     { stars: 3, label: 'Neutral', dvp: 'DvP #13–20', desc: 'Middle of the Pack' },
     { stars: 4, label: 'Good Matchup', dvp: 'DvP #21–26', desc: 'Above Average Matchup' },
-    { stars: 5, label: 'Amazing Matchup', dvp: 'DvP #27–32', desc: 'Generous / Smash Matchup (Most Pts Conceded)' },
+    { stars: 5, label: 'Amazing Matchup', dvp: 'DvP #27–32', desc: 'Generous / Smash Matchup (Most FPTS Conceded)' },
   ]
 
   return (

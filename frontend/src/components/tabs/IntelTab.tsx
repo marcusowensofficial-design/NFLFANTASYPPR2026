@@ -768,7 +768,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
 
           <div className="intel-card-header-right">
             <div className="intel-projected-pts">
-              {p.projected_points.toFixed(1)} <span>pts</span>
+              {p.projected_points.toFixed(1)} <span>fpts</span>
             </div>
             <span
               className={`pill ${isStarter ? 'emerald' : 'zinc'}`}
@@ -808,7 +808,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
               </Tooltip>
             )}
             {p.dvp_fpa ? (
-              <Tooltip term="DVP_FPA" title={`Half-PPR Fantasy Points Allowed to ${p.position}s: ${p.dvp_fpa.dk_fpa.toFixed(1)} pts/G (Rank #${p.dvp_fpa.rank_softness} ${p.dvp_fpa.tier_label})`}>
+              <Tooltip term="DVP_FPA" title={`Half-PPR Fantasy Points Allowed to ${p.position}s: ${p.dvp_fpa.dk_fpa.toFixed(1)} fpts/G (Rank #${p.dvp_fpa.rank_softness} ${p.dvp_fpa.tier_label})`}>
                 <span
                   className={`pill ${
                     p.dvp_fpa.tier === 'SMASH'
@@ -894,7 +894,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                 🛡️ {p.opponent} vs {p.position}:
               </span>
               <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                Allows <strong style={{ color: p.dvp_fpa.vs_avg >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>{p.dvp_fpa.dk_fpa.toFixed(1)} Half-PPR pts/G</strong> ({p.dvp_fpa.vs_avg >= 0 ? `+${p.dvp_fpa.vs_avg.toFixed(1)}` : p.dvp_fpa.vs_avg.toFixed(1)} vs avg)
+                Allows <strong style={{ color: p.dvp_fpa.vs_avg >= 0 ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>{p.dvp_fpa.dk_fpa.toFixed(1)} Half-PPR fpts/G</strong> ({p.dvp_fpa.vs_avg >= 0 ? `+${p.dvp_fpa.vs_avg.toFixed(1)}` : p.dvp_fpa.vs_avg.toFixed(1)} vs avg)
               </span>
               {p.dvp_fpa.trend && (
                 <span
@@ -948,9 +948,9 @@ export const IntelTab: React.FC<IntelTabProps> = ({
               🎯 {p.itemized_stats.receptions.toFixed(1)} Proj Rec
             </span>
           )}
-          {p.volume_share !== undefined && p.volume_share !== null && p.volume_share > 0 && (
+          {p.volume_share !== undefined && p.volume_share !== null && p.volume_share > 0 && !['QB', 'K', 'DST', 'D/ST'].includes(p.position) && (
             <span className="pill purple" style={{ padding: '1px 6px', fontWeight: 700, fontSize: '10.5px' }} title="Projected Target or Touch Share">
-              📈 {(p.volume_share * 100).toFixed(0)}% Share
+              📈 {(p.volume_share > 1.0 ? p.volume_share : p.volume_share * 100).toFixed(0)}% Share
             </span>
           )}
           {['RB', 'FB'].includes(p.position) && ((p.itemized_stats?.receptions ?? 0) >= 2.5 || p.projected_points >= 15.0) && (
@@ -1041,8 +1041,11 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                     </span>
                   )}
                   {p.props_pass_tds_ou && (
-                    <span className="intel-prop-chip" title="Passing Touchdowns Over/Under">
-                      🏈 <strong>{p.props_pass_tds_ou}</strong> Pass TDs
+                    <span
+                      className="intel-prop-chip"
+                      title={`Passing Touchdowns Over/Under: O/U ${p.props_pass_tds_ou}${p.props_pass_tds_over_odds != null ? ` (${p.props_pass_tds_over_odds > 0 ? `+${p.props_pass_tds_over_odds}` : p.props_pass_tds_over_odds})` : ''}`}
+                    >
+                      🏈 <strong>{p.props_pass_tds_ou}</strong> Pass TDs{p.props_pass_tds_over_odds != null ? ` (${p.props_pass_tds_over_odds > 0 ? `+${p.props_pass_tds_over_odds}` : p.props_pass_tds_over_odds})` : ''}
                     </span>
                   )}
                   {p.props_rush_yds_ou && p.props_rush_yds_ou >= 10.0 && (
@@ -1092,8 +1095,11 @@ export const IntelTab: React.FC<IntelTabProps> = ({
 
               {/* Anytime TD Odds & Probability */}
               {p.props_anytime_td_prob && p.props_anytime_td_prob >= 0.25 ? (
-                <span className="intel-prop-chip td" title="Market Implied Touchdown Probability">
-                  💰 <strong>{Math.round(p.props_anytime_td_prob * 100)}%</strong> Anytime TD
+                <span
+                  className="intel-prop-chip td"
+                  title={p.position === 'QB' ? 'Anytime Rush/Rec TD (Sportsbooks only count crossing the goal line; passing TDs do not count)' : 'Market Implied Touchdown Probability'}
+                >
+                  💰 <strong>{Math.round(p.props_anytime_td_prob * 100)}%</strong> {p.position === 'QB' ? 'Rush/Rec TD' : 'Anytime TD'}
                   {p.props_anytime_td_odds ? ` (${p.props_anytime_td_odds > 0 ? `+${p.props_anytime_td_odds}` : p.props_anytime_td_odds})` : ''}
                 </span>
               ) : null}
@@ -1466,7 +1472,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                               </div>
                             ) : (
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px', minWidth: '70px' }}>
-                                <span className="intel-tale-pts">{slot.user_player.projected_points.toFixed(1)} <small>pts</small></span>
+                                <span className="intel-tale-pts">{slot.user_player.projected_points.toFixed(1)} <small>fpts</small></span>
                                 <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Proj</span>
                               </div>
                             )}
@@ -1491,7 +1497,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                         {/* Center Delta & Tactical Leverage */}
                         <div className="intel-tale-col-delta">
                           <span className={`intel-tale-delta-pill ${isUserAdv ? 'emerald' : isOppAdv ? 'rose' : 'zinc'}`}>
-                            {deltaFormatted} pts
+                            {deltaFormatted} fpts
                           </span>
                           <span className="intel-tale-leverage-text">
                             {slot.leverage_label}
@@ -1530,7 +1536,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                               </div>
                             ) : (
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1px', minWidth: '70px' }}>
-                                <span className="intel-tale-pts opp">{slot.opp_player.projected_points.toFixed(1)} <small>pts</small></span>
+                                <span className="intel-tale-pts opp">{slot.opp_player.projected_points.toFixed(1)} <small>fpts</small></span>
                                 <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Proj</span>
                               </div>
                             )}
@@ -1854,7 +1860,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                         CURRENT STARTER
                       </span>
                       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '14px' }}>
-                        {opp.starter.player.projected_points.toFixed(1)} pts
+                        {opp.starter.player.projected_points.toFixed(1)} fpts
                       </span>
                     </div>
                     <div style={{ fontWeight: 800, fontSize: '16px' }}>
@@ -1892,7 +1898,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                         BENCH LEVERAGE
                       </span>
                       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '14px' }}>
-                        {opp.bench.player.projected_points.toFixed(1)} pts
+                        {opp.bench.player.projected_points.toFixed(1)} fpts
                       </span>
                     </div>
                     <div style={{ fontWeight: 800, fontSize: '16px' }}>
@@ -2234,7 +2240,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                               <NFLTeamLogo team={item.pro_team} size={18} />
                               <strong>{item.pro_team}</strong> vs <NFLTeamLogo team={item.opponent} size={18} /> <strong>{item.opponent}</strong>
                               <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginLeft: '4px' }}>
-                                • Proj: {item.projected_points.toFixed(1)} pts
+                                • Proj: {item.projected_points.toFixed(1)} fpts
                               </span>
                             </div>
                           </div>

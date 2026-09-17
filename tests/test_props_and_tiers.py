@@ -126,6 +126,29 @@ async def test_vegas_grade_buckets_across_positions():
     )
     assert qb_props.vegas_grade in ("VERY_ELITE", "ELITE")
     assert "Pass Yds O/U" in qb_props.vegas_takeaway or "Pass Yds" in qb_props.vegas_takeaway
+    assert qb_props.pass_tds_ou == 1.5
+    assert qb_props.pass_tds_over_odds is not None
+    assert qb_props.pass_tds_under_odds is not None
+    assert qb_props.pass_tds_over_odds < 0  # Favored in high total
+    assert "Pass TDs" in qb_props.vegas_takeaway
+
+    # Low implied total QB
+    low_qb = await client.get_player_props(
+        player_id=205,
+        player_name="Bo Nix",
+        position="QB",
+        team="DEN",
+        opponent="SEA",
+        week=1,
+        implied_team_total=16.5,
+        spread=6.0,
+        over_under=39.0,
+        projected_points=11.5,
+        force_synthetic=True,
+    )
+    assert low_qb.pass_tds_ou == 1.5
+    assert low_qb.pass_tds_over_odds is not None
+    assert low_qb.pass_tds_over_odds > 0  # Underdog/plus-money in low total
 
     # 2. Elite TE
     te_props = await client.get_player_props(

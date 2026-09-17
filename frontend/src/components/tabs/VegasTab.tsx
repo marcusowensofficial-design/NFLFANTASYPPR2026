@@ -961,7 +961,7 @@ export function VegasTab({
                                   <span className={`status-tag ${p.is_starter ? 'start' : 'bench'}`}>
                                     {p.is_starter ? 'STARTER' : 'BENCH'}
                                   </span>
-                                  <span className="proj-pts">{p.projected_points.toFixed(1)} proj pts</span>
+                                  <span className="proj-pts">{p.projected_points.toFixed(1)} proj fpts</span>
                                 </div>
                               </div>
                             ))}
@@ -1154,7 +1154,7 @@ export function VegasTab({
                     Vegas Sportsbook Player Propositions & Implied Fantasy Points
                   </h3>
                   <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                    Receptions Over/Under, Anytime Touchdown implied probabilities, yardage lines, and market-synthesized PPR output.
+                    Passing TDs & Yardage lines, Receptions Over/Under, Anytime Touchdown implied probabilities, and market-synthesized PPR output.
                   </p>
                 </div>
                 <span className="pill emerald" style={{ fontSize: '11px' }}>
@@ -1182,24 +1182,26 @@ export function VegasTab({
                         className={`vegas-prop-card ${isRostered ? 'prop-rostered' : ''}`}
                       >
                         <div className="prop-card-header">
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontWeight: 800, fontSize: '15px' }}>{p.player_name}</span>
-                              <span className="pill zinc" style={{ fontSize: '10px' }}>{p.position}</span>
-                              {isRostered && (
-                                <span className="pill purple" style={{ fontSize: '9px', fontWeight: 800 }}>MY ROSTER</span>
-                              )}
+                          <div className="prop-card-header-left">
+                            <div className="prop-player-name" title={p.player_name}>
+                              {p.player_name}
                             </div>
-                            <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                              <NFLTeamLogo team={p.team} size={16} />
-                              <span>{p.team}</span>
-                              <span>vs</span>
-                              <NFLTeamLogo team={p.opponent} size={16} />
-                              <span>{p.opponent}</span>
+                            <div className="prop-card-sub-row">
+                              <span className="pill zinc prop-badge-pos">{p.position}</span>
+                              {isRostered && (
+                                <span className="pill purple prop-badge-roster">MY ROSTER</span>
+                              )}
+                              <div className="prop-matchup-group">
+                                <NFLTeamLogo team={p.team} size={15} />
+                                <span>{p.team}</span>
+                                <span style={{ color: 'var(--text-muted)' }}>vs</span>
+                                <NFLTeamLogo team={p.opponent} size={15} />
+                                <span>{p.opponent}</span>
+                              </div>
                             </div>
                           </div>
 
-                          <span className={`pill ${p.vegas_grade_color || 'cyan'}`} style={{ fontSize: '10px', fontWeight: 700 }}>
+                          <span className={`pill prop-grade-pill ${p.vegas_grade_color || 'cyan'}`}>
                             {p.vegas_grade_label || p.vegas_grade}
                           </span>
                         </div>
@@ -1208,7 +1210,7 @@ export function VegasTab({
                         <div className="prop-implied-bar">
                           <span className="prop-implied-label">Market Implied PPR:</span>
                           <span className="prop-implied-value" style={{ color: 'var(--accent-emerald)' }}>
-                            {p.implied_ppr_points.toFixed(1)} pts
+                            {p.implied_ppr_points.toFixed(1)} fpts
                           </span>
                         </div>
 
@@ -1222,9 +1224,35 @@ export function VegasTab({
                             </div>
                           )}
 
-                          {/* Anytime TD */}
-                          <div className="prop-line-cell">
-                            <span className="line-label">Anytime TD Odds</span>
+                          {/* QB Pass TDs O/U & Odds */}
+                          {p.position === 'QB' && p.pass_tds_ou != null && (
+                            <div
+                              className="prop-line-cell highlight-pass-td"
+                              title={
+                                p.pass_tds_over_odds != null
+                                  ? `Over ${p.pass_tds_ou.toFixed(1)} (${p.pass_tds_over_odds > 0 ? `+${p.pass_tds_over_odds}` : p.pass_tds_over_odds})${p.pass_tds_under_odds != null ? ` • Under ${p.pass_tds_ou.toFixed(1)} (${p.pass_tds_under_odds > 0 ? `+${p.pass_tds_under_odds}` : p.pass_tds_under_odds})` : ''}`
+                                  : 'Passing Touchdowns Over/Under'
+                              }
+                            >
+                              <span className="line-label" style={{ color: 'var(--accent-cyan)' }}>Pass TDs O/U</span>
+                              <span className="line-val" style={{ color: 'var(--accent-cyan)', fontWeight: 800 }}>
+                                O {p.pass_tds_ou.toFixed(1)} {p.pass_tds_over_odds != null ? `(${p.pass_tds_over_odds > 0 ? `+${p.pass_tds_over_odds}` : p.pass_tds_over_odds})` : ''}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Anytime TD (Clarified for QBs vs Skill Positions) */}
+                          <div
+                            className="prop-line-cell"
+                            title={
+                              p.position === 'QB'
+                                ? 'In sportsbook rules, Anytime TD scorer bets strictly require the player to score via rush or reception. Passing TDs do not cash Anytime TD tickets.'
+                                : 'Anytime Touchdown Scorer implied probability and American odds'
+                            }
+                          >
+                            <span className="line-label">
+                              {p.position === 'QB' ? 'Anytime TD (Rush/Rec)' : 'Anytime TD Odds'}
+                            </span>
                             <span className="line-val" style={{ color: tdPct >= 50 ? 'var(--accent-emerald)' : 'inherit' }}>
                               {tdPct}% ({p.anytime_td_odds != null && p.anytime_td_odds > 0 ? `+${p.anytime_td_odds}` : p.anytime_td_odds})
                             </span>
@@ -1238,9 +1266,9 @@ export function VegasTab({
                             </div>
                           )}
 
-                          {p.position === 'RB' && p.rush_yards_ou != null && (
+                          {(p.position === 'RB' || (p.position === 'QB' && p.rush_yards_ou != null && p.rush_yards_ou >= 10.0)) && p.rush_yards_ou != null && (
                             <div className="prop-line-cell">
-                              <span className="line-label">Rush Yds O/U</span>
+                              <span className="line-label">{p.position === 'QB' ? 'QB Rush Yds' : 'Rush Yds O/U'}</span>
                               <span className="line-val">{p.rush_yards_ou.toFixed(1)} yds</span>
                             </div>
                           )}

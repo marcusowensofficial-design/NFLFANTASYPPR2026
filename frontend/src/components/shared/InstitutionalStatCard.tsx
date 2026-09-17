@@ -177,7 +177,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
             <span>⚡</span> Our Quant Model
           </div>
           <div className="source-card-pts">
-            {modelPts ? `${modelPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>pts</span>
+            {modelPts ? `${modelPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>fpts</span>
           </div>
           <div className="source-card-sub">
             Vegas Micro-Volume Script
@@ -191,7 +191,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
             <span>🌐</span> FantasyPros (PPR)
           </div>
           <div className="source-card-pts">
-            {fpPts ? `${fpPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>pts</span>
+            {fpPts ? `${fpPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>fpts</span>
           </div>
           <div className="source-card-sub">
             {p.consensus_rank ? `ECR #${p.consensus_rank.toFixed(0)} Consensus` : 'Weekly Consensus PPR'}
@@ -205,7 +205,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
             <span>📱</span> Sleeper (RotoWire)
           </div>
           <div className="source-card-pts" style={{ color: currentActive === 'SLEEPER' ? '#38bdf8' : undefined }}>
-            {sleeperPts ? `${sleeperPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>pts</span>
+            {sleeperPts ? `${sleeperPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>fpts</span>
           </div>
           <div className="source-card-sub">
             RotoWire Official PPR
@@ -219,7 +219,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
             <span>🏈</span> ESPN Official
           </div>
           <div className="source-card-pts">
-            {espnPts ? `${espnPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>pts</span>
+            {espnPts ? `${espnPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>fpts</span>
           </div>
           <div className="source-card-sub">
             ESPN Official League PPR
@@ -233,7 +233,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
             <span>⭐</span> Multi-Source Blend
           </div>
           <div className="source-card-pts" style={{ color: currentActive === 'CONSENSUS' ? '#38bdf8' : '#facc15' }}>
-            {consensusPts ? `${consensusPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>pts</span>
+            {consensusPts ? `${consensusPts.toFixed(1)}` : '—'} <span style={{ fontSize: '13px', fontWeight: 600 }}>fpts</span>
           </div>
           <div className="source-card-sub">
             Outlier-Protected Bayesian
@@ -246,7 +246,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span>⚖️ <strong>Expert Disparity:</strong></span>
           <span>
-            {spread > 0 ? `±${(spread / 2).toFixed(1)} pts range (Spread: ${spread.toFixed(1)} pts)` : 'Unanimous Alignment'}
+            {spread > 0 ? `±${(spread / 2).toFixed(1)} fpts range (Spread: ${spread.toFixed(1)} fpts)` : 'Unanimous Alignment'}
           </span>
         </div>
         <div>
@@ -265,7 +265,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
           </div>
           <div className="volatility-badge-row">
             <span className="pill zinc" style={{ fontSize: '10.5px' }}>
-              Span: {(ceilingPts - floorPts).toFixed(1)} pts (±{((ceilingPts - floorPts) / 2).toFixed(1)})
+              Span: {(ceilingPts - floorPts).toFixed(1)} fpts (±{((ceilingPts - floorPts) / 2).toFixed(1)})
             </span>
           </div>
         </div>
@@ -275,7 +275,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
           <div
             className="volatility-marker-pin"
             style={{ left: `${markerPct}%` }}
-            title={`Active Projection: ${p.projected_points.toFixed(1)} pts`}
+            title={`Active Projection: ${p.projected_points.toFixed(1)} fpts`}
           >
             <div className="marker-tooltip tabular-nums">{p.projected_points.toFixed(1)}</div>
             <div className="marker-needle" />
@@ -285,15 +285,15 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
         <div className="volatility-labels-row">
           <div className="volatility-bound floor">
             <span className="bound-label">SAFE FLOOR</span>
-            <span className="bound-val tabular-nums">{floorPts.toFixed(1)} pts</span>
+            <span className="bound-val tabular-nums">{floorPts.toFixed(1)} fpts</span>
           </div>
           <div className="volatility-bound median">
             <span className="bound-label">EXPECTED MEDIAN</span>
-            <span className="bound-val tabular-nums">{p.projected_points.toFixed(1)} pts</span>
+            <span className="bound-val tabular-nums">{p.projected_points.toFixed(1)} fpts</span>
           </div>
           <div className="volatility-bound ceiling">
             <span className="bound-label">CEILING OUTCOME</span>
-            <span className="bound-val tabular-nums">{ceilingPts.toFixed(1)} pts</span>
+            <span className="bound-val tabular-nums">{ceilingPts.toFixed(1)} fpts</span>
           </div>
         </div>
       </div>
@@ -450,7 +450,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
 
         <div className="statcard-box" style={{ background: 'rgba(56, 189, 248, 0.1)', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
           <span className="statcard-box-val" style={{ color: '#38bdf8' }}>
-            {p.projected_points.toFixed(2)} pts
+            {p.projected_points.toFixed(2)} fpts
           </span>
           <span className="statcard-box-lbl">Active Total ({currentActive})</span>
         </div>
@@ -463,12 +463,12 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
           <span>Volatility Index: ±{p.fp_rank_std ? p.fp_rank_std.toFixed(1) : '1.2'}</span>
         </div>
         <div className="volatility-track-bar">
-          <div className="volatility-track-marker" style={{ left: `${markerPct}%` }} title={`Active Projection: ${p.projected_points.toFixed(1)} pts`} />
+          <div className="volatility-track-marker" style={{ left: `${markerPct}%` }} title={`Active Projection: ${p.projected_points.toFixed(1)} fpts`} />
         </div>
         <div className="volatility-track-labels">
-          <span className="volatility-track-lbl floor">🛡️ 20th % Floor: {floorPts.toFixed(1)} pts</span>
-          <span className="volatility-track-lbl median">🎯 Active: {p.projected_points.toFixed(1)} pts</span>
-          <span className="volatility-track-lbl ceiling">🚀 90th % Ceiling: {ceilingPts.toFixed(1)} pts</span>
+          <span className="volatility-track-lbl floor">🛡️ 20th % Floor: {floorPts.toFixed(1)} fpts</span>
+          <span className="volatility-track-lbl median">🎯 Active: {p.projected_points.toFixed(1)} fpts</span>
+          <span className="volatility-track-lbl ceiling">🚀 90th % Ceiling: {ceilingPts.toFixed(1)} fpts</span>
         </div>
       </div>
 
@@ -601,7 +601,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
             <div className="statcard-box">
               <span className="statcard-box-val emerald" style={{ fontSize: '15px' }}>
                 {p.dvp_fpa.dk_fpa.toFixed(1)}{' '}
-                <span style={{ fontSize: '11px', fontWeight: 600 }}>Half-PPR pts/G</span>
+                <span style={{ fontSize: '11px', fontWeight: 600 }}>Half-PPR fpts/G</span>
               </span>
               <span className="statcard-box-lbl">Half-PPR Fantasy Points Allowed</span>
             </div>
@@ -610,7 +610,7 @@ export const InstitutionalStatCard: React.FC<{ player: StartSitEvaluation; activ
               <div className="statcard-box">
                 <span className="statcard-box-val cyan" style={{ fontSize: '15px', color: '#38bdf8' }}>
                   {p.dvp_fpa.fd_fpa.toFixed(1)}{' '}
-                  <span style={{ fontSize: '11px', fontWeight: 600 }}>Full-PPR pts/G</span>
+                  <span style={{ fontSize: '11px', fontWeight: 600 }}>Full-PPR fpts/G</span>
                 </span>
                 <span className="statcard-box-lbl">Full-PPR Points Allowed (ESPN)</span>
               </div>

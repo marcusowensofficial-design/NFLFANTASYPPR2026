@@ -32,14 +32,14 @@ export const ShareLineupModal: React.FC<ShareLineupModalProps> = ({
     const week = league?.current_week ?? 1
     const leagueName = league?.name ?? 'Fantasy League'
     let text = `🏈 **${leagueName.toUpperCase()} — WEEK ${week} OPTIMAL LINEUP**\n`
-    text += `⚡ Total Projection: **${startersTotal.toFixed(1)} pts** | Strategy: *${strategyMode}* | Source: *${projectionSource}*\n`
+    text += `⚡ Total Projection: **${startersTotal.toFixed(1)} fpts** | Strategy: *${strategyMode}* | Source: *${projectionSource}*\n`
     text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
 
     lineup.starters.forEach((slot: SlotAssignment) => {
       const p = slot.recommended_player
       const dvpRank = p.opp_dvp_rank ? ` • DvP #${p.opp_dvp_rank}` : ''
       const vs = p.is_home ? 'vs' : '@'
-      text += `**${slot.slot_name}**: ${p.full_name} (${p.pro_team} ${vs} ${p.opponent}) — **${p.projected_points.toFixed(1)} pts**${dvpRank}\n`
+      text += `**${slot.slot_name}**: ${p.full_name} (${p.pro_team} ${vs} ${p.opponent}) — **${p.projected_points.toFixed(1)} fpts**${dvpRank}\n`
     })
 
     text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
@@ -66,7 +66,7 @@ export const ShareLineupModal: React.FC<ShareLineupModalProps> = ({
             <div>
               <h3 className="share-modal-title">Export & Share Lineup Card</h3>
               <p className="share-modal-subtitle">
-                {league?.name || 'League'} • Week {league?.current_week || 1} • {startersTotal.toFixed(1)} Projected Pts
+                {league?.name || 'League'} • Week {league?.current_week || 1} • {startersTotal.toFixed(1)} Projected FPTS
               </p>
             </div>
           </div>
@@ -83,7 +83,7 @@ export const ShareLineupModal: React.FC<ShareLineupModalProps> = ({
               </span>
             </div>
             <div className="share-banner-score tabular-nums">
-              {startersTotal.toFixed(1)} <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>PTS</span>
+              {startersTotal.toFixed(1)} <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>FPTS</span>
             </div>
           </div>
 

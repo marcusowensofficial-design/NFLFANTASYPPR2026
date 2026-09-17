@@ -155,6 +155,8 @@ export interface StartSitEvaluation {
   props_rush_att_ou?: number | null
   props_pass_yds_ou?: number | null
   props_pass_tds_ou?: number | null
+  props_pass_tds_over_odds?: number | null
+  props_pass_tds_under_odds?: number | null
   props_anytime_td_odds?: number | null
   props_anytime_td_prob?: number | null
   props_implied_ppr_pts?: number | null
@@ -184,6 +186,8 @@ export interface PlayerPropsData {
   rush_att_ou?: number | null
   pass_yards_ou?: number | null
   pass_tds_ou?: number | null
+  pass_tds_over_odds?: number | null
+  pass_tds_under_odds?: number | null
   anytime_td_odds?: number | null
   anytime_td_prob: number
   implied_ppr_points: number
@@ -955,6 +959,8 @@ export interface VegasPlayerPropsItem {
   rush_att_ou?: number | null
   pass_yards_ou?: number | null
   pass_tds_ou?: number | null
+  pass_tds_over_odds?: number | null
+  pass_tds_under_odds?: number | null
   anytime_td_odds?: number | null
   anytime_td_prob: number
   implied_ppr_points: number

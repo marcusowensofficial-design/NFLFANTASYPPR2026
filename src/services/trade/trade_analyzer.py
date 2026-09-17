@@ -246,7 +246,7 @@ class TradeAnalyzer:
 
                         if weakest_partner_starter:
                             partner_net_pts = (p1.projected_points - alpha.projected_points) + (p2.projected_points - weakest_partner_starter.projected_points)
-                            partner_weak_desc = f"upgrades their {weakest_partner_starter.position} slot ({weakest_partner_starter.full_name}, {weakest_partner_starter.projected_points:.1f} pts)"
+                            partner_weak_desc = f"upgrades their {weakest_partner_starter.position} slot ({weakest_partner_starter.full_name}, {weakest_partner_starter.projected_points:.1f} fpts)"
                         else:
                             partner_net_pts = (p1.projected_points + p2.projected_points) - (alpha.projected_points + 11.0)
                             partner_weak_desc = "adds crucial starting depth"
@@ -336,8 +336,8 @@ class TradeAnalyzer:
                                 partner_net_projected_delta=round(partner_net_pts, 1),
                                 feasibility=feasibility,
                                 rationale=(
-                                    f"Consolidates depth into Tier-1 Alpha {alpha.full_name} (+{user_net_pts:.1f} net starting pts). "
-                                    f"In an 8-man league, starting studs outperform bench depth. Open roster spot backfilled by {backfill.full_name} ({backfill.projected_points:.1f} pts)."
+                                    f"Consolidates depth into Tier-1 Alpha {alpha.full_name} (+{user_net_pts:.1f} net starting fpts). "
+                                    f"In an 8-man league, starting studs outperform bench depth. Open roster spot backfilled by {backfill.full_name} ({backfill.projected_points:.1f} fpts)."
                                     f"{playoff_note}"
                                 ),
                                 pitch_message=pitch,

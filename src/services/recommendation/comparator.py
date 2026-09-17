@@ -103,14 +103,14 @@ class PlayerComparator:
             )
 
         if is_close:
-            headline = f"TOSS-UP: Edge to {winner.full_name} over {runner_up.full_name} (+{delta} pts)"
+            headline = f"TOSS-UP: Edge to {winner.full_name} over {runner_up.full_name} (+{delta} StartScore)"
             detailed = (
                 f"This is a razor-thin decision separated by only {delta} StartScore points. "
                 f"We give the slight nod to {winner.full_name} due to {reason_str}. "
                 f"In an 8-team league where every roster is loaded, check late inactives before locking.{upside_note}"
             )
         else:
-            headline = f"START {winner.full_name} over {runner_up.full_name} (+{delta} pts)"
+            headline = f"START {winner.full_name} over {runner_up.full_name} (+{delta} StartScore)"
             detailed = (
                 f"Strong recommendation to start {winner.full_name} ({winner.start_score:.1f}) "
                 f"over {runner_up.full_name} ({runner_up.start_score:.1f}). "

@@ -5767,6 +5767,24 @@ code {
   font-weight: 700;
 }
 
+.intel-dvp-cell-fpa {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.intel-dvp-fpa-unit {
+  font-size: 9.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  opacity: 0.85;
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  user-select: none;
+}
+
 .intel-dvp-strip {
   display: flex;
   align-items: center;
@@ -6682,7 +6700,7 @@ code {
 
 .vegas-props-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: 14px;
 }
 
@@ -6695,6 +6713,8 @@ code {
   flex-direction: column;
   gap: 10px;
   transition: transform 0.15s ease, border-color 0.15s ease;
+  overflow: hidden;
+  position: relative;
 }
 
 .vegas-prop-card:hover {
@@ -6710,6 +6730,70 @@ code {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 8px;
+  position: relative;
+}
+
+.prop-card-header-left {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prop-player-name {
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.25;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prop-card-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.prop-badge-pos {
+  font-size: 9px !important;
+  padding: 1.5px 5px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+}
+
+.prop-badge-roster {
+  font-size: 8.5px !important;
+  padding: 1.5px 5px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0.03em !important;
+}
+
+.prop-matchup-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.prop-grade-pill {
+  flex-shrink: 0;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  padding: 2.5px 8px !important;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  max-width: 125px;
 }
 
 .prop-implied-bar {
@@ -6761,6 +6845,12 @@ code {
   font-weight: 700;
   font-family: var(--font-mono);
   color: var(--text-primary);
+}
+
+.prop-line-cell.highlight-pass-td {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.08);
 }
 
 .prop-takeaway-box {
