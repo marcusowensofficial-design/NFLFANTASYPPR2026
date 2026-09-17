@@ -1181,7 +1181,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                             className="btn-link"
                             onClick={() => setExpandedWhy(isExpanded ? null : p.player_id)}
                           >
-                            {isExpanded ? 'Hide Why' : 'Why?'}
+                            {isExpanded ? 'Hide Player Factors Analysis' : 'Player Factors Analysis'}
                           </button>
                           <button
                             className="btn btn-secondary btn-sm"
@@ -1291,7 +1291,16 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                       <tr className="why-row">
                         <td colSpan={8}>
                           <div className="why-content">
-                            <div className="why-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                            <button
+                              type="button"
+                              className="why-close-btn"
+                              onClick={() => setExpandedWhy(null)}
+                              title="Hide Player Factors Analysis"
+                              aria-label="Close"
+                            >
+                              ✕
+                            </button>
+                            <div className="why-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', paddingRight: '28px' }}>
                               <strong>Factor Analysis for {p.full_name} (Confidence: {p.confidence}):</strong>
                               {p.opp_dvp_rank !== undefined && p.opp_dvp_rank !== null && (
                                 <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
@@ -1826,7 +1835,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                 onClick={() => setExpandedWhy(expandedWhy === b.player_id ? null : b.player_id)}
                                 style={{ color: expandedWhy === b.player_id ? 'var(--accent-cyan)' : 'var(--text-secondary)' }}
                               >
-                                {expandedWhy === b.player_id ? 'Hide Why' : 'Why?'}
+                                {expandedWhy === b.player_id ? 'Hide Player Factors Analysis' : 'Player Factors Analysis'}
                               </button>
                               <button
                                 className="btn btn-secondary btn-sm"
@@ -1852,7 +1861,16 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                           <tr className="why-row">
                             <td colSpan={8}>
                               <div className="why-content">
-                                <div className="why-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                                <button
+                                  type="button"
+                                  className="why-close-btn"
+                                  onClick={() => setExpandedWhy(null)}
+                                  title="Hide Player Factors Analysis"
+                                  aria-label="Close"
+                                >
+                                  ✕
+                                </button>
+                                <div className="why-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', paddingRight: '28px' }}>
                                   <strong>Factor Analysis for {b.full_name} (Confidence: {b.confidence}):</strong>
                                   {b.opp_dvp_rank !== undefined && b.opp_dvp_rank !== null && (
                                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
