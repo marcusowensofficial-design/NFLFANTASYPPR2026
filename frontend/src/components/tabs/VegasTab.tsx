@@ -101,6 +101,8 @@ export function VegasTab({
       if (pRes.ok) {
         const pJson: VegasPlayerPropsItem[] = await pRes.json()
         setPropsData(pJson)
+      } else {
+        console.error('Failed to fetch vegas player props:', pRes.status)
       }
     } catch (err) {
       console.error('Error fetching vegas intelligence:', err)
