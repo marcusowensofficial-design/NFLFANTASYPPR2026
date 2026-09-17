@@ -1155,6 +1155,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                               fontWeight: 600,
                               display: 'inline-flex',
                               alignItems: 'center',
+                              justifyContent: 'flex-start',
+                              textAlign: 'left',
                               gap: '4px',
                             }}
                             title="View multi-source itemized projections & stat model"
@@ -1170,6 +1172,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                 fontWeight: 600,
                                 display: 'inline-flex',
                                 alignItems: 'center',
+                                justifyContent: 'flex-start',
+                                textAlign: 'left',
                                 gap: '4px',
                               }}
                               title="View 2026 game logs & box scores"
@@ -1184,6 +1188,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                               fontWeight: 600,
                               display: 'inline-flex',
                               alignItems: 'center',
+                              justifyContent: 'flex-start',
+                              textAlign: 'left',
                               gap: '4px',
                             }}
                           >
@@ -1429,6 +1435,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                   fontWeight: 600,
                                   display: 'inline-flex',
                                   alignItems: 'center',
+                                  justifyContent: 'flex-start',
+                                  textAlign: 'left',
                                   gap: '4px',
                                 }}
                                 title="View multi-source itemized projections & stat model"
@@ -1444,6 +1452,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                     fontWeight: 600,
                                     display: 'inline-flex',
                                     alignItems: 'center',
+                                    justifyContent: 'flex-start',
+                                    textAlign: 'left',
                                     gap: '4px',
                                   }}
                                   title="View 2026 game logs & box scores"
@@ -1814,6 +1824,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                   fontWeight: 600,
                                   display: 'inline-flex',
                                   alignItems: 'center',
+                                  justifyContent: 'flex-start',
+                                  textAlign: 'left',
                                   gap: '4px',
                                 }}
                                 title="View multi-source itemized projections & stat model"
@@ -1829,6 +1841,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                     fontWeight: 600,
                                     display: 'inline-flex',
                                     alignItems: 'center',
+                                    justifyContent: 'flex-start',
+                                    textAlign: 'left',
                                     gap: '4px',
                                   }}
                                   title="View 2026 game logs & box scores"
@@ -1844,6 +1858,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                                   fontWeight: 600,
                                   display: 'inline-flex',
                                   alignItems: 'center',
+                                  justifyContent: 'flex-start',
+                                  textAlign: 'left',
                                   gap: '4px',
                                 }}
                               >

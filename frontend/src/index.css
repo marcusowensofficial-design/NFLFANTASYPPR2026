@@ -1059,6 +1059,8 @@ code {
   cursor: pointer;
   text-decoration: underline;
   padding: 4px 6px;
+  text-align: left;
+  justify-content: flex-start;
 }
 
 .btn-link:hover {

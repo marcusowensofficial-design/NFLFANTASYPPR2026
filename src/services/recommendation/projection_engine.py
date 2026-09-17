@@ -26,6 +26,13 @@ from src.adapters.nfl.dvp_client import dvp_client
 from src.adapters.nfl.schedule_client import NFLGame
 from src.adapters.weather.client import WeatherReport
 from src.db.models import PlayerModel
+from src.services.recommendation.nextgen_advanced_metrics import (
+    ExpectedFantasyPointsCalculator,
+    CoverageShellMatcher,
+    QBPressureRedistributor,
+    GoalLinePackageEquity,
+    XFPCalculationResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -304,6 +311,58 @@ def get_team_personnel_and_pace(team_abbrev: str) -> dict[str, Any]:
     return _personnel_and_pace_cache.get("teams", {}).get(t, {})
 
 
+_nextgen_advanced_cache: dict[str, Any] = {"mtime": 0, "data": {}}
+
+
+def _load_nextgen_advanced_cache() -> None:
+    global _nextgen_advanced_cache
+    import json
+    from pathlib import Path
+    ng_file = Path(__file__).resolve().parent.parent.parent.parent / "data" / "nextgen_micro_metrics_2026.json"
+    if not ng_file.exists():
+        return
+    mtime = ng_file.stat().st_mtime
+    if _nextgen_advanced_cache.get("mtime") == mtime:
+        return
+    try:
+        with open(ng_file, encoding="utf-8") as f:
+            data = json.load(f)
+        _nextgen_advanced_cache = {"mtime": mtime, "data": data}
+    except Exception as e:
+        logger.debug(f"Failed to load Next-Gen advanced cache: {e}")
+
+
+def get_player_nextgen_metrics(player_name: str, pos: str) -> dict[str, Any]:
+    """Retrieve player-specific Next-Gen metrics (xFP, TPRR vs Zone/Man, Scramble %, HVT inside-5)."""
+    _load_nextgen_advanced_cache()
+    data = _nextgen_advanced_cache.get("data", {})
+    norm = re.sub(r"[^\w\s]", "", (player_name or "").lower()).strip()
+    p = (pos or "").upper().strip()
+
+    group_key = "quarterbacks" if p == "QB" else ("running_backs" if p in ("RB", "FB") else "receivers")
+    pos_dict = data.get(group_key, {})
+    if norm in pos_dict:
+        return pos_dict[norm]
+    for k, v in pos_dict.items():
+        if k in norm or norm in k:
+            return v
+    return {}
+
+
+def get_team_coverage_metrics(team_abbrev: str) -> dict[str, Any]:
+    """Retrieve team defensive coverage shell metrics (MOFO %, MOFC %, Blitz 0 %)."""
+    _load_nextgen_advanced_cache()
+    t = (team_abbrev or "").upper().strip()
+    return _nextgen_advanced_cache.get("data", {}).get("teams_coverage", {}).get(t, {})
+
+
+def get_team_coaching_forensics(team_abbrev: str) -> dict[str, Any]:
+    """Retrieve team coaching forensics (4th-down aggression %, goal-line personnel rates)."""
+    _load_nextgen_advanced_cache()
+    t = (team_abbrev or "").upper().strip()
+    return _nextgen_advanced_cache.get("data", {}).get("team_forensics", {}).get(t, {})
+
+
 def _load_depth_charts_cache() -> None:
     global _depth_charts_cache
     import json
@@ -461,6 +520,13 @@ class PlayerProjectionResult(BaseModel):
     milestone_bonus_points: float = 0.0
     hvt_inside_5: float = 0.0
     hvt_inside_10: float = 0.0
+    xfp: float = 0.0
+    fpoe: float = 0.0
+    tprr_vs_zone: float = 0.0
+    inside_5_carry_share: float = 0.0
+    scramble_rate_pressured: float = 0.0
+    p2s_rate: float = 0.0
+    coverage_scheme_note: str | None = None
     consensus_spread: float = 0.0
     consensus_agreement: str = "HIGH_AGREEMENT"
     itemized_stats: ItemizedStatLine
@@ -754,18 +820,29 @@ class QuantProjectionEngine:
             else:
                 pass_yds = model_pass_yds
 
-            # Dual-Threat vs Immobile QB Detection
-            scramble_pct = float(im_data.get("scramble_pct", 5.0))
+            # Dual-Threat vs Immobile QB Detection & Next-Gen Pressure Redistribution
+            ng_qb = get_player_nextgen_metrics(p_name, "QB")
+            scramble_pct = float(ng_qb.get("scramble_pct_pressured", im_data.get("scramble_pct", 5.0)))
+            checkdown_pct = float(ng_qb.get("checkdown_pct_pressured", 14.0))
+            p2s_rate = float(ng_qb.get("p2s_rate", 15.0))
             is_dual_threat = (
                 scramble_pct >= 8.0
                 or any(dt.lower() in p_name.lower() for dt in ("josh allen", "jalen hurts", "lamar jackson", "jayden daniels", "kyler murray", "anthony richardson", "justin fields"))
                 or (use_explicit_stats and float(raw_espn_stats.get("rush_att", 0.0)) >= 4.0)
             )
 
+            qb_redist = QBPressureRedistributor.calculate_redistribution(
+                is_dual_threat=is_dual_threat,
+                scramble_rate_pressured=scramble_pct,
+                checkdown_rate_pressured=checkdown_pct,
+                p2s_rate=p2s_rate,
+                opp_pressure_pct=opp_pressure_pct,
+            )
+
             if is_dual_threat:
                 rush_att_base = float(raw_espn_stats.get("rush_att", 6.5)) if use_explicit_stats else max(5.0, float(im_data.get("rush_att", 6.5)))
                 if is_severe_pass_pressure:
-                    rush_att = rush_att_base + 2.2
+                    rush_att = rush_att_base + max(2.2, qb_redist["qb_rush_att_boost"])
                     model_rush_yds = round(rush_att * 6.2, 1) + 14.0
                     rush_yds = float(raw_espn_stats.get("rush_yds", model_rush_yds)) if (use_explicit_stats and "rush_yds" in raw_espn_stats) else (round(0.40 * model_rush_yds + 0.60 * live_rush_yds, 1) if live_rush_yds is not None else model_rush_yds)
                     rush_td = float(raw_espn_stats.get("rush_td", 0.55)) if (use_explicit_stats and "rush_td" in raw_espn_stats) else float(im_data.get("rush_tds", 0.55))
@@ -862,11 +939,21 @@ class QuantProjectionEngine:
             else:
                 rush_yds = model_rush_yds
 
-            # High-Value Touch (HVT) Goal Line conversion modeling
-            inside_5_share = float(rb_micro.get("inside_5_carry_share", 0.75 if carry_share >= 0.55 else 0.25)) if rb_micro else (0.75 if carry_share >= 0.55 else 0.25)
+            # High-Value Touch (HVT) Goal Line conversion modeling & Package Equity
+            ng_rb = get_player_nextgen_metrics(p_name, "RB")
+            inside_5_share = float(ng_rb.get("inside_5_carry_share", rb_micro.get("inside_5_carry_share", 0.75 if carry_share >= 0.55 else 0.25))) if rb_micro or ng_rb else (0.75 if carry_share >= 0.55 else 0.25)
             carries_in_5 = float(im_data.get("carries_inside_5", round(inside_5_share * 2.2, 1)))
+            team_forensics = get_team_coaching_forensics(getattr(player, "pro_team", ""))
+            gl_equity = GoalLinePackageEquity.calculate_td_equity(
+                inside_5_carry_share=inside_5_share,
+                gl_11_personnel_pct=float(team_forensics.get("gl_11_personnel_pct", 45.0)),
+                gl_12_personnel_pct=float(team_forensics.get("gl_12_personnel_pct", 28.0)),
+                gl_jumbo_pct=float(team_forensics.get("gl_jumbo_pct", 25.0)),
+                expected_team_tds=context.expected_team_tds,
+            )
+            inside_5_share = gl_equity["inside_5_carry_share_calibrated"]
             td_conv = float(team_rz.get("offense", {}).get("rz_td_conversion_pct", 58.0)) / 100.0
-            td_share = max(0.05, (inside_5_share * 0.65 + carry_share * 0.35) * (context.expected_team_tds * (0.40 + 0.20 * td_conv)))
+            td_share = max(0.05, max(gl_equity["rb_rush_td_expectancy"], (inside_5_share * 0.65 + carry_share * 0.35) * (context.expected_team_tds * (0.40 + 0.20 * td_conv))))
             if use_explicit_stats and "rush_td" in raw_espn_stats:
                 rush_td = float(raw_espn_stats["rush_td"])
             elif live_td_prob is not None:
@@ -874,12 +961,12 @@ class QuantProjectionEngine:
             else:
                 rush_td = round(max(0.05, min(1.45, td_share)), 2)
 
-            # Targets & checkdown using route participation %
-            rb_route_part = float(rb_micro.get("route_participation_pct", 0.48 if carry_share >= 0.5 else 0.25)) if rb_micro else (0.48 if carry_share >= 0.5 else 0.25)
-            rb_tprr = float(rb_micro.get("tprr", 0.19)) if rb_micro else 0.19
+            # Targets & checkdown using route participation % and QB Pressure Checkdown rate
+            rb_route_part = float(ng_rb.get("route_participation_pct", rb_micro.get("route_participation_pct", 0.48 if carry_share >= 0.5 else 0.25))) if rb_micro or ng_rb else (0.48 if carry_share >= 0.5 else 0.25)
+            rb_tprr = float(ng_rb.get("tprr", rb_micro.get("tprr", 0.19))) if rb_micro or ng_rb else 0.19
             tgt_share = min(0.25, max(0.04, rb_route_part * rb_tprr * 1.6))
             is_pass_catcher = (tgt_share >= 0.08) or (float(im_data.get("targets", 0)) >= 3) or (live_rec_yds is not None and live_rec_yds >= 15.0) or (use_explicit_stats and float(raw_espn_stats.get("targets", 0)) >= 2.0)
-            checkdown_boost = 1.3 if (is_severe_pass_pressure and is_pass_catcher) else 0.0
+            checkdown_boost = 1.6 if (is_severe_pass_pressure and is_pass_catcher) else (1.0 if is_severe_pass_pressure else 0.0)
             if use_explicit_stats and "targets" in raw_espn_stats:
                 targets = float(raw_espn_stats["targets"])
             else:
@@ -962,7 +1049,28 @@ class QuantProjectionEngine:
             else:
                 base_tprr = prior_tprr
 
-            micro_multiplier = 1.0
+            # Scheme & Defensive Coverage Shell Matching (Man vs Zone, MOFO vs MOFC)
+            ng_rec = get_player_nextgen_metrics(p_name, pos)
+            tprr_vs_zone = float(ng_rec.get("tprr_vs_zone", base_tprr))
+            tprr_vs_man = float(ng_rec.get("tprr_vs_man", base_tprr))
+            slot_rate = float(ng_rec.get("slot_rate_pct", 58.0 if pos == "TE" else 30.0))
+
+            opp_cov = get_team_coverage_metrics(context.opponent)
+            opp_mofo = float(opp_cov.get("mofo_pct", 45.0))
+            opp_mofc = float(opp_cov.get("mofc_pct", 45.0))
+            opp_blitz = float(opp_cov.get("cov_0", 5.0))
+
+            scheme_mult, coverage_scheme_note = CoverageShellMatcher.calculate_scheme_multiplier(
+                pos=pos,
+                slot_rate_pct=slot_rate,
+                tprr_vs_zone=tprr_vs_zone,
+                tprr_vs_man=tprr_vs_man,
+                opp_mofo_pct=opp_mofo,
+                opp_mofc_pct=opp_mofc,
+                opp_blitz_rate_pct=opp_blitz,
+            )
+
+            micro_multiplier = 1.0 * scheme_mult
             if first_read is not None:
                 fr_val = float(first_read) / 100.0 if float(first_read) > 1.0 else float(first_read)
                 if fr_val >= 0.28:
@@ -1043,7 +1151,15 @@ class QuantProjectionEngine:
             opp_ol_rank = int(opp_trench.get("offensive_line", {}).get("rank", 16))
             sack_trench_boost = 0.7 if opp_ol_rank >= 24 else (0.3 if opp_ol_rank >= 18 else 0.0)
 
-            base_sacks = 2.4 + (0.08 * -context.spread) + ((24.0 - opp_itt) * 0.08) + sack_trench_boost
+            # Incorporate Opponent QB Pressure-to-Sack (P2S) rate
+            opp_qb_info = get_player_depth_chart_info("qb", context.opponent)
+            opp_qb_p2s = 15.0
+            if opp_qb_info:
+                ng_opp_qb = get_player_nextgen_metrics(opp_qb_info.get("name", ""), "QB")
+                opp_qb_p2s = float(ng_opp_qb.get("p2s_rate", 15.0))
+            p2s_sack_adj = (opp_qb_p2s - 15.0) * 0.05
+
+            base_sacks = 2.4 + (0.08 * -context.spread) + ((24.0 - opp_itt) * 0.08) + sack_trench_boost + p2s_sack_adj
             sacks = round(max(1.0, min(6.0, base_sacks * (1.0 + (dvp_rank - 16.5) * 0.025))), 1)
             turnovers = round(max(0.5, min(3.2, 1.25 + (sacks * 0.22) + ((dvp_rank - 16.5) * 0.03))), 1)
             def_td = round(max(0.05, min(0.35, 0.12 + ((dvp_rank - 16.5) * 0.008))), 2)
@@ -1058,14 +1174,18 @@ class QuantProjectionEngine:
             volume_share = 100.0
 
         elif pos in ("K", "PK"):
-            # 32-Team Red Zone Stall & Field Goal Rate Modeling
+            # 32-Team Red Zone Stall & Field Goal Rate Modeling with Coach Aggression Forensics
             team_rz = get_team_redzone_efficiency(player.pro_team)
             opp_rz = get_team_redzone_efficiency(context.opponent)
+            team_forensics = get_team_coaching_forensics(player.pro_team)
+            coach_aggression = float(team_forensics.get("coach_4th_down_aggression_pct", 50.0))
+            coach_fg_mult = 1.15 if coach_aggression <= 45.0 else (0.88 if coach_aggression >= 75.0 else 1.0)
+
             fg_rate = float(team_rz.get("offense", {}).get("rz_fg_attempt_rate_pct", 36.0)) / 100.0
             opp_stop = float(opp_rz.get("defense", {}).get("rz_stop_rate_pct", 45.0)) / 100.0
             rz_trips = float(team_rz.get("offense", {}).get("rz_trips_per_game", context.implied_team_total / 6.5))
             
-            fg_made = round(max(0.8, min(3.8, rz_trips * (fg_rate * 0.65 + opp_stop * 0.35) * 1.5 * total_efficiency_adj)), 1)
+            fg_made = round(max(0.8, min(3.8, rz_trips * (fg_rate * 0.65 + opp_stop * 0.35) * 1.5 * total_efficiency_adj * coach_fg_mult)), 1)
             pat_made = round(max(0.8, min(4.4, context.expected_team_tds * 0.94)), 1)
             quant_stats = ItemizedStatLine(
                 fg_made=fg_made,
@@ -1227,6 +1347,33 @@ class QuantProjectionEngine:
             provenance["vacated_opportunity"] = vacated_note
             provenance["is_injury_beneficiary"] = True
 
+        # Calculate Expected Fantasy Points (xFP) and FPOE (Coiled Spring vs Mirage)
+        adot_calc = float(adot) if ("adot" in locals() and adot is not None) else (10.5 if pos == "WR" else 6.5)
+        ez_targets = float(quant_stats.rec_td * 1.8) if pos in ("WR", "TE", "RB") else 0.0
+        c_in_5 = float(hvt_inside_5)
+        c_6_10 = max(0.0, float(hvt_inside_10 - hvt_inside_5))
+        c_20s = max(0.0, float(quant_stats.rush_att - hvt_inside_10))
+
+        xfp_calc = ExpectedFantasyPointsCalculator.calculate_player_xfp(
+            targets=quant_stats.targets,
+            adot=adot_calc,
+            endzone_targets=ez_targets,
+            carries_inside_5=c_in_5,
+            carries_6_to_10=c_6_10,
+            carries_between_20s=c_20s,
+            rush_att_qb=quant_stats.rush_att if pos == "QB" else 0.0,
+            pass_att_qb=quant_stats.pass_att if pos == "QB" else 0.0,
+            realized_ppr=calc_quant_ppr,
+            realized_half_ppr=calc_quant_half_ppr,
+            pos=pos,
+        )
+        provenance["xfp"] = xfp_calc.xfp_half_ppr if is_half else xfp_calc.xfp_ppr
+        provenance["fpoe"] = xfp_calc.fpoe_half_ppr if is_half else xfp_calc.fpoe_ppr
+        provenance["regression_signal"] = xfp_calc.regression_signal
+        provenance["opportunity_tier"] = xfp_calc.opportunity_tier
+        if "coverage_scheme_note" in locals() and coverage_scheme_note:
+            provenance["coverage_scheme_note"] = coverage_scheme_note
+
         milestone_bonus = round(max(0.0, calc_quant_half_ppr - (calc_quant_ppr - (quant_stats.receptions * 0.5))), 2) if is_half else 0.0
 
         return PlayerProjectionResult(
@@ -1245,6 +1392,13 @@ class QuantProjectionEngine:
             milestone_bonus_points=milestone_bonus,
             hvt_inside_5=hvt_inside_5,
             hvt_inside_10=hvt_inside_10,
+            xfp=xfp_calc.xfp_half_ppr if is_half else xfp_calc.xfp_ppr,
+            fpoe=xfp_calc.fpoe_half_ppr if is_half else xfp_calc.fpoe_ppr,
+            tprr_vs_zone=tprr_vs_zone if "tprr_vs_zone" in locals() else 0.0,
+            inside_5_carry_share=inside_5_share if pos in ("RB", "FB") else (0.45 if (pos == "QB" and is_dual_threat) else 0.0),
+            scramble_rate_pressured=scramble_pct if pos == "QB" else 0.0,
+            p2s_rate=p2s_rate if pos == "QB" else 0.0,
+            coverage_scheme_note=coverage_scheme_note if "coverage_scheme_note" in locals() else None,
             consensus_spread=consensus_spread,
             consensus_agreement=consensus_agreement,
             itemized_stats=reconciled_stats,

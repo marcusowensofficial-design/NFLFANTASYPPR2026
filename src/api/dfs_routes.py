@@ -309,10 +309,14 @@ async def get_slate_data(
         & (slate_df["proj"] >= 1.0)
     ].sort_values(by="salary", ascending=False)
 
-    player_items = _to_clean_records(clean_pool[[
+    desired_cols = [
         "player_id", "name", "position", "team", "opponent", "salary", "proj", "ceiling_proj", "floor_proj",
-        "team_implied", "opp_soft_rank", "opp_tier", "opp_tier_label", "opp_fd_fpa", "value_ratio", "proj_ownership", "ownership_tier", "leverage_score"
-    ]])
+        "team_implied", "opp_soft_rank", "opp_tier", "opp_tier_label", "opp_fd_fpa", "value_ratio", "proj_ownership", "ownership_tier", "leverage_score",
+        "xfp", "fpoe", "tprr_vs_zone", "inside_5_carry_share", "scramble_rate_pressured", "p2s_rate", "scheme_note",
+        "separation_score", "first_read_pct", "regression_index"
+    ]
+    available_cols = [col for col in desired_cols if col in clean_pool.columns]
+    player_items = _to_clean_records(clean_pool[available_cols])
 
     raw_resp = {
         "slate_id": slate_id,

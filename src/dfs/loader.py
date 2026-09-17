@@ -23,6 +23,7 @@ from src.services.recommendation.projection_engine import (
     quant_projection_engine,
     get_receiver_micro_metrics,
     get_team_trench_metrics,
+    get_player_nextgen_metrics,
 )
 from src.db.models import PlayerModel
 
@@ -364,6 +365,14 @@ class DFSSlateLoader:
             vacated_note = None
             milestone_bonus = 0.0
             wr_micro = get_receiver_micro_metrics(name)
+            ng_metrics = get_player_nextgen_metrics(name, pos)
+            player_xfp = float(ng_metrics.get("xfp_half", 0.0))
+            player_fpoe = float(ng_metrics.get("fpoe_half", 0.0))
+            player_zone_tprr = float(ng_metrics.get("tprr_vs_zone", 0.0))
+            player_i5_share = float(ng_metrics.get("inside_5_carry_share", 0.0))
+            player_scramble = float(ng_metrics.get("scramble_pct_pressured", 0.0))
+            player_p2s = float(ng_metrics.get("p2s_rate", 0.0))
+            scheme_note = ng_metrics.get("notes")
 
             if is_out:
                 base_proj = 0.0
@@ -442,6 +451,13 @@ class DFSSlateLoader:
                     base_proj = model_res.projected_points
                     final_proj = model_res.projected_points
                     milestone_bonus = model_res.milestone_bonus_points
+                    player_xfp = model_res.xfp
+                    player_fpoe = model_res.fpoe
+                    player_zone_tprr = model_res.tprr_vs_zone or player_zone_tprr
+                    player_i5_share = model_res.inside_5_carry_share or player_i5_share
+                    player_scramble = model_res.scramble_rate_pressured or player_scramble
+                    player_p2s = model_res.p2s_rate or player_p2s
+                    scheme_note = model_res.coverage_scheme_note or scheme_note
 
                 # Check beneficiary mapping for elevated vacated workload
                 b_match = live_beneficiaries.get(norm_name)
@@ -541,6 +557,13 @@ class DFSSlateLoader:
                 "separation_score": wr_micro.get("separation_score"),
                 "first_read_pct": wr_micro.get("first_read_pct"),
                 "regression_index": wr_micro.get("regression_index"),
+                "xfp": player_xfp,
+                "fpoe": player_fpoe,
+                "tprr_vs_zone": player_zone_tprr,
+                "inside_5_carry_share": player_i5_share,
+                "scramble_rate_pressured": player_scramble,
+                "p2s_rate": player_p2s,
+                "scheme_note": scheme_note,
                 # Vegas Metrics
                 "game": v.get("game"),
                 "is_home": v.get("is_home"),

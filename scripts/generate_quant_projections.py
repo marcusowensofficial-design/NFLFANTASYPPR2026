@@ -90,6 +90,13 @@ def run_slate_projections(csv_path: str, mode: str, limit: int) -> list[dict[str
                 "milestone_bonus": bonus,
                 "hvt_inside_5": ppr_res.hvt_inside_5,
                 "hvt_inside_10": ppr_res.hvt_inside_10,
+                "xfp": ppr_res.xfp,
+                "fpoe": ppr_res.fpoe,
+                "tprr_vs_zone": ppr_res.tprr_vs_zone,
+                "inside_5_carry_share": ppr_res.inside_5_carry_share,
+                "scramble_rate": ppr_res.scramble_rate_pressured,
+                "p2s_rate": ppr_res.p2s_rate,
+                "scheme_note": ppr_res.coverage_scheme_note,
                 "separation_score": sep_score if sep_score is not None and not (isinstance(sep_score, float) and sep_score != sep_score) else None,
                 "first_read_pct": first_read if first_read is not None and not (isinstance(first_read, float) and first_read != first_read) else None,
                 "regression_index": reg_idx if reg_idx is not None and not (isinstance(reg_idx, float) and reg_idx != reg_idx) else None,
@@ -103,19 +110,19 @@ def run_slate_projections(csv_path: str, mode: str, limit: int) -> list[dict[str
 
     # Print Table
     header = (
-        f"{'Player':<22} {'Team':<5} {'Pos':<5} {'Salary':<8} "
-        f"{'Half-PPR':<10} {'Full-PPR':<10} {'Delta':<8} {'Val/k':<8} {'HVT<5':<7} {'HVT<10':<7} {'SepScr':<8} {'RegIdx':<8}"
+        f"{'Player':<20} {'Team':<5} {'Pos':<5} {'Salary':<8} "
+        f"{'Half-PPR':<9} {'Full-PPR':<9} {'xFP':<7} {'FPOE':<7} {'Val/k':<6} {'HVT<5':<6} {'ZnTPRR':<7} {'SepScr':<7}"
     )
     print("\n" + header)
     print("-" * len(header))
     for r in top_results:
         sep_str = f"{r['separation_score']:.2f}" if r['separation_score'] is not None else "-"
-        reg_str = f"{r['regression_index']:.2f}" if r['regression_index'] is not None else "-"
+        zn_str = f"{r['tprr_vs_zone']:.2f}" if r['tprr_vs_zone'] > 0 else "-"
         sal_str = f"${r['salary']:,}" if r['salary'] > 0 else "-"
         line = (
-            f"{r['player'][:21]:<22} {r['team']:<5} {r['position']:<5} {sal_str:<8} "
-            f"{r['half_ppr']:<10.2f} {r['full_ppr']:<10.2f} {r['delta']:<+8.2f} {r['value_pt_per_k']:<8.2f} "
-            f"{r['hvt_inside_5']:<7.2f} {r['hvt_inside_10']:<7.2f} {sep_str:<8} {reg_str:<8}"
+            f"{r['player'][:19]:<20} {r['team']:<5} {r['position']:<5} {sal_str:<8} "
+            f"{r['half_ppr']:<9.2f} {r['full_ppr']:<9.2f} {r['xfp']:<7.2f} {r['fpoe']:<+7.2f} {r['value_pt_per_k']:<6.2f} "
+            f"{r['hvt_inside_5']:<6.2f} {zn_str:<7} {sep_str:<7}"
         )
         print(line)
 
