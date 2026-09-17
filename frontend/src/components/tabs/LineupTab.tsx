@@ -1180,8 +1180,14 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                           <button
                             className="btn-link"
                             onClick={() => setExpandedWhy(isExpanded ? null : p.player_id)}
+                            style={{
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
                           >
-                            {isExpanded ? 'Hide Player Factors Analysis' : 'Player Factors Analysis'}
+                            {isExpanded ? '🧠 Hide Player Factors Analysis' : '🧠 Player Factors Analysis'}
                           </button>
                           <button
                             className="btn btn-secondary btn-sm"
@@ -1833,9 +1839,15 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                               <button
                                 className="btn-link"
                                 onClick={() => setExpandedWhy(expandedWhy === b.player_id ? null : b.player_id)}
-                                style={{ color: expandedWhy === b.player_id ? 'var(--accent-cyan)' : 'var(--text-secondary)' }}
+                                style={{
+                                  color: expandedWhy === b.player_id ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                                  fontWeight: 600,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
                               >
-                                {expandedWhy === b.player_id ? 'Hide Player Factors Analysis' : 'Player Factors Analysis'}
+                                {expandedWhy === b.player_id ? '🧠 Hide Player Factors Analysis' : '🧠 Player Factors Analysis'}
                               </button>
                               <button
                                 className="btn btn-secondary btn-sm"
