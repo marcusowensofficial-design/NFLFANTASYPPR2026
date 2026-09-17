@@ -475,6 +475,8 @@ def calculate_start_sit_matchup_score(
     is_receiving_back: bool = False,
     is_slot_wr: bool = False,
     dvp_fpa: dict[str, Any] | None = None,
+    opp_implied_total: float | None = None,
+    spread: float | None = None,
 ) -> FactorScoreDetail:
     """Calculates objective opponent defensive favorability.
     
@@ -482,6 +484,7 @@ def calculate_start_sit_matchup_score(
     - 70% Positional DvP Rank (1=toughest, 32=softest).
     - 20% Overall Defensive Rank (or Opponent Offensive Rank for D/ST).
     - 10% Role/Funnel Alignment.
+    - Vegas Market Anchoring: Low opponent implied total (<18.0) strongly boosts D/ST favorability.
     - True Opponent Generosity: Tough opponents score low (Rank 1 -> 20-30s),
       soft opponents score high (Rank 32 -> 85-95s).
     - Buckets: Smash (85-100), Favorable (70-84), Neutral (55-69), Tough (40-54), Brutal (<40).
@@ -531,6 +534,20 @@ def calculate_start_sit_matchup_score(
     # Scale to 20.0 - 95.0 range
     final_score = round(20.0 + (blended_pct * 75.0), 1)
 
+    reasons: list[str] = []
+
+    # Vegas Anchor for D/ST Matchup Scoring
+    if is_dst and opp_implied_total is not None and opp_implied_total > 0:
+        if opp_implied_total <= 17.5:
+            final_score = min(98.0, final_score + 8.0)
+            reasons.append(f"[Vegas Anchor] 🎯 Low Implied Total Opponent: {opp} projected for only {opp_implied_total:.1f} pts (prime D/ST turnover/sack environment)")
+        elif opp_implied_total <= 19.5:
+            final_score = min(95.0, final_score + 4.0)
+            reasons.append(f"[Vegas Anchor] 🛡️ Favorable Implied Total: {opp} held to {opp_implied_total:.1f} implied pts by Vegas markets")
+        elif opp_implied_total >= 25.0:
+            final_score = max(20.0, final_score - 8.0)
+            reasons.append(f"[Vegas Anchor] ⚠️ High Implied Total Warning: {opp} projected for {opp_implied_total:.1f} pts (elevated shootout/bust risk)")
+
     # Buckets perfectly aligned to FantasyPros 1-5 Star Matchup Key
     stars = client.get_matchup_stars(pos_rank)
     if final_score >= 80.0 or stars == 5:
@@ -549,7 +566,6 @@ def calculate_start_sit_matchup_score(
         bucket = "BRUTAL"
         bucket_color = "rose"
 
-    reasons: list[str] = []
     if stars == 5 or pos_rank >= 27:
         reasons.append(f"[Matchup] ⭐ 5-Star Smash Matchup: Facing #{pos_rank} defense vs {pos} (softest tier in NFL, generous fantasy points conceded)")
     elif stars == 4 or pos_rank >= 21:
@@ -581,6 +597,7 @@ def calculate_start_sit_matchup_score(
         "opp_def_rank": overall_rank,
         "opp_role_rank": role_rank,
         "matchup_stars": stars,
+        "opp_implied_total": opp_implied_total,
     }
 
     contributions = {
@@ -801,12 +818,24 @@ def calculate_comparator_factors_for_evaluation(
         volume_share=share,
     )
 
+    opp_itt = None
+    if nfl_game and hasattr(nfl_game, "get_implied_total_for_team"):
+        opp_itt = nfl_game.get_implied_total_for_team(opp)
+    elif hasattr(evaluation, "opp_implied_total"):
+        opp_itt = getattr(evaluation, "opp_implied_total", None)
+
+    spread_val = getattr(evaluation, "spread", None)
+    if spread_val is None and nfl_game:
+        spread_val = getattr(nfl_game, "spread", None)
+
     match_factor = calculate_start_sit_matchup_score(
         position=pos,
         opponent_team=opp,
         is_receiving_back=is_receiving_back,
         is_slot_wr=is_slot_wr,
         dvp_fpa=getattr(evaluation, "dvp_fpa", None),
+        opp_implied_total=opp_itt,
+        spread=spread_val,
     )
 
     env_factor = calculate_start_sit_environment_score(

@@ -354,6 +354,7 @@ async def calculate_in_house_dvp(
     for team in ALL_32_NFL_TEAMS.keys():
         team_stats[team] = {
             "games_played": 0,
+            "opponents": [],
             "QB": {"half_ppr": 0.0, "full_ppr": 0.0, "pass_yds": 0.0, "pass_tds": 0.0, "ints": 0.0, "sacks": 0.0, "rush_yds": 0.0, "rush_tds": 0.0},
             "RB": {"half_ppr": 0.0, "full_ppr": 0.0, "rush_yds": 0.0, "rush_tds": 0.0, "targets": 0.0, "receptions": 0.0, "rec_yds": 0.0, "rec_tds": 0.0},
             "WR": {"half_ppr": 0.0, "full_ppr": 0.0, "targets": 0.0, "receptions": 0.0, "rec_yds": 0.0, "rec_tds": 0.0, "rush_yds": 0.0, "rush_tds": 0.0},
@@ -380,6 +381,8 @@ async def calculate_in_house_dvp(
                     continue
 
                 team_stats[def_team]["games_played"] += 0.5  # each game has 2 offensive sides, so +0.5 per side = 1.0 game
+                if off_team and off_team not in team_stats[def_team]["opponents"]:
+                    team_stats[def_team]["opponents"].append(off_team)
 
                 player_stats: dict[str, dict[str, Any]] = {}
                 team_sacks = 0.0
@@ -502,17 +505,57 @@ async def calculate_in_house_dvp(
                         bucket["rec_yds"] += pstats["rec_yds"]
                         bucket["rec_tds"] += pstats["rec_tds"]
 
-    # Compute Bayesian weighting schedule based on sample games
-    # Week 2 (1 game): 70% 2026 + 30% baseline
-    # Week 3 (2 games): 85% 2026 + 15% baseline
-    # Week 4+ (3+ games): 100% 2026
+    # Accumulate opponents faced to calculate Opponent-Adjusted FPA (aFPA)
+    # Track which offense each defense faced during the sample period
+    # Compute Bayesian weighting schedule based on sample games (Empirical Bayes Shrinkage):
+    # In NFL defensive analytics, raw points allowed requires 6-8 games to correlate more
+    # with future performance than preseason market baselines.
+    # Week 2 (1 game sample): 25% realized sample + 75% baseline prior (anchors against single-game noise)
+    # Week 3 (2 games): 40% realized + 60% baseline prior
+    # Week 4 (3 games): 55% realized + 45% baseline prior
+    # Week 5 (4 games): 70% realized + 30% baseline prior
+    # Week 6 (5 games): 85% realized + 15% baseline prior
+    # Week 7+ (6+ games): 100% realized
     sample_games = max(1, len(weeks_to_process))
     if sample_games == 1:
-        current_weight, base_weight = 0.70, 0.30
+        current_weight, base_weight = 0.25, 0.75
     elif sample_games == 2:
+        current_weight, base_weight = 0.40, 0.60
+    elif sample_games == 3:
+        current_weight, base_weight = 0.55, 0.45
+    elif sample_games == 4:
+        current_weight, base_weight = 0.70, 0.30
+    elif sample_games == 5:
         current_weight, base_weight = 0.85, 0.15
     else:
         current_weight, base_weight = 1.00, 0.00
+
+    from src.adapters.nfl.dvp_client import DEFAULT_DVP_PROFILES
+
+    def _get_opp_strength(opponents: list[str], position_code: str) -> float:
+        """Calculates opponent offensive strength factor (0.75 to 1.25) across games faced.
+        1.0 = average league offense.
+        > 1.0 = powerhouse offense (e.g. 1.20 for Detroit / Buffalo / KC).
+        < 1.0 = low-scoring/sluggish offense (e.g. 0.80 for Carolina / New England).
+        """
+        if not opponents:
+            return 1.0
+        factors = []
+        league_base = DEFAULT_BASELINE_FPA.get(position_code, {}).get("half_ppr", 16.0)
+        for opp_code in opponents:
+            opp_norm = normalize_team(opp_code)
+            prof = DEFAULT_DVP_PROFILES.get(opp_norm)
+            off_rank = prof.overall_off_rank if prof else 16
+            rank_delta = (16.5 - off_rank) / 15.5
+
+            pos_base = baseline_by_team.get(opp_norm, {}).get(position_code, {}).get("prior_season_fpa", league_base)
+            pos_ratio = (pos_base / league_base) if league_base > 0 else 1.0
+            pos_delta = max(-1.0, min(1.0, (pos_ratio - 1.0) / 0.25))
+
+            blended_delta = (0.60 * rank_delta) + (0.40 * pos_delta)
+            strength_factor = 1.0 + (blended_delta * 0.25)
+            factors.append(max(0.75, min(1.25, strength_factor)))
+        return sum(factors) / len(factors) if factors else 1.0
 
     output_by_position: dict[str, list[dict[str, Any]]] = {"QB": [], "RB": [], "WR": [], "TE": []}
 
@@ -523,6 +566,8 @@ async def calculate_in_house_dvp(
             team_name = ALL_32_NFL_TEAMS.get(team, team)
             games = max(1.0, tdata.get("games_played", 1.0))
             pdata = tdata[pos]
+            opponents_faced = tdata.get("opponents", [])
+            opp_strength = _get_opp_strength(opponents_faced, pos)
 
             # Prior season baseline from DraftEdge
             base_info = baseline_by_team.get(team, {}).get(pos, {})
@@ -559,39 +604,61 @@ async def calculate_in_house_dvp(
                 realized_half = calc_half
                 realized_full = calc_full
             else:
-                realized_half = pdata["half_ppr"] / games
-                realized_full = pdata["full_ppr"] / games
+                # Opponent-Adjusted FPA (aFPA): Normalize realized production by the strength of the opponent offense
+                adj_half = (pdata.get("half_ppr", 0.0) / games) / opp_strength
+                adj_full = (pdata.get("full_ppr", 0.0) / games) / opp_strength
+                realized_half = pdata.get("half_ppr", 0.0) / games
+                realized_full = pdata.get("full_ppr", 0.0) / games
 
                 if pos == "QB":
+                    adj_pass_yds = (pdata.get("pass_yds", 0.0) / games) / opp_strength
+                    adj_pass_td = (pdata.get("pass_tds", 0.0) / games) / opp_strength
+                    adj_rush_yds = (pdata.get("rush_yds", 0.0) / games) / opp_strength
                     supp_stats = {
-                        "pass_yds": round(pdata["pass_yds"] / games, 1),
-                        "pass_td": round(pdata["pass_tds"] / games, 2),
-                        "int": round(pdata["ints"] / games, 2),
-                        "sacks": round(pdata["sacks"] / games, 1),
-                        "qb_rush_yds": round(pdata["rush_yds"] / games, 1),
+                        "pass_yds": round((adj_pass_yds * current_weight) + (float(de_supp.get("pass_yds", adj_pass_yds)) * base_weight), 1),
+                        "pass_td": round((adj_pass_td * current_weight) + (float(de_supp.get("pass_td", adj_pass_td)) * base_weight), 2),
+                        "int": round(((pdata.get("ints", 0.0) / games) * current_weight) + (float(de_supp.get("int", 0.6)) * base_weight), 2),
+                        "sacks": round(((pdata.get("sacks", 0.0) / games) * current_weight) + (float(de_supp.get("sacks", 2.2)) * base_weight), 1),
+                        "qb_rush_yds": round((adj_rush_yds * current_weight) + (float(de_supp.get("qb_rush_yds", 15.0)) * base_weight), 1),
                     }
                 elif pos == "RB":
+                    adj_rush_yds = (pdata.get("rush_yds", 0.0) / games) / opp_strength
+                    adj_rush_td = (pdata.get("rush_tds", 0.0) / games) / opp_strength
+                    adj_targets = (pdata.get("targets", 0.0) / games) / opp_strength
+                    adj_rec = (pdata.get("receptions", 0.0) / games) / opp_strength
+                    adj_rec_yds = (pdata.get("rec_yds", 0.0) / games) / opp_strength
+                    adj_rec_td = (pdata.get("rec_tds", 0.0) / games) / opp_strength
                     supp_stats = {
-                        "rush_yds": round(pdata["rush_yds"] / games, 1),
-                        "rush_td": round(pdata["rush_tds"] / games, 2),
-                        "targets": round(pdata["targets"] / games, 1),
-                        "rec": round(pdata["receptions"] / games, 1),
-                        "rec_yds": round(pdata["rec_yds"] / games, 1),
+                        "rush_yds": round((adj_rush_yds * current_weight) + (float(de_supp.get("rush_yds", adj_rush_yds)) * base_weight), 1),
+                        "rush_td": round((adj_rush_td * current_weight) + (float(de_supp.get("rush_td", adj_rush_td)) * base_weight), 2),
+                        "targets": round((adj_targets * current_weight) + (float(de_supp.get("targets", adj_targets)) * base_weight), 1),
+                        "rec": round((adj_rec * current_weight) + (float(de_supp.get("rec", adj_rec)) * base_weight), 1),
+                        "rec_yds": round((adj_rec_yds * current_weight) + (float(de_supp.get("rec_yds", adj_rec_yds)) * base_weight), 1),
+                        "rec_td": round((adj_rec_td * current_weight) + (float(de_supp.get("rec_td", adj_rec_td)) * base_weight), 2),
                     }
                 elif pos == "WR":
+                    adj_targets = (pdata.get("targets", 0.0) / games) / opp_strength
+                    adj_rec = (pdata.get("receptions", 0.0) / games) / opp_strength
+                    adj_rec_yds = (pdata.get("rec_yds", 0.0) / games) / opp_strength
+                    adj_rec_td = (pdata.get("rec_tds", 0.0) / games) / opp_strength
+                    adj_rush_yds = (pdata.get("rush_yds", 0.0) / games) / opp_strength
                     supp_stats = {
-                        "targets": round(pdata["targets"] / games, 1),
-                        "rec": round(pdata["receptions"] / games, 1),
-                        "rec_yds": round(pdata["rec_yds"] / games, 1),
-                        "rec_td": round(pdata["rec_tds"] / games, 2),
-                        "rush_yds": round(pdata["rush_yds"] / games, 1),
+                        "targets": round((adj_targets * current_weight) + (float(de_supp.get("targets", adj_targets)) * base_weight), 1),
+                        "rec": round((adj_rec * current_weight) + (float(de_supp.get("rec", adj_rec)) * base_weight), 1),
+                        "rec_yds": round((adj_rec_yds * current_weight) + (float(de_supp.get("rec_yds", adj_rec_yds)) * base_weight), 1),
+                        "rec_td": round((adj_rec_td * current_weight) + (float(de_supp.get("rec_td", adj_rec_td)) * base_weight), 2),
+                        "rush_yds": round((adj_rush_yds * current_weight) + (float(de_supp.get("rush_yds", adj_rush_yds)) * base_weight), 1),
                     }
                 elif pos == "TE":
+                    adj_targets = (pdata.get("targets", 0.0) / games) / opp_strength
+                    adj_rec = (pdata.get("receptions", 0.0) / games) / opp_strength
+                    adj_rec_yds = (pdata.get("rec_yds", 0.0) / games) / opp_strength
+                    adj_rec_td = (pdata.get("rec_tds", 0.0) / games) / opp_strength
                     supp_stats = {
-                        "targets": round(pdata["targets"] / games, 1),
-                        "rec": round(pdata["receptions"] / games, 1),
-                        "rec_yds": round(pdata["rec_yds"] / games, 1),
-                        "rec_td": round(pdata["rec_tds"] / games, 2),
+                        "targets": round((adj_targets * current_weight) + (float(de_supp.get("targets", adj_targets)) * base_weight), 1),
+                        "rec": round((adj_rec * current_weight) + (float(de_supp.get("rec", adj_rec)) * base_weight), 1),
+                        "rec_yds": round((adj_rec_yds * current_weight) + (float(de_supp.get("rec_yds", adj_rec_yds)) * base_weight), 1),
+                        "rec_td": round((adj_rec_td * current_weight) + (float(de_supp.get("rec_td", adj_rec_td)) * base_weight), 2),
                     }
 
                 # Backfill any individual missing stats from DraftEdge if 0
@@ -599,10 +666,10 @@ async def calculate_in_house_dvp(
                     if (k not in supp_stats or supp_stats[k] == 0) and de_val:
                         supp_stats[k] = de_val
 
-                # Calculate Half-PPR and Full-PPR using our calculations
+                # Calculate Half-PPR and Full-PPR directly from blended, opponent-adjusted supporting stats
                 calc_half, calc_full = calculate_fpa_from_supporting_stats(pos, supp_stats)
-                blended_half = round((calc_half * current_weight) + (prior_fpa * base_weight), 1)
-                blended_full = round((calc_full * current_weight) + ((prior_fpa * 1.25) * base_weight), 1)
+                blended_half = calc_half
+                blended_full = calc_full
 
             # Trend calculation
             trend = "Stable"

@@ -205,15 +205,23 @@ class DvPClient:
         else:
             return 5
 
-    def calculate_matchup_score(self, opponent_team: str, position: str) -> tuple[float, str]:
+    def calculate_matchup_score(
+        self,
+        opponent_team: str,
+        position: str,
+        opponent_implied_total: float | None = None,
+        spread: float | None = None,
+    ) -> tuple[float, str]:
         """Calculates 0-100 MatchupScore using non-linear calibrated curve centered at 70 (neutral).
+        Incorporates Vegas Implied Team Totals and Spreads when available as objective market anchors.
         
         Returns:
             tuple[float, str]: (matchup_score, grade: ELITE | FAVORABLE | NEUTRAL | TOUGH | BRUTAL)
         """
         pos = position.upper().strip()
         pos_rank = self.get_position_rank(opponent_team, pos)
-        if pos in ("D/ST", "DST"):
+        is_dst = pos in ("D/ST", "DST")
+        if is_dst:
             overall_rank = self.get_overall_off_rank(opponent_team)
         else:
             overall_rank = self.get_overall_rank(opponent_team)
@@ -225,7 +233,23 @@ class DvPClient:
         pos_delta = (pos_rank - 16.5) / 15.5
         overall_delta = (overall_rank - 16.5) / 15.5
 
-        blended_delta = (0.75 * pos_delta) + (0.25 * overall_delta)
+        if is_dst:
+            blended_delta = (0.70 * pos_delta) + (0.30 * overall_delta)
+            # D/ST Vegas Anchor: Opponent Implied Total is the single highest-signal predictive market metric
+            if opponent_implied_total is not None and opponent_implied_total > 0:
+                vegas_delta = max(-1.0, min(1.0, (21.5 - opponent_implied_total) / 6.0))
+                blended_delta = (0.50 * pos_delta) + (0.20 * overall_delta) + (0.30 * vegas_delta)
+            if spread is not None:
+                # Favored defense (-spread > 0) suppresses pass attempts and creates turnover traps
+                spread_bonus = max(-0.12, min(0.12, (-spread) * 0.015))
+                blended_delta += spread_bonus
+        else:
+            blended_delta = (0.75 * pos_delta) + (0.25 * overall_delta)
+            if opponent_implied_total is not None and opponent_implied_total > 0:
+                # Offensive scoring environment adjustment
+                env_delta = max(-0.8, min(0.8, (opponent_implied_total - 21.5) / 7.0))
+                blended_delta = (0.70 * pos_delta) + (0.20 * overall_delta) + (0.10 * env_delta)
+
         score = round(70.0 + (blended_delta * 26.0), 1)
         score = max(20.0, min(100.0, score))
 

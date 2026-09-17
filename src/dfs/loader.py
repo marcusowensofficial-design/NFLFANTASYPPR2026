@@ -318,6 +318,15 @@ class DFSSlateLoader:
             if pos_clean in ("D", "DEF", "D/ST", "DST"):
                 raw_dst_rank = dvp_client.get_position_rank(opp_clean, "DST")
                 soft_rank = 33 - raw_dst_rank if raw_dst_rank else 16
+                opp_itt = v.get("opp_implied", 21.0) if v else 21.0
+                # Vegas Market Anchor: Low implied total (<18.0) upgrades D/ST softness; high implied total downgrades
+                if opp_itt <= 17.5:
+                    soft_rank = min(soft_rank, 6)
+                elif opp_itt <= 19.5:
+                    soft_rank = min(soft_rank, 12)
+                elif opp_itt >= 25.0:
+                    soft_rank = max(soft_rank, 22)
+
                 if soft_rank <= 8:
                     tier, tier_label = "SMASH", "Elite Smash Matchup"
                 elif soft_rank <= 15:
