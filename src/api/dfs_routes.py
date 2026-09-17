@@ -57,8 +57,8 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "is_showdown": False,
         "default_csv": str(DATA_DIR / "mainslate9-13-2026.csv") if (DATA_DIR / "mainslate9-13-2026.csv").exists() else str(DATA_DIR / "FanDuel-NFL-2026 MDT-09 MDT-13 MDT-133104-players-list.csv"),
     },
-    "early_week1": {
-        "id": "early_week1",
+    "early": {
+        "id": "early",
         "name": "Week 1 Early-Only Archive (8 Games)",
         "games_count": 8,
         "platform": "FanDuel ($60k Cap)",
