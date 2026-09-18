@@ -27,6 +27,8 @@ def load_and_enrich_slate(csv_path=None,
     if csv_path is None:
         if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
             csv_path = sys.argv[1]
+        elif os.path.exists("data/9-20-26-main-slate-rosters-salaries-fd-week2.csv"):
+            csv_path = "data/9-20-26-main-slate-rosters-salaries-fd-week2.csv"
         elif os.path.exists("data/FanDuel-NFL-2026 MDT-09 MDT-13 MDT-133104-players-list.csv"):
             csv_path = "data/FanDuel-NFL-2026 MDT-09 MDT-13 MDT-133104-players-list.csv"
         else:
