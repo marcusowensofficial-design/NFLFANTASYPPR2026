@@ -177,15 +177,15 @@ TEAMS_DATA = {
     "DET": {
         "team_name": "Detroit Lions",
         "cornerbacks": {
-            "outside1": {"name": "Carlton Davis III", "role": "LWR", "grade": 75.0, "is_shadow": False, "targets_per_route": 0.18, "catch_rate": 0.60, "fpts_per_route": 0.29},
-            "outside2": {"name": "Terrion Arnold", "role": "RWR", "grade": 73.0, "is_shadow": False, "targets_per_route": 0.21, "catch_rate": 0.64, "fpts_per_route": 0.33},
-            "slot": {"name": "Brian Branch", "role": "SLOT", "grade": 86.5, "is_shadow": False, "targets_per_route": 0.14, "catch_rate": 0.54, "fpts_per_route": 0.19},
-            "safety": {"name": "Kerby Joseph", "role": "FS", "grade": 82.5, "coverage_grade": 84.0, "run_def_grade": 79.5}
+            "outside1": {"name": "D.J. Reed", "role": "LWR", "grade": 74.5, "is_shadow": False, "targets_per_route": 0.18, "catch_rate": 0.60, "fpts_per_route": 0.28},
+            "outside2": {"name": "Rock Ya-Sin", "role": "RWR", "grade": 64.0, "is_shadow": False, "targets_per_route": 0.22, "catch_rate": 0.66, "fpts_per_route": 0.34},
+            "slot": {"name": "Roger McCreary", "role": "SLOT", "grade": 72.0, "is_shadow": False, "targets_per_route": 0.18, "catch_rate": 0.61, "fpts_per_route": 0.26},
+            "safety": {"name": "Brian Branch", "role": "SS", "grade": 86.5, "coverage_grade": 85.0, "run_def_grade": 88.0}
         },
         "backup_cornerbacks": {
-            "outside_backup": {"name": "Ennis Rakestraw Jr.", "grade": 68.0},
-            "slot_backup": {"name": "Amik Robertson", "grade": 71.0},
-            "safety_backup": {"name": "Ifeatu Melifonwu", "grade": 74.0}
+            "outside_backup": {"name": "Khalil Dorsey", "grade": 61.0},
+            "slot_backup": {"name": "Christian Izien", "grade": 63.5},
+            "safety_backup": {"name": "Chuck Clark", "grade": 72.0}
         },
         "offensive_line": {"pass_block_grade": 88.5, "run_block_grade": 89.0, "overall_grade": 88.8, "rank": 1, "key_tackles": ["Penei Sewell", "Taylor Decker"]},
         "defensive_line_front": {"pass_rush_grade": 88.5, "run_defense_grade": 86.0, "overall_grade": 87.2, "pressure_rate_pct": 40.0, "stuffed_run_pct": 24.5, "rank": 3, "key_disruptors": ["Aidan Hutchinson", "Alim McNeill", "Marcus Davenport"]}

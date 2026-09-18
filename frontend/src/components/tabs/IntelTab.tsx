@@ -2470,7 +2470,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
                     </span>
                   </div>
                   <p className="intel-dvp-banner-text">
-                    Fantasy points allowed (DvP) can be deceiving due to blowout garbage time or small sample sizes. Our quant model weights <strong>60% PFF Film Grades</strong> (coverage & run stop win rates) with <strong>40% DvP Fantasy Points Allowed</strong>. Crucially, when key defensive starters are ruled OUT (e.g. Seattle CB Terrion Arnold & Safety Nick Emmanwori), their unit ratings automatically degrade in real-time.
+                    Fantasy points allowed (DvP) can be deceiving due to blowout garbage time or small sample sizes. Our quant model weights <strong>60% PFF Film Grades</strong> (coverage & run stop win rates) with <strong>40% DvP Fantasy Points Allowed</strong>. Crucially, when key defensive starters are ruled OUT (e.g. Detroit CBs Ennis Rakestraw Jr. & Keith Abney II, or Buffalo DT Ed Oliver), their unit ratings automatically degrade in real-time.
                   </p>
                 </div>
               </div>

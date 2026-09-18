@@ -21,7 +21,7 @@ from scipy.optimize import milp, LinearConstraint, Bounds
 def load_and_enrich_slate(csv_path=None,
                           vegas_path="data/vegas_movement_2026.json",
                           pff_path="data/pff_scouting_2026.json",
-                          dvp_path="data/draftedge_dvp_seed.json",
+                          dvp_path="data/nfl_dvp_proprietary_2026.json" if os.path.exists("data/nfl_dvp_proprietary_2026.json") else "data/draftedge_dvp_seed.json",
                           wr_metrics_path="data/week_1_receiver_micro_metrics_2026.json",
                           coverage_path="data/week_1_defensive_coverage_2026.json"):
     if csv_path is None:

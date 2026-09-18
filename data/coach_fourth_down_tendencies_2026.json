@@ -1,0 +1,304 @@
+{
+  "metadata": {
+    "season": 2026,
+    "description": "NFL 32-Team Head Coach 4th-Down Aggressiveness, Red-Zone FG Propensity, and Kicker Variance Index",
+    "metrics_dictionary": {
+      "head_coach": "Current head coach name",
+      "go_for_it_rate_plus_territory": "Frequency (%) coach attempts 4th down conversion in opponent territory (opp 25-45 yard line)",
+      "rz_fourth_down_go_rate": "Frequency (%) coach goes for it on 4th down inside the 20-yard line",
+      "field_goal_propensity_tier": "HIGH (conservative/kicker friendly), MODERATE, or LOW (hyper-aggressive/kicker cannibal)",
+      "kicker_opportunity_multiplier": "Projected multiplier on baseline kicker FG attempts (e.g. 1.15 = +15% FG equity, 0.85 = -15% FG equity)",
+      "fourth_down_rank": "Rank from 1 (most aggressive) to 32 (most conservative)"
+    }
+  },
+  "coaches": {
+    "DET": {
+      "head_coach": "Dan Campbell",
+      "go_for_it_rate_plus_territory": 0.365,
+      "rz_fourth_down_go_rate": 0.28,
+      "field_goal_propensity_tier": "LOW",
+      "kicker_opportunity_multiplier": 0.82,
+      "fourth_down_rank": 1,
+      "notes": "Most aggressive coach in NFL. Routinely passes on 38-48 yard FGs for 4th-and-short."
+    },
+    "PHI": {
+      "head_coach": "Nick Sirianni",
+      "go_for_it_rate_plus_territory": 0.34,
+      "rz_fourth_down_go_rate": 0.32,
+      "field_goal_propensity_tier": "LOW",
+      "kicker_opportunity_multiplier": 0.85,
+      "fourth_down_rank": 2,
+      "notes": "Tush Push / Brotherly Shove makes 4th-and-1 virtually automatic. Suppresses FG volume."
+    },
+    "GB": {
+      "head_coach": "Matt LaFleur",
+      "go_for_it_rate_plus_territory": 0.295,
+      "rz_fourth_down_go_rate": 0.22,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 0.95,
+      "fourth_down_rank": 5,
+      "notes": "Analytically aggressive on 4th-and-2 or less."
+    },
+    "BUF": {
+      "head_coach": "Sean McDermott",
+      "go_for_it_rate_plus_territory": 0.245,
+      "rz_fourth_down_go_rate": 0.16,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.12,
+      "fourth_down_rank": 18,
+      "notes": "Trusts Tyler Bass inside 50 yards; takes guaranteed 3 points in close games."
+    },
+    "KC": {
+      "head_coach": "Andy Reid",
+      "go_for_it_rate_plus_territory": 0.22,
+      "rz_fourth_down_go_rate": 0.15,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.15,
+      "fourth_down_rank": 22,
+      "notes": "Elite trust in Harrison Butker in plus territory."
+    },
+    "BAL": {
+      "head_coach": "John Harbaugh",
+      "go_for_it_rate_plus_territory": 0.285,
+      "rz_fourth_down_go_rate": 0.2,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 1.05,
+      "fourth_down_rank": 8,
+      "notes": "Balanced analytical approach; relies on Justin Tucker when drive stalls outside 35."
+    },
+    "SF": {
+      "head_coach": "Kyle Shanahan",
+      "go_for_it_rate_plus_territory": 0.21,
+      "rz_fourth_down_go_rate": 0.14,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.1,
+      "fourth_down_rank": 24,
+      "notes": "Conservative on 4th down; prioritizes field position and points."
+    },
+    "DAL": {
+      "head_coach": "Mike McCarthy",
+      "go_for_it_rate_plus_territory": 0.26,
+      "rz_fourth_down_go_rate": 0.18,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.15,
+      "fourth_down_rank": 14,
+      "notes": "Brandon Aubrey weaponized from 55+ yards out."
+    },
+    "CIN": {
+      "head_coach": "Zac Taylor",
+      "go_for_it_rate_plus_territory": 0.275,
+      "rz_fourth_down_go_rate": 0.19,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 1.02,
+      "fourth_down_rank": 11,
+      "notes": "Moderate aggression; leans on McPherson in 45-55 yard range."
+    },
+    "MIA": {
+      "head_coach": "Mike McDaniel",
+      "go_for_it_rate_plus_territory": 0.315,
+      "rz_fourth_down_go_rate": 0.24,
+      "field_goal_propensity_tier": "LOW",
+      "kicker_opportunity_multiplier": 0.88,
+      "fourth_down_rank": 4,
+      "notes": "Heavy 4th down attempts in opposing territory."
+    },
+    "HOU": {
+      "head_coach": "DeMeco Ryans",
+      "go_for_it_rate_plus_territory": 0.25,
+      "rz_fourth_down_go_rate": 0.17,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.08,
+      "fourth_down_rank": 16,
+      "notes": "Defensive background; values points on the board with Fairbairn."
+    },
+    "LAR": {
+      "head_coach": "Sean McVay",
+      "go_for_it_rate_plus_territory": 0.23,
+      "rz_fourth_down_go_rate": 0.15,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.06,
+      "fourth_down_rank": 20,
+      "notes": "Prefers 4th down only on 4th-and-inches."
+    },
+    "CHI": {
+      "head_coach": "Matt Eberflus",
+      "go_for_it_rate_plus_territory": 0.235,
+      "rz_fourth_down_go_rate": 0.16,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.1,
+      "fourth_down_rank": 19,
+      "notes": "Defensive mindset; relies heavily on Cairo Santos."
+    },
+    "MIN": {
+      "head_coach": "Kevin O Connell",
+      "go_for_it_rate_plus_territory": 0.28,
+      "rz_fourth_down_go_rate": 0.21,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 1.0,
+      "fourth_down_rank": 10,
+      "notes": "Balanced modern play-caller with rookie kicker."
+    },
+    "TB": {
+      "head_coach": "Todd Bowles",
+      "go_for_it_rate_plus_territory": 0.19,
+      "rz_fourth_down_go_rate": 0.12,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.18,
+      "fourth_down_rank": 28,
+      "notes": "Very conservative 4th down decision maker; kicks early and often."
+    },
+    "PIT": {
+      "head_coach": "Mike Tomlin",
+      "go_for_it_rate_plus_territory": 0.18,
+      "rz_fourth_down_go_rate": 0.11,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.22,
+      "fourth_down_rank": 30,
+      "notes": "Traditional football; Boswell is a massive fantasy asset due to FG volume."
+    },
+    "DEN": {
+      "head_coach": "Sean Payton",
+      "go_for_it_rate_plus_territory": 0.27,
+      "rz_fourth_down_go_rate": 0.19,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 1.04,
+      "fourth_down_rank": 12,
+      "notes": "Altitude benefits Lutz; takes deep 50+ yard kicks."
+    },
+    "ATL": {
+      "head_coach": "Raheem Morris",
+      "go_for_it_rate_plus_territory": 0.265,
+      "rz_fourth_down_go_rate": 0.18,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 1.05,
+      "fourth_down_rank": 13,
+      "notes": "Koo high floor in dome."
+    },
+    "NO": {
+      "head_coach": "Dennis Allen",
+      "go_for_it_rate_plus_territory": 0.195,
+      "rz_fourth_down_go_rate": 0.13,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.16,
+      "fourth_down_rank": 27,
+      "notes": "Field position defense-oriented coach."
+    },
+    "ARI": {
+      "head_coach": "Jonathan Gannon",
+      "go_for_it_rate_plus_territory": 0.32,
+      "rz_fourth_down_go_rate": 0.25,
+      "field_goal_propensity_tier": "LOW",
+      "kicker_opportunity_multiplier": 0.88,
+      "fourth_down_rank": 3,
+      "notes": "Top 3 aggressive coach on 4th down."
+    },
+    "IND": {
+      "head_coach": "Shane Steichen",
+      "go_for_it_rate_plus_territory": 0.305,
+      "rz_fourth_down_go_rate": 0.23,
+      "field_goal_propensity_tier": "LOW",
+      "kicker_opportunity_multiplier": 0.9,
+      "fourth_down_rank": 6,
+      "notes": "Richardson QB sneaks encourage 4th-down attempts."
+    },
+    "JAC": {
+      "head_coach": "Doug Pederson",
+      "go_for_it_rate_plus_territory": 0.29,
+      "rz_fourth_down_go_rate": 0.22,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 0.95,
+      "fourth_down_rank": 7,
+      "notes": "Aggressive pedigree from Philly days."
+    },
+    "CLE": {
+      "head_coach": "Kevin Stefanski",
+      "go_for_it_rate_plus_territory": 0.28,
+      "rz_fourth_down_go_rate": 0.2,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 1.02,
+      "fourth_down_rank": 9,
+      "notes": "Heavy analytics department influences go decisions."
+    },
+    "NYJ": {
+      "head_coach": "Robert Saleh",
+      "go_for_it_rate_plus_territory": 0.215,
+      "rz_fourth_down_go_rate": 0.14,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.12,
+      "fourth_down_rank": 23,
+      "notes": "Relies on Greg Zuerlein leg; defensive philosophy."
+    },
+    "LAC": {
+      "head_coach": "Jim Harbaugh",
+      "go_for_it_rate_plus_territory": 0.225,
+      "rz_fourth_down_go_rate": 0.15,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.12,
+      "fourth_down_rank": 21,
+      "notes": "Run heavy, field position control, Cameron Dicker usage."
+    },
+    "SEA": {
+      "head_coach": "Mike Macdonald",
+      "go_for_it_rate_plus_territory": 0.255,
+      "rz_fourth_down_go_rate": 0.18,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 1.05,
+      "fourth_down_rank": 15,
+      "notes": "Jason Myers reliable asset."
+    },
+    "WAS": {
+      "head_coach": "Dan Quinn",
+      "go_for_it_rate_plus_territory": 0.24,
+      "rz_fourth_down_go_rate": 0.17,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.08,
+      "fourth_down_rank": 17,
+      "notes": "Balanced defensive coach."
+    },
+    "NYG": {
+      "head_coach": "Brian Daboll",
+      "go_for_it_rate_plus_territory": 0.27,
+      "rz_fourth_down_go_rate": 0.2,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 1.0,
+      "fourth_down_rank": 12,
+      "notes": "Situational aggression."
+    },
+    "LV": {
+      "head_coach": "Antonio Pierce",
+      "go_for_it_rate_plus_territory": 0.175,
+      "rz_fourth_down_go_rate": 0.11,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.24,
+      "fourth_down_rank": 31,
+      "notes": "Daniel Carlson is an elite fantasy kicker due to Pierce taking FGs."
+    },
+    "TEN": {
+      "head_coach": "Brian Callahan",
+      "go_for_it_rate_plus_territory": 0.25,
+      "rz_fourth_down_go_rate": 0.18,
+      "field_goal_propensity_tier": "MODERATE",
+      "kicker_opportunity_multiplier": 1.05,
+      "fourth_down_rank": 16,
+      "notes": "First-year head coach learning pacing."
+    },
+    "NE": {
+      "head_coach": "Jerod Mayo",
+      "go_for_it_rate_plus_territory": 0.185,
+      "rz_fourth_down_go_rate": 0.12,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.2,
+      "fourth_down_rank": 29,
+      "notes": "Joey Slye high attempt volume in low-scoring games."
+    },
+    "CAR": {
+      "head_coach": "Dave Canales",
+      "go_for_it_rate_plus_territory": 0.17,
+      "rz_fourth_down_go_rate": 0.1,
+      "field_goal_propensity_tier": "HIGH",
+      "kicker_opportunity_multiplier": 1.15,
+      "fourth_down_rank": 32,
+      "notes": "Most conservative in goal-line 4th downs; takes easy points with Pineiro."
+    }
+  }
+}

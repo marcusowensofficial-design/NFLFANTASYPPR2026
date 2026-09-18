@@ -94,6 +94,7 @@ _receiver_micro_metrics_cache: dict[str, Any] = {"mtime": 0, "players": {}}
 _pff_trench_cache: dict[str, Any] = {"mtime": 0, "teams": {}}
 _depth_charts_cache: dict[str, Any] = {"mtime": 0, "players": {}}
 _nfl_intelligence_cache: dict[str, Any] = {"mtime": 0, "players": {}}
+_coach_tendencies_cache: dict[str, Any] = {"mtime": 0, "coaches": {}}
 
 
 def _load_injury_wire_cache() -> None:
@@ -356,11 +357,36 @@ def get_team_coverage_metrics(team_abbrev: str) -> dict[str, Any]:
     return _nextgen_advanced_cache.get("data", {}).get("teams_coverage", {}).get(t, {})
 
 
+def _load_coach_tendencies_cache() -> None:
+    global _coach_tendencies_cache
+    import json
+    from pathlib import Path
+    c_file = Path(__file__).resolve().parent.parent.parent.parent / "data" / "coach_fourth_down_tendencies_2026.json"
+    if not c_file.exists():
+        return
+    mtime = c_file.stat().st_mtime
+    if _coach_tendencies_cache.get("mtime") == mtime:
+        return
+    try:
+        with open(c_file, encoding="utf-8") as f:
+            data = json.load(f)
+        _coach_tendencies_cache = {"mtime": mtime, "coaches": data.get("coaches", {})}
+    except Exception as e:
+        logger.debug(f"Failed to load coach tendencies cache: {e}")
+
+
 def get_team_coaching_forensics(team_abbrev: str) -> dict[str, Any]:
     """Retrieve team coaching forensics (4th-down aggression %, goal-line personnel rates)."""
     _load_nextgen_advanced_cache()
+    _load_coach_tendencies_cache()
     t = (team_abbrev or "").upper().strip()
-    return _nextgen_advanced_cache.get("data", {}).get("team_forensics", {}).get(t, {})
+    forensics = dict(_nextgen_advanced_cache.get("data", {}).get("team_forensics", {}).get(t, {}))
+    coach_info = _coach_tendencies_cache.get("coaches", {}).get(t, {})
+    if coach_info:
+        forensics.update(coach_info)
+        if "coach_4th_down_aggression_pct" not in forensics:
+            forensics["coach_4th_down_aggression_pct"] = round(float(coach_info.get("go_for_it_rate_plus_territory", 0.25)) * 200.0, 1)
+    return forensics
 
 
 def _load_depth_charts_cache() -> None:
@@ -1179,7 +1205,7 @@ class QuantProjectionEngine:
             opp_rz = get_team_redzone_efficiency(context.opponent)
             team_forensics = get_team_coaching_forensics(player.pro_team)
             coach_aggression = float(team_forensics.get("coach_4th_down_aggression_pct", 50.0))
-            coach_fg_mult = 1.15 if coach_aggression <= 45.0 else (0.88 if coach_aggression >= 75.0 else 1.0)
+            coach_fg_mult = float(team_forensics.get("kicker_opportunity_multiplier", 1.15 if coach_aggression <= 45.0 else (0.88 if coach_aggression >= 75.0 else 1.0)))
 
             fg_rate = float(team_rz.get("offense", {}).get("rz_fg_attempt_rate_pct", 36.0)) / 100.0
             opp_stop = float(opp_rz.get("defense", {}).get("rz_stop_rate_pct", 45.0)) / 100.0
