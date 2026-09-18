@@ -41,13 +41,29 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "is_showdown": False,
         "default_csv": str(DATA_DIR / "9-20-26-main-slate-rosters-salaries-fd-week2.csv"),
     },
+    "showdown_dal_nyg": {
+        "id": "showdown_dal_nyg",
+        "name": "Week 2 Showdown: Dallas at NY Giants ($60k)",
+        "games_count": 1,
+        "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
+        "is_showdown": True,
+        "default_csv": str(DATA_DIR / "DALLASVSNYGSINGLEGAMESLATE.csv"),
+    },
     "showdown_tnf": {
         "id": "showdown_tnf",
-        "name": "Week 2 TNF: Detroit at Buffalo ($60k Showdown)",
+        "name": "Week 2 TNF Archive: Detroit at Buffalo (Final 41-31)",
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
         "is_showdown": True,
         "default_csv": str(DATA_DIR / "detvsbuffalosinglegameslaterostersnsalaries.csv"),
+    },
+    "showdown_w1_mnf": {
+        "id": "showdown_w1_mnf",
+        "name": "Week 1 MNF Archive: Denver at Kansas City",
+        "games_count": 1,
+        "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
+        "is_showdown": True,
+        "default_csv": str(DATA_DIR / "KCVSBRONCOSSINGLEGAMESLATE9-14-26.csv"),
     },
     "main_week1": {
         "id": "main_week1",
@@ -76,11 +92,23 @@ def _resolve_csv_path(slate_id: str) -> str:
             return str(uploaded_path)
         raise HTTPException(status_code=404, detail="No uploaded FanDuel CSV found. Please upload one first.")
 
+    # Check for Dallas vs NYG showdown
+    if sid in ("showdown_dal_nyg", "dal_nyg", "dal@nyg", "cowboys_giants", "giants_cowboys", "dallas_nyg"):
+        dal_path = DATA_DIR / "DALLASVSNYGSINGLEGAMESLATE.csv"
+        if dal_path.exists():
+            return str(dal_path)
+
     # Check for TNF showdown variants
     if sid in ("showdown_tnf", "det_buf", "tnf", "showdown"):
         tnf_path = DATA_DIR / "detvsbuffalosinglegameslaterostersnsalaries.csv"
         if tnf_path.exists():
             return str(tnf_path)
+
+    # Check for Week 1 MNF showdown
+    if sid in ("showdown_w1_mnf", "kc_den", "mnf", "kc@den"):
+        w1_mnf = DATA_DIR / "KCVSBRONCOSSINGLEGAMESLATE9-14-26.csv"
+        if w1_mnf.exists():
+            return str(w1_mnf)
 
     # Week 2 Main Slate checks
     if sid in ("main", "week2", "week2_main", "main_week2"):
@@ -383,14 +411,24 @@ async def optimize_dfs_lineup(payload: DFSOptimizeRequest) -> dict[str, Any]:
         mode_str = "GPP" if "GPP" in (payload.mode or "GPP").upper() else "CASH"
 
         if payload.num_lineups > 1:
-            all_scripts = solver.generate_all_scripts(
+            port = solver.generate_portfolio(
                 df_slate=slate_df,
+                num_lineups=payload.num_lineups,
+                max_flex_exposure=0.50,
                 mode=mode_str,
-                lock_mvp=lock_mvp,
-                lock_players=regular_locks if regular_locks else None,
+                allow_sub3500_punts=True,
                 exclude_players=payload.exclude_players if payload.exclude_players else None,
             )
-            valid_lineups = [l for l in all_scripts.values() if l is not None]
+            valid_lineups = port["lineups"] if port and "lineups" in port else []
+            if not valid_lineups:
+                all_scripts = solver.generate_all_scripts(
+                    df_slate=slate_df,
+                    mode=mode_str,
+                    lock_mvp=lock_mvp,
+                    lock_players=regular_locks if regular_locks else None,
+                    exclude_players=payload.exclude_players if payload.exclude_players else None,
+                )
+                valid_lineups = [l for l in all_scripts.values() if l is not None]
             if not valid_lineups:
                 # Fallback to pure solve
                 sol = solver.solve(

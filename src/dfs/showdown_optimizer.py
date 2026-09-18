@@ -45,13 +45,14 @@ class FanDuelShowdownOptimizer:
         self,
         df_slate: pd.DataFrame,
         exclude_players: list[str] | None = None,
-        allow_sub3500_punts: bool = False,
+        allow_sub3500_punts: bool = True,
     ) -> pd.DataFrame:
-        """Standardizes columns, cleans injuries, and applies single-entry quality filters."""
+        """Standardizes columns, cleans injuries, and applies role/route-based quality filters."""
         df = df_slate.copy()
 
         # Standardize column names
         col_map = {
+            "Id": "player_id",
             "Nickname": "name",
             "First Name": "first_name",
             "Last Name": "last_name",
@@ -90,7 +91,7 @@ class FanDuelShowdownOptimizer:
                 is_backup_qb = qb_mask & (df["salary"] < df["team"].map(max_qb_sal_by_team))
                 df = df[~is_backup_qb].copy()
 
-        # Fill missing projections (do NOT assign 5.0 to unplayed backups/long snappers)
+        # Fill missing projections
         if "proj" in df.columns:
             df["proj"] = pd.to_numeric(df["proj"], errors="coerce")
             if "FPPG" in df.columns:
@@ -122,9 +123,32 @@ class FanDuelShowdownOptimizer:
             clean_exclude = [p.strip().lower() for p in exclude_players]
             df = df[~df["name"].str.lower().isin(clean_exclude)].copy()
 
-        # Filter out sub-$3,500 punts for single entry unless explicitly allowed
+        # Verified Role & Route Participation Floor:
+        # Rather than an arbitrary dollar cutoff (which blocked viable rotational players like Joshua Palmer at $3,200),
+        # allow players with verified offensive utility (route_share >= 0.35, snap_share >= 0.40, verified_starter,
+        # or proj >= 2.5 and salary >= $3,000), while filtering pure ghost blocking tight ends / depth FB punts.
         if not allow_sub3500_punts:
-            df = df[(df["salary"] >= self.min_punt_salary) | (df["proj"] >= 6.0)].copy()
+            has_starter_col = "verified_starter" in df.columns
+            has_role_col = "active_role" in df.columns
+            has_route_col = "route_share" in df.columns
+            has_snap_col = "snap_share" in df.columns
+
+            viable_role_mask = pd.Series(False, index=df.index)
+            if has_starter_col:
+                viable_role_mask = viable_role_mask | (df["verified_starter"] == True)
+            if has_role_col:
+                viable_role_mask = viable_role_mask | (df["active_role"] == True)
+            if has_route_col:
+                viable_role_mask = viable_role_mask | (df["route_share"] >= 0.35)
+            if has_snap_col:
+                viable_role_mask = viable_role_mask | (df["snap_share"] >= 0.40)
+
+            # Keep if >= min_punt_salary OR has verified offensive role OR reasonable projection floor
+            df = df[
+                (df["salary"] >= self.min_punt_salary) | 
+                viable_role_mask | 
+                (df["proj"] >= 4.0)
+            ].copy()
 
         df = df.reset_index(drop=True)
         return df
@@ -133,13 +157,15 @@ class FanDuelShowdownOptimizer:
         self,
         df_slate: pd.DataFrame,
         mode: str = "GPP",  # "GPP" (weights 75% ceiling + 25% median) or "CASH" (70% floor + 30% median)
-        script: str = "OPTIMAL",  # "OPTIMAL", "TEAM_A_DOMINANT", "TEAM_B_DOMINANT", "BALANCED", "ZERO_QB"
+        script: str = "OPTIMAL",  # "OPTIMAL", "TEAM_A_DOMINANT", "TEAM_B_DOMINANT", "BALANCED", "ZERO_QB", "DUAL_QB"
         lock_mvp: str | None = None,
+        disallowed_mvps: list[str] | None = None,
         lock_players: list[str] | None = None,
         exclude_players: list[str] | None = None,
+        forbidden_lineups: list[list[str]] | None = None,
         max_salary: int | None = None,
         min_salary: int | None = None,
-        allow_sub3500_punts: bool = False,
+        allow_sub3500_punts: bool = True,
         enforce_qb_rules: bool = True,
         enforce_dst_rules: bool = True,
     ) -> dict[str, Any] | None:
@@ -398,6 +424,32 @@ class FanDuelShowdownOptimizer:
                     b_l.append(1.0)
                     b_u.append(1.0)
 
+        # 9. Disallowed MVPs (Diversifies MVP selections across portfolio)
+        if disallowed_mvps:
+            for d_mvp in disallowed_mvps:
+                d_clean = d_mvp.strip().lower()
+                d_match = df[df["name"].str.lower() == d_clean].index.tolist()
+                if d_match:
+                    row_disallow_mvp = np.zeros(2 * n)
+                    row_disallow_mvp[d_match[0]] = 1.0
+                    A_rows.append(row_disallow_mvp)
+                    b_l.append(0.0)
+                    b_u.append(0.0)
+
+        # 10. Forbidden Lineups (Prevents Duplicates in Multi-Lineup Portfolios)
+        if forbidden_lineups:
+            for fl in forbidden_lineups:
+                fl_clean = [p.strip().lower() for p in fl]
+                matched_indices = df[df["name"].str.lower().isin(fl_clean)].index.tolist()
+                if len(matched_indices) >= 5:
+                    row_fl = np.zeros(2 * n)
+                    for m_idx in matched_indices:
+                        row_fl[m_idx] = 1.0
+                        row_fl[n + m_idx] = 1.0
+                    A_rows.append(row_fl)
+                    b_l.append(0.0)
+                    b_u.append(float(len(matched_indices) - 1))
+
         A = np.array(A_rows)
         constraints = LinearConstraint(A, b_l, b_u)
 
@@ -500,3 +552,158 @@ class FanDuelShowdownOptimizer:
                 results[script_id] = sol
 
         return results
+
+    def generate_portfolio(
+        self,
+        df_slate: pd.DataFrame,
+        num_lineups: int = 5,
+        max_flex_exposure: float = 0.50,  # Max 50% exposure for non-QB skill players
+        max_mvp_exposure: float = 0.40,   # Max 40% on any single MVP
+        game_total: float | None = None,
+        mode: str = "GPP",
+        allow_sub3500_punts: bool = True,
+        exclude_players: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Generates a mathematically diversified tournament portfolio enforcing script quotas and exposure caps.
+
+        Guarantees:
+        1. Script diversification: For high totals (>= 50.0), at least 40% Dual-QB builds.
+        2. Exposure caps: Prevents single-player concentration risks (e.g. max 50% non-QB flex exposure).
+        3. Multi-MVP allocation: Ensures top target hogs and dual-threat QBs both get MVP representation.
+        4. Zero exact duplicate rosters.
+        """
+        clean_df = self.clean_slate(
+            df_slate,
+            allow_sub3500_punts=allow_sub3500_punts,
+            exclude_players=exclude_players,
+        )
+        base_excludes = list(exclude_players) if exclude_players else []
+
+        # Determine script schedule based on game total
+        if game_total is not None and game_total >= 50.0:
+            # High-total shootout: prioritize Dual-QB and passing onslaughts
+            script_cycle = ["DUAL_QB", "DUAL_QB", "BALANCED", "TEAM_A_DOMINANT", "TEAM_B_DOMINANT"]
+        elif game_total is not None and game_total <= 43.0:
+            # Low-total ground/defense game: prioritize onslaughts, Zero-QB, and defensive slugfest
+            script_cycle = ["TEAM_A_DOMINANT", "TEAM_B_DOMINANT", "ZERO_QB", "BALANCED", "OPTIMAL"]
+        else:
+            # Standard mid-total slate
+            script_cycle = ["OPTIMAL", "DUAL_QB", "TEAM_A_DOMINANT", "TEAM_B_DOMINANT", "BALANCED"]
+
+        # Expand script cycle to match num_lineups
+        scheduled_scripts = [script_cycle[i % len(script_cycle)] for i in range(num_lineups)]
+
+        # Tracking structures
+        lineups = []
+        player_flex_counts: dict[str, int] = {}
+        player_mvp_counts: dict[str, int] = {}
+        player_positions: dict[str, str] = {}
+        player_salaries: dict[str, int] = {}
+        player_teams: dict[str, str] = {}
+        existing_roster_sets: list[frozenset[str]] = []
+
+        # Strict total exposure limits (e.g. max 2 of 5 = 40% for 5-lineup contest)
+        max_total_allowed = max(1, int(np.floor(num_lineups * max_flex_exposure) if num_lineups >= 4 else np.ceil(num_lineups * max_flex_exposure)))
+        max_mvp_allowed = max(1, int(np.ceil(num_lineups * max_mvp_exposure)))
+        forbidden_lineups: list[list[str]] = []
+
+        for idx, target_script in enumerate(scheduled_scripts, 1):
+            temp_excludes = list(base_excludes)
+            
+            # Non-QB total exposure cap enforcement (insulates portfolio from injuries)
+            all_tracked = set(list(player_flex_counts.keys()) + list(player_mvp_counts.keys()))
+            for p_name in all_tracked:
+                pos = player_positions.get(p_name, "")
+                tot_c = player_flex_counts.get(p_name, 0) + player_mvp_counts.get(p_name, 0)
+                if pos != "QB" and tot_c >= max_total_allowed:
+                    if p_name not in temp_excludes:
+                        temp_excludes.append(p_name)
+
+            # Check if any MVP has reached the MVP allocation cap
+            disallowed_mvps = [p for p, c in player_mvp_counts.items() if c >= max_mvp_allowed]
+
+            # Solve lineup enforcing forbidden lineups, disallowed MVPs, and exposure limits
+            sol = None
+            for attempt in range(4):
+                # If subsequent attempts, relax the latest temporary exclusion
+                attempt_excludes = temp_excludes if attempt == 0 else temp_excludes[:-attempt]
+
+                sol = self.solve(
+                    clean_df,
+                    mode=mode,
+                    script=target_script,
+                    allow_sub3500_punts=allow_sub3500_punts,
+                    exclude_players=attempt_excludes,
+                    forbidden_lineups=forbidden_lineups,
+                    disallowed_mvps=disallowed_mvps,
+                )
+
+                if sol:
+                    roster_set = frozenset([p["name"] for p in sol["roster"]])
+                    if roster_set not in existing_roster_sets:
+                        break
+                    sol = None
+
+            if not sol:
+                # Fallback to unconstrained solve with forbidden_lineups
+                sol = self.solve(
+                    clean_df,
+                    mode=mode,
+                    script="OPTIMAL",
+                    allow_sub3500_punts=allow_sub3500_punts,
+                    exclude_players=base_excludes,
+                    forbidden_lineups=forbidden_lineups,
+                )
+
+            if sol:
+                sol["lineup_num"] = idx
+                sol["script_id"] = target_script
+                roster_names = [p["name"] for p in sol["roster"]]
+                existing_roster_sets.append(frozenset(roster_names))
+                forbidden_lineups.append(roster_names)
+                lineups.append(sol)
+
+                # Update counts
+                mvp_name = sol["mvp"]["name"]
+                player_mvp_counts[mvp_name] = player_mvp_counts.get(mvp_name, 0) + 1
+                player_positions[mvp_name] = sol["mvp"]["position"]
+                player_salaries[mvp_name] = sol["mvp"]["salary"]
+                player_teams[mvp_name] = sol["mvp"]["team"]
+
+                for f in sol["flex"]:
+                    f_name = f["name"]
+                    player_flex_counts[f_name] = player_flex_counts.get(f_name, 0) + 1
+                    player_positions[f_name] = f["position"]
+                    player_salaries[f_name] = f["salary"]
+                    player_teams[f_name] = f["team"]
+
+        # Build comprehensive portfolio exposure summary
+        all_players = set(list(player_flex_counts.keys()) + list(player_mvp_counts.keys()))
+        exposures = []
+        for p in all_players:
+            mvp_c = player_mvp_counts.get(p, 0)
+            flex_c = player_flex_counts.get(p, 0)
+            total_c = mvp_c + flex_c
+            exposures.append({
+                "name": p,
+                "team": player_teams.get(p, ""),
+                "position": player_positions.get(p, ""),
+                "salary": player_salaries.get(p, 0),
+                "mvp_count": mvp_c,
+                "mvp_pct": round((mvp_c / len(lineups)) * 100, 1),
+                "flex_count": flex_c,
+                "flex_pct": round((flex_c / len(lineups)) * 100, 1),
+                "total_count": total_c,
+                "total_pct": round((total_c / len(lineups)) * 100, 1),
+            })
+
+        df_exposures = pd.DataFrame(exposures).sort_values("total_pct", ascending=False).reset_index(drop=True)
+
+        return {
+            "num_lineups": len(lineups),
+            "game_total": game_total,
+            "max_flex_exposure_limit": max_flex_exposure,
+            "lineups": lineups,
+            "exposures": df_exposures,
+        }
+

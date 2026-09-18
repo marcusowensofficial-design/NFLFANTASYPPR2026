@@ -58,27 +58,41 @@ PORTFOLIO = [
     },
 ]
 
-# Base FanDuel Salaries for Single Game Slate
+# Actual Realized Contest Ownership from 8,928-entry FanDuel Tournament ($5,000 to 1st)
+ACTUAL_OWNERSHIP = {
+    "Josh Allen": {"mvp": 31.1, "total": 84.1},
+    "Jahmyr Gibbs": {"mvp": 20.4, "total": 70.1},
+    "James Cook III": {"mvp": 14.3, "total": 53.6},
+    "DJ Moore": {"mvp": 5.6, "total": 42.4},
+    "Dalton Kincaid": {"mvp": 5.1, "total": 40.7},
+    "Tyler Bass": {"mvp": 0.9, "total": 28.3},
+    "Khalil Shakir": {"mvp": 1.2, "total": 15.8},
+    "Buffalo Bills": {"mvp": 0.8, "total": 11.2},
+    "Dawson Knox": {"mvp": 0.3, "total": 10.9},
+    "Detroit Lions": {"mvp": 0.5, "total": 6.4},
+}
+
+# Base FanDuel Salaries for Single Game Slate (from live contest)
 SALARIES = {
     "Josh Allen": 13200,
     "Jahmyr Gibbs": 12400,
-    "James Cook III": 12000,
-    "James Cook": 12000,
+    "James Cook III": 10200,
+    "James Cook": 10200,
     "Amon-Ra St. Brown": 11600,
     "Jared Goff": 10600,
     "DJ Moore": 8600,
+    "Khalil Shakir": 8200,
     "Jameson Williams": 8200,
     "Dalton Kincaid": 7600,
     "Sam LaPorta": 7400,
     "Tyler Bass": 6800,
+    "Buffalo Bills": 6400,
+    "Detroit Lions": 6200,
     "Jake Bates": 6400,
-    "Khalil Shakir": 6200,
-    "Buffalo Bills": 5800,
-    "Detroit Lions": 5600,
     "Keon Coleman": 5000,
+    "Ray Davis": 4400,
     "Dawson Knox": 4200,
     "Sione Vaki": 3600,
-    "Ray Davis": 4400,
     "Isaac TeSlaa": 2800,
     "Brock Wright": 2400,
     "Tom Kennedy": 2000,
@@ -142,10 +156,11 @@ def parse_fantasy_points(summary: Dict[str, Any]) -> Dict[str, float]:
 
                 elif cat == "kicking":
                     # FG, PCT, LONG, XP, PTS
-                    xp = float(stat_dict.get("XP", 0) or 0)
+                    xp_str = str(stat_dict.get("XP", "0/0"))
+                    xp_made = float(xp_str.split("/")[0]) if "/" in xp_str else float(xp_str or 0)
                     fg_str = str(stat_dict.get("FG", "0/0"))
                     fg_made = float(fg_str.split("/")[0]) if "/" in fg_str else 0.0
-                    pts = (fg_made * 3.0) + (xp * 1.0)
+                    pts = (fg_made * 3.0) + (xp_made * 1.0)
                     scores[name] += pts
 
     # Standardize player names (e.g. James Cook -> James Cook III)

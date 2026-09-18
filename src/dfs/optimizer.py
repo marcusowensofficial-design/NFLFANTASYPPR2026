@@ -431,14 +431,14 @@ class DFSLineupOptimizer:
         exposure: dict[str, dict[str, Any]] = {}
         for lineup in lineups:
             for item in lineup.get("roster", []):
-                pid = item["player_id"]
+                pid = item.get("player_id") or item.get("name") or "unknown"
                 if pid not in exposure:
                     exposure[pid] = {
                         "player_id": pid,
-                        "name": item["name"],
-                        "position": item["position"],
-                        "team": item["team"],
-                        "salary": item["salary"],
+                        "name": item.get("name", "Unknown"),
+                        "position": item.get("position", "UTIL"),
+                        "team": item.get("team", "UNK"),
+                        "salary": item.get("salary", 0),
                         "count": 0,
                         "pct": 0.0,
                     }

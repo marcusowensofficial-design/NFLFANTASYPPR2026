@@ -1,0 +1,215 @@
+{
+  "contest_metadata": {
+    "slate": "Detroit Lions @ Buffalo Bills",
+    "date": "2026-09-17",
+    "event_id": "401872932",
+    "week": 2,
+    "platform": "FanDuel",
+    "contest_type": "Single Game Showdown",
+    "entry_fee": "$4",
+    "max_entries": 20,
+    "total_entries": 8928,
+    "first_place_prize": "$5,000",
+    "total_prize_pool": "$30,000"
+  },
+  "players": {
+    "Josh Allen": {
+      "team": "BUF",
+      "position": "QB",
+      "salary": 13200,
+      "mvp_salary": 19800,
+      "mvp_pct": 31.1,
+      "total_pct": 84.1,
+      "flex_pct": 53.0
+    },
+    "Jahmyr Gibbs": {
+      "team": "DET",
+      "position": "RB",
+      "salary": 12400,
+      "mvp_salary": 18600,
+      "mvp_pct": 20.4,
+      "total_pct": 70.1,
+      "flex_pct": 49.7
+    },
+    "James Cook III": {
+      "team": "BUF",
+      "position": "RB",
+      "salary": 10200,
+      "mvp_salary": 15300,
+      "mvp_pct": 14.3,
+      "total_pct": 53.6,
+      "flex_pct": 39.3
+    },
+    "Jared Goff": {
+      "team": "DET",
+      "position": "QB",
+      "salary": 10600,
+      "mvp_salary": 15900,
+      "mvp_pct": 5.4,
+      "total_pct": 50.7,
+      "flex_pct": 45.3
+    },
+    "Jameson Williams": {
+      "team": "DET",
+      "position": "WR",
+      "salary": 9200,
+      "mvp_salary": 13800,
+      "mvp_pct": 3.8,
+      "total_pct": 22.5,
+      "flex_pct": 18.7
+    },
+    "Sam LaPorta": {
+      "team": "DET",
+      "position": "TE",
+      "salary": 7400,
+      "mvp_salary": 11100,
+      "mvp_pct": 2.1,
+      "total_pct": 27.9,
+      "flex_pct": 25.8
+    },
+    "Brock Wright": {
+      "team": "DET",
+      "position": "TE",
+      "salary": 1800,
+      "mvp_salary": 2700,
+      "mvp_pct": 0.05,
+      "total_pct": 6.1,
+      "flex_pct": 6.05
+    },
+    "DJ Moore": {
+      "team": "BUF",
+      "position": "WR",
+      "salary": 8600,
+      "mvp_salary": 12900,
+      "mvp_pct": 5.6,
+      "total_pct": 42.4,
+      "flex_pct": 36.8
+    },
+    "Dalton Kincaid": {
+      "team": "BUF",
+      "position": "TE",
+      "salary": 7600,
+      "mvp_salary": 11400,
+      "mvp_pct": 5.1,
+      "total_pct": 40.7,
+      "flex_pct": 35.6
+    },
+    "Amon-Ra St. Brown": {
+      "team": "DET",
+      "position": "WR",
+      "salary": 11600,
+      "mvp_salary": 17400,
+      "mvp_pct": 6.4,
+      "total_pct": 34.4,
+      "flex_pct": 28.0
+    },
+    "Tyler Bass": {
+      "team": "BUF",
+      "position": "K",
+      "salary": 6800,
+      "mvp_salary": 10200,
+      "mvp_pct": 0.9,
+      "total_pct": 28.3,
+      "flex_pct": 27.4
+    },
+    "Jake Bates": {
+      "team": "DET",
+      "position": "K",
+      "salary": 6600,
+      "mvp_salary": 9900,
+      "mvp_pct": 0.4,
+      "total_pct": 19.3,
+      "flex_pct": 18.9
+    },
+    "Joshua Palmer": {
+      "team": "BUF",
+      "position": "WR",
+      "salary": 3200,
+      "mvp_salary": 4800,
+      "mvp_pct": 0.4,
+      "total_pct": 18.4,
+      "flex_pct": 18.0
+    },
+    "Khalil Shakir": {
+      "team": "BUF",
+      "position": "WR",
+      "salary": 8200,
+      "mvp_salary": 12300,
+      "mvp_pct": 1.2,
+      "total_pct": 15.8,
+      "flex_pct": 14.6
+    },
+    "Buffalo Bills": {
+      "team": "BUF",
+      "position": "D/ST",
+      "salary": 6400,
+      "mvp_salary": 9600,
+      "mvp_pct": 0.8,
+      "total_pct": 11.2,
+      "flex_pct": 10.4
+    },
+    "Dawson Knox": {
+      "team": "BUF",
+      "position": "TE",
+      "salary": 4200,
+      "mvp_salary": 6300,
+      "mvp_pct": 0.3,
+      "total_pct": 10.9,
+      "flex_pct": 10.6
+    },
+    "Detroit Lions": {
+      "team": "DET",
+      "position": "D/ST",
+      "salary": 6200,
+      "mvp_salary": 9300,
+      "mvp_pct": 0.5,
+      "total_pct": 6.4,
+      "flex_pct": 5.9
+    },
+    "Keon Coleman": {
+      "team": "BUF",
+      "position": "WR",
+      "salary": 5600,
+      "mvp_salary": 8400,
+      "mvp_pct": 0.2,
+      "total_pct": 6.8,
+      "flex_pct": 6.6
+    },
+    "Sione Vaki": {
+      "team": "DET",
+      "position": "RB",
+      "salary": 3600,
+      "mvp_salary": 5400,
+      "mvp_pct": 0.1,
+      "total_pct": 5.8,
+      "flex_pct": 5.7
+    },
+    "Isaac TeSlaa": {
+      "team": "DET",
+      "position": "WR",
+      "salary": 2800,
+      "mvp_salary": 4200,
+      "mvp_pct": 0.6,
+      "total_pct": 22.5,
+      "flex_pct": 21.9
+    },
+    "Frank Gore Jr.": {
+      "team": "BUF",
+      "position": "RB",
+      "salary": 1600,
+      "mvp_salary": 2400,
+      "mvp_pct": 0.05,
+      "total_pct": 6.9,
+      "flex_pct": 6.85
+    },
+    "Ray Davis": {
+      "team": "BUF",
+      "position": "RB",
+      "salary": 4600,
+      "mvp_salary": 6900,
+      "mvp_pct": 0.1,
+      "total_pct": 2.7,
+      "flex_pct": 2.6
+    }
+  }
+}

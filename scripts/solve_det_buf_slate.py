@@ -45,23 +45,24 @@ def build_calibrated_player_pool() -> pd.DataFrame:
         "Khalil Shakir": {"proj": 8.50, "ceiling": 16.00, "floor": 4.50, "verified_starter": True},
         "Buffalo Bills": {"proj": 5.20, "ceiling": 12.00, "floor": 0.00, "verified_starter": True},
         "Detroit Lions": {"proj": 5.00, "ceiling": 12.00, "floor": 0.00, "verified_starter": True},
-        "Keon Coleman": {"proj": 4.20, "ceiling": 11.00, "floor": 1.00, "verified_starter": True},
-        "Sione Vaki": {"proj": 2.80, "ceiling": 7.50, "floor": 0.50, "verified_starter": False},
-        "Joshua Palmer": {"proj": 3.20, "ceiling": 11.00, "floor": 0.50, "verified_starter": False},
-        "Isaac TeSlaa": {"proj": 1.80, "ceiling": 6.50, "floor": 0.00, "verified_starter": False},
-        "Ray Davis": {"proj": 2.00, "ceiling": 6.00, "floor": 0.00, "verified_starter": False},
-        "Dawson Knox": {"proj": 2.20, "ceiling": 7.00, "floor": 0.00, "verified_starter": False},
-        "Ty Johnson": {"proj": 2.00, "ceiling": 6.00, "floor": 0.00, "verified_starter": False},
-        "Greg Dortch": {"proj": 0.50, "ceiling": 3.00, "floor": 0.00, "verified_starter": False},
-        "Brock Wright": {"proj": 1.20, "ceiling": 5.00, "floor": 0.00, "verified_starter": False},
-        "Frank Gore Jr.": {"proj": 1.00, "ceiling": 4.00, "floor": 0.00, "verified_starter": False},
-        "Tyler Conklin": {"proj": 1.20, "ceiling": 5.00, "floor": 0.00, "verified_starter": False},
+        "Keon Coleman": {"proj": 4.20, "ceiling": 11.00, "floor": 1.00, "verified_starter": True, "active_role": True},
+        "Joshua Palmer": {"proj": 3.20, "ceiling": 12.00, "floor": 0.50, "verified_starter": True, "active_role": True},
+        "Sione Vaki": {"proj": 2.80, "ceiling": 7.50, "floor": 0.50, "verified_starter": False, "active_role": False},
+        "Isaac TeSlaa": {"proj": 1.80, "ceiling": 6.50, "floor": 0.00, "verified_starter": False, "active_role": False},
+        "Ray Davis": {"proj": 2.00, "ceiling": 6.00, "floor": 0.00, "verified_starter": False, "active_role": False},
+        "Dawson Knox": {"proj": 2.20, "ceiling": 7.00, "floor": 0.00, "verified_starter": False, "active_role": True},
+        "Ty Johnson": {"proj": 2.00, "ceiling": 6.00, "floor": 0.00, "verified_starter": False, "active_role": False},
+        "Greg Dortch": {"proj": 0.50, "ceiling": 3.00, "floor": 0.00, "verified_starter": False, "active_role": False},
+        "Brock Wright": {"proj": 1.20, "ceiling": 5.00, "floor": 0.00, "verified_starter": False, "active_role": False},
+        "Frank Gore Jr.": {"proj": 1.00, "ceiling": 4.00, "floor": 0.00, "verified_starter": False, "active_role": False},
+        "Tyler Conklin": {"proj": 1.20, "ceiling": 5.00, "floor": 0.00, "verified_starter": False, "active_role": False},
     }
 
     df["proj"] = df["name"].map(lambda x: calibrated_stats.get(x, {}).get("proj", 0.0))
     df["ceiling_proj"] = df["name"].map(lambda x: calibrated_stats.get(x, {}).get("ceiling", 0.0))
     df["floor_proj"] = df["name"].map(lambda x: calibrated_stats.get(x, {}).get("floor", 0.0))
     df["verified_starter"] = df["name"].map(lambda x: calibrated_stats.get(x, {}).get("verified_starter", False))
+    df["active_role"] = df["name"].map(lambda x: calibrated_stats.get(x, {}).get("active_role", False))
 
     return df
 
@@ -71,26 +72,25 @@ def solve_all_slate_scripts():
     print("DETROIT LIONS @ BUFFALO BILLS | FANDUEL SINGLE-GAME CHAMPIONSHIP SOLVER")
     print("Week 2 (9/17/2026) | Vegas: BUF -4.5 | O/U 54.5 (Implied: BUF 29.5, DET 25.0)")
     print("Salary Cap: $60,000 | Dynamic High-Total Buffer: $200 - $1,000 Unspent")
-    print("Single-Entry Floor: >= $3,500 (Ghost Punts Disqualified)")
+    print("Verified Role Punt Floor: >= $3,000 or Active Rotational Asset")
     print("=" * 80)
 
     df_pool = build_calibrated_player_pool()
 
-    # Filter out backup QBs & sub-$3,500 unverified punts
-    # Single-entry discipline: Disallow sub-$3,500 punts who are not verified starters
+    # Filter out backup QBs & unverified zero-opportunity punts
     df_clean = df_pool[
-        (df_pool["salary"] >= 3500) & 
+        ((df_pool["salary"] >= 3000) | (df_pool["verified_starter"] == True) | (df_pool["active_role"] == True)) & 
         (~df_pool["name"].isin(["Kyle Allen", "Joshua Dobbs", "Shane Buechele", "Luke Altmyer"]))
     ].copy().reset_index(drop=True)
 
-    print(f"\nViable Player Pool ({len(df_clean)} players >= $3,500):")
+    print(f"\nViable Player Pool ({len(df_clean)} players):")
     print(df_clean[["name", "team", "position", "salary", "proj", "ceiling_proj"]].to_string(index=False))
 
     optimizer = FanDuelShowdownOptimizer(
         salary_cap=60000,
         max_salary=59800,  # leaves >= $200 unspent
         min_salary=59000,  # leaves <= $1,000 unspent for high total (54.5 O/U)
-        min_punt_salary=3500,
+        min_punt_salary=3000,
     )
 
     scripts = {
@@ -108,7 +108,7 @@ def solve_all_slate_scripts():
             df_clean,
             mode="GPP",
             script=script_id,
-            allow_sub3500_punts=False,
+            allow_sub3500_punts=True,
             enforce_qb_rules=True,
             enforce_dst_rules=True,
         )
@@ -126,7 +126,39 @@ def solve_all_slate_scripts():
                 print(f"[FLEX {i}]    {f['name']:<22} | {f['team']:<4} {f['position']:<3} | Cost: ${f['salary']:,}              | Proj: {f['effective_pts']:.1f}")
             print("-" * 80)
 
-    return results, df_clean
+    # Now generate the 5-lineup balanced tournament portfolio with exposure caps
+    print("\n" + "=" * 80)
+    print("AUTOMATED 5-LINEUP DIVERSIFIED TOURNAMENT PORTFOLIO (MAX 50% FLEX EXPOSURE)")
+    print("=" * 80)
+    port = optimizer.generate_portfolio(
+        df_clean,
+        num_lineups=5,
+        max_flex_exposure=0.50,
+        game_total=54.5,
+        mode="GPP",
+        allow_sub3500_punts=True,
+    )
+
+    for sol in port["lineups"]:
+        print(f"\n{'='*25} PORTFOLIO LINEUP {sol['lineup_num']} [{sol['script_id']}] {'='*25}")
+        print(f"Total Salary: ${sol['total_salary']:,} / $60,000 | Unspent Buffer: ${sol['unspent_buffer']:,}")
+        print(f"Projected Median: {sol['total_projected_pts']:.2f} | 90th Ceiling: {sol['total_ceiling_pts']:.2f}")
+        print(f"Team Breakdown: {sol['team_counts']}")
+        print("-" * 80)
+        mvp = sol["mvp"]
+        print(f"[MVP (1.5x)] {mvp['name']:<22} | {mvp['team']:<4} {mvp['position']:<3} | Base: ${mvp['salary']:,} (Cost: ${mvp['effective_salary']:,}) | Proj: {mvp['effective_pts']:.1f}")
+        print("-" * 80)
+        for i, f in enumerate(sol["flex"], 1):
+            print(f"[FLEX {i}]    {f['name']:<22} | {f['team']:<4} {f['position']:<3} | Cost: ${f['salary']:,}              | Proj: {f['effective_pts']:.1f}")
+        print("-" * 80)
+
+    print("\n" + "=" * 80)
+    print("PORTFOLIO EXPOSURE REPORT")
+    print("=" * 80)
+    print(port["exposures"].to_string(index=False))
+    print("=" * 80 + "\n")
+
+    return results, port, df_clean
 
 
 if __name__ == "__main__":

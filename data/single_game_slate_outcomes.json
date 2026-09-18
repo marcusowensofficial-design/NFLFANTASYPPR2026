@@ -70,5 +70,78 @@
         "Underdog QB Fade in Blowout: Bo Nix held to 6.44 FP as KC blitzes forced 2 turnovers and 4 sacks."
       ]
     }
+  },
+  "week_2": {
+    "DET_at_BUF_2026_09_17": {
+      "date": "2026-09-17",
+      "game": "DET @ BUF",
+      "slate_type": "Thursday Night Football (TNF)",
+      "final_score": "BUF 41, DET 31",
+      "vegas_total": 54.5,
+      "vegas_spread": "BUF -4.5",
+      "total_score": 168.15,
+      "total_salary_spent": 59400,
+      "unspent_salary": 600,
+      "stack_split": "3-3 Balanced",
+      "mvp": {
+        "name": "Amon-Ra St. Brown",
+        "team": "DET",
+        "position": "WR",
+        "salary": 17400,
+        "base_salary": 11600,
+        "fpts": 50.55,
+        "base_fpts": 33.70,
+        "stats": "9 rec, 142 yds, 2 TD (13 targets)"
+      },
+      "flex": [
+        {
+          "name": "Josh Allen",
+          "team": "BUF",
+          "position": "QB",
+          "salary": 13200,
+          "fpts": 40.82,
+          "stats": "20/31, 248 pass yds, 3 pass TD, 69 rush yds, 2 rush TD (5 total TDs)"
+        },
+        {
+          "name": "Jared Goff",
+          "team": "DET",
+          "position": "QB",
+          "salary": 10600,
+          "fpts": 32.78,
+          "stats": "26/38, 327 pass yds, 4 pass TD"
+        },
+        {
+          "name": "Dalton Kincaid",
+          "team": "BUF",
+          "position": "TE",
+          "salary": 7600,
+          "fpts": 19.00,
+          "stats": "7 rec, 95 yds, 1 TD"
+        },
+        {
+          "name": "Sam LaPorta",
+          "team": "DET",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 14.20,
+          "stats": "6 rec, 52 yds, 1 TD"
+        },
+        {
+          "name": "Joshua Palmer",
+          "team": "BUF",
+          "position": "WR",
+          "salary": 3200,
+          "fpts": 10.80,
+          "stats": "1 rec, 43 yds, 1 TD"
+        }
+      ],
+      "key_takeaways": [
+        "Dual-QB Mega-Shootout Dominance: Josh Allen (40.82) + Jared Goff (32.78) combined for 73.6 raw FP, proving Dual-QB is mandatory in high-total games (>= 50.0 O/U).",
+        "The $3,200 Palmer Key: Arbitrary $3,500 salary bans fail; Joshua Palmer ($3,200) ran active rotational routes and unlocked the 5 studs.",
+        "50% Max Player Exposure: DJ Moore's 2nd-quarter shoulder injury destroyed 80% of lines due to over-concentration. Max 50% non-QB exposure rule required.",
+        "Target Hog MVP Leverage: Amon-Ra St. Brown caught 9 of 13 targets for 142 yards and 2 TDs (50.55 MVP FP) in negative trailing script."
+      ]
+    }
   }
 }
+

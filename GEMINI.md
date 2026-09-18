@@ -35,8 +35,9 @@
    * **Historical Slate Outcomes Master Archive:**
       * All winning single-game rosters and forensic reviews are persistently archived in [SHOWDOWN_SLATE_RESULTS_ARCHIVE.md](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/SHOWDOWN_SLATE_RESULTS_ARCHIVE.md) and [single_game_slate_outcomes.json](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/data/single_game_slate_outcomes.json).
    * **The Dual-QB Safety Floor vs. Zero-QB Touchdown Monopoly:**
-     * **Dual-QB (60% of slates):** Roster BOTH starting QBs when passing volume is diffused across multiple receivers, or in back-and-forth shootouts. In ugly games, opposing QBs provide an unbeatable 11–14 point baseline floor that secondary receivers fail to reach.
-     * **Zero-QB Touchdown Monopoly (40% of slates):** Roster ZERO QBs only when touchdowns are monopolized on the ground by starting RBs and field goals by kickers, and passing touchdowns are captured exclusively by the rostered WR1/WR2.
+     * **Dual-QB (60% of slates & 100% of Shootouts):** Roster BOTH starting QBs when passing volume is diffused across multiple receivers, or in back-and-forth shootouts. In ugly games, opposing QBs provide an unbeatable 11–14 point baseline floor.
+     * **The High-Total Shootout Dual-QB Mandate:** In games with Vegas O/U $\ge 50.0$ (e.g. BUF @ DET 41-31, 72 total points), passing volume explodes. Allen (40.82) + Goff (32.78) combined for 73.6 FP. In shootouts $\ge 50.0$, **at least 40% of tournament portfolio entries MUST roster both starting QBs**.
+     * **Zero-QB Touchdown Monopoly (40% of slates):** Roster ZERO QBs only when touchdowns are monopolized on the ground by starting RBs and field goals by kickers (e.g. low-total games $\le 42.0$), and passing touchdowns are captured exclusively by the rostered WR1/WR2.
    * **Correlation Integrity (ETR & FantasyLabs):**
      * Never pair a D/ST with the opposing starting Running Back (RB1).
      * Never roster a D/ST against 3+ opposing offensive players.
@@ -47,8 +48,8 @@
        * If rostering 3 or more pass-catchers from Team A, **Team A's QB MUST be rostered** (either at MVP or in the FLEX).
    * **The Verified Role & Route Participation Floor (Replacing Arbitrary Salary Bans):**
      * In Single-Entry contests, taking a 0.0 point score is mathematically fatal.
-     * Never roster pure-blocking fullbacks or rotational blockers with zero route participation.
-     * **The Role Floor:** Require all rostered players to command $\ge 35\%$ projected route participation or $\ge 4$ designated high-value opportunities, regardless of salary tag. If an official 90-minute inactive vaults a sub-$3,500 player into a verified starting role ($\ge 65\%$ route share), allow the knapsack solver to utilize that cap-relief.
+     * **The Joshua Palmer Law:** NEVER apply an arbitrary dollar minimum (e.g. banning sub-$3,500 players). In Week 2 DET @ BUF, Joshua Palmer ($3,200) caught a 43-yard TD (10.8 FP), serving as the exact knapsack key that won 1st place ($1,111).
+     * **The Role Floor:** Filter strictly by **route participation ($\ge 35\%$) and verified offensive utility**, regardless of salary tag. Only disqualify true zero-opportunity ghost punts (blocking fullbacks, 3rd-string tight ends with 0 routes, inactive depth).
    * **Specialized Skill Link:** Reference and follow [.agents/skills/fanduel-single-game/SKILL.md](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/.agents/skills/fanduel-single-game/SKILL.md) for full algorithmic guidelines.
 
 3. **NFL DFS Contest Slate Taxonomy & Multi-Game Formats (MST Reference):**
@@ -76,7 +77,7 @@
      1. Vegas Blueprint & Game Script (Spreads, game totals, 4-2 vs 5-1 classification; ban default 3-3).
      2. 1.5x MVP Regime Math (Alpha Multiplier vs. Knapsack Cap Relief).
      3. Correlation & Anti-Cannibalization (QB Rule of 3, D/ST vs RB1 ban, Dual-QB vs Zero-QB).
-     4. Sub-$3,500 Punt Route Viability Filter ($\ge 25\%$ route participation, zero blocking-only assets).
+     4. Verified Role Punt Floor ($\ge 35\%$ route participation; ban zero-route blockers, allow viable sub-$3,500 contributors).
      5. Dynamic Salary Buffer Verification (O/U $\le 42$: leave $1,500–$3,500 unspent; O/U 42.1–46.5: leave $800–$2,500 unspent; O/U $\ge 47$: leave $200–$1,000 unspent).
      6. World-Class Pro Forensics (Coach 4th-down aggressiveness for kickers, QB Pressure-to-Sack P2S rates for D/ST, PFF CB shadow alignment, high-value touches inside the 5/10).
      7. Official 90-Minute Inactive Verification.
@@ -90,12 +91,14 @@
        2. Team B Dominant (Onslaught)
        3. Balanced Game Script (3-3 / 4-2)
        4. Zero-QB Touchdown Monopoly
+   * **The Multi-Lineup Portfolio Diversification Law (The DJ Moore In-Game Injury Shield):**
+     * In 3-to-5 entry contests, **STRICTLY ENFORCE a 50% maximum exposure cap on any individual non-QB skill player**.
+     * Never allow a mid-tier receiver to command 80% exposure across a portfolio where an early in-game injury (e.g. DJ Moore shoulder stinger) would instantly wipe out 80% of entries.
+     * Automatically execute `optimizer.generate_portfolio(df, num_lineups=N, max_flex_exposure=0.50)` to enforce mathematical diversity, unique rosters, and script quotas.
+   * **The Alpha WR MVP Multiplier Rule:**
+     * In games with potential negative trailing scripts or fast-paced shootouts, alpha wide receivers commanding $\ge 28\%$ target share (e.g. Amon-Ra St. Brown 9-142-2 TD, 50.55 MVP FP) MUST be allocated MVP exposure alongside QBs and bellcows.
    * **The Knapsack MVP Cap Relief Rule:**
-     * In FanDuel Showdown, evaluate MVP selection through the lens of the **Knapsack Problem**: A cheaper ceiling MVP (e.g., Purdy at $15,900) that unlocks five $5,400+ full-time starters mathematically dominates an expensive MVP ($17,100–$19,500) that forces a sub-$3,500 zero-point punt.
-   * **The Strict Single-Entry Punt Floor ($\ge \$3,500$):**
-     * In Single-Entry contests, taking a 0.0 point score is mathematically fatal.
-     * Strictly **ban all sub-$3,500 rotational/depth punts** (e.g. 3rd-string tight ends or backup vultures) unless an official 90-minute inactive directly vaults them into a verified starting role ($\ge 60\%$ projected snap share).
-     * The lowest-priced player in a single-entry lineup must be a verified offensive contributor (e.g., Demarcus Robinson at $5,400).
+     * In FanDuel Showdown, evaluate MVP selection through the lens of the **Knapsack Problem**: A cheaper ceiling MVP (e.g., Purdy at $15,900, Goff at $15,900) that unlocks four or five full-time starters mathematically dominates an expensive MVP ($18k–$20k) that forces unviable zero-point punts.
    * **Pro Exposure Signal Integration:**
      * When top pro models (like Mike McClure / SportsLine or ETR) publish exposure distributions with $\ge 25\%$ MVP or $\ge 50\%$ total exposure on a player, treat this as a high-priority mathematical signal.
      * NEVER dismiss consensus pro exposure as "chalk to fade" without running an integer programming simulation to understand why the optimizer favored them.
