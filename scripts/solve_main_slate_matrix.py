@@ -50,8 +50,22 @@ def load_and_enrich_slate(csv_path=None,
     df['fppg'] = df['FPPG'].fillna(0.0).astype(float)
     df['injury'] = df['Injury Indicator'].fillna('').str.strip()
     
-    # Filter out inactive players
-    df = df[~df['injury'].isin(['IR', 'O'])].copy()
+    # Filter out inactive players from CSV indicator and live injury wire (data/injuries_live_2026.json)
+    import re
+    live_out_names = set()
+    inj_wire_path = "data/injuries_live_2026.json"
+    if os.path.exists(inj_wire_path):
+        with open(inj_wire_path, 'r', encoding='utf-8') as f:
+            inj_data = json.load(f)
+            for inj in inj_data.get('injuries', []):
+                st = str(inj.get('status', '')).upper()
+                if inj.get('is_out') or st in ('OUT', 'IR', 'INACTIVE', 'DOUBTFUL') or 'IR' in st:
+                    clean_n = re.sub(r"[^\w\s]", "", str(inj.get('name', '')).lower()).strip()
+                    if clean_n:
+                        live_out_names.add(clean_n)
+
+    df['norm_name'] = df['name'].str.lower().apply(lambda x: re.sub(r"[^\w\s]", "", str(x)).strip())
+    df = df[~df['injury'].isin(['IR', 'O']) & ~df['norm_name'].isin(live_out_names)].copy()
 
     # Load Vegas data
     vegas_games = []
@@ -324,9 +338,37 @@ if __name__ == "__main__":
     for g in top_games[:5]:
         print(f"  {g['away']} @ {g['home']} | O/U: {g['ou']} | Dome: {g['dome']} | Implied: {g['away']} {g['away_imp']} vs {g['home']} {g['home_imp']}")
 
-    print("\n=== SOLVING MATRIX: BUF-HOU + CHI-CAR + NO-DET + NYJ D/ST ===")
-    roster = solve_tournament_matrix(df, primary_game=('BUF', 'HOU'), mini_game_1=('CHI', 'CAR'), mini_game_2=('NO', 'DET'), dst_team='NYJ')
+    # Identify games present in current slate player pool
+    slate_teams = set(df['team'].unique())
+    eligible_games = [
+        g for g in top_games 
+        if g['away'] in slate_teams and g['home'] in slate_teams
+    ]
+
+    if len(eligible_games) >= 3:
+        primary = (eligible_games[0]['away'], eligible_games[0]['home'])
+        mini_1 = (eligible_games[1]['away'], eligible_games[1]['home'])
+        mini_2 = (eligible_games[2]['away'], eligible_games[2]['home'])
+    else:
+        # Fallback to WSH@DAL, MIN@CHI, NO@BAL if available
+        primary = ('WSH', 'DAL')
+        mini_1 = ('MIN', 'CHI')
+        mini_2 = ('NO', 'BAL')
+
+    # Find optimal cheap disruption D/ST (lowest opponent implied total or favorable P2S matchup)
+    dst_candidates = df[df['pos'] == 'D'].sort_values(by='gpp_proj', ascending=False)
+    dst_pick = dst_candidates.iloc[0]['team'] if not dst_candidates.empty else 'TB'
+
+    print(f"\n=== SOLVING MATRIX: {primary[0]}-{primary[1]} (Primary) + {mini_1[0]}-{mini_1[1]} (Mini 1) + {mini_2[0]}-{mini_2[1]} (Mini 2) + {dst_pick} D/ST ===")
+    roster = solve_tournament_matrix(df, primary_game=primary, mini_game_1=mini_1, mini_game_2=mini_2, dst_team=dst_pick, min_salary=58500, max_salary=59800)
     if roster is not None:
         cols = ['pos', 'name', 'team', 'opp', 'salary', 'fppg', 'gpp_proj']
         print(roster[cols].sort_values(by=['pos', 'salary'], ascending=[True, False]).to_string(index=False))
-        print(f"\nTotal Salary: ${roster['salary'].sum()} | Projected: {roster['gpp_proj'].sum():.2f} pts")
+        print(f"\nTotal Salary: ${roster['salary'].sum():,} | Projected: {roster['gpp_proj'].sum():.2f} pts | Remaining Cap: ${60000 - roster['salary'].sum():,}")
+    else:
+        print("Could not solve with exact matrix constraints; relaxing D/ST constraint...")
+        roster = solve_tournament_matrix(df, primary_game=primary, mini_game_1=mini_1, mini_game_2=mini_2, dst_team=None, min_salary=58000, max_salary=59800)
+        if roster is not None:
+            cols = ['pos', 'name', 'team', 'opp', 'salary', 'fppg', 'gpp_proj']
+            print(roster[cols].sort_values(by=['pos', 'salary'], ascending=[True, False]).to_string(index=False))
+            print(f"\nTotal Salary: ${roster['salary'].sum():,} | Projected: {roster['gpp_proj'].sum():.2f} pts | Remaining Cap: ${60000 - roster['salary'].sum():,}")
