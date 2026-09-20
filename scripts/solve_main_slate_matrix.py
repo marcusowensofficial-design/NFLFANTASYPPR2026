@@ -13,10 +13,14 @@ Engineered to build GPP winning rosters based on:
 
 import os
 import sys
+from pathlib import Path
 import json
 import pandas as pd
 import numpy as np
 from scipy.optimize import milp, LinearConstraint, Bounds
+
+# Add project root to sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 def load_and_enrich_slate(csv_path=None,
                           vegas_path="data/vegas_movement_2026.json",
@@ -42,6 +46,11 @@ def load_and_enrich_slate(csv_path=None,
 
     print(f"Ingesting slate data from: {csv_path}")
     df = pd.read_csv(csv_path)
+
+    # Automated real-world NFL roster normalization
+    from src.core.nfl_rosters import normalize_roster_dataframe
+    df = normalize_roster_dataframe(df)
+
     df['name'] = df['Nickname'].str.strip()
     df['pos'] = df['Position'].str.strip()
     df['team'] = df['Team'].str.strip()

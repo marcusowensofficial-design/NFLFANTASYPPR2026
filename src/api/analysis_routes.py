@@ -496,6 +496,13 @@ async def get_wrcb_matrix(
         team_opp_map[g.home_team] = g.away_team
         team_opp_map[g.away_team] = g.home_team
 
+    from src.core.nfl_rosters import CANONICAL_TEAM_ALIASES
+    for t, aliases in CANONICAL_TEAM_ALIASES.items():
+        if t in team_opp_map:
+            for a in aliases:
+                if a not in team_opp_map:
+                    team_opp_map[a] = team_opp_map[t]
+
     # Resolve live inactives for real-time secondary downgrade
     inactive_names: set[str] = set()
     try:
@@ -668,11 +675,12 @@ async def get_vegas_environments(
                 })
 
     # Fetch weekly schedule with spreads and totals
-    schedule_games = await nfl_schedule_client.fetch_week_schedule(season=season, week=eff_week)
+    eff_season = season if isinstance(season, int) else 2026
+    schedule_games = await nfl_schedule_client.fetch_week_schedule(season=eff_season, week=eff_week)
 
     response = vegas_gamescript_analyzer.analyze_week(
         games=schedule_games,
-        season=season,
+        season=eff_season,
         week=eff_week,
         user_roster_players=user_roster_data,
     )
@@ -711,6 +719,14 @@ async def get_vegas_slate_props(
             "spread": -g.spread,
             "over_under": g.over_under,
         }
+
+    # Expand aliases
+    from src.core.nfl_rosters import CANONICAL_TEAM_ALIASES
+    for t, aliases in CANONICAL_TEAM_ALIASES.items():
+        if t in team_games:
+            for a in aliases:
+                if a not in team_games:
+                    team_games[a] = team_games[t]
 
     query = select(PlayerModel).where(
         PlayerModel.position.in_(["QB", "RB", "WR", "TE"]),

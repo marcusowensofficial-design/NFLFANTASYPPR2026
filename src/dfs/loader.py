@@ -115,6 +115,20 @@ class DFSSlateLoader:
                 "venue": g.venue_name,
             }
 
+        # Expand team_vegas with standard aliases so both WSH/WAS and JAX/JAC succeed
+        for alias_from, alias_to in [("WSH", "WAS"), ("WAS", "WSH"), ("JAX", "JAC"), ("JAC", "JAX"), ("LAR", "LA"), ("LV", "LVR")]:
+            if alias_from in team_vegas and alias_to not in team_vegas:
+                team_vegas[alias_to] = team_vegas[alias_from]
+
+        # Automated real-world NFL roster normalization and non-slate player filtering
+        from src.core.nfl_rosters import normalize_roster_dataframe
+        is_single_game = len(df_raw["Game"].dropna().unique()) <= 1 if "Game" in df_raw.columns else False
+        df_raw = normalize_roster_dataframe(
+            df_raw,
+            team_vegas_schedule=team_vegas if not is_single_game else None,
+            filter_non_slate=not is_single_game,
+        )
+
         # 2. Fetch DvP Matrix from SQLite defense_vs_position table
         dvp_map: dict[tuple[str, str], dict[str, Any]] = {}
         try:

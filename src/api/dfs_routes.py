@@ -43,7 +43,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
     },
     "showdown_dal_nyg": {
         "id": "showdown_dal_nyg",
-        "name": "Week 2 Showdown: Dallas at NY Giants ($60k)",
+        "name": "Week 1 SNF Archive: Dallas at NY Giants ($60k)",
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
         "is_showdown": True,

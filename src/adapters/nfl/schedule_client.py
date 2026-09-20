@@ -34,22 +34,30 @@ class NFLGame(BaseModel):
     home_implied_total: float = 23.75
     away_implied_total: float = 20.25
 
+    def _matches_team(self, team1: str, team2: str) -> bool:
+        t1 = str(team1).upper().strip()
+        t2 = str(team2).upper().strip()
+        if t1 == t2:
+            return True
+        from src.core.nfl_rosters import CANONICAL_TEAM_ALIASES
+        return t2 in CANONICAL_TEAM_ALIASES.get(t1, [])
+
     def get_implied_total_for_team(self, team_abbrev: str) -> float:
-        if team_abbrev == self.home_team:
+        if self._matches_team(team_abbrev, self.home_team):
             return self.home_implied_total
-        if team_abbrev == self.away_team:
+        if self._matches_team(team_abbrev, self.away_team):
             return self.away_implied_total
         return 21.0
 
     def get_opponent_for_team(self, team_abbrev: str) -> str | None:
-        if team_abbrev == self.home_team:
+        if self._matches_team(team_abbrev, self.home_team):
             return self.away_team
-        if team_abbrev == self.away_team:
+        if self._matches_team(team_abbrev, self.away_team):
             return self.home_team
         return None
 
     def is_home_for_team(self, team_abbrev: str) -> bool:
-        return team_abbrev == self.home_team
+        return self._matches_team(team_abbrev, self.home_team)
 
 
 class NFLScheduleClient:

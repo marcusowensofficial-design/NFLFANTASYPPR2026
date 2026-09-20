@@ -174,6 +174,16 @@ async def get_optimal_lineup(
         weather_by_team[g.home_team] = w
         weather_by_team[g.away_team] = w
 
+    # Expand aliases so WAS/WSH and JAC/JAX match
+    from src.core.nfl_rosters import CANONICAL_TEAM_ALIASES
+    for t, aliases in CANONICAL_TEAM_ALIASES.items():
+        if t in games_by_team:
+            for a in aliases:
+                if a not in games_by_team:
+                    games_by_team[a] = games_by_team[t]
+                if a not in weather_by_team:
+                    weather_by_team[a] = weather_by_team[t]
+
     # Evaluate each player with StartSitScoringEngine using O(1) precomputed game context
     evaluations: list[StartSitEvaluation] = []
     for re, player in entries:
