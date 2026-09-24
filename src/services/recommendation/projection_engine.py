@@ -498,15 +498,20 @@ def get_injury_beneficiary_boost(player_name: str, pos: str) -> tuple[float, str
         # Cross-positional rule: Inline blocking backup TEs do not inherit alpha pass-catcher volume
         if "BOWERS" in inj_name.upper():
             return 4.5, f"Inline blocking TE role with {inj_name} ({st}) sidelined; target volume flows cross-positionally."
-        return 8.0, f"Direct TE beneficiary of {inj_name} ({st}) - modest starting floor."
+        return 7.0, f"Direct TE beneficiary of {inj_name} ({st}) - modest starting floor."
     elif pos_clean in ("RB", "FB"):
         if "bucky irving" in norm:
             return 14.8, f"Consolidated workhorse RB beneficiary with {inj_name} ({st}) sidelined."
-        return 12.5, f"Starting RB beneficiary of {inj_name} ({st}) - elevated to primary backfield volume."
+        return 12.0, f"Starting RB beneficiary of {inj_name} ({st}) - elevated to primary backfield volume."
     elif pos_clean == "QB":
         return 13.5, f"Starting QB taking over first-team reps with {inj_name} ({st}) sidelined."
     elif pos_clean == "WR":
-        return 11.5, f"WR target progression beneficiary with {inj_name} ({st}) sidelined."
+        # Only established WR1/WR2 beneficiaries receive an elevated baseline; rotational depth should not get an artificial 10+ floor
+        dc_info = get_player_depth_chart_info(player_name)
+        dc_rank = int(dc_info.get("rank", 3))
+        if dc_rank <= 2:
+            return 10.0, f"WR target progression beneficiary with {inj_name} ({st}) sidelined."
+        return 6.5, f"Rotational WR depth with {inj_name} ({st}) sidelined."
 
     return 0.0, None
 
@@ -752,18 +757,25 @@ class QuantProjectionEngine:
                 ceiling_points=0.0,
             )
 
-        # 1. Matchup Efficiency Multiplier (DvP + Weather + Trench Pressure)
+        # 1. Matchup Efficiency Multiplier (Vegas ITT + Trench Pressure + Early-Season DvP Dampening)
         dvp_rank = dvp_client.get_position_rank(context.opponent, pos)
         if pos in ("D/ST", "DST"):
             unit_rank = dvp_client.get_overall_off_rank(context.opponent)
         else:
             unit_rank = dvp_client.get_overall_rank(context.opponent)
 
-        # DvP: 1 is toughest, 32 is softest. Neutral is 16.5
+        # Early-season (Weeks 1-4) DvP dampening: 1-2 game DvP samples are noisy and schedule-distorted.
+        # Anchor heavily to Vegas Implied Team Total (ITT) and Trench collision physics.
         dvp_delta = (dvp_rank - 16.5) / 15.5
-        unit_delta = (unit_rank - 16.5) / 15.5
-        blended_matchup = (0.75 * dvp_delta) + (0.25 * unit_delta)
-        efficiency_mult = round(blended_matchup * 0.11, 3)
+        itt_delta = (context.implied_team_total - 21.5) / 8.5  # Positive for high-scoring offenses, negative for low totals
+        
+        # For QBs and pass-catchers, Vegas ITT and game pace dominate noisy early DvP
+        if pos in ("QB", "WR", "TE"):
+            blended_matchup = (0.25 * dvp_delta) + (0.75 * itt_delta)
+        else:
+            blended_matchup = (0.40 * dvp_delta) + (0.60 * itt_delta)
+            
+        efficiency_mult = round(blended_matchup * 0.09, 3)
 
         wind_drag = 0.0
         if context.wind_mph > 15.0 and pos in ("QB", "WR", "TE", "K"):
@@ -827,7 +839,7 @@ class QuantProjectionEngine:
 
         is_real_indexed_player = bool(dc_slot or is_live_prop or im_data)
         has_explicit_stats = bool(raw_espn_stats and any(k in raw_espn_stats for k in ("targets", "rush_att", "pass_att", "rush_yds", "rec_yds", "pass_yds")))
-        is_mock_test_override = bool(has_explicit_stats and ("calculated_ppr" not in raw_espn_stats or (getattr(player, "id", 0) or 0) >= 8000))
+        is_mock_test_override = bool(has_explicit_stats and ("calculated_ppr" not in raw_espn_stats or (8000 <= (getattr(player, "id", 0) or 0) <= 8999)))
         use_explicit_stats = bool(has_explicit_stats and (is_mock_test_override or not is_real_indexed_player))
 
         if pos == "QB":
@@ -837,8 +849,13 @@ class QuantProjectionEngine:
             cmp_pct = max(0.58, min(0.74, (0.655 + cpoe * 0.008) * total_efficiency_adj))
             pass_cmp = float(raw_espn_stats["pass_cmp"]) if (use_explicit_stats and "pass_cmp" in raw_espn_stats) else round(pass_att * cmp_pct, 1)
 
-            # Passing Yards
-            model_pass_yds = round(pass_att * max(6.0, min(8.8, 7.30 * total_efficiency_adj)), 1)
+            # Passing Yards - scale with efficiency and high-total environments
+            base_ypa = 7.30
+            if context.implied_team_total >= 25.5 or context.over_under >= 48.0:
+                base_ypa = 7.75
+            elif context.over_under <= 42.0:
+                base_ypa = 6.65
+            model_pass_yds = round(pass_att * max(5.8, min(9.2, base_ypa * total_efficiency_adj)), 1)
             if use_explicit_stats and "pass_yds" in raw_espn_stats:
                 pass_yds = float(raw_espn_stats["pass_yds"])
             elif live_pass_yds is not None:
@@ -865,6 +882,9 @@ class QuantProjectionEngine:
                 opp_pressure_pct=opp_pressure_pct,
             )
 
+            # Touchdown share of team TDs: In shootouts (ITT >= 25.0 or OU >= 48.0), QBs monopolize 75-80% of team TDs
+            td_share_rate = 0.78 if (context.implied_team_total >= 25.0 or context.over_under >= 48.0) else 0.65
+
             if is_dual_threat:
                 rush_att_base = float(raw_espn_stats.get("rush_att", 6.5)) if use_explicit_stats else max(5.0, float(im_data.get("rush_att", 6.5)))
                 if is_severe_pass_pressure:
@@ -880,10 +900,10 @@ class QuantProjectionEngine:
                     model_rush_yds = round(rush_att * 5.8, 1)
                     rush_yds = float(raw_espn_stats.get("rush_yds", model_rush_yds)) if (use_explicit_stats and "rush_yds" in raw_espn_stats) else (round(0.40 * model_rush_yds + 0.60 * live_rush_yds, 1) if live_rush_yds is not None else model_rush_yds)
                     rush_td = float(raw_espn_stats.get("rush_td", 0.45)) if (use_explicit_stats and "rush_td" in raw_espn_stats) else float(im_data.get("rush_tds", 0.45))
-                    pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * max(0.035, min(0.08, (context.expected_team_tds * 0.65) / max(pass_att, 1.0))), 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * max(0.035, min(0.08, (context.expected_team_tds * 0.65) / max(pass_att, 1.0))), 2)
+                    pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * max(0.035, min(0.085, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * max(0.035, min(0.085, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2)
                     pass_int = float(raw_espn_stats.get("pass_int", round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2))) if (use_explicit_stats and "pass_int" in raw_espn_stats) else round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2)
                 hvt_inside_5 = round(0.45, 2)
-                hvt_inside_10 = round(context.expected_team_tds * 0.65, 2)
+                hvt_inside_10 = round(context.expected_team_tds * td_share_rate, 2)
             else:
                 # Pocket passer
                 if is_severe_pass_pressure:
@@ -896,13 +916,13 @@ class QuantProjectionEngine:
                     rush_yds = 4.0
                     rush_td = 0.02
                 else:
-                    pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * max(0.025, min(0.075, (context.expected_team_tds * 0.65) / max(pass_att, 1.0))), 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * max(0.025, min(0.075, (context.expected_team_tds * 0.65) / max(pass_att, 1.0))), 2)
+                    pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * max(0.025, min(0.080, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * max(0.025, min(0.080, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2)
                     pass_int = float(raw_espn_stats.get("pass_int", round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2))) if (use_explicit_stats and "pass_int" in raw_espn_stats) else round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2)
                     rush_att = float(raw_espn_stats.get("rush_att", 2.0)) if (use_explicit_stats and "rush_att" in raw_espn_stats) else 2.0
                     rush_yds = float(raw_espn_stats.get("rush_yds", 7.0)) if (use_explicit_stats and "rush_yds" in raw_espn_stats) else 7.0
                     rush_td = float(raw_espn_stats.get("rush_td", 0.05)) if (use_explicit_stats and "rush_td" in raw_espn_stats) else 0.05
                 hvt_inside_5 = round(0.05, 2)
-                hvt_inside_10 = round(context.expected_team_tds * 0.65, 2)
+                hvt_inside_10 = round(context.expected_team_tds * td_share_rate, 2)
 
             # If not a real player and anchor_baseline is higher (e.g. mock Elite QB with 24.5 pts):
             if not is_real_indexed_player and not use_explicit_stats and anchor_baseline >= 18.0:
@@ -931,22 +951,27 @@ class QuantProjectionEngine:
                 carry_share = rush_att / max(context.expected_rush_attempts, 1.0)
             elif rb_micro and rb_micro.get("snap_share_pct") is not None:
                 snap_pct = float(rb_micro["snap_share_pct"]) * 100.0
-                carry_share = min(0.82, max(0.20, (snap_pct / 100.0) * 0.88))
+                carry_share = min(0.72, max(0.18, (snap_pct / 100.0) * 0.78))
                 rush_att = round(context.expected_rush_attempts * carry_share, 1)
             elif "snap_pct" in im_data:
                 snap_pct = float(im_data["snap_pct"])
-                carry_share = min(0.78, max(0.20, (snap_pct / 100.0) * 0.86))
+                carry_share = min(0.70, max(0.18, (snap_pct / 100.0) * 0.76))
                 rush_att = round(context.expected_rush_attempts * carry_share, 1)
             elif dc_slot == "rb" and dc_rank == 1:
-                carry_share = 0.62
+                if anchor_baseline >= 14.0:
+                    carry_share = 0.60
+                elif anchor_baseline >= 9.5:
+                    carry_share = 0.50
+                else:
+                    carry_share = 0.38
                 rush_att = round(context.expected_rush_attempts * carry_share, 1)
             elif dc_slot == "rb" and dc_rank == 2:
-                carry_share = 0.28
+                carry_share = 0.25
                 rush_att = round(context.expected_rush_attempts * carry_share, 1)
             elif anchor_baseline >= 14.0:
-                carry_share = 0.65
+                carry_share = 0.60
                 rush_att = round(context.expected_rush_attempts * carry_share, 1)
-            elif anchor_baseline >= 10.0:
+            elif anchor_baseline >= 9.5:
                 carry_share = 0.45
                 rush_att = round(context.expected_rush_attempts * carry_share, 1)
             else:
@@ -983,16 +1008,19 @@ class QuantProjectionEngine:
             if use_explicit_stats and "rush_td" in raw_espn_stats:
                 rush_td = float(raw_espn_stats["rush_td"])
             elif live_td_prob is not None:
-                rush_td = round(max(0.05, min(1.50, 0.40 * td_share + 0.60 * live_td_prob)), 2)
+                # Sportsbook anytime TD includes both rush and rec TDs. For RBs, ~80% of TD equity is on the ground.
+                # Convert single-event probability to expected Poisson events: lambda = -ln(1 - p)
+                poisson_td_lambda = -math.log(max(0.01, 1.0 - min(0.80, live_td_prob))) * 0.80
+                rush_td = round(max(0.05, min(1.35, 0.55 * td_share + 0.45 * poisson_td_lambda)), 2)
             else:
-                rush_td = round(max(0.05, min(1.45, td_share)), 2)
+                rush_td = round(max(0.05, min(1.35, td_share)), 2)
 
             # Targets & checkdown using route participation % and QB Pressure Checkdown rate
-            rb_route_part = float(ng_rb.get("route_participation_pct", rb_micro.get("route_participation_pct", 0.48 if carry_share >= 0.5 else 0.25))) if rb_micro or ng_rb else (0.48 if carry_share >= 0.5 else 0.25)
-            rb_tprr = float(ng_rb.get("tprr", rb_micro.get("tprr", 0.19))) if rb_micro or ng_rb else 0.19
-            tgt_share = min(0.25, max(0.04, rb_route_part * rb_tprr * 1.6))
+            rb_route_part = float(ng_rb.get("route_participation_pct", rb_micro.get("route_participation_pct", 0.45 if carry_share >= 0.5 else 0.22))) if rb_micro or ng_rb else (0.45 if carry_share >= 0.5 else 0.22)
+            rb_tprr = float(ng_rb.get("tprr", rb_micro.get("tprr", 0.18))) if rb_micro or ng_rb else 0.18
+            tgt_share = min(0.18, max(0.03, rb_route_part * rb_tprr))
             is_pass_catcher = (tgt_share >= 0.08) or (float(im_data.get("targets", 0)) >= 3) or (live_rec_yds is not None and live_rec_yds >= 15.0) or (use_explicit_stats and float(raw_espn_stats.get("targets", 0)) >= 2.0)
-            checkdown_boost = 1.6 if (is_severe_pass_pressure and is_pass_catcher) else (1.0 if is_severe_pass_pressure else 0.0)
+            checkdown_boost = 0.6 if (is_severe_pass_pressure and is_pass_catcher) else (0.3 if is_severe_pass_pressure else 0.0)
             if use_explicit_stats and "targets" in raw_espn_stats:
                 targets = float(raw_espn_stats["targets"])
             else:
@@ -1001,9 +1029,9 @@ class QuantProjectionEngine:
             if use_explicit_stats and "receptions" in raw_espn_stats:
                 rec = float(raw_espn_stats["receptions"])
             else:
-                rec = round(targets * 0.76, 1)
+                rec = round(targets * 0.74, 1)
 
-            model_rec_yds = round(rec * 7.6, 1)
+            model_rec_yds = round(rec * 7.2, 1)
             if use_explicit_stats and "rec_yds" in raw_espn_stats:
                 rec_yds = float(raw_espn_stats["rec_yds"])
             elif live_rec_yds is not None:
@@ -1014,7 +1042,7 @@ class QuantProjectionEngine:
             if use_explicit_stats and "rec_td" in raw_espn_stats:
                 rec_td = float(raw_espn_stats["rec_td"])
             else:
-                rec_td = round(rec * 0.04, 2)
+                rec_td = round(rec * 0.035, 2)
 
             hvt_inside_5 = round(inside_5_share * (context.expected_team_tds * 0.75), 2)
             hvt_inside_10 = round((inside_5_share * (context.expected_team_tds * 0.75)) + (tgt_share * context.expected_team_tds * 0.35), 2)
@@ -1043,14 +1071,14 @@ class QuantProjectionEngine:
                 snap_pct = float(im_data["snap_pct"])
                 routes_run = round(context.expected_pass_attempts * (snap_pct / 100.0) * 0.90, 1)
             elif is_wr:
-                if dc_slot == "wr1" or (dc_slot.startswith("wr") and dc_rank == 1) or anchor_baseline >= 14.0:
+                if (dc_slot in ("wr1", "wr") and dc_rank == 1) or anchor_baseline >= 14.0:
                     routes_run = round(context.expected_pass_attempts * 0.92, 1)
-                elif dc_slot == "wr2" or (dc_slot.startswith("wr") and dc_rank == 2) or anchor_baseline >= 10.0:
-                    routes_run = round(context.expected_pass_attempts * 0.82, 1)
-                elif dc_rank >= 3 or anchor_baseline >= 6.5:
-                    routes_run = round(context.expected_pass_attempts * 0.62, 1)
+                elif (dc_slot in ("wr2", "wr") and dc_rank == 2) or anchor_baseline >= 10.0:
+                    routes_run = round(context.expected_pass_attempts * 0.80, 1)
+                elif dc_slot in ("wr3", "slot") or dc_rank >= 3 or anchor_baseline >= 6.5:
+                    routes_run = round(context.expected_pass_attempts * 0.58, 1)
                 else:
-                    routes_run = round(context.expected_pass_attempts * 0.45, 1)
+                    routes_run = round(context.expected_pass_attempts * 0.38, 1)
             else:
                 # Tight Ends
                 if dc_slot in ("te", "te1") and dc_rank == 1:
@@ -1063,7 +1091,7 @@ class QuantProjectionEngine:
             # Targeted per Route Run (TPRR) & Regression Index adjustment
             prior_tprr = (
                 0.28 if (anchor_baseline >= 14.0 or (fp_ecr is not None and fp_ecr <= 15))
-                else (0.24 if (dc_slot == "wr1" or dc_rank == 1) else (0.19 if (dc_slot == "wr2" or dc_rank == 2) else 0.14))
+                else (0.24 if (dc_slot in ("wr1", "wr") and dc_rank == 1) else (0.19 if (dc_slot in ("wr2", "wr") and dc_rank == 2) else 0.14))
             ) if is_wr else (0.21 if (dc_slot in ("te", "te1") and dc_rank == 1) else 0.12)
             tprr_val = wr_micro.get("tprr") if wr_micro.get("tprr") is not None else im_data.get("tprr")
             if tprr_val is not None:
@@ -1205,14 +1233,16 @@ class QuantProjectionEngine:
             opp_rz = get_team_redzone_efficiency(context.opponent)
             team_forensics = get_team_coaching_forensics(player.pro_team)
             coach_aggression = float(team_forensics.get("coach_4th_down_aggression_pct", 50.0))
-            coach_fg_mult = float(team_forensics.get("kicker_opportunity_multiplier", 1.15 if coach_aggression <= 45.0 else (0.88 if coach_aggression >= 75.0 else 1.0)))
+            coach_fg_mult = float(team_forensics.get("kicker_opportunity_multiplier", 1.10 if coach_aggression <= 45.0 else (0.90 if coach_aggression >= 75.0 else 1.0)))
 
             fg_rate = float(team_rz.get("offense", {}).get("rz_fg_attempt_rate_pct", 36.0)) / 100.0
             opp_stop = float(opp_rz.get("defense", {}).get("rz_stop_rate_pct", 45.0)) / 100.0
             rz_trips = float(team_rz.get("offense", {}).get("rz_trips_per_game", context.implied_team_total / 6.5))
             
-            fg_made = round(max(0.8, min(3.8, rz_trips * (fg_rate * 0.65 + opp_stop * 0.35) * 1.5 * total_efficiency_adj * coach_fg_mult)), 1)
-            pat_made = round(max(0.8, min(4.4, context.expected_team_tds * 0.94)), 1)
+            # Calibrated field goal expectation: Remove artificial 1.5x multiplier, anchor to 1.3 - 2.4 FGs
+            raw_fg = rz_trips * (fg_rate * 0.65 + opp_stop * 0.35) * total_efficiency_adj * coach_fg_mult
+            fg_made = round(max(0.6, min(2.8, raw_fg)), 1)
+            pat_made = round(max(0.8, min(4.2, context.expected_team_tds * 0.94)), 1)
             quant_stats = ItemizedStatLine(
                 fg_made=fg_made,
                 pat_made=pat_made,

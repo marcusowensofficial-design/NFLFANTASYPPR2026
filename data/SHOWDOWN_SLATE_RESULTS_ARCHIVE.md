@@ -10,6 +10,7 @@ This document serves as the **persistent historical knowledge base** for winning
 | :--- | :--- | :--- | :---: | :---: | :--- | :---: | :---: | :--- |
 | **W1 (MNF)** | 2026-09-14 | **DEN @ KC** | KC 31–10 | **117.86 FP** | **Kenneth Walker III** (53.4 FP) | **5-1 KC** | **$1,600** | Ground Dominance + Favored D/ST Onslaught |
 | **W2 (TNF)** | 2026-09-17 | **DET @ BUF** | BUF 41–31 | **168.15 FP** | **Amon-Ra St. Brown** (50.55 FP) | **3-3 Balanced** | **$600** | Dual-QB Mega-Shootout + Route-Running Value ($3.2k) |
+| **W2 (SNF)** | 2026-09-20 | **IND @ KC** | KC 33–30 (OT) | **161.58 FP** | **Patrick Mahomes** (47.97 FP) | **4-2 KC** | **$400** | OT Shootout + Dual Bellcow Ground Attack |
 
 ---
 
@@ -121,4 +122,91 @@ This document serves as the **persistent historical knowledge base** for winning
    * When Buffalo raced to a 21–0 lead, Detroit threw 38 passes. Amon-Ra St. Brown saw 13 targets, posting 33.7 base FP and 50.55 MVP FP.
    * Gibbs (100% user exposure) was limited to 52 rushing yards due to the deficit.
    * **The Fix:** Ensure alpha receivers with $\ge 28\%$ target share are represented at MVP in portfolios.
+
+---
+
+### Week 2: Indianapolis Colts at Kansas City Chiefs (SNF)
+* **Date:** Sunday, September 20, 2026
+* **Contest:** FanDuel NFL Single Game ($60,000 Cap, 1.5x MVP Rule)
+* **Vegas Total & Spread:** 47.5 O/U | Chiefs -6.5 (Closed -6.5)
+* **Final Score:** **Kansas City Chiefs 33, Indianapolis Colts 30 (OT)** (63 Total Points)
+* **Winning Total Score:** **161.58 FP**
+* **Optimal MVP:** **Patrick Mahomes** (47.97 FP)
+* **Stack Split:** **4-2 KC** (Mahomes, Walker, Kelce, Butker + Taylor, Jones)
+
+#### Optimal Showdown Roster
+
+| Slot | Player | Team | Pos | Salary | FP Scored | Key Realized Stats |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **MVP (1.5x)** | **Patrick Mahomes** | **KC** | **QB** | **$16,500** | **47.97** | **32/47, 382 pass yds, 3 pass TDs, 0 INT, 17 rush yds (31.98 base FP)** |
+| **AnyFLEX** | **Jonathan Taylor** | **IND** | **RB** | **$12,500** | **27.20** | 24 car, 92 rush yds, 2 rush TDs, 4 rec, 40 rec yds (4 tgts) |
+| **AnyFLEX** | **Kenneth Walker III** | **KC** | **RB** | **$11,500** | **23.80** | 24 car, 117 rush yds, 6 rec, 61 rec yds (10 tgts, 178 scrimmage yds) |
+| **AnyFLEX** | **Travis Kelce** | **KC** | **TE** | **$7,800** | **23.60** | 9 rec, 101 rec yds, 1 rec TD (11 tgts) |
+| **AnyFLEX** | **Harrison Butker** | **KC** | **K** | **$6,200** | **15.00** | 4/5 FG (including 40-yd OT game-winner), 3/3 XP |
+| **AnyFLEX** | **Daniel Jones** | **IND** | **QB** | **$5,100** | **13.40** | 22/31, 210 pass yds, 1 pass TD, 1 INT, 1 rush TD |
+| **TOTALS** | — | — | — | **$59,600** | **161.58** | **Unspent Buffer: $400** (Spent $59,600 / $60,000) |
+
+---
+
+#### Key Forensic & Strategic Insights
+
+1. **The Kenneth Walker III Hegemony (Back-to-Back 175+ Scrimmage Yard Games):**
+   * Week 1 MNF: 23 car, 173 rush yds, 1 rush TD, 3 rec, 18 rec yds, 1 rec TD (191 scrimmage yds, 2 TDs) = 35.6 FP / 53.4 MVP FP.
+   * Week 2 SNF: 24 car, 117 rush yds, 6 rec, 61 rec yds on 10 targets (178 scrimmage yds) = 23.8 FP.
+   * Walker has commanded **56 touches for 369 yards** through two weeks in Andy Reid's offense. He is a matchup-proof bellcow anchor.
+
+2. **Patrick Mahomes & Travis Kelce Re-Connection:**
+   * Mahomes threw for 382 yards and 3 TDs, while Kelce caught 9 of 11 targets for 101 yards and a touchdown.
+   * In tight, high-leverage games, Mahomes consolidates red-zone targets to his trusted Hall-of-Fame tight end.
+
+3. **Dual-Bellcow Ground Production (Taylor + Walker = 51.0 FP):**
+   * Both teams leaned on their elite running backs. Taylor scored 2 TDs on 24 carries + 4 catches (27.2 FP), while Walker monopolized Kansas City's backfield touches.
+   * Shows that high-volume bellcow running backs thrive even in 60+ point shootouts.
+
+4. **Kicker Equity in High-Total Close Games:**
+   * Harrison Butker scored 15.0 FP, outscoring all wide receivers in the game. In competitive games where drives stall near the red zone, elite kickers provide unbeatable value.
+
+---
+
+### Week 2: New York Giants at Los Angeles Rams (MNF)
+* **Date:** Monday, September 21, 2026
+* **Contest:** FanDuel NFL Single Game ($60,000 Cap, 1.5x MVP Rule)
+* **Vegas Total & Spread:** 48.5 O/U | Rams -8.5 (Closed -8.5)
+* **Final Score:** **Los Angeles Rams 28, New York Giants 6** (34 Total Points)
+* **Winning Total Score:** **129.83 FP**
+* **Optimal MVP:** **Davante Adams** (53.25 FP)
+* **Stack Split:** **5-1 LAR** (Adams, Stafford, Williams, Ferguson, Rams D/ST + Skattebo)
+
+#### Optimal Showdown Roster
+
+| Slot | Player | Team | Pos | Salary | FP Scored | Key Realized Stats |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **MVP (1.5x)** | **Davante Adams** | **LAR** | **WR** | **$16,200** | **53.25** | **8 rec, 195 rec yds, 2 rec TDs (8 tgts, 35.50 base FP)** |
+| **AnyFLEX** | **Matthew Stafford** | **LAR** | **QB** | **$12,200** | **27.98** | 24/33, 327 pass yds, 4 pass TDs, 1 INT |
+| **AnyFLEX** | **Kyren Williams** | **LAR** | **RB** | **$10,200** | **16.70** | 17 car, 85 rush yds, 2 rec, 12 yds, 1 rec TD |
+| **AnyFLEX** | **Terrance Ferguson** | **LAR** | **TE** | **$2,800** | **14.40** | 6 rec, 54 rec yds, 1 rec TD |
+| **AnyFLEX** | **Los Angeles Rams** | **LAR** | **D** | **$6,800** | **10.00** | 6 pts allowed, 2 sacks, 1 INT |
+| **AnyFLEX** | **Cam Skattebo** | **NYG** | **RB** | **$8,800** | **7.50** | 9 car, 36 rush yds, 4 rec, 19 rec yds (lone viable Giants bring-back) |
+| **TOTALS** | — | — | — | **$57,000** | **129.83** | **Unspent Buffer: $3,000** (Spent $57,000 / $60,000) |
+
+---
+
+#### Key Forensic & Strategic Insights
+
+1. **5-1 Rams Onslaught Hegemony:**
+   * A dominant 28–6 home victory yielded 5 Rams and only 1 Giant (Skattebo). The Giants' offense was completely stifled, failing to sustain drives.
+
+2. **The Dynamic Unspent Salary Law ($3,000 Left on the Table):**
+   * The optimal roster left **$3,000 unspent** ($57,000 spent). Bypassing overpriced, low-floor options like Jaxson Dart ($13,000 for 0.8 FP) and Malik Nabers ($9,800 for 0.6 FP) was the mathematical differentiator.
+
+3. **The Sub-$3,500 Punt Key (Terrance Ferguson at $2,800):**
+   * Terrance Ferguson ($2,800) ran active rotational routes, catching 6 passes for 54 yards and a touchdown (14.40 FP). This proves the **Joshua Palmer / Role Participation Law**: never apply arbitrary dollar minimums when a cheap player has a verified route and red-zone role.
+
+4. **Alpha WR MVP Multiplier Outlier:**
+   * Davante Adams posted an absurd 8-195-2 TD line for 53.25 MVP points, crushing all other captain options on the slate.
+
+5. **Favored RB + D/ST Positive Covariance:**
+   * Pairing Kyren Williams (16.7 FP) with the Rams D/ST (10.0 FP) captured positive script covariance: early defensive stops created red-zone leads, which fed fourth-quarter clock killing.
+
+
 

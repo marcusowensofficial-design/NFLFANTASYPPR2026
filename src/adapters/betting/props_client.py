@@ -87,19 +87,15 @@ def _load_live_props_cache() -> None:
                     elif lines:
                         parsed[norm]["pass_yds"] = round(statistics.median(lines), 1)
                 elif cat == "Touchdowns":
-                    odds_list = []
+                    probs_list = []
                     for b in books.values():
                         o = parse_odds(b)
                         if o is not None:
-                            odds_list.append(o)
-                    if odds_list:
-                        med_odds = int(statistics.median(odds_list))
-                        parsed[norm]["td_odds"] = med_odds
-                        if med_odds < 0:
-                            prob = abs(med_odds) / (abs(med_odds) + 100)
-                        else:
-                            prob = 100 / (med_odds + 100)
-                        parsed[norm]["td_prob"] = round(prob, 3)
+                            probs_list.append(american_odds_to_prob(o))
+                    if probs_list:
+                        med_prob = round(float(statistics.median(probs_list)), 3)
+                        parsed[norm]["td_prob"] = med_prob
+                        parsed[norm]["td_odds"] = prob_to_american_odds(med_prob)
 
         _live_props_cache = {"mtime": mtime, "players": parsed}
     except Exception as e:

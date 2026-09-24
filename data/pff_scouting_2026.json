@@ -83,13 +83,14 @@
       "team_name": "Atlanta Falcons",
       "cornerbacks": {
         "outside1": {
-          "name": "A.J. Terrell Jr.",
+          "name": "C.J. Henderson",
           "role": "LWR",
-          "grade": 76.0,
+          "grade": 64.0,
           "is_shadow": false,
-          "targets_per_route": 0.18,
-          "catch_rate": 0.59,
-          "fpts_per_route": 0.27
+          "targets_per_route": 0.23,
+          "catch_rate": 0.68,
+          "fpts_per_route": 0.38,
+          "injury_note": "Starting in place of A.J. Terrell Jr. (IR - groin)"
         },
         "outside2": {
           "name": "Mike Hughes",
@@ -119,8 +120,8 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "C.J. Henderson",
-          "grade": 64.0
+          "name": "Malcolm DeWalt IV",
+          "grade": 60.0
         },
         "slot_backup": {
           "name": "Sydney Brown",
@@ -892,13 +893,13 @@
         }
       },
       "offensive_line": {
-        "pass_block_grade": 84.0,
+        "pass_block_grade": 78.5,
         "run_block_grade": 83.5,
-        "overall_grade": 83.8,
+        "overall_grade": 80.5,
         "rank": 6,
         "key_tackles": [
           "Jordan Morgan",
-          "Zach Bako-Bewele"
+          "Anthony Belton"
         ]
       },
       "defensive_line_front": {

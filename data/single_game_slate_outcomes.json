@@ -141,6 +141,147 @@
         "50% Max Player Exposure: DJ Moore's 2nd-quarter shoulder injury destroyed 80% of lines due to over-concentration. Max 50% non-QB exposure rule required.",
         "Target Hog MVP Leverage: Amon-Ra St. Brown caught 9 of 13 targets for 142 yards and 2 TDs (50.55 MVP FP) in negative trailing script."
       ]
+    },
+    "IND_at_KC_2026_09_20": {
+      "date": "2026-09-20",
+      "game": "IND @ KC",
+      "slate_type": "Sunday Night Football (SNF)",
+      "final_score": "KC 33, IND 30 (OT)",
+      "vegas_total": 47.5,
+      "vegas_spread": "KC -6.5",
+      "total_score": 161.58,
+      "total_salary_spent": 59600,
+      "unspent_salary": 400,
+      "stack_split": "4-2 KC",
+      "mvp": {
+        "name": "Patrick Mahomes",
+        "team": "KC",
+        "position": "QB",
+        "salary": 16500,
+        "base_salary": 11000,
+        "fpts": 47.97,
+        "base_fpts": 31.98,
+        "stats": "32/47, 382 pass yds, 3 pass TDs, 0 INT, 17 rush yds"
+      },
+      "flex": [
+        {
+          "name": "Jonathan Taylor",
+          "team": "IND",
+          "position": "RB",
+          "salary": 12500,
+          "fpts": 27.20,
+          "stats": "24 car, 92 rush yds, 2 rush TDs, 4 rec, 40 rec yds (4 tgts)"
+        },
+        {
+          "name": "Kenneth Walker III",
+          "team": "KC",
+          "position": "RB",
+          "salary": 11500,
+          "fpts": 23.80,
+          "stats": "24 car, 117 rush yds, 6 rec, 61 rec yds (10 tgts, 178 scrimmage yds)"
+        },
+        {
+          "name": "Travis Kelce",
+          "team": "KC",
+          "position": "TE",
+          "salary": 7800,
+          "fpts": 23.60,
+          "stats": "9 rec, 101 rec yds, 1 rec TD (11 tgts)"
+        },
+        {
+          "name": "Harrison Butker",
+          "team": "KC",
+          "position": "K",
+          "salary": 6200,
+          "fpts": 15.00,
+          "stats": "4/5 FG (including 40-yd OT game-winner), 3/3 XP"
+        },
+        {
+          "name": "Daniel Jones",
+          "team": "IND",
+          "position": "QB",
+          "salary": 5100,
+          "fpts": 13.40,
+          "stats": "22/31, 210 pass yds, 1 pass TD, 1 INT, 1 rush TD"
+        }
+      ],
+      "key_takeaways": [
+        "The Kenneth Walker III Hegemony: 56 touches for 369 scrimmage yds across Weeks 1 and 2 in Andy Reid's offense. Matchup-proof bellcow anchor.",
+        "Mahomes & Kelce Re-Connection: Mahomes (382 yds, 3 TDs) and Kelce (9-101-1 TD on 11 tgts) monopolized Kansas City's red-zone passing attack.",
+        "Dual-Bellcow Ground Dominance: Taylor (27.2 FP) and Walker (23.8 FP) both crushed in a high-volume, competitive environment.",
+        "High-Total Kicker Edge: Harrison Butker scored 15.0 FP with 4 field goals and the game-winner in OT, beating volatile mid-tier receivers."
+      ]
+    },
+    "NYG_at_LAR_2026_09_21": {
+      "date": "2026-09-21",
+      "game": "NYG @ LAR",
+      "slate_type": "Monday Night Football (MNF)",
+      "final_score": "LAR 28, NYG 6",
+      "vegas_total": 48.5,
+      "vegas_spread": "LAR -8.5",
+      "total_score": 129.83,
+      "total_salary_spent": 57000,
+      "unspent_salary": 3000,
+      "stack_split": "5-1 LAR",
+      "mvp": {
+        "name": "Davante Adams",
+        "team": "LAR",
+        "position": "WR",
+        "salary": 16200,
+        "base_salary": 10800,
+        "fpts": 53.25,
+        "base_fpts": 35.50,
+        "stats": "8 rec, 195 yds, 2 TD (8 targets)"
+      },
+      "flex": [
+        {
+          "name": "Matthew Stafford",
+          "team": "LAR",
+          "position": "QB",
+          "salary": 12200,
+          "fpts": 27.98,
+          "stats": "24/33, 327 pass yds, 4 pass TDs, 1 INT"
+        },
+        {
+          "name": "Kyren Williams",
+          "team": "LAR",
+          "position": "RB",
+          "salary": 10200,
+          "fpts": 16.70,
+          "stats": "17 car, 85 rush yds, 2 rec, 12 yds, 1 rec TD"
+        },
+        {
+          "name": "Terrance Ferguson",
+          "team": "LAR",
+          "position": "TE",
+          "salary": 2800,
+          "fpts": 14.40,
+          "stats": "6 rec, 54 yds, 1 rec TD"
+        },
+        {
+          "name": "Los Angeles Rams",
+          "team": "LAR",
+          "position": "D",
+          "salary": 6800,
+          "fpts": 10.00,
+          "stats": "6 pts allowed, 2 sacks, 1 INT"
+        },
+        {
+          "name": "Cam Skattebo",
+          "team": "NYG",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 7.50,
+          "stats": "9 car, 36 rush yds, 4 rec, 19 yds (lone viable Giants bring-back)"
+        }
+      ],
+      "key_takeaways": [
+        "5-1 Rams Onslaught: Dominant 28-6 home victory yielded 5 Rams + 1 Giant (Skattebo).",
+        "Dynamic Unspent Salary Law ($3,000 Unspent): Roster spent $57,000, leaving exactly $3,000 on the table to bypass low-scoring overpriced receivers.",
+        "The $2,800 Ferguson Punt Key: Terrance Ferguson ($2,800) ran active rotational routes and hauled in 6 catches for 54 yards and a touchdown, acting as the indispensable knapsack key unlocking the studs.",
+        "Alpha WR MVP Outlier: Davante Adams (8-195-2 TD) dominated with 53.25 MVP points, crushing all other captain options.",
+        "Favored RB + D/ST Covariance: Pairing Kyren Williams with Rams D/ST captured both positive rush volume and defensive clamp."
+      ]
     }
   }
 }
