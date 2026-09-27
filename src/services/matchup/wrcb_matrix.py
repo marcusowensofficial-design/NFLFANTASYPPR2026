@@ -54,163 +54,163 @@ class WRCBMatchupAnalysis(BaseModel):
 # 32 NFL Team Cornerback Depth Charts (CB1, CB2, Slot CB)
 NFL_CB_DEPTH_CHARTS: dict[str, dict[str, CornerbackProfile]] = {
     "ARI": {
-        "outside1": CornerbackProfile(name="Will Johnson", team="ARI", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Denzel Burke", team="ARI", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Garrett Williams", team="ARI", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
+        "outside2": CornerbackProfile(name="Denzel Burke", team="ARI", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Max Melton", team="ARI", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "ATL": {
-        "outside1": CornerbackProfile(name="A.J. Terrell Jr.", team="ATL", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Mike Hughes", team="ATL", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="C.J. Henderson", team="ATL", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
+        "outside2": CornerbackProfile(name="Mike Hughes", team="ATL", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Billy Bowman Jr.", team="ATL", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "BAL": {
-        "outside1": CornerbackProfile(name="Nate Wiggins", team="BAL", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Marlon Humphrey", team="BAL", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
+        "outside1": CornerbackProfile(name="Nate Wiggins", team="BAL", slot_role="LWR", coverage_grade=79.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.26, catch_rate_allowed=0.58),
+        "outside2": CornerbackProfile(name="Marlon Humphrey", team="BAL", slot_role="SHADOW", coverage_grade=86.5, is_shadow=True, targets_per_route_allowed=0.15, fpts_per_route_allowed=0.22, catch_rate_allowed=0.54),
         "slot": CornerbackProfile(name="Kyle Hamilton", team="BAL", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "BUF": {
-        "outside1": CornerbackProfile(name="Christian Benford", team="BUF", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Maxwell Hairston", team="BUF", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Christian Benford", team="BUF", slot_role="LWR", coverage_grade=81.5, is_shadow=False, targets_per_route_allowed=0.16, fpts_per_route_allowed=0.25, catch_rate_allowed=0.57),
+        "outside2": CornerbackProfile(name="Maxwell Hairston", team="BUF", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Dee Alford", team="BUF", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "CAR": {
         "outside1": CornerbackProfile(name="Mike Jackson", team="CAR", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Jaycee Horn", team="CAR", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
-        "slot": CornerbackProfile(name="Chau Smith-Wade", team="CAR", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
+        "outside2": CornerbackProfile(name="Will Lee III", team="CAR", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "slot": CornerbackProfile(name="Jaycee Horn", team="CAR", slot_role="SHADOW", coverage_grade=85.5, is_shadow=True, targets_per_route_allowed=0.16, fpts_per_route_allowed=0.23, catch_rate_allowed=0.55),
     },
     "CHI": {
         "outside1": CornerbackProfile(name="Jaylon Johnson", team="CHI", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
-        "outside2": CornerbackProfile(name="Tyrique Stevenson Sr.", team="CHI", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside2": CornerbackProfile(name="Tyrique Stevenson Sr.", team="CHI", slot_role="RWR", coverage_grade=75.0, is_shadow=False, targets_per_route_allowed=0.19, fpts_per_route_allowed=0.29, catch_rate_allowed=0.61),
         "slot": CornerbackProfile(name="Cam Lewis", team="CHI", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "CIN": {
         "outside1": CornerbackProfile(name="Dax Hill", team="CIN", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="DJ Turner II", team="CIN", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside2": CornerbackProfile(name="DJ Turner II", team="CIN", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Jalen Davis", team="CIN", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "CLE": {
-        "outside1": CornerbackProfile(name="Denzel Ward", team="CLE", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
-        "outside2": CornerbackProfile(name="Tyson Campbell", team="CLE", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Denzel Ward", team="CLE", slot_role="SHADOW", coverage_grade=87.5, is_shadow=True, targets_per_route_allowed=0.15, fpts_per_route_allowed=0.21, catch_rate_allowed=0.53),
+        "outside2": CornerbackProfile(name="Tyson Campbell", team="CLE", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Myles Harden", team="CLE", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "DAL": {
         "outside1": CornerbackProfile(name="Cobie Durant", team="DAL", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="DaRon Bland", team="DAL", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside2": CornerbackProfile(name="DaRon Bland", team="DAL", slot_role="RWR", coverage_grade=82.5, is_shadow=False, targets_per_route_allowed=0.16, fpts_per_route_allowed=0.24, catch_rate_allowed=0.57),
         "slot": CornerbackProfile(name="Caleb Downs", team="DAL", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "DEN": {
-        "outside1": CornerbackProfile(name="Pat Surtain II", team="DEN", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
-        "outside2": CornerbackProfile(name="Riley Moss", team="DEN", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
-        "slot": CornerbackProfile(name="Ja'Quan McMillian", team="DEN", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
+        "outside1": CornerbackProfile(name="Pat Surtain II", team="DEN", slot_role="SHADOW", coverage_grade=90.0, is_shadow=True, targets_per_route_allowed=0.12, fpts_per_route_allowed=0.17, catch_rate_allowed=0.49),
+        "outside2": CornerbackProfile(name="Riley Moss", team="DEN", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "slot": CornerbackProfile(name="Ja'Quan McMillian", team="DEN", slot_role="SLOT", coverage_grade=76.5, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
     },
     "DET": {
-        "outside1": CornerbackProfile(name="D.J. Reed", team="DET", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Rock Ya-Sin", team="DET", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
-        "slot": CornerbackProfile(name="Roger McCreary", team="DET", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
+        "outside1": CornerbackProfile(name="D.J. Reed", team="DET", slot_role="LWR", coverage_grade=81.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.26, catch_rate_allowed=0.58),
+        "outside2": CornerbackProfile(name="Rock Ya-Sin", team="DET", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "slot": CornerbackProfile(name="Christian Izien", team="DET", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "GB": {
         "outside1": CornerbackProfile(name="Keisean Nixon", team="GB", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Brandon Cisse", team="GB", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside2": CornerbackProfile(name="Brandon Cisse", team="GB", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Javon Bullard", team="GB", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "HOU": {
         "outside1": CornerbackProfile(name="Derek Stingley Jr.", team="HOU", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
-        "outside2": CornerbackProfile(name="Kamari Lassiter", team="HOU", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
-        "slot": CornerbackProfile(name="Jalen Pitre", team="HOU", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
+        "outside2": CornerbackProfile(name="Kamari Lassiter", team="HOU", slot_role="RWR", coverage_grade=77.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
+        "slot": CornerbackProfile(name="Jalen Pitre", team="HOU", slot_role="SLOT", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "IND": {
-        "outside1": CornerbackProfile(name="Sauce Gardner", team="IND", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
-        "outside2": CornerbackProfile(name="Charvarius Ward", team="IND", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Sauce Gardner", team="IND", slot_role="SHADOW", coverage_grade=89.5, is_shadow=True, targets_per_route_allowed=0.13, fpts_per_route_allowed=0.18, catch_rate_allowed=0.5),
+        "outside2": CornerbackProfile(name="Charvarius Ward", team="IND", slot_role="RWR", coverage_grade=84.0, is_shadow=False, targets_per_route_allowed=0.16, fpts_per_route_allowed=0.24, catch_rate_allowed=0.56),
         "slot": CornerbackProfile(name="Justin Walley", team="IND", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "JAX": {
-        "outside1": CornerbackProfile(name="Travis Hunter", team="JAX", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Montaric Brown", team="JAX", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Travis Hunter", team="JAX", slot_role="LWR", coverage_grade=78.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
+        "outside2": CornerbackProfile(name="Montaric Brown", team="JAX", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Jourdan Lewis", team="JAX", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "KC": {
         "outside1": CornerbackProfile(name="Nohl Williams", team="KC", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Mansoor Delane", team="KC", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
-        "slot": CornerbackProfile(name="L'Jarius Sneed", team="KC", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
+        "outside2": CornerbackProfile(name="Mansoor Delane", team="KC", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "slot": CornerbackProfile(name="L'Jarius Sneed", team="KC", slot_role="SLOT", coverage_grade=85.0, is_shadow=False, targets_per_route_allowed=0.15, fpts_per_route_allowed=0.22, catch_rate_allowed=0.54),
     },
     "LAC": {
         "outside1": CornerbackProfile(name="Cam Hart", team="LAC", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Donte Jackson", team="LAC", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside2": CornerbackProfile(name="Donte Jackson", team="LAC", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Tarheeb Still", team="LAC", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "LAR": {
         "outside1": CornerbackProfile(name="Jaylen Watson", team="LAR", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Trent McDuffie", team="LAR", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
+        "outside2": CornerbackProfile(name="Trent McDuffie", team="LAR", slot_role="SHADOW", coverage_grade=89.0, is_shadow=True, targets_per_route_allowed=0.13, fpts_per_route_allowed=0.19, catch_rate_allowed=0.51),
         "slot": CornerbackProfile(name="Quentin Lake", team="LAR", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "LV": {
         "outside1": CornerbackProfile(name="Eric Stokes", team="LV", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Darien Porter", team="LV", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
-        "slot": CornerbackProfile(name="Taron Johnson", team="LV", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
+        "outside2": CornerbackProfile(name="Darien Porter", team="LV", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "slot": CornerbackProfile(name="Taron Johnson", team="LV", slot_role="SLOT", coverage_grade=82.0, is_shadow=False, targets_per_route_allowed=0.16, fpts_per_route_allowed=0.25, catch_rate_allowed=0.57),
     },
     "MIA": {
         "outside1": CornerbackProfile(name="Jason Marshall Jr.", team="MIA", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="JuJu Brents", team="MIA", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside2": CornerbackProfile(name="JuJu Brents", team="MIA", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Chris Johnson", team="MIA", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "MIN": {
-        "outside1": CornerbackProfile(name="Charles Demmings", team="MIN", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="James Pierre", team="MIN", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
-        "slot": CornerbackProfile(name="Byron Murphy Jr.", team="MIN", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
+        "outside1": CornerbackProfile(name="Isaiah Rodgers", team="MIN", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
+        "outside2": CornerbackProfile(name="James Pierre", team="MIN", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "slot": CornerbackProfile(name="Byron Murphy Jr.", team="MIN", slot_role="SLOT", coverage_grade=76.5, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
     },
     "NE": {
-        "outside1": CornerbackProfile(name="Carlton Davis III", team="NE", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Christian Gonzalez", team="NE", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
+        "outside1": CornerbackProfile(name="Carlton Davis III", team="NE", slot_role="LWR", coverage_grade=78.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.28, catch_rate_allowed=0.6),
+        "outside2": CornerbackProfile(name="Christian Gonzalez", team="NE", slot_role="SHADOW", coverage_grade=87.5, is_shadow=True, targets_per_route_allowed=0.15, fpts_per_route_allowed=0.21, catch_rate_allowed=0.53),
         "slot": CornerbackProfile(name="Marcus Jones", team="NE", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "NO": {
         "outside1": CornerbackProfile(name="Kool-Aid McKinstry", team="NO", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Quincy Riley", team="NO", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside2": CornerbackProfile(name="Quincy Riley", team="NO", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Jonas Sanker", team="NO", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "NYG": {
-        "outside1": CornerbackProfile(name="Deonte Banks", team="NYG", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Greg Newsome II", team="NYG", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Deonte Banks", team="NYG", slot_role="LWR", coverage_grade=76.5, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
+        "outside2": CornerbackProfile(name="Greg Newsome II", team="NYG", slot_role="RWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
         "slot": CornerbackProfile(name="Dru Phillips", team="NYG", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "NYJ": {
-        "outside1": CornerbackProfile(name="Nahshon Wright", team="NYJ", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Brandon Stephens", team="NYJ", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Azareye'h Thomas", team="NYJ", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
+        "outside2": CornerbackProfile(name="Brandon Stephens", team="NYJ", slot_role="RWR", coverage_grade=75.5, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.28, catch_rate_allowed=0.6),
         "slot": CornerbackProfile(name="Jarvis Brownlee Jr.", team="NYJ", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "PHI": {
-        "outside1": CornerbackProfile(name="Riq Woolen", team="PHI", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Quinyon Mitchell", team="PHI", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
-        "slot": CornerbackProfile(name="Cooper DeJean", team="PHI", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
+        "outside1": CornerbackProfile(name="Riq Woolen", team="PHI", slot_role="LWR", coverage_grade=80.5, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.26, catch_rate_allowed=0.58),
+        "outside2": CornerbackProfile(name="Quinyon Mitchell", team="PHI", slot_role="SHADOW", coverage_grade=87.0, is_shadow=True, targets_per_route_allowed=0.15, fpts_per_route_allowed=0.22, catch_rate_allowed=0.54),
+        "slot": CornerbackProfile(name="Cooper DeJean", team="PHI", slot_role="SLOT", coverage_grade=83.0, is_shadow=False, targets_per_route_allowed=0.16, fpts_per_route_allowed=0.24, catch_rate_allowed=0.56),
     },
     "PIT": {
-        "outside1": CornerbackProfile(name="Joey Porter Jr.", team="PIT", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
-        "outside2": CornerbackProfile(name="Jamel Dean", team="PIT", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
-        "slot": CornerbackProfile(name="Jalen Ramsey", team="PIT", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
+        "outside1": CornerbackProfile(name="Joey Porter Jr.", team="PIT", slot_role="SHADOW", coverage_grade=86.5, is_shadow=True, targets_per_route_allowed=0.15, fpts_per_route_allowed=0.22, catch_rate_allowed=0.54),
+        "outside2": CornerbackProfile(name="Jamel Dean", team="PIT", slot_role="RWR", coverage_grade=78.5, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.28, catch_rate_allowed=0.6),
+        "slot": CornerbackProfile(name="Jalen Ramsey", team="PIT", slot_role="SLOT", coverage_grade=84.5, is_shadow=False, targets_per_route_allowed=0.16, fpts_per_route_allowed=0.24, catch_rate_allowed=0.56),
     },
     "SEA": {
-        "outside1": CornerbackProfile(name="Devon Witherspoon", team="SEA", slot_role="SHADOW", coverage_grade=88.5, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
-        "outside2": CornerbackProfile(name="Josh Jobe", team="SEA", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Devon Witherspoon", team="SEA", slot_role="SHADOW", coverage_grade=88.0, is_shadow=True, targets_per_route_allowed=0.14, fpts_per_route_allowed=0.2, catch_rate_allowed=0.52),
+        "outside2": CornerbackProfile(name="Josh Jobe", team="SEA", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Nick Emmanwori", team="SEA", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "SF": {
         "outside1": CornerbackProfile(name="Renardo Green", team="SF", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Deommodore Lenoir", team="SF", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside2": CornerbackProfile(name="Deommodore Lenoir", team="SF", slot_role="RWR", coverage_grade=80.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.26, catch_rate_allowed=0.58),
         "slot": CornerbackProfile(name="Upton Stout", team="SF", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "TB": {
-        "outside1": CornerbackProfile(name="Zyon McCollum", team="TB", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Benjamin Morrison", team="TB", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Zyon McCollum", team="TB", slot_role="LWR", coverage_grade=78.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
+        "outside2": CornerbackProfile(name="Benjamin Morrison", team="TB", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Jacob Parrish", team="TB", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "TEN": {
-        "outside1": CornerbackProfile(name="Cor'Dale Flott", team="TEN", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Alontae Taylor", team="TEN", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Cor'Dale Flott", team="TEN", slot_role="LWR", coverage_grade=72.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside2": CornerbackProfile(name="Alontae Taylor", team="TEN", slot_role="RWR", coverage_grade=75.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.6),
         "slot": CornerbackProfile(name="Marcus Harris", team="TEN", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "WSH": {
-        "outside1": CornerbackProfile(name="Rasul Douglas", team="WSH", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
-        "outside2": CornerbackProfile(name="Mike Sainristil", team="WSH", slot_role="RWR", coverage_grade=72.5, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
+        "outside1": CornerbackProfile(name="Rasul Douglas", team="WSH", slot_role="LWR", coverage_grade=77.5, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.28, catch_rate_allowed=0.6),
+        "outside2": CornerbackProfile(name="Mike Sainristil", team="WSH", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Amik Robertson", team="WSH", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
 }
@@ -377,18 +377,19 @@ class WRCBAnalyzer:
         outside2 = cb_room.get("outside2", DEFAULT_FALLBACK_CB_ROOM["outside2"])
         slot_cb = cb_room.get("slot", DEFAULT_FALLBACK_CB_ROOM["slot"])
 
-        # Determine if opponent shadows with CB1
+        # Determine if opponent shadows with CB1 or CB2
+        shadow_cb = outside1 if outside1.is_shadow else (outside2 if outside2.is_shadow else None)
         is_shadow_projected = False
         primary_cb = outside1
 
-        if outside1.is_shadow and alignment.target_share >= 0.22:
+        if shadow_cb and alignment.target_share >= 0.22:
             # Shadow CB travels with WR1 unless WR plays predominantly in the slot (>60%)
             if alignment.pct_slot >= 0.60:
                 is_shadow_projected = False
                 primary_cb = slot_cb
             else:
                 is_shadow_projected = True
-                primary_cb = outside1
+                primary_cb = shadow_cb
         elif alignment.pct_slot >= 0.50:
             # Heavy slot receiver faces nickel corner predominantly
             primary_cb = slot_cb
@@ -417,7 +418,7 @@ class WRCBAnalyzer:
         if is_shadow_projected and advantage_score <= -10.0:
             advantage_rating = "SHADOW_LOCKDOWN"
             tactical_takeaway = (
-                f"⚠️ SHADOW ALERT: Projected shadow coverage by {outside1.name} (Coverage Grade: {outside1.coverage_grade:.1f}). "
+                f"⚠️ SHADOW ALERT: Projected shadow coverage by {primary_cb.name} (Coverage Grade: {primary_cb.coverage_grade:.1f}). "
                 f"Significant ceiling reduction; expect contested targets and lower efficiency."
             )
         elif advantage_score <= -6.0:

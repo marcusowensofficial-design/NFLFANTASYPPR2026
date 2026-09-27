@@ -182,7 +182,7 @@ class ESPNSyncService:
             try:
                 free_agent_athletes = await client.fetch_free_agents(
                     scoring_period_id=parsed_response.scoring_period_id,
-                    limit=100,
+                    limit=250,
                 )
                 logger.info(f"Fetched {len(free_agent_athletes)} available free agents from ESPN.")
             except Exception as e:

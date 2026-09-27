@@ -102,12 +102,12 @@ def get_consensus_waiver_board(
     team_id: int | None = Query(default=None, description="Optional team ID"),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    """Retrieve the full 2026 Week 2 Internet Expert Consensus Waiver Board with live league availability."""
+    """Retrieve the full 2026 Week 3 Internet Expert Consensus Waiver Board with live league availability."""
     from src.services.waiver.expert_consensus_service import expert_consensus_service
     league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
     if not league:
         raw = expert_consensus_service.load_consensus_data()
-        return {"season": 2026, "week": 2, "positions": raw.get("positions", {}), "positional_needs": []}
+        return {"season": 2026, "week": 3, "positions": raw.get("positions", {}), "positional_needs": []}
 
     target_team_id = team_id or league.user_team_id or 1
     expert_consensus_service.ensure_consensus_players_in_db(db)
@@ -122,13 +122,35 @@ def get_consensus_waiver_board(
         )
     ).all()
     user_evals = [scoring_engine.evaluate_player(p, league_size=league.size or 8) for _, p in entries]
-    needs = expert_consensus_service.analyze_team_positional_needs(user_evals, league_size=league.size or 8)
+
+    # Query all rostered players in league to guarantee zero taken players in recommendations
+    rostered_rows = db.execute(
+        select(PlayerModel.id, PlayerModel.full_name, PlayerModel.pro_team, PlayerModel.position)
+        .join(RosterEntryModel, RosterEntryModel.player_id == PlayerModel.id)
+        .where(RosterEntryModel.league_id == league.id)
+    ).all()
+    rostered_pids = {r[0] for r in rostered_rows}
+    rostered_names = {r[1].lower().replace(".", "").replace("'", "").strip() for r in rostered_rows if r[1]}
+    rostered_names_clean = {
+        r[1].lower().replace(".", "").replace("'", "").replace(" jr", "").replace(" sr", "").replace(" iii", "").replace(" ii", "").strip()
+        for r in rostered_rows if r[1]
+    }
+    rostered_names.update(rostered_names_clean)
+    rostered_dst_teams = {r[2].upper() for r in rostered_rows if r[3] and r[3].upper() in ("D/ST", "DST") and r[2]}
+
+    needs = expert_consensus_service.analyze_team_positional_needs(
+        user_roster_evaluations=user_evals,
+        league_size=league.size or 8,
+        rostered_names=rostered_names,
+        rostered_pids=rostered_pids,
+        rostered_dst_teams=rostered_dst_teams,
+    )
     board = expert_consensus_service.get_consensus_board_with_availability(db, league.id, target_team_id, needs)
 
     return {
         "success": True,
         "season": 2026,
-        "week": 2,
+        "week": league.current_week,
         "positional_needs": [n.model_dump() for n in needs],
         "positions": {pos: [p.model_dump() for p in players] for pos, players in board.items()},
         "consensus_board": {pos: [p.model_dump() for p in players] for pos, players in board.items()},

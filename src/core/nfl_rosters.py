@@ -5,6 +5,8 @@ simulation artifacts, swapped team tags, and erroneous inclusions of players
 who already played on Thursday Night or play in non-slate island games.
 """
 
+import json
+from pathlib import Path
 from typing import Any
 import pandas as pd
 
@@ -349,6 +351,23 @@ CANONICAL_REAL_TEAMS: dict[str, str] = {
     "Josh Oliver": "MIN",
     "Johnny Mundt": "MIN",
 }
+
+# Dynamically synchronize CANONICAL_REAL_TEAMS from authoritative 2026 depth charts
+try:
+    _depth_chart_path = Path(__file__).resolve().parents[2] / "data" / "nfl_depth_charts_2026.json"
+    if _depth_chart_path.exists():
+        with open(_depth_chart_path, "r", encoding="utf-8") as _f:
+            _dc = json.load(_f).get("teams", {})
+            for _tm, _tdata in _dc.items():
+                for _unit, _pdict in _tdata.items():
+                    if isinstance(_pdict, dict):
+                        for _pos, _plist in _pdict.items():
+                            if isinstance(_plist, list):
+                                for _p in _plist:
+                                    if isinstance(_p, dict) and "name" in _p:
+                                        CANONICAL_REAL_TEAMS[_p["name"]] = _tm
+except Exception:
+    pass
 
 CANONICAL_TEAM_ALIASES: dict[str, list[str]] = {
     "WSH": ["WAS"],

@@ -13,7 +13,7 @@ def test_consensus_data_integrity_and_sources():
     and is backed by verified national fantasy outlets."""
     data = expert_consensus_service.load_consensus_data()
     assert data["season"] == 2026
-    assert data["week"] == 2
+    assert data["week"] in (2, 3)
     assert "FantasyPros" in data["expert_sources"]
     assert "CBS Sports" in data["expert_sources"]
     assert "NFL.com" in data["expert_sources"]

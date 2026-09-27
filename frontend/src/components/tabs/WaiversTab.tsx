@@ -148,7 +148,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                 <span style={{ fontSize: '18px' }}>🎯</span>
                 <h3 className="positional-needs-title">Roster Positional Needs Diagnostic</h3>
                 <span className="pill purple" style={{ fontSize: '11px', fontWeight: 700 }}>
-                  Week 2 2026 Intelligence
+                  Week 3 2026 Intelligence
                 </span>
               </div>
               <p className="positional-needs-desc">
@@ -162,7 +162,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                 setConsensusPosFilter('ALL')
               }}
             >
-              🏆 View All 47 Consensus Plays ➔
+              🏆 View All Consensus Plays ➔
             </button>
           </div>
 
@@ -265,7 +265,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '22px' }}>🏆</span>
                 <h3 className="card-title" style={{ color: '#38bdf8' }}>
-                  2026 Week 2 Expert Consensus Wire Board
+                  2026 Week 3 Expert Consensus Wire Board
                 </h3>
               </div>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
@@ -487,7 +487,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
             <div>
               <h3 className="card-title">🎯 Human-Pro Lineup Upgrades & Tactical Wire Claims</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
-                Every recommendation is tailored to diagnosed roster needs and cross-referenced with 2026 Week 2 expert consensus value.
+                Every recommendation is tailored to diagnosed roster needs and cross-referenced with 2026 Week 3 expert consensus value.
               </p>
             </div>
             <span className="pill emerald">8-Man Depth Calibrated</span>

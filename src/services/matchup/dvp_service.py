@@ -82,7 +82,7 @@ class DvPService:
     def _get_db(self) -> Session:
         return self._external_db if self._external_db is not None else SessionLocal()
 
-    async def sync_dvp_data(self, season: int = 2026, week: int = 2) -> dict[str, Any]:
+    async def sync_dvp_data(self, season: int = 2026, week: int = 3) -> dict[str, Any]:
         """Scrapes or loads latest DvP data from DraftEdge and upserts to database."""
         db = self._get_db()
         should_close = self._external_db is None

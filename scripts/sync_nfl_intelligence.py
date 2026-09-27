@@ -75,6 +75,14 @@ async def sync_depth_charts() -> int:
         json.dump(summary, f, indent=2)
 
     logger.info(f"Exported depth charts for {len(charts)} teams to {out_file.name}")
+
+    try:
+        from scripts.sync_authoritative_defense_2026 import sync_defense_data
+        sync_defense_data()
+        logger.info("Successfully auto-synchronized PFF scouting & WR-CB matrix with fresh depth charts.")
+    except Exception as e:
+        logger.error(f"Failed to auto-sync defense data: {e}")
+
     return len(charts)
 
 
@@ -116,7 +124,18 @@ async def sync_injuries() -> int:
     return len(injuries)
 
 
-async def sync_vegas_odds(week: int = 2) -> int:
+from src.services.matchup.dvp_calculator import calculate_in_house_dvp
+
+async def sync_dvp(season: int = 2026, week: int = 3) -> int:
+    """Calculates realized Defense vs Position (DvP) and exports to data/nfl_dvp_proprietary_2026.json."""
+    logger.info(f"Calculating in-house DvP ratings for Season {season}, Week {week}...")
+    dvp_res = await calculate_in_house_dvp(season=season, target_week=week)
+    total_records = sum(len(records) for records in dvp_res.values())
+    logger.info(f"Exported {total_records} team DvP records across all positions")
+    return total_records
+
+
+async def sync_vegas_odds(week: int = 3) -> int:
     """Fetches week schedule and live betting lines, exporting to data/vegas_movement_2026.json."""
     nfl_schedule_client.clear_cache()
     games = await nfl_schedule_client.fetch_week_schedule(season=2026, week=week)
@@ -157,7 +176,7 @@ async def sync_vegas_odds(week: int = 2) -> int:
 
 
 
-async def sync_database_and_calibrate(season: int = 2026, week: int = 2):
+async def sync_database_and_calibrate(season: int = 2026, week: int = 3):
     """Synchronizes ESPN league, Sleeper consensus, and runs bulk projection calibration."""
     logger.info("=== Starting Database Sync & Projection Calibration ===")
     from src.db.session import SessionLocal
@@ -191,17 +210,18 @@ async def main():
     parser = argparse.ArgumentParser(description="Master NFL Intelligence Synchronizer")
     parser.add_argument("--with-db", action="store_true", help="Also sync ESPN, Sleeper, and calibrate database projections")
     parser.add_argument("--season", type=int, default=2026, help="NFL season year (default: 2026)")
-    parser.add_argument("--week", type=int, default=2, help="NFL week number (default: 2)")
+    parser.add_argument("--week", type=int, default=3, help="NFL week number (default: 3)")
     args = parser.parse_args()
 
     logger.info(f"=== Starting Master NFL Intelligence Sync (Season {args.season}, Week {args.week}) ===")
     t1 = asyncio.create_task(sync_depth_charts())
     t2 = asyncio.create_task(sync_injuries())
     t3 = asyncio.create_task(sync_vegas_odds(week=args.week))
+    t4 = asyncio.create_task(sync_dvp(season=args.season, week=args.week))
 
-    teams_count, inj_count, games_count = await asyncio.gather(t1, t2, t3)
+    teams_count, inj_count, games_count, dvp_count = await asyncio.gather(t1, t2, t3, t4)
     logger.info(
-        f"=== Wire Sync Complete! Synced {teams_count} Teams, {inj_count} Injuries, {games_count} Games ==="
+        f"=== Wire Sync Complete! Synced {teams_count} Teams, {inj_count} Injuries, {games_count} Games, {dvp_count} DvP Records ==="
     )
 
     if args.with_db:

@@ -176,7 +176,7 @@ class PFFScoutingService:
                 name=o2.get("name", "CB2"),
                 role=o2.get("role", "RWR"),
                 grade=float(o2.get("grade", 69.0)),
-                is_shadow=False,
+                is_shadow=bool(o2.get("is_shadow", False)),
                 targets_per_route=float(o2.get("targets_per_route", 0.20)),
                 catch_rate=float(o2.get("catch_rate", 0.62)),
                 fpts_per_route=float(o2.get("fpts_per_route", 0.31)),

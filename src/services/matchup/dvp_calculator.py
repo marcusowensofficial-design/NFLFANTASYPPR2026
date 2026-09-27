@@ -331,7 +331,7 @@ def calculate_player_fantasy_points(pstats: dict[str, Any]) -> tuple[float, floa
 
 async def calculate_in_house_dvp(
     season: int = 2026,
-    target_week: int = 2,
+    target_week: int = 3,
 ) -> dict[str, list[dict[str, Any]]]:
     """Calculates in-house DvP ratings and Fantasy Points Allowed (Half-PPR & Full-PPR).
     
@@ -380,7 +380,7 @@ async def calculate_in_house_dvp(
                 if def_team not in team_stats:
                     continue
 
-                team_stats[def_team]["games_played"] += 0.5  # each game has 2 offensive sides, so +0.5 per side = 1.0 game
+                team_stats[def_team]["games_played"] += 1.0  # 1 game played for defending team
                 if off_team and off_team not in team_stats[def_team]["opponents"]:
                     team_stats[def_team]["opponents"].append(off_team)
 

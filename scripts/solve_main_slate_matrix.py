@@ -267,8 +267,27 @@ def solve_tournament_matrix(df, primary_game, mini_game_1, mini_game_2, dst_team
     - Mini 2: 2 players (Opposing game stack)
     - D/ST: 1 player from low-total disruption matchup
     """
-    # Filter active pool
-    df_pool = df[(df['gpp_proj'] >= 3.0) | (df['pos'] == 'D')].reset_index(drop=True).copy()
+    # Filter active pool with verified roles from official depth charts
+    depth_chart_path = Path("data/nfl_depth_charts_2026.json")
+    starter_names = set()
+    if depth_chart_path.exists():
+        with open(depth_chart_path, "r", encoding="utf-8") as f:
+            dc_data = json.load(f).get("teams", {})
+            for t_code, t_info in dc_data.items():
+                for unit in ["offense", "defense"]:
+                    for pos_slot, p_list in t_info.get(unit, {}).items():
+                        for p_obj in p_list:
+                            if p_obj.get("rank", 99) <= 2:
+                                starter_names.add(p_obj.get("name", "").lower().strip())
+
+    if starter_names:
+        df_pool = df[
+            ((df['norm_name'].isin(starter_names)) | (df['fppg'] >= 5.0) | (df['pos'] == 'D')) &
+            ((df['gpp_proj'] >= 3.0) | (df['pos'] == 'D'))
+        ].reset_index(drop=True).copy()
+    else:
+        df_pool = df[(df['gpp_proj'] >= 3.0) | (df['pos'] == 'D')].reset_index(drop=True).copy()
+
     n = len(df_pool)
     c = -df_pool['gpp_proj'].values
 
@@ -279,7 +298,7 @@ def solve_tournament_matrix(df, primary_game, mini_game_1, mini_game_2, dst_team
     # 1. Total players = 9
     A_rows.append(np.ones(n)); b_l.append(9); b_u.append(9)
 
-    # 2. Total Salary
+    # 2. Total Salary (Dynamic Unspent Buffer: $200 - $900 left)
     A_rows.append(df_pool['salary'].values); b_l.append(min_salary); b_u.append(max_salary)
 
     # 3. Exactly 1 QB
@@ -309,7 +328,16 @@ def solve_tournament_matrix(df, primary_game, mini_game_1, mini_game_2, dst_team
     qb_primary_mask = ((df_pool['pos'] == 'QB') & (df_pool['team'].isin([p_t1, p_t2]))).astype(float).values
     A_rows.append(qb_primary_mask); b_l.append(1); b_u.append(1)
 
-    # Each side of primary game must have at least 1 player
+    # QB MUST be paired with at least one WR or TE from the same team (NO NAKED QBs!)
+    t1_pass_catchers = ((df_pool['team'] == p_t1) & (df_pool['pos'].isin(['WR', 'TE']))).astype(float).values
+    t1_qb = ((df_pool['team'] == p_t1) & (df_pool['pos'] == 'QB')).astype(float).values
+    A_rows.append(t1_pass_catchers - t1_qb); b_l.append(0); b_u.append(9)
+
+    t2_pass_catchers = ((df_pool['team'] == p_t2) & (df_pool['pos'].isin(['WR', 'TE']))).astype(float).values
+    t2_qb = ((df_pool['team'] == p_t2) & (df_pool['pos'] == 'QB')).astype(float).values
+    A_rows.append(t2_pass_catchers - t2_qb); b_l.append(0); b_u.append(9)
+
+    # Each side of primary game must have at least 1 player (Opposing Bring-back)
     A_rows.append((df_pool['team'] == p_t1).astype(float).values); b_l.append(1); b_u.append(3)
     A_rows.append((df_pool['team'] == p_t2).astype(float).values); b_l.append(1); b_u.append(3)
 
@@ -323,10 +351,20 @@ def solve_tournament_matrix(df, primary_game, mini_game_1, mini_game_2, dst_team
     A_rows.append((df_pool['team'] == m2_t1).astype(float).values); b_l.append(1); b_u.append(1)
     A_rows.append((df_pool['team'] == m2_t2).astype(float).values); b_l.append(1); b_u.append(1)
 
-    # 12. D/ST selection
+    # 12. D/ST selection & Anti-Cannibalization
     if dst_team:
         A_rows.append(((df_pool['pos'] == 'D') & (df_pool['team'] == dst_team)).astype(float).values)
         b_l.append(1); b_u.append(1)
+
+    # Anti-Cannibalization: D/ST cannot play against any offensive player in the lineup
+    for idx_dst, row_dst in df_pool[df_pool['pos'] == 'D'].iterrows():
+        dst_tm = row_dst['team']
+        dst_opp = row_dst['opp']
+        opp_offense_mask = ((df_pool['team'] == dst_opp) & (df_pool['pos'] != 'D')).astype(float).values
+        dst_indicator = (np.arange(n) == idx_dst).astype(float)
+        A_rows.append(opp_offense_mask + 8.0 * dst_indicator)
+        b_l.append(-np.inf)
+        b_u.append(8.0)
 
     A = np.array(A_rows)
     constraints = LinearConstraint(A, b_l, b_u)

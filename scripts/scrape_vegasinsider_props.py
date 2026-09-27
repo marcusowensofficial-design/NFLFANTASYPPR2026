@@ -15,7 +15,7 @@ import sys
 import re
 import json
 from pathlib import Path
-import requests
+import httpx
 from bs4 import BeautifulSoup
 import pandas as pd
 
@@ -55,7 +55,7 @@ def clean_prop_cell(cell_str: str) -> dict:
 def scrape_vegasinsider_props(save_json: bool = True):
     print(f"[*] Fetching live NFL player props from {URL}...")
     try:
-        r = requests.get(URL, headers=HEADERS, timeout=15)
+        r = httpx.get(URL, headers=HEADERS, timeout=15.0, follow_redirects=True)
         r.raise_for_status()
     except Exception as e:
         print(f"Error connecting to VegasInsider: {e}")

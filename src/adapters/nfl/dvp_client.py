@@ -68,13 +68,17 @@ class DvPClient:
             self.hydrate_from_db()
 
     def hydrate_from_draftedge(self) -> None:
-        """Hydrate team DvP ranks with DraftEdge calibrated baseline rankings."""
+        """Hydrate team DvP ranks with proprietary in-house DvP or DraftEdge calibrated rankings."""
         try:
             import json
             from pathlib import Path
-            seed_path = Path(__file__).resolve().parent.parent.parent.parent / "data" / "draftedge_dvp_seed.json"
-            if seed_path.exists():
-                with open(seed_path, "r", encoding="utf-8") as f:
+            data_dir = Path(__file__).resolve().parent.parent.parent.parent / "data"
+            prop_path = data_dir / "nfl_dvp_proprietary_2026.json"
+            seed_path = data_dir / "draftedge_dvp_seed.json"
+            target_path = prop_path if prop_path.exists() else seed_path
+
+            if target_path.exists():
+                with open(target_path, "r", encoding="utf-8") as f:
                     seed_data = json.load(f)
                 pos_attr_map = {"QB": "qb_rank", "RB": "rb_rank", "WR": "wr_rank", "TE": "te_rank"}
                 for pos, attr in pos_attr_map.items():
