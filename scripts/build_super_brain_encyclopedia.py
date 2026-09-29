@@ -76,11 +76,11 @@ def build_super_brain():
                 "inside_5_carry_share": 0.52, "cpoe": 3.8, "role_archetype": "ELITE_DUAL_THREAT_ALPHA"
             },
             "in_season_2026": {
-                "season": 2026, "games": 1, "pass_yds_pg": 334.0, "pass_tds_pg": 2.0, "int_pg": 0.0,
-                "rush_yds_pg": 23.0, "rush_tds_pg": 2.0, "fppg_half": 35.6, "fppg_ppr": 35.6,
+                "season": 2026, "games": 3, "pass_yds_pg": 262.0, "pass_tds_pg": 1.67, "int_pg": 0.33,
+                "rush_yds_pg": 38.0, "rush_tds_pg": 1.33, "fppg_half": 31.8, "fppg_ppr": 31.8,
                 "scramble_pct_pressured": 18.5, "p2s_rate": 12.5, "clean_pocket_rtg": 112.4,
                 "inside_5_carry_share": 0.55, "cpoe": 4.8, "role_archetype": "ELITE_DUAL_THREAT_ALPHA",
-                "trajectory": "ASCENDING_PEAK", "role_shift_notes": "Added DJ Moore as alpha perimeter receiver; red zone rushing monopoly intact."
+                "trajectory": "ASCENDING_PEAK", "role_shift_notes": "Dominant goal-line equity; 4 rushing TDs through 3 games. Alpha QB anchor."
             }
         },
         {
@@ -92,11 +92,11 @@ def build_super_brain():
                 "inside_5_carry_share": 0.04, "cpoe": 2.4, "role_archetype": "ELITE_POCKET_DISTRIBUTOR"
             },
             "in_season_2026": {
-                "season": 2026, "games": 1, "pass_yds_pg": 206.0, "pass_tds_pg": 2.0, "int_pg": 0.0,
-                "rush_yds_pg": 2.0, "rush_tds_pg": 0.0, "fppg_half": 16.4, "fppg_ppr": 16.4,
+                "season": 2026, "games": 3, "pass_yds_pg": 267.3, "pass_tds_pg": 2.0, "int_pg": 0.0,
+                "rush_yds_pg": 3.0, "rush_tds_pg": 0.0, "fppg_half": 22.8, "fppg_ppr": 22.8,
                 "scramble_pct_pressured": 2.1, "p2s_rate": 14.8, "clean_pocket_rtg": 108.5,
                 "inside_5_carry_share": 0.05, "cpoe": 2.1, "role_archetype": "ELITE_POCKET_DISTRIBUTOR",
-                "trajectory": "STABLE_HIGH_FLOOR", "role_shift_notes": "Protected by NFL #1 offensive line (88.8 PFF); clean pocket distributor."
+                "trajectory": "STABLE_HIGH_FLOOR", "role_shift_notes": "Protected by NFL #1 offensive line (88.8 PFF); clean pocket distributor with 6 TDs."
             }
         },
         {
@@ -108,11 +108,11 @@ def build_super_brain():
                 "inside_5_carry_share": 0.38, "cpoe": 5.2, "role_archetype": "DYNAMIC_MVP_DUAL_THREAT"
             },
             "in_season_2026": {
-                "season": 2026, "games": 1, "pass_yds_pg": 273.0, "pass_tds_pg": 1.0, "int_pg": 0.0,
-                "rush_yds_pg": 122.0, "rush_tds_pg": 0.0, "fppg_half": 23.1, "fppg_ppr": 23.1,
+                "season": 2026, "games": 3, "pass_yds_pg": 242.0, "pass_tds_pg": 1.67, "int_pg": 0.33,
+                "rush_yds_pg": 74.0, "rush_tds_pg": 0.33, "fppg_half": 25.2, "fppg_ppr": 25.2,
                 "scramble_pct_pressured": 24.1, "p2s_rate": 15.0, "clean_pocket_rtg": 114.0,
                 "inside_5_carry_share": 0.35, "cpoe": 5.8, "role_archetype": "DYNAMIC_MVP_DUAL_THREAT",
-                "trajectory": "ELITE_PEAK", "role_shift_notes": "Rushing floor unbeatable; heavy designed runs + broken play scrambles."
+                "trajectory": "ELITE_PEAK", "role_shift_notes": "Rushing floor unbeatable; averaging 74 rush yards per game."
             }
         },
         {
@@ -124,11 +124,11 @@ def build_super_brain():
                 "inside_5_carry_share": 0.62, "cpoe": 1.8, "role_archetype": "TUSH_PUSH_GOAL_LINE_MONSTER"
             },
             "in_season_2026": {
-                "season": 2026, "games": 1, "pass_yds_pg": 278.0, "pass_tds_pg": 2.0, "int_pg": 2.0,
-                "rush_yds_pg": 33.0, "rush_tds_pg": 0.0, "fppg_half": 18.4, "fppg_ppr": 18.4,
+                "season": 2026, "games": 3, "pass_yds_pg": 215.0, "pass_tds_pg": 1.0, "int_pg": 1.0,
+                "rush_yds_pg": 29.0, "rush_tds_pg": 0.67, "fppg_half": 18.7, "fppg_ppr": 18.7,
                 "scramble_pct_pressured": 18.8, "p2s_rate": 17.2, "clean_pocket_rtg": 104.5,
                 "inside_5_carry_share": 0.58, "cpoe": 2.1, "role_archetype": "TUSH_PUSH_GOAL_LINE_MONSTER",
-                "trajectory": "HIGH_GOAL_LINE_EQUITY", "role_shift_notes": "Tush push remains #1 red-zone touchdown conversion play in football."
+                "trajectory": "HIGH_GOAL_LINE_EQUITY", "role_shift_notes": "Scored lone Philly TD in Chicago; tush push remains core red-zone engine."
             }
         },
 
@@ -142,11 +142,11 @@ def build_super_brain():
                 "yac_per_att": 3.42, "fppg_half": 14.8, "fppg_ppr": 16.5, "role_archetype": "EXPLOSIVE_1A_COMMITTEE"
             },
             "in_season_2026": {
-                "season": 2026, "games": 1, "carries_pg": 29.0, "rush_yds_pg": 156.0, "rush_tds_pg": 2.0,
-                "targets_pg": 5.0, "rec_pg": 5.0, "rec_yds_pg": 30.0, "rec_tds_pg": 0.0,
+                "season": 2026, "games": 3, "carries_pg": 23.3, "rush_yds_pg": 102.3, "rush_tds_pg": 1.33,
+                "targets_pg": 6.0, "rec_pg": 5.3, "rec_yds_pg": 42.0, "rec_tds_pg": 0.33,
                 "snap_share_pct": 68.0, "route_participation_pct": 64.0, "inside_5_carry_share": 0.65,
-                "yac_per_att": 3.85, "fppg_half": 33.1, "fppg_ppr": 35.6, "role_archetype": "TRUE_BELLCOW_ALPHA",
-                "trajectory": "BREAKOUT_SUPERSTAR", "role_shift_notes": "Massive leap to true bellcow (68% snaps, 65% inside-5). Usurped Montgomery's goal line monopoly."
+                "yac_per_att": 3.85, "fppg_half": 28.6, "fppg_ppr": 31.2, "role_archetype": "TRUE_BELLCOW_ALPHA",
+                "trajectory": "BREAKOUT_SUPERSTAR", "role_shift_notes": "Dominant bellcow: 37.9 FP Week 3 explosion; 4 total touchdowns through 3 weeks."
             }
         },
         {
@@ -158,11 +158,11 @@ def build_super_brain():
                 "yac_per_att": 3.10, "fppg_half": 12.5, "fppg_ppr": 13.8, "role_archetype": "YARDAGE_ACCUMULATOR"
             },
             "in_season_2026": {
-                "season": 2026, "games": 1, "carries_pg": 13.0, "rush_yds_pg": 57.0, "rush_tds_pg": 0.0,
-                "targets_pg": 4.0, "rec_pg": 3.0, "rec_yds_pg": 12.0, "rec_tds_pg": 0.0,
-                "snap_share_pct": 61.0, "route_participation_pct": 52.0, "inside_5_carry_share": 0.45,
-                "yac_per_att": 3.15, "fppg_half": 8.4, "fppg_ppr": 9.9, "role_archetype": "YARDAGE_ACCUMULATOR",
-                "trajectory": "NEUTRAL_CAPPED_CEILING", "role_shift_notes": "Efficient between 20s, but Josh Allen (55% inside 5) caps multi-TD ceiling."
+                "season": 2026, "games": 3, "carries_pg": 16.0, "rush_yds_pg": 98.0, "rush_tds_pg": 0.67,
+                "targets_pg": 3.3, "rec_pg": 2.3, "rec_yds_pg": 18.0, "rec_tds_pg": 0.0,
+                "snap_share_pct": 64.0, "route_participation_pct": 52.0, "inside_5_carry_share": 0.50,
+                "yac_per_att": 3.45, "fppg_half": 16.4, "fppg_ppr": 17.5, "role_archetype": "YARDAGE_ACCUMULATOR",
+                "trajectory": "ASCENDING_TOUCHDOWN_EQUITY", "role_shift_notes": "154 rushing yards and 22.4 FP in Week 3; absorbing goal-line volume."
             }
         },
         {
@@ -174,11 +174,11 @@ def build_super_brain():
                 "yac_per_att": 3.65, "fppg_half": 13.2, "fppg_ppr": 14.9, "role_archetype": "VERSATILE_ALPHA"
             },
             "in_season_2026": {
-                "season": 2026, "games": 1, "carries_pg": 18.0, "rush_yds_pg": 68.0, "rush_tds_pg": 0.0,
-                "targets_pg": 5.0, "rec_pg": 5.0, "rec_yds_pg": 43.0, "rec_tds_pg": 0.0,
-                "snap_share_pct": 78.0, "route_participation_pct": 68.0, "inside_5_carry_share": 0.65,
-                "yac_per_att": 3.75, "fppg_half": 13.6, "fppg_ppr": 16.1, "role_archetype": "TRUE_BELLCOW_ALPHA",
-                "trajectory": "COILED_SPRING_BUY", "role_shift_notes": "Snap share climbed to 78%; 100% of high-value backfield touches in Zac Robinson scheme."
+                "season": 2026, "games": 3, "carries_pg": 21.0, "rush_yds_pg": 112.0, "rush_tds_pg": 1.0,
+                "targets_pg": 5.3, "rec_pg": 4.3, "rec_yds_pg": 36.0, "rec_tds_pg": 0.33,
+                "snap_share_pct": 80.0, "route_participation_pct": 70.0, "inside_5_carry_share": 0.75,
+                "yac_per_att": 4.10, "fppg_half": 23.9, "fppg_ppr": 26.1, "role_archetype": "TRUE_BELLCOW_ALPHA",
+                "trajectory": "ALPHA_OUTLIER_SMASH", "role_shift_notes": "Erupted for 194 rush yds, 2 TDs (37.3 FP / 55.95 MVP) in Week 3. Consensus RB1."
             }
         },
         {
@@ -190,11 +190,11 @@ def build_super_brain():
                 "yac_per_att": 3.40, "fppg_half": 14.9, "fppg_ppr": 17.3, "role_archetype": "ELITE_RECEIVING_BELLCOW"
             },
             "in_season_2026": {
-                "season": 2026, "games": 1, "carries_pg": 16.0, "rush_yds_pg": 54.0, "rush_tds_pg": 1.0,
-                "targets_pg": 6.0, "rec_pg": 5.0, "rec_yds_pg": 39.0, "rec_tds_pg": 0.0,
-                "snap_share_pct": 76.0, "route_participation_pct": 62.0, "inside_5_carry_share": 0.70,
-                "yac_per_att": 3.20, "fppg_half": 17.8, "fppg_ppr": 20.3, "role_archetype": "ELITE_RECEIVING_BELLCOW",
-                "trajectory": "ELITE_STABLE", "role_shift_notes": "Full health; Rodgers checkdowns ensure 6+ targets weekly."
+                "season": 2026, "games": 3, "carries_pg": 15.0, "rush_yds_pg": 58.0, "rush_tds_pg": 0.33,
+                "targets_pg": 5.7, "rec_pg": 4.3, "rec_yds_pg": 32.0, "rec_tds_pg": 0.0,
+                "snap_share_pct": 74.0, "route_participation_pct": 60.0, "inside_5_carry_share": 0.65,
+                "yac_per_att": 3.10, "fppg_half": 14.3, "fppg_ppr": 16.5, "role_archetype": "ELITE_RECEIVING_BELLCOW",
+                "trajectory": "ELITE_STABLE", "role_shift_notes": "High floor in full-PPR formats; consistent 5+ targets weekly."
             }
         },
 

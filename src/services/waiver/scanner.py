@@ -687,7 +687,7 @@ class WaiverScanner:
             fa_pos = fa.position.upper()
             if fa.player_id in seen_pids:
                 continue
-            if fa_pos == "WR" and fa.projected_points >= 9.0:
+            if fa_pos == "WR" and fa.projected_points >= 8.0:
                 net_score = round(fa.start_score - (drop_candidate.start_score if drop_candidate else 60.0), 1)
                 catalyst = f"Expanding target share and route participation in an active passing attack ({fa.projected_points:.1f} proj fpts)."
                 matchup_ctx = f"Solid weekly floor and flex upside vs {fa.opponent}."

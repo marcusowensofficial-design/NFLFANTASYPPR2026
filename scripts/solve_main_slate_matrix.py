@@ -22,6 +22,49 @@ from scipy.optimize import milp, LinearConstraint, Bounds
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+def compute_bayesian_base_projection(pos: str, salary: int, fppg: float, played: int, is_starter: bool = True) -> float:
+    """
+    Computes an empirical Bayesian baseline projection to prevent small-sample FPPG distortion.
+    Shrinks early-season FPPG toward a mathematically sound salary-implied prior.
+    """
+    sal_k = salary / 1000.0
+    eff_played = int(played) if pd.notna(played) and played >= 0 else 0
+
+    # Starter prior expectations per $1,000 of salary on FanDuel ($60k cap)
+    if is_starter:
+        if pos == 'QB':
+            prior = max(11.0, sal_k * 2.35 - 2.0)
+        elif pos == 'RB':
+            prior = max(6.0, sal_k * 2.05 - 1.5)
+        elif pos == 'WR':
+            prior = max(5.0, sal_k * 1.95 - 1.8)
+        elif pos == 'TE':
+            prior = max(4.0, sal_k * 1.65 - 1.8)
+        elif pos == 'D':
+            prior = max(3.0, sal_k * 1.75)
+        else:
+            prior = sal_k * 1.80
+    else:
+        # Non-starter / backup prior reflects rotational / contingency workload
+        prior = max(1.0, sal_k * 0.90)
+
+    # If player hasn't played yet this season, default to prior
+    if eff_played == 0:
+        return round(prior, 2)
+
+    # Weight K=3.0 provides standard empirical Bayes shrinkage:
+    # 1 game: 25% sample / 75% prior
+    # 2 games: 40% sample / 60% prior
+    # 4 games: 57% sample / 43% prior
+    # 12 games: 80% sample / 20% prior
+    k_prior = 3.0
+    w = eff_played / (eff_played + k_prior)
+
+    base = w * fppg + (1.0 - w) * prior
+    return round(base, 2)
+
+
+
 def load_and_enrich_slate(csv_path=None,
                           vegas_path="data/vegas_movement_2026.json",
                           pff_path="data/pff_scouting_2026.json",
@@ -53,8 +96,8 @@ def load_and_enrich_slate(csv_path=None,
 
     df['name'] = df['Nickname'].str.strip()
     df['pos'] = df['Position'].str.strip()
-    df['team'] = df['Team'].str.strip()
-    df['opp'] = df['Opponent'].str.strip()
+    df['team'] = df['Team'].str.strip().replace({'WSH': 'WAS', 'JAX': 'JAC'})
+    df['opp'] = df['Opponent'].str.strip().replace({'WSH': 'WAS', 'JAX': 'JAC'})
     df['salary'] = df['Salary'].astype(int)
     df['fppg'] = df['FPPG'].fillna(0.0).astype(float)
     df['injury'] = df['Injury Indicator'].fillna('').str.strip()
@@ -115,6 +158,18 @@ def load_and_enrich_slate(csv_path=None,
         with open(pff_path, 'r') as f:
             pff_dict = json.load(f).get('teams', {})
 
+    # Mirror Team Aliases (e.g. WAS <-> WSH, JAC <-> JAX) across Vegas, DvP, and PFF
+    TEAM_ALIASES = {'WAS': 'WSH', 'WSH': 'WAS', 'JAC': 'JAX', 'JAX': 'JAC'}
+    for t1, t2 in list(TEAM_ALIASES.items()):
+        if t1 in vegas_team_map and t2 not in vegas_team_map:
+            vegas_team_map[t2] = vegas_team_map[t1]
+        if t1 in pff_dict and t2 not in pff_dict:
+            pff_dict[t2] = pff_dict[t1]
+        for pos_k in ['QB', 'RB', 'WR', 'TE']:
+            if pos_k in dvp_dict and t1 in dvp_dict[pos_k] and t2 not in dvp_dict[pos_k]:
+                dvp_dict[pos_k][t2] = dvp_dict[pos_k][t1]
+
+
     # Load Week 1 WR Forensic Micro-Metrics (Separation, First-Read, TPRR, 1D/RR)
     wr_metrics_dict = {}
     if os.path.exists(wr_metrics_path):
@@ -133,44 +188,100 @@ def load_and_enrich_slate(csv_path=None,
                 for alias in t.get('aliases', []):
                     coverage_dict[alias] = t
 
+    dc_path = Path("data/nfl_depth_charts_2026.json")
+    active_starter_qbs = set()
+    verified_starters = set()
+    if dc_path.exists():
+        with open(dc_path, "r", encoding="utf-8") as f:
+            dc_teams = json.load(f).get("teams", {})
+            for tm, tdata in dc_teams.items():
+                off = tdata.get("offense", {})
+                # QB1
+                for q_entry in off.get("qb", []):
+                    q_n = re.sub(r"[^\w\s]", "", str(q_entry.get("name", "")).lower()).strip()
+                    if q_n and q_n not in live_out_names:
+                        active_starter_qbs.add((tm, q_n))
+                        verified_starters.add((tm, q_n))
+                        break
+                # RB1
+                for r_entry in off.get("rb", [])[:1]:
+                    r_n = re.sub(r"[^\w\s]", "", str(r_entry.get("name", "")).lower()).strip()
+                    if r_n:
+                        verified_starters.add((tm, r_n))
+                # WR1, WR2, WR3
+                for wslot in ["wr1", "wr2", "wr3"]:
+                    for w_entry in off.get(wslot, [])[:1]:
+                        w_n = re.sub(r"[^\w\s]", "", str(w_entry.get("name", "")).lower()).strip()
+                        if w_n:
+                            verified_starters.add((tm, w_n))
+                # TE1
+                for t_entry in off.get("te", [])[:1]:
+                    t_n = re.sub(r"[^\w\s]", "", str(t_entry.get("name", "")).lower()).strip()
+                    if t_n:
+                        verified_starters.add((tm, t_n))
+
     # Calculate GPP Tournament Projections with Multipliers
     gpp_projs = []
     ceiling_factors = []
     for idx, row in df.iterrows():
-        base = row['fppg']
         pos = row['pos']
         team = row['team']
         opp = row['opp']
         name = row['name']
-        
-        mult = 1.0
+        norm_name = row['norm_name']
+        salary = row['salary']
+        raw_fppg = row['fppg']
+        played = row.get('Played', 1)
+
+        # QB Starting Status Verification
+        if pos == 'QB':
+            is_starter = (team, norm_name) in active_starter_qbs
+            if not is_starter and active_starter_qbs:
+                # Backup QB who is not projected to start gets zeroed out
+                gpp_projs.append(0.0)
+                ceiling_factors.append(0.0)
+                continue
+            elif is_starter and raw_fppg < 5.0:
+                # Starter with missing or early-injury sample gets starter prior baseline
+                raw_fppg = max(14.0, (salary / 1000.0) * 2.25)
+
+        is_starter = ((team, norm_name) in verified_starters) or (raw_fppg >= 9.5) or (salary >= 6400)
+        base = compute_bayesian_base_projection(pos, salary, raw_fppg, played, is_starter=is_starter)
+
+
         v_meta = vegas_team_map.get(team, {})
         g_info = v_meta.get('game', {})
         ou = g_info.get('ou', 44.0)
         dome = g_info.get('dome', False)
         implied = v_meta.get('implied', 21.0)
 
+        net_boost = 0.0
+
         # 1. Game Total & Implied Team Total Boost
         if ou >= 48.0:
-            mult += 0.08
+            net_boost += 0.08
         elif ou >= 45.0:
-            mult += 0.04
+            net_boost += 0.04
         elif ou < 40.0 and pos != 'D':
-            mult -= 0.10
+            net_boost -= 0.10
 
         if implied >= 26.0:
-            mult += 0.05
+            net_boost += 0.05
+        elif implied <= 18.0 and pos != 'D':
+            net_boost -= 0.08
 
         # 2. Dome Track Boost for Passing / Catching
         if dome and pos in ['QB', 'WR', 'TE']:
-            mult += 0.06
+            net_boost += 0.06
 
         # 3. DvP Matchup Softness (Top 10 most generous defenses)
         pos_dvp = dvp_dict.get(pos, {}).get(opp, 16)
         if pos_dvp <= 5:
-            mult += 0.12 # Softest matchup in NFL
+            net_boost += 0.10
         elif pos_dvp <= 10:
-            mult += 0.06
+            net_boost += 0.05
+        elif pos_dvp >= 28:
+            net_boost -= 0.08
 
         # 4. PFF Trench Mismatch
         team_trench = pff_dict.get(team, {})
@@ -178,81 +289,92 @@ def load_and_enrich_slate(csv_path=None,
         if pos == 'RB':
             opp_run_def_rank = opp_trench.get('defensive_line_front', {}).get('rank', 16)
             team_run_blk_grade = team_trench.get('offensive_line', {}).get('run_block_grade', 70.0)
-            if opp_run_def_rank >= 25:  # Facing bottom 8 run defense (Verified 2.0x Empirical Law)
-                mult += 0.15
-            if team_run_blk_grade >= 85.0: # Elite run blocking unit (Lions O-line)
-                mult += 0.08
+            if opp_run_def_rank >= 25:
+                net_boost += 0.12
+            if team_run_blk_grade >= 85.0:
+                net_boost += 0.06
 
-        # 5. Dual-Threat QB Ceiling Inversion Axiom
-        # Top-tier running QBs facing heavy edge rush scramble more and score rushing TDs
-        if pos == 'QB' and name in ['Josh Allen', 'Lamar Jackson', 'Jalen Hurts', 'Jayden Daniels', 'Kyler Murray']:
+        # 5. Dual-Threat QB Scramble & Touchdown Modeling
+        if pos == 'QB':
             opp_pass_rush_rank = opp_trench.get('defensive_line_front', {}).get('rank', 16)
-            if opp_pass_rush_rank <= 10:
-                mult += 0.15 # Edge pressure stimulates rushing ceiling
+            is_mobile_qb = (salary >= 8200 and base >= 17.5) or (name in ['Josh Allen', 'Lamar Jackson', 'Jalen Hurts', 'Jayden Daniels', 'Kyler Murray'])
+            if is_mobile_qb and opp_pass_rush_rank <= 10:
+                net_boost += 0.08
 
         # 6. Defense Disruption Filter
         if pos == 'D':
             d_pass_rush = team_trench.get('defensive_line_front', {}).get('pass_rush_grade', 70.0)
             opp_pass_blk = opp_trench.get('offensive_line', {}).get('pass_block_grade', 70.0)
             if ou <= 40.0 and d_pass_rush >= 80.0 and opp_pass_blk <= 70.0:
-                mult += 0.25 # Elite disruption vs incompetent offense in low-total game
+                net_boost += 0.20
 
-        # 7. WR Forensic Separation & First-Read Multipliers (FantasyPoints Tracking Data)
+        # 7. WR Forensic Separation & First-Read Multipliers
         if pos == 'WR' and name in wr_metrics_dict:
             wr_m = wr_metrics_dict[name]
             gpp_tag = wr_m.get('gpp_tag', '')
             reg_idx = wr_m.get('regression_index', 0.0) or 0.0
 
             if gpp_tag == 'CORE_PAY_UP':
-                mult += 0.10 # Proven stratospheric alpha (JSN, Jefferson, Lamb, St. Brown)
+                net_boost += 0.08
             elif gpp_tag == 'CHEAT_CODE_VALUE':
-                mult += 0.14 # Elite separation / chain mover priced as secondary flex (Jalen Coker, McConkey, Shakir)
+                net_boost += 0.08
             elif gpp_tag == 'PRIORITY_TARGET':
-                mult += 0.08 # Rejuvenated alphas (Diggs, Wilson, Olave)
+                net_boost += 0.06
 
-            # Coiled-Spring Buy-Lows: High separation (+0.07 to +0.21) with suppressed Week 1 volume
             if reg_idx >= 1.5:
-                mult += 0.12 # Regression to the mean will ignite target funnels (Chase, MHJ, Downs, Mitchell)
+                net_boost += 0.08
 
-            # Deceleration Traps & Bad Chalk: Negative separation, low chain-moving efficiency
             if gpp_tag == 'FADE_BAD_CHALK' or 'Trap' in wr_m.get('archetype', ''):
-                mult -= 0.15 # Filter out deceleration traps (Kupp, Godwin, Worthy, Rice)
+                net_boost -= 0.12
             elif gpp_tag == 'AVOID':
-                mult -= 0.20
+                net_boost -= 0.15
 
         # 8. Defensive Pass EPA/DB & Coverage Shell Matchup Multipliers
         opp_cov = coverage_dict.get(opp, {})
         if opp_cov and pos in ['QB', 'WR', 'TE']:
             opp_epa = opp_cov.get('epa_per_db', 0.0)
             opp_mofc = opp_cov.get('mofc_pct', 50.0)
-            opp_mofo = opp_cov.get('mofo_pct', 50.0)
             opp_man = opp_cov.get('total_man_pct', 20.0)
 
-            # Pass Defense Quality Multiplier (EPA/DB)
             if opp_epa >= 0.45:
-                mult += 0.10 # Attack priority turnstiles (Browns, Cowboys, Texans, Panthers)
+                net_boost += 0.08
             elif opp_epa >= 0.20:
-                mult += 0.04 # Vulnerable pass defense
+                net_boost += 0.04
             elif opp_epa <= -0.25:
-                mult -= 0.08 # Downgrade vs elite shutdown fortresses (Steelers, Chiefs, Ravens, 49ers)
+                net_boost -= 0.08
 
-            # Scheme-Specific Multipliers
             if pos == 'WR':
-                # Man-Beaters feasting vs heavy man defenses
                 if opp_man >= 35.0 and name in wr_metrics_dict and wr_metrics_dict[name].get('separation_score', 0.0) >= 0.10:
-                    mult += 0.06 # High-separation wideout facing single man coverage (Coker, Diggs, JSN)
-                # Boundary Alphas feasting vs MOFC (Single-High Cover 1/3)
+                    net_boost += 0.05
                 if opp_mofc >= 60.0 and name in wr_metrics_dict and wr_metrics_dict[name].get('first_read_pct', 0.0) and wr_metrics_dict[name]['first_read_pct'] >= 0.25:
-                    mult += 0.05 # Boundary first-read alpha with 1-on-1 boundary isolations
+                    net_boost += 0.04
 
+        # Smooth Hyperbolic Tangent Dampening (Prevents Runaway Multiplier Compounding)
+        # Clamps environmental influence cleanly to [-20%, +25%]
+        mult = 1.0 + float(np.tanh(net_boost / 0.35) * 0.25)
+        raw_proj = base * mult
 
-        gpp_proj = round(base * mult, 2)
+        # 9. Team Implied Total Reality Ceiling Caps
+        # Pass-catchers on low-implied offenses cannot project for ungrounded 25+ FP
+        if pos in ['WR', 'TE']:
+            max_allowed = max(11.0, implied * 1.05)
+            gpp_proj = round(min(raw_proj, max_allowed), 2)
+        elif pos == 'RB':
+            max_allowed = max(13.0, implied * 1.30)
+            gpp_proj = round(min(raw_proj, max_allowed), 2)
+        elif pos == 'QB':
+            max_allowed = max(15.0, implied * 1.25)
+            gpp_proj = round(min(raw_proj, max_allowed), 2)
+        else:
+            gpp_proj = round(raw_proj, 2)
+
         gpp_projs.append(gpp_proj)
         ceiling_factors.append(round(mult, 2))
 
     df['gpp_proj'] = gpp_projs
     df['ceiling_factor'] = ceiling_factors
     return df, vegas_games
+
 
 def rank_top_game_environments(vegas_games):
     """Sorts and identifies top game environments by shootout potential."""

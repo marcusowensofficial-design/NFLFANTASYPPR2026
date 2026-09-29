@@ -11,6 +11,10 @@ This document serves as the **persistent historical knowledge base** for winning
 | **W1 (MNF)** | 2026-09-14 | **DEN @ KC** | KC 31–10 | **117.86 FP** | **Kenneth Walker III** (53.4 FP) | **5-1 KC** | **$1,600** | Ground Dominance + Favored D/ST Onslaught |
 | **W2 (TNF)** | 2026-09-17 | **DET @ BUF** | BUF 41–31 | **168.15 FP** | **Amon-Ra St. Brown** (50.55 FP) | **3-3 Balanced** | **$600** | Dual-QB Mega-Shootout + Route-Running Value ($3.2k) |
 | **W2 (SNF)** | 2026-09-20 | **IND @ KC** | KC 33–30 (OT) | **161.58 FP** | **Patrick Mahomes** (47.97 FP) | **4-2 KC** | **$400** | OT Shootout + Dual Bellcow Ground Attack |
+| **W2 (MNF)** | 2026-09-21 | **NYG @ LAR** | LAR 28–6 | **129.83 FP** | **Davante Adams** (53.25 FP) | **5-1 LAR** | **$3,000** | 5-1 Blowout Onslaught + Alpha WR MVP + Punt TE Key |
+| **W3 (TNF)** | 2026-09-24 | **ATL @ GB** | ATL 35–14 | **153.93 FP** | **Bijan Robinson** (55.95 FP) | **4-2 ATL / 3-3** | **$4,300** | Bellcow Alpha MVP + Trailing Pass Funnel |
+| **W3 (SNF)** | 2026-09-27 | **LAR @ DEN** | DEN 30–26 | **127.69 FP** | **Matthew Stafford** (38.85 FP) | **4-2 LAR** | **$4,500** | Dual-QB High Volume + Losing Team Dominance |
+| **W3 (MNF)** | 2026-09-28 | **PHI @ CHI** | CHI 27–7 | **106.44 FP** | **Case Keenum** (36.72 FP) | **5-1 CHI** | **$12,000** | 5-1 Blowout Onslaught + Backup QB Knapsack MVP |
 
 ---
 
@@ -207,6 +211,113 @@ This document serves as the **persistent historical knowledge base** for winning
 
 5. **Favored RB + D/ST Positive Covariance:**
    * Pairing Kyren Williams (16.7 FP) with the Rams D/ST (10.0 FP) captured positive script covariance: early defensive stops created red-zone leads, which fed fourth-quarter clock killing.
+
+---
+
+### Week 3: Atlanta Falcons at Green Bay Packers (TNF)
+* **Date:** Thursday, September 24, 2026
+* **Contest:** FanDuel NFL Single Game ($60,000 Cap, 1.5x MVP Rule)
+* **Vegas Total & Spread:** 47.5 O/U | Packers -3.0
+* **Final Score:** **Atlanta Falcons 35, Green Bay Packers 14** (49 Total Points)
+* **Winning Total Score:** **153.93 FP**
+* **Optimal MVP:** **Bijan Robinson** (55.95 FP)
+* **Stack Split:** **4-2 ATL / 3-3** (Robinson, London, Hooper + Love, Golden, Watson)
+
+#### Optimal Showdown Roster
+
+| Slot | Player | Team | Pos | Salary | FP Scored | Key Realized Stats |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **MVP (1.5x)** | **Bijan Robinson** | **ATL** | **RB** | **$17,700** | **55.95** | **29 car, 194 rush yds, 2 rush TDs, 2 rec, 19 rec yds (213 scrimmage yds, 2 TDs, 37.30 base FP)** |
+| **AnyFLEX** | **Drake London** | **ATL** | **WR** | **$10,200** | **26.90** | 9 rec, 194 rec yds (10 targets) |
+| **AnyFLEX** | **Jordan Love** | **GB** | **QB** | **$11,200** | **22.48** | 28/53, 312 pass yds, 2 pass TDs, 1 INT |
+| **AnyFLEX** | **Matthew Golden** | **GB** | **WR** | **$5,400** | **21.50** | 5 rec, 100 rec yds, 1 rec TD (12 targets) |
+| **AnyFLEX** | **Christian Watson** | **GB** | **WR** | **$7,600** | **19.10** | 7 rec, 96 rec yds, 1 rec TD (10 targets) |
+| **AnyFLEX** | **Austin Hooper** | **ATL** | **TE** | **$3,600** | **8.10** | 2 rec, 11 rec yds, 1 rec TD |
+| **TOTALS** | — | — | — | **$55,700** | **153.93** | **Unspent Buffer: $4,300** (Spent $55,700 / $60,000) |
+
+---
+
+#### Key Forensic & Strategic Insights
+
+1. **Alpha Outlier MVP Multiplier Hegemony (Bijan Robinson 55.95 FP):**
+   * Bijan commanded 29 carries for 194 yards and 2 touchdowns. In games where an elite bellcow commands $>80\%$ backfield touches with red-zone monopoly, paying up at MVP ($17,700) captures the unbeatable 9.0-pt TD multiplier.
+2. **The Trailing Passing Funnel (Love 53 Passes -> Golden + Watson 22 Targets):**
+   * Atlanta's early lead forced Green Bay into pass-heavy script. Love threw 53 times, feeding rookie Matthew Golden (12 tgts, 21.5 FP at $5,400) and Christian Watson (10 tgts, 19.1 FP).
+3. **The Sub-$4,000 Hooper Punt Key:**
+   * Austin Hooper ($3,600) scored Atlanta's lone passing touchdown, providing the mathematical relief to stack four $10k+ studs.
+4. **Dynamic Unspent Salary Law ($4,300 Left Unspent):**
+   * Optimal roster spent $55,700, demonstrating that jamming overpriced mid-tier players reduces lineup ceiling compared to target-hog volume.
+
+---
+
+### Week 3: Los Angeles Rams at Denver Broncos (SNF)
+* **Date:** Sunday, September 27, 2026
+* **Contest:** FanDuel NFL Single Game ($60,000 Cap, 1.5x MVP Rule)
+* **Vegas Total & Spread:** 45.5 O/U | Rams -3.0
+* **Final Score:** **Denver Broncos 30, Los Angeles Rams 26** (56 Total Points)
+* **Winning Total Score:** **127.69 FP**
+* **Optimal MVP:** **Matthew Stafford** (38.85 FP)
+* **Stack Split:** **4-2 LAR** (Stafford, Adams, Williams, Mumpfield + Nix, Bryant)
+
+#### Optimal Showdown Roster
+
+| Slot | Player | Team | Pos | Salary | FP Scored | Key Realized Stats |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **MVP (1.5x)** | **Matthew Stafford** | **LAR** | **QB** | **$15,900** | **38.85** | **30/55, 390 pass yds, 2 pass TDs, 2 INT (25.90 base FP)** |
+| **AnyFLEX** | **Bo Nix** | **DEN** | **QB** | **$10,200** | **21.14** | 17/34, 186 pass yds, 2 pass TDs, 1 rush TD |
+| **AnyFLEX** | **Davante Adams** | **LAR** | **WR** | **$11,000** | **20.20** | 7 rec, 137 rec yds (13 targets) |
+| **AnyFLEX** | **Kyren Williams** | **LAR** | **RB** | **$10,400** | **18.80** | 15 car, 88 rush yds, 6 rec, 70 rec yds (158 scrimmage yds, 7 tgts) |
+| **AnyFLEX** | **Konata Mumpfield** | **LAR** | **WR** | **$4,600** | **17.30** | 4 rec, 93 rec yds, 1 rec TD (8 targets) |
+| **AnyFLEX** | **Pat Bryant** | **DEN** | **WR** | **$3,400** | **11.40** | 2 rec, 44 rec yds, 1 rec TD (2 targets) |
+| **TOTALS** | — | — | — | **$55,500** | **127.69** | **Unspent Buffer: $4,500** (Spent $55,500 / $60,000) |
+
+---
+
+#### Key Forensic & Strategic Insights
+
+1. **Dual-QB Core Shootout Mandate:**
+   * Both Stafford (25.90 FP) and Nix (21.14 FP) finished in the optimal lineup as passing volume dominated a 56-point shootout exceeding the 45.5 Vegas total.
+2. **Losing Team Fantasy Dominance (4-2 LAR):**
+   * Even though Denver won 30-26, Rams accounted for 4 of 6 roster spots due to Stafford's 55 pass attempts.
+3. **Punt Deep Threat Value ($3,400 Pat Bryant):**
+   * Pat Bryant caught a 44-yard touchdown, unlocking four $10k+ studs and leaving $4,500 unspent.
+
+---
+
+### Week 3: Philadelphia Eagles at Chicago Bears (MNF)
+* **Date:** Monday, September 28, 2026
+* **Contest:** FanDuel NFL Single Game ($60,000 Cap, 1.5x MVP Rule)
+* **Vegas Total & Spread:** 46.5 O/U | Bears -1.5
+* **Final Score:** **Chicago Bears 27, Philadelphia Eagles 7** (34 Total Points)
+* **Winning Total Score:** **106.44 FP**
+* **Optimal MVP:** **Case Keenum** (36.72 FP)
+* **Stack Split:** **5-1 CHI Onslaught** (Keenum, Raymond, Burden, Bears D/ST, Swift + Hurts)
+
+#### Optimal Showdown Roster
+
+| Slot | Player | Team | Pos | Salary | FP Scored | Key Realized Stats |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **MVP (1.5x)** | **Case Keenum** | **CHI** | **QB** | **$9,000** | **36.72** | **24/34, 247 pass yds, 2 pass TDs, 1 rush TD (24.48 base FP)** |
+| **AnyFLEX** | **Kalif Raymond** | **CHI** | **WR** | **$4,200** | **18.00** | 6 rec, 90 rec yds, 1 rec TD (7 targets) |
+| **AnyFLEX** | **Luther Burden III** | **CHI** | **WR** | **$7,200** | **16.30** | 1 car, 7 yds, 7 rec, 61 rec yds, 1 rec TD (11 targets) |
+| **AnyFLEX** | **Jalen Hurts** | **PHI** | **QB** | **$12,000** | **13.62** | 16/25, 153 pass yds, 25 rush yds, 1 rush TD, 1 INT |
+| **AnyFLEX** | **Chicago Bears** | **CHI** | **DST**| **$6,200** | **12.00** | 7 pts allowed, 3 sacks, 2 INT, 1 fumble recovery |
+| **AnyFLEX** | **D'Andre Swift** | **CHI** | **RB** | **$9,400** | **9.80** | 20 car, 84 rush yds, 2 rec, 4 rec yds (3 targets) |
+| **TOTALS** | — | — | — | **$48,000** | **106.44** | **Unspent Buffer: $12,000** (Spent $48,000 / $60,000) |
+
+---
+
+#### Key Forensic & Strategic Insights
+
+1. **5-1 Onslaught Hegemony in Defensive Stifles:**
+   * Chicago suffocated Philadelphia 27-7. Jalen Hurts (13.62 FP) was the lone Philadelphia survivor as Saquon Barkley (8.5 FP) and DeVonta Smith (9.5 FP) were shut down.
+2. **Backup QB Knapsack MVP Hack (Case Keenum at $9,000):**
+   * Starting in place of injured Caleb Williams, Keenum threw 2 TDs and rushed for 1, putting up 36.72 MVP FP at minimum salary.
+3. **The Extreme Dynamic Unspent Salary Law ($12,000 Left on Table):**
+   * The optimal roster left an astounding $12,000 unspent ($48,000 spent), completely disproving the casual DFS myth of spending every dollar.
+4. **Favored D/ST Dominance:**
+   * Bears D/ST scored 12.0 FP with 3 sacks and 3 turnovers, delivering massive point-per-dollar equity at $6,200.
+
 
 
 

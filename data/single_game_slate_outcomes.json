@@ -35,7 +35,7 @@
           "team": "DEN",
           "position": "TE",
           "salary": 4800,
-          "fpts": 12.30,
+          "fpts": 12.3,
           "stats": "4 rec, 43 yds, 1 TD (lone Denver touchdown)"
         },
         {
@@ -43,7 +43,7 @@
           "team": "KC",
           "position": "DST",
           "salary": 6400,
-          "fpts": 12.00,
+          "fpts": 12.0,
           "stats": "10 pts allowed, 4 sacks, 1 INT, 1 fumble recovery"
         },
         {
@@ -51,7 +51,7 @@
           "team": "KC",
           "position": "WR",
           "salary": 11400,
-          "fpts": 8.90,
+          "fpts": 8.9,
           "stats": "2 rec, 19 yds, 1 TD"
         },
         {
@@ -59,7 +59,7 @@
           "team": "KC",
           "position": "TE",
           "salary": 7200,
-          "fpts": 8.60,
+          "fpts": 8.6,
           "stats": "3 rec, 71 yds"
         }
       ],
@@ -90,7 +90,7 @@
         "salary": 17400,
         "base_salary": 11600,
         "fpts": 50.55,
-        "base_fpts": 33.70,
+        "base_fpts": 33.7,
         "stats": "9 rec, 142 yds, 2 TD (13 targets)"
       },
       "flex": [
@@ -115,7 +115,7 @@
           "team": "BUF",
           "position": "TE",
           "salary": 7600,
-          "fpts": 19.00,
+          "fpts": 19.0,
           "stats": "7 rec, 95 yds, 1 TD"
         },
         {
@@ -123,7 +123,7 @@
           "team": "DET",
           "position": "TE",
           "salary": 7400,
-          "fpts": 14.20,
+          "fpts": 14.2,
           "stats": "6 rec, 52 yds, 1 TD"
         },
         {
@@ -131,7 +131,7 @@
           "team": "BUF",
           "position": "WR",
           "salary": 3200,
-          "fpts": 10.80,
+          "fpts": 10.8,
           "stats": "1 rec, 43 yds, 1 TD"
         }
       ],
@@ -169,7 +169,7 @@
           "team": "IND",
           "position": "RB",
           "salary": 12500,
-          "fpts": 27.20,
+          "fpts": 27.2,
           "stats": "24 car, 92 rush yds, 2 rush TDs, 4 rec, 40 rec yds (4 tgts)"
         },
         {
@@ -177,7 +177,7 @@
           "team": "KC",
           "position": "RB",
           "salary": 11500,
-          "fpts": 23.80,
+          "fpts": 23.8,
           "stats": "24 car, 117 rush yds, 6 rec, 61 rec yds (10 tgts, 178 scrimmage yds)"
         },
         {
@@ -185,7 +185,7 @@
           "team": "KC",
           "position": "TE",
           "salary": 7800,
-          "fpts": 23.60,
+          "fpts": 23.6,
           "stats": "9 rec, 101 rec yds, 1 rec TD (11 tgts)"
         },
         {
@@ -193,7 +193,7 @@
           "team": "KC",
           "position": "K",
           "salary": 6200,
-          "fpts": 15.00,
+          "fpts": 15.0,
           "stats": "4/5 FG (including 40-yd OT game-winner), 3/3 XP"
         },
         {
@@ -201,7 +201,7 @@
           "team": "IND",
           "position": "QB",
           "salary": 5100,
-          "fpts": 13.40,
+          "fpts": 13.4,
           "stats": "22/31, 210 pass yds, 1 pass TD, 1 INT, 1 rush TD"
         }
       ],
@@ -230,7 +230,7 @@
         "salary": 16200,
         "base_salary": 10800,
         "fpts": 53.25,
-        "base_fpts": 35.50,
+        "base_fpts": 35.5,
         "stats": "8 rec, 195 yds, 2 TD (8 targets)"
       },
       "flex": [
@@ -247,7 +247,7 @@
           "team": "LAR",
           "position": "RB",
           "salary": 10200,
-          "fpts": 16.70,
+          "fpts": 16.7,
           "stats": "17 car, 85 rush yds, 2 rec, 12 yds, 1 rec TD"
         },
         {
@@ -255,7 +255,7 @@
           "team": "LAR",
           "position": "TE",
           "salary": 2800,
-          "fpts": 14.40,
+          "fpts": 14.4,
           "stats": "6 rec, 54 yds, 1 rec TD"
         },
         {
@@ -263,7 +263,7 @@
           "team": "LAR",
           "position": "D",
           "salary": 6800,
-          "fpts": 10.00,
+          "fpts": 10.0,
           "stats": "6 pts allowed, 2 sacks, 1 INT"
         },
         {
@@ -271,7 +271,7 @@
           "team": "NYG",
           "position": "RB",
           "salary": 8800,
-          "fpts": 7.50,
+          "fpts": 7.5,
           "stats": "9 car, 36 rush yds, 4 rec, 19 yds (lone viable Giants bring-back)"
         }
       ],
@@ -283,6 +283,217 @@
         "Favored RB + D/ST Covariance: Pairing Kyren Williams with Rams D/ST captured both positive rush volume and defensive clamp."
       ]
     }
+  },
+  "week_3": {
+    "ATL_at_GB_2026_09_24": {
+      "date": "2026-09-24",
+      "game": "ATL @ GB",
+      "slate_type": "Thursday Night Football (TNF)",
+      "final_score": "ATL 35, GB 14",
+      "vegas_total": 47.5,
+      "vegas_spread": "GB -3.0",
+      "total_score": 153.93,
+      "total_salary_spent": 55700,
+      "unspent_salary": 4300,
+      "stack_split": "3-3 Balanced / 4-2 ATL",
+      "mvp": {
+        "name": "Bijan Robinson",
+        "team": "ATL",
+        "position": "RB",
+        "salary": 17700,
+        "base_salary": 11800,
+        "fpts": 55.95,
+        "base_fpts": 37.3,
+        "stats": "29 car, 194 rush yds, 2 rush TDs, 2 rec, 19 rec yds (213 scrimmage yds, 2 TDs)"
+      },
+      "flex": [
+        {
+          "name": "Drake London",
+          "team": "ATL",
+          "position": "WR",
+          "salary": 10200,
+          "fpts": 26.9,
+          "stats": "9 rec, 194 rec yds, 0 TD (10 targets)"
+        },
+        {
+          "name": "Jordan Love",
+          "team": "GB",
+          "position": "QB",
+          "salary": 11200,
+          "fpts": 22.48,
+          "stats": "28/53, 312 pass yds, 2 pass TDs, 1 INT"
+        },
+        {
+          "name": "Matthew Golden",
+          "team": "GB",
+          "position": "WR",
+          "salary": 5400,
+          "fpts": 21.5,
+          "stats": "5 rec, 100 rec yds, 1 rec TD (12 targets)"
+        },
+        {
+          "name": "Christian Watson",
+          "team": "GB",
+          "position": "WR",
+          "salary": 7600,
+          "fpts": 19.1,
+          "stats": "7 rec, 96 rec yds, 1 rec TD (10 targets)"
+        },
+        {
+          "name": "Austin Hooper",
+          "team": "ATL",
+          "position": "TE",
+          "salary": 3600,
+          "fpts": 8.1,
+          "stats": "2 rec, 11 rec yds, 1 rec TD"
+        }
+      ],
+      "key_takeaways": [
+        "Alpha Outlier MVP Hegemony: Bijan Robinson (29 car, 194 yds, 2 TDs) commanded 55.95 MVP points, crushing the slate as an elite multiplier bellcow.",
+        "Trailing Target Funnels: With Green Bay in a negative game script, Jordan Love threw 53 passes, funneling 22 combined targets to Matthew Golden (5-100-1 TD) and Christian Watson (7-96-1 TD).",
+        "The Sub-$4k Hooper Punt Key: Austin Hooper ($3,600) scored on an 8-yard TD pass, providing the exact salary release needed to fit Robinson, London, Love, Watson, and Golden.",
+        "Dynamic Unspent Salary Law ($4,300 Unspent): Roster left $4,300 on the table, proving once again that forcing arbitrary cap expenditure destroys winning rosters."
+      ]
+    },
+    "LAR_at_DEN_2026_09_27": {
+      "date": "2026-09-27",
+      "game": "LAR @ DEN",
+      "slate_type": "Sunday Night Football (SNF)",
+      "final_score": "DEN 30, LAR 26",
+      "vegas_total": 45.5,
+      "vegas_spread": "LAR -3.0",
+      "total_score": 127.69,
+      "total_salary_spent": 55500,
+      "unspent_salary": 4500,
+      "stack_split": "4-2 LAR",
+      "mvp": {
+        "name": "Matthew Stafford",
+        "team": "LAR",
+        "position": "QB",
+        "salary": 15900,
+        "base_salary": 10600,
+        "fpts": 38.85,
+        "base_fpts": 25.9,
+        "stats": "30/55, 390 pass yds, 2 pass TDs, 2 INT, 13 rush yds"
+      },
+      "flex": [
+        {
+          "name": "Bo Nix",
+          "team": "DEN",
+          "position": "QB",
+          "salary": 10200,
+          "fpts": 21.14,
+          "stats": "17/34, 186 pass yds, 2 pass TDs, 1 INT, 4 car, 7 rush yds, 1 rush TD"
+        },
+        {
+          "name": "Davante Adams",
+          "team": "LAR",
+          "position": "WR",
+          "salary": 11000,
+          "fpts": 20.2,
+          "stats": "7 rec, 137 rec yds, 0 TD (13 targets)"
+        },
+        {
+          "name": "Kyren Williams",
+          "team": "LAR",
+          "position": "RB",
+          "salary": 10400,
+          "fpts": 18.8,
+          "stats": "15 car, 88 rush yds, 6 rec, 70 rec yds (158 scrimmage yds, 7 targets)"
+        },
+        {
+          "name": "Konata Mumpfield",
+          "team": "LAR",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 17.3,
+          "stats": "4 rec, 93 rec yds, 1 rec TD (8 targets)"
+        },
+        {
+          "name": "Pat Bryant",
+          "team": "DEN",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 11.4,
+          "stats": "2 rec, 44 rec yds, 1 rec TD (2 targets)"
+        }
+      ],
+      "key_takeaways": [
+        "Dual-QB Core in Shootouts: Both Stafford (25.90 FP) and Nix (21.14 FP) finished in the top 2 overall scorers as the game exceeded its 45.5 total to hit 56 combined points.",
+        "Losing Team Hegemony (4-2 LAR): Even though Denver won 30-26, Rams players accounted for 4 of the top 6 fantasy scorers due to high-octane 55-pass game script.",
+        "Punt Deep Threat Value: Pat Bryant ($3,400) caught a 44-yard TD, beating higher-priced chalk receivers.",
+        "Dynamic Salary Buffer ($4,500 Unspent): Spending only $55,500 avoided dead-weight mid-tier punts."
+      ]
+    },
+    "PHI_at_CHI_2026_09_28": {
+      "date": "2026-09-28",
+      "game": "PHI @ CHI",
+      "slate_type": "Monday Night Football (MNF)",
+      "final_score": "CHI 27, PHI 7",
+      "vegas_total": 46.5,
+      "vegas_spread": "CHI -1.5",
+      "total_score": 106.44,
+      "total_salary_spent": 48000,
+      "unspent_salary": 12000,
+      "stack_split": "5-1 CHI Onslaught",
+      "mvp": {
+        "name": "Case Keenum",
+        "team": "CHI",
+        "position": "QB",
+        "salary": 9000,
+        "base_salary": 6000,
+        "fpts": 36.72,
+        "base_fpts": 24.48,
+        "stats": "24/34, 247 pass yds, 2 pass TDs, 0 INT, 4 car, 6 rush yds, 1 rush TD"
+      },
+      "flex": [
+        {
+          "name": "Kalif Raymond",
+          "team": "CHI",
+          "position": "WR",
+          "salary": 4200,
+          "fpts": 18.0,
+          "stats": "6 rec, 90 rec yds, 1 rec TD (7 targets)"
+        },
+        {
+          "name": "Luther Burden III",
+          "team": "CHI",
+          "position": "WR",
+          "salary": 7200,
+          "fpts": 16.3,
+          "stats": "1 car, 7 rush yds, 7 rec, 61 rec yds, 1 rec TD (11 targets)"
+        },
+        {
+          "name": "Jalen Hurts",
+          "team": "PHI",
+          "position": "QB",
+          "salary": 12000,
+          "fpts": 13.62,
+          "stats": "16/25, 153 pass yds, 0 pass TD, 1 INT, 4 car, 25 rush yds, 1 rush TD"
+        },
+        {
+          "name": "Chicago Bears",
+          "team": "CHI",
+          "position": "DST",
+          "salary": 6200,
+          "fpts": 12.0,
+          "stats": "7 pts allowed, 3 sacks, 2 INT, 1 fumble recovery"
+        },
+        {
+          "name": "D'Andre Swift",
+          "team": "CHI",
+          "position": "RB",
+          "salary": 9400,
+          "fpts": 9.8,
+          "stats": "20 car, 84 rush yds, 2 rec, 4 rec yds (3 targets)"
+        }
+      ],
+      "key_takeaways": [
+        "5-1 Blowout Onslaught Hegemony: Chicago suffocated Philadelphia 27-7, placing 5 Bears in the winning roster. Jalen Hurts (13.62 FP) was the lone surviving Eagle.",
+        "Backup QB Knapsack MVP Hack: Case Keenum ($6,000 base / $9,000 MVP) threw 2 TDs and ran for another, giving 36.72 MVP FP at bare-minimum price.",
+        "The $12,000 Extreme Unspent Salary: Bypassing overpriced stars (Saquon Barkley $11,200 for 8.5 FP, DeVonta Smith $9,800 for 9.5 FP) resulted in $12,000 unspent cap.",
+        "D/ST Dominance in Closed-Script Blowouts: Bears D/ST scored 12.0 FP, completely neutralizing the opposing offense."
+      ]
+    }
   }
 }
-
