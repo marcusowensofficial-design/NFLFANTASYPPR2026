@@ -2645,7 +2645,7 @@
       "last4_fpa": 22.6,
       "trend": "Tightening up lately",
       "supporting_stats": {
-        "targets": 18.1,
+        "targets": 18.3,
         "rec": 10.2,
         "rec_yds": 115.1,
         "rec_td": 0.2,
@@ -2864,7 +2864,7 @@
       "last4_fpa": 20.7,
       "trend": "Allowing more lately (good for offense)",
       "supporting_stats": {
-        "targets": 8.8,
+        "targets": 9.0,
         "rec": 6.4,
         "rec_yds": 63.3,
         "rec_td": 0.43,

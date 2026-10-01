@@ -271,7 +271,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Te'Cory Couch",
+          "name": "Davison Igbinosun",
           "grade": 64.0
         },
         "slot_backup": {
@@ -311,7 +311,7 @@
       "team_name": "Carolina Panthers",
       "cornerbacks": {
         "outside1": {
-          "name": "Mike Jackson",
+          "name": "Akayleb Evans",
           "role": "LWR",
           "grade": 76.0,
           "is_shadow": false,
@@ -329,13 +329,13 @@
           "fpts_per_route": 0.31
         },
         "slot": {
-          "role": "SHADOW",
-          "grade": 85.5,
-          "is_shadow": true,
-          "targets_per_route": 0.16,
-          "catch_rate": 0.55,
-          "fpts_per_route": 0.23,
-          "name": "Jaycee Horn"
+          "name": "Chau Smith-Wade",
+          "role": "SLOT",
+          "grade": 74.0,
+          "is_shadow": false,
+          "targets_per_route": 0.17,
+          "catch_rate": 0.58,
+          "fpts_per_route": 0.25
         },
         "safety": {
           "grade": 79.5,
@@ -347,11 +347,11 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Akayleb Evans",
+          "name": "Mike Jackson",
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Chau Smith-Wade",
+          "name": "Jaycee Horn",
           "grade": 63.0
         },
         "safety_backup": {
@@ -441,7 +441,7 @@
         "overall_grade": 75.8,
         "rank": 14,
         "key_tackles": [
-          "Braxton Jones",
+          "Theo Benedet",
           "Darnell Wright"
         ]
       },
@@ -463,7 +463,7 @@
       "team_name": "Cincinnati Bengals",
       "cornerbacks": {
         "outside1": {
-          "name": "Dax Hill",
+          "name": "Tacario Davis",
           "role": "LWR",
           "grade": 76.0,
           "is_shadow": false,
@@ -481,7 +481,7 @@
           "fpts_per_route": 0.31
         },
         "slot": {
-          "name": "Jalen Davis",
+          "name": "Dax Hill",
           "role": "SLOT",
           "grade": 74.0,
           "is_shadow": false,
@@ -499,7 +499,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Tacario Davis",
+          "name": "DJ Ivey",
           "grade": 64.0
         },
         "slot_backup": {
@@ -615,13 +615,13 @@
       "team_name": "Dallas Cowboys",
       "cornerbacks": {
         "outside1": {
-          "name": "Cobie Durant",
-          "role": "LWR",
-          "grade": 76.0,
-          "is_shadow": false,
-          "targets_per_route": 0.18,
-          "catch_rate": 0.59,
-          "fpts_per_route": 0.27
+          "role": "SHADOW",
+          "grade": 86.5,
+          "is_shadow": true,
+          "targets_per_route": 0.15,
+          "catch_rate": 0.54,
+          "fpts_per_route": 0.22,
+          "name": "Joey Porter Jr."
         },
         "outside2": {
           "role": "RWR",
@@ -642,7 +642,7 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "name": "Jalen Thompson",
+          "name": "Markquese Bell",
           "role": "SS",
           "grade": 77.0,
           "coverage_grade": 76.0,
@@ -651,11 +651,11 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Shavon Revel Jr.",
+          "name": "Cobie Durant",
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Reddy Steward",
+          "name": "Caleb Downs",
           "grade": 63.0
         },
         "safety_backup": {
@@ -776,7 +776,7 @@
           "name": "D.J. Reed"
         },
         "outside2": {
-          "name": "Rock Ya-Sin",
+          "name": "Ennis Rakestraw Jr.",
           "role": "RWR",
           "grade": 73.0,
           "is_shadow": false,
@@ -785,16 +785,16 @@
           "fpts_per_route": 0.31
         },
         "slot": {
-          "name": "Christian Izien",
           "role": "SLOT",
-          "grade": 74.0,
+          "grade": 76.5,
           "is_shadow": false,
           "targets_per_route": 0.17,
-          "catch_rate": 0.58,
-          "fpts_per_route": 0.25
+          "catch_rate": 0.59,
+          "fpts_per_route": 0.27,
+          "name": "Roger McCreary"
         },
         "safety": {
-          "name": "Jalen Mills",
+          "name": "Christian Izien",
           "role": "SS",
           "grade": 77.0,
           "coverage_grade": 76.0,
@@ -1384,7 +1384,7 @@
           "fpts_per_route": 0.27
         },
         "outside2": {
-          "name": "Darien Porter",
+          "name": "Hezekiah Masses",
           "role": "RWR",
           "grade": 73.0,
           "is_shadow": false,
@@ -1567,7 +1567,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Tavierre Thomas",
+          "name": "Tyreek Chappell",
           "grade": 63.0
         },
         "safety_backup": {
@@ -1791,7 +1791,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Korie Black",
+          "name": "Colton Hood",
           "grade": 64.0
         },
         "slot_backup": {
@@ -1947,7 +1947,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Mac McWilliams",
+          "name": "Kenny Moore II",
           "grade": 63.0
         },
         "safety_backup": {
@@ -1983,13 +1983,13 @@
       "team_name": "Pittsburgh Steelers",
       "cornerbacks": {
         "outside1": {
-          "role": "SHADOW",
-          "grade": 86.5,
-          "is_shadow": true,
-          "targets_per_route": 0.15,
-          "catch_rate": 0.54,
-          "fpts_per_route": 0.22,
-          "name": "Joey Porter Jr."
+          "name": "Asante Samuel Jr.",
+          "role": "LWR",
+          "grade": 76.0,
+          "is_shadow": false,
+          "targets_per_route": 0.18,
+          "catch_rate": 0.59,
+          "fpts_per_route": 0.27
         },
         "outside2": {
           "role": "RWR",
@@ -2038,7 +2038,7 @@
         "rank": 18,
         "key_tackles": [
           "Troy Fautanu",
-          "Dylan Cook"
+          "Max Iheanachor"
         ]
       },
       "defensive_line_front": {
@@ -2372,7 +2372,7 @@
           "name": "Rasul Douglas"
         },
         "outside2": {
-          "name": "Mike Sainristil",
+          "name": "Fabian Moreau",
           "role": "RWR",
           "grade": 73.0,
           "is_shadow": false,
@@ -2403,7 +2403,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Amik Robertson",
+          "name": "Mike Sainristil",
           "grade": 63.0
         },
         "safety_backup": {

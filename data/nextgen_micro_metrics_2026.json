@@ -395,7 +395,7 @@
       "inside_5_carry_share": 0.08
     },
     "kyler murray": {
-      "team": "ARI",
+      "team": "MIN",
       "scramble_pct_pressured": 17.5,
       "checkdown_pct_pressured": 12.5,
       "p2s_rate": 14.5,
@@ -483,7 +483,7 @@
       "inside_5_carry_share": 0.1
     },
     "kirk cousins": {
-      "team": "ATL",
+      "team": "LV",
       "scramble_pct_pressured": 1.2,
       "checkdown_pct_pressured": 23.5,
       "p2s_rate": 17.0,
@@ -494,7 +494,7 @@
       "inside_5_carry_share": 0.02
     },
     "tua tagovailoa": {
-      "team": "MIA",
+      "team": "ATL",
       "scramble_pct_pressured": 3.0,
       "checkdown_pct_pressured": 22.0,
       "p2s_rate": 12.0,
@@ -505,7 +505,7 @@
       "inside_5_carry_share": 0.03
     },
     "aaron rodgers": {
-      "team": "NYJ",
+      "team": "PIT",
       "scramble_pct_pressured": 4.0,
       "checkdown_pct_pressured": 21.0,
       "p2s_rate": 13.0,
@@ -549,7 +549,7 @@
       "inside_5_carry_share": 0.2
     },
     "geno smith": {
-      "team": "SEA",
+      "team": "NYJ",
       "scramble_pct_pressured": 7.0,
       "checkdown_pct_pressured": 19.0,
       "p2s_rate": 16.5,
@@ -615,7 +615,7 @@
       "inside_5_carry_share": 0.15
     },
     "daniel jones": {
-      "team": "NYG",
+      "team": "IND",
       "scramble_pct_pressured": 14.0,
       "checkdown_pct_pressured": 16.0,
       "p2s_rate": 24.0,
@@ -652,7 +652,7 @@
       "regression_status": "COILED_SPRING_BUY"
     },
     "david montgomery": {
-      "team": "DET",
+      "team": "HOU",
       "inside_5_carry_share": 0.35,
       "inside_10_touch_share": 0.35,
       "route_participation_pct": 0.28,
@@ -884,7 +884,7 @@
       "notes": "Buffalo runs 38% 12-personnel in red-zone; Knox commands 40% of goal-line TE targets."
     },
     "dj moore": {
-      "team": "CHI",
+      "team": "BUF",
       "pos": "WR",
       "slot_rate_pct": 34.0,
       "boundary_rate_pct": 66.0,

@@ -6,7 +6,7 @@
       2026
     ],
     "last_updated": "2026-09-17T17:50:00Z",
-    "total_players_indexed": 16,
+    "total_players_indexed": 27,
     "total_teams_indexed": 32,
     "source_provenance": "PFF, NextGenStats, nflverse, Sportsbook Props, FantasyPoints Data"
   },
@@ -14,6 +14,7 @@
     "Josh Allen": {
       "name": "Josh Allen",
       "pos": "QB",
+      "position": "QB",
       "team": "BUF",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -60,6 +61,7 @@
     "Jared Goff": {
       "name": "Jared Goff",
       "pos": "QB",
+      "position": "QB",
       "team": "DET",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -106,6 +108,7 @@
     "Lamar Jackson": {
       "name": "Lamar Jackson",
       "pos": "QB",
+      "position": "QB",
       "team": "BAL",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -152,6 +155,7 @@
     "Jalen Hurts": {
       "name": "Jalen Hurts",
       "pos": "QB",
+      "position": "QB",
       "team": "PHI",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -198,6 +202,7 @@
     "Jahmyr Gibbs": {
       "name": "Jahmyr Gibbs",
       "pos": "RB",
+      "position": "RB",
       "team": "DET",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -246,6 +251,7 @@
     "James Cook III": {
       "name": "James Cook III",
       "pos": "RB",
+      "position": "RB",
       "team": "BUF",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -294,6 +300,7 @@
     "Bijan Robinson": {
       "name": "Bijan Robinson",
       "pos": "RB",
+      "position": "RB",
       "team": "ATL",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -342,6 +349,7 @@
     "Breece Hall": {
       "name": "Breece Hall",
       "pos": "RB",
+      "position": "RB",
       "team": "NYJ",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -387,9 +395,59 @@
         "current_tag": "[2026 Realized In-Season]"
       }
     },
+    "David Montgomery": {
+      "name": "David Montgomery",
+      "pos": "RB",
+      "position": "RB",
+      "team": "HOU",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 14,
+        "carries_pg": 15.6,
+        "rush_yds_pg": 72.5,
+        "rush_tds_pg": 0.86,
+        "targets_pg": 1.7,
+        "rec_pg": 1.4,
+        "rec_yds_pg": 8.4,
+        "rec_tds_pg": 0.0,
+        "snap_share_pct": 48.0,
+        "route_participation_pct": 28.0,
+        "inside_5_carry_share": 0.56,
+        "yac_per_att": 3.1,
+        "fppg_half": 13.8,
+        "fppg_ppr": 14.5,
+        "role_archetype": "GOAL_LINE_HAMMER"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "carries_pg": 15.0,
+        "rush_yds_pg": 62.0,
+        "rush_tds_pg": 0.67,
+        "targets_pg": 2.0,
+        "rec_pg": 1.7,
+        "rec_yds_pg": 10.0,
+        "rec_tds_pg": 0.0,
+        "snap_share_pct": 60.0,
+        "route_participation_pct": 34.0,
+        "inside_5_carry_share": 0.65,
+        "yac_per_att": 3.05,
+        "fppg_half": 12.2,
+        "fppg_ppr": 13.0,
+        "role_archetype": "STARTING_BELLCOW_RB",
+        "trajectory": "LEAD_RUSHER",
+        "role_shift_notes": "Starting lead running back for Houston Texans; splits touches with Woody Marks."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
     "Amon-Ra St. Brown": {
       "name": "Amon-Ra St. Brown",
       "pos": "WR",
+      "position": "WR",
       "team": "DET",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -434,6 +492,7 @@
     "DJ Moore": {
       "name": "DJ Moore",
       "pos": "WR",
+      "position": "WR",
       "team": "BUF",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -478,6 +537,7 @@
     "CeeDee Lamb": {
       "name": "CeeDee Lamb",
       "pos": "WR",
+      "position": "WR",
       "team": "DAL",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -522,6 +582,7 @@
     "Justin Jefferson": {
       "name": "Justin Jefferson",
       "pos": "WR",
+      "position": "WR",
       "team": "MIN",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -566,6 +627,7 @@
     "Dalton Kincaid": {
       "name": "Dalton Kincaid",
       "pos": "TE",
+      "position": "TE",
       "team": "BUF",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -610,6 +672,7 @@
     "Sam LaPorta": {
       "name": "Sam LaPorta",
       "pos": "TE",
+      "position": "TE",
       "team": "DET",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -654,6 +717,7 @@
     "Sione Vaki": {
       "name": "Sione Vaki",
       "pos": "RB",
+      "position": "RB",
       "team": "DET",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -692,7 +756,7 @@
         "fppg_ppr": 2.8,
         "role_archetype": "THIRD_DOWN_CHANGE_OF_PACE",
         "trajectory": "ROTATIONAL_PASS_DOWN",
-        "role_shift_notes": "Clear RB3 behind Gibbs and Montgomery; trusted on 3rd down passing reps."
+        "role_shift_notes": "Clear RB2 behind Gibbs in Detroit; trusted on 3rd down passing reps with Montgomery in Houston."
       },
       "provenance_tags": {
         "prior_tag": "[2025 Full-Season Prior]",
@@ -702,6 +766,7 @@
     "Dawson Knox": {
       "name": "Dawson Knox",
       "pos": "TE",
+      "position": "TE",
       "team": "BUF",
       "depth_chart_rank": 1,
       "prior_2025": {
@@ -736,6 +801,360 @@
         "role_archetype": "RED_ZONE_12_PERSONNEL_TE",
         "trajectory": "TOUCHDOWN_DEPENDENT_VALUE",
         "role_shift_notes": "Commands 40% of goal-line TE targets in Buffalo's 38% 12-personnel red zone packages."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
+    "Sauce Gardner": {
+      "name": "Sauce Gardner",
+      "pos": "CB",
+      "position": "CB",
+      "team": "IND",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 16,
+        "pff_coverage_grade": 89.5,
+        "is_shadow": true,
+        "targets_per_route": 0.13,
+        "catch_rate_allowed": 0.5,
+        "fpts_per_route_allowed": 0.18,
+        "role_archetype": "SHADOW_SHUTDOWN_CB1"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "pff_coverage_grade": 89.5,
+        "is_shadow": true,
+        "targets_per_route": 0.12,
+        "catch_rate_allowed": 0.48,
+        "fpts_per_route_allowed": 0.17,
+        "role_archetype": "SHADOW_SHUTDOWN_CB1",
+        "trajectory": "LOCKDOWN_ELITE",
+        "role_shift_notes": "Anchors Indianapolis boundary as primary shadow CB1 funneling targets inside."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
+    "Trent McDuffie": {
+      "name": "Trent McDuffie",
+      "pos": "CB",
+      "position": "CB",
+      "team": "LAR",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 16,
+        "pff_coverage_grade": 89.0,
+        "is_shadow": true,
+        "targets_per_route": 0.13,
+        "catch_rate_allowed": 0.51,
+        "fpts_per_route_allowed": 0.19,
+        "role_archetype": "SHADOW_ALL_PRO_CB"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "pff_coverage_grade": 89.0,
+        "is_shadow": true,
+        "targets_per_route": 0.14,
+        "catch_rate_allowed": 0.5,
+        "fpts_per_route_allowed": 0.18,
+        "role_archetype": "SHADOW_ALL_PRO_CB",
+        "trajectory": "LOCKDOWN_ELITE",
+        "role_shift_notes": "Acquired by Los Angeles Rams; shadows opposing WR1s across all alignments."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
+    "Pat Surtain II": {
+      "name": "Pat Surtain II",
+      "pos": "CB",
+      "position": "CB",
+      "team": "DEN",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 17,
+        "pff_coverage_grade": 90.0,
+        "is_shadow": true,
+        "targets_per_route": 0.12,
+        "catch_rate_allowed": 0.49,
+        "fpts_per_route_allowed": 0.17,
+        "role_archetype": "PREMIER_SHADOW_SHUTDOWN"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "pff_coverage_grade": 90.5,
+        "is_shadow": true,
+        "targets_per_route": 0.11,
+        "catch_rate_allowed": 0.46,
+        "fpts_per_route_allowed": 0.15,
+        "role_archetype": "PREMIER_SHADOW_SHUTDOWN",
+        "trajectory": "PEAK_DEFENSIVE_WEAPON",
+        "role_shift_notes": "Undisputed #1 shadow corner in NFL. Eliminates primary boundary receivers."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
+    "Patrick Surtain II": {
+      "name": "Patrick Surtain II",
+      "pos": "CB",
+      "position": "CB",
+      "team": "DEN",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 17,
+        "pff_coverage_grade": 90.0,
+        "is_shadow": true,
+        "targets_per_route": 0.12,
+        "catch_rate_allowed": 0.49,
+        "fpts_per_route_allowed": 0.17,
+        "role_archetype": "PREMIER_SHADOW_SHUTDOWN"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "pff_coverage_grade": 90.5,
+        "is_shadow": true,
+        "targets_per_route": 0.11,
+        "catch_rate_allowed": 0.46,
+        "fpts_per_route_allowed": 0.15,
+        "role_archetype": "PREMIER_SHADOW_SHUTDOWN",
+        "trajectory": "PEAK_DEFENSIVE_WEAPON",
+        "role_shift_notes": "Undisputed #1 shadow corner in NFL."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
+    "L'Jarius Sneed": {
+      "name": "L'Jarius Sneed",
+      "pos": "CB",
+      "position": "CB",
+      "team": "KC",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 15,
+        "pff_coverage_grade": 84.5,
+        "is_shadow": false,
+        "targets_per_route": 0.16,
+        "catch_rate_allowed": 0.55,
+        "fpts_per_route_allowed": 0.23,
+        "role_archetype": "VERSATILE_PRESS_CB"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "pff_coverage_grade": 85.0,
+        "is_shadow": false,
+        "targets_per_route": 0.15,
+        "catch_rate_allowed": 0.54,
+        "fpts_per_route_allowed": 0.22,
+        "role_archetype": "VERSATILE_PRESS_CB",
+        "trajectory": "REUNITED_CHIEFS_KEY",
+        "role_shift_notes": "Rejoined Kansas City secondary playing physical press and nickel packages."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
+    "Charvarius Ward": {
+      "name": "Charvarius Ward",
+      "pos": "CB",
+      "position": "CB",
+      "team": "IND",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 16,
+        "pff_coverage_grade": 82.0,
+        "is_shadow": false,
+        "targets_per_route": 0.17,
+        "catch_rate_allowed": 0.57,
+        "fpts_per_route_allowed": 0.25,
+        "role_archetype": "VETERAN_OUTSIDE_CB2"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "pff_coverage_grade": 82.5,
+        "is_shadow": false,
+        "targets_per_route": 0.16,
+        "catch_rate_allowed": 0.56,
+        "fpts_per_route_allowed": 0.24,
+        "role_archetype": "VETERAN_OUTSIDE_CB2",
+        "trajectory": "STABLE_BOUNDARY_STARTER",
+        "role_shift_notes": "Starting outside cornerback for Indianapolis Colts opposite Sauce Gardner."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
+    "Sam Darnold": {
+      "name": "Sam Darnold",
+      "pos": "QB",
+      "position": "QB",
+      "team": "SEA",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 16,
+        "pass_yds_pg": 242.5,
+        "pass_tds_pg": 1.55,
+        "int_pg": 0.85,
+        "rush_yds_pg": 12.0,
+        "rush_tds_pg": 0.15,
+        "fppg_half": 17.5,
+        "fppg_ppr": 17.5,
+        "scramble_pct_pressured": 8.5,
+        "p2s_rate": 18.0,
+        "clean_pocket_rtg": 98.5,
+        "inside_5_carry_share": 0.05,
+        "cpoe": 1.2,
+        "role_archetype": "DOWNFIELD_DISTRIBUTOR"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "pass_yds_pg": 285.0,
+        "pass_tds_pg": 2.33,
+        "int_pg": 0.33,
+        "rush_yds_pg": 14.0,
+        "rush_tds_pg": 0.0,
+        "fppg_half": 24.2,
+        "fppg_ppr": 24.2,
+        "scramble_pct_pressured": 9.2,
+        "p2s_rate": 15.0,
+        "clean_pocket_rtg": 109.8,
+        "inside_5_carry_share": 0.06,
+        "cpoe": 4.5,
+        "role_archetype": "HIGH_CEILING_AGGRESSIVE_STARTER",
+        "trajectory": "BREAKOUT_STARTER",
+        "role_shift_notes": "Threw for 328 yards and 3 TDs in Week 3 win; Ryan Grubb scheme maximizing JSN, Cooper Kupp & Rashid Shaheed."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
+    "Jaylen Warren": {
+      "name": "Jaylen Warren",
+      "pos": "RB",
+      "position": "RB",
+      "team": "PIT",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 16,
+        "snap_share_pct": 48.0,
+        "hvt_per_game": 4.8,
+        "carries_inside_5": 3,
+        "yac_per_att": 3.45,
+        "broken_tackles": 28,
+        "fppg_half": 10.8,
+        "fppg_ppr": 13.2,
+        "role_archetype": "HIGH_EFFICIENCY_COMMITTEE_BACK"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "snap_share_pct": 68.0,
+        "hvt_per_game": 7.5,
+        "carries_inside_5": 3,
+        "yac_per_att": 4.15,
+        "broken_tackles": 12,
+        "fppg_half": 18.5,
+        "fppg_ppr": 22.1,
+        "role_archetype": "BELLCOW_USURPER_RB1",
+        "trajectory": "LEAGUE_WINNING_BREAKOUT",
+        "role_shift_notes": "Usurped starting backfield command post-Week 3 (22.1 FP, 14 car, 86 yds, TD, 4 rec). Priority starter for Week 4 TNF."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
+    "Kenyon Sadiq": {
+      "name": "Kenyon Sadiq",
+      "pos": "TE",
+      "position": "TE",
+      "team": "NYJ",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 0,
+        "snap_share_pct": 0.0,
+        "route_participation_pct": 0.0,
+        "inside_5_carry_share": 0.0,
+        "yac_per_att": 0.0,
+        "fppg_half": 0.0,
+        "fppg_ppr": 0.0,
+        "role_archetype": "ROOKIE_DEVELOPMENT"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "snap_share_pct": 62.0,
+        "route_participation_pct": 74.0,
+        "inside_5_carry_share": 0.0,
+        "yac_per_att": 6.8,
+        "fppg_half": 14.5,
+        "fppg_ppr": 18.2,
+        "role_archetype": "SEAM_STRETCHING_MOVE_TE",
+        "trajectory": "METEORIC_BREAKOUT",
+        "role_shift_notes": "Exploded in Week 3 with 23.0 FP (6 tgt, 5 rec, 68 yds, 2 TDs). Immediate #1 waiver TE add."
+      },
+      "provenance_tags": {
+        "prior_tag": "[2025 Full-Season Prior]",
+        "current_tag": "[2026 Realized In-Season]"
+      }
+    },
+    "Quinshon Judkins": {
+      "name": "Quinshon Judkins",
+      "pos": "RB",
+      "position": "RB",
+      "team": "CLE",
+      "depth_chart_rank": 1,
+      "prior_2025": {
+        "season": 2025,
+        "games": 0,
+        "snap_share_pct": 0.0,
+        "hvt_per_game": 0.0,
+        "carries_inside_5": 0,
+        "yac_per_att": 0.0,
+        "broken_tackles": 0,
+        "fppg_half": 0.0,
+        "fppg_ppr": 0.0,
+        "role_archetype": "ROOKIE_BELLCOW_PROSPECT"
+      },
+      "in_season_2026": {
+        "season": 2026,
+        "games": 3,
+        "snap_share_pct": 65.0,
+        "hvt_per_game": 5.2,
+        "carries_inside_5": 2,
+        "yac_per_att": 3.75,
+        "broken_tackles": 8,
+        "fppg_half": 14.8,
+        "fppg_ppr": 16.5,
+        "role_archetype": "STARTING_BELLCOW_RB",
+        "trajectory": "ESTABLISHED_STARTER",
+        "role_shift_notes": "Starting RB for Cleveland Browns; primary early-down and goal-line back for Week 4 TNF."
       },
       "provenance_tags": {
         "prior_tag": "[2025 Full-Season Prior]",

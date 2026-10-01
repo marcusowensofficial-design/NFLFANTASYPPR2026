@@ -23,9 +23,10 @@ from src.services.recommendation.scoring_engine import StartSitEvaluation
 logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
+WEEK_4_PATH = DATA_DIR / "waiver_expert_consensus_week_4_2026.json"
 WEEK_3_PATH = DATA_DIR / "waiver_expert_consensus_week_3_2026.json"
 WEEK_2_PATH = DATA_DIR / "waiver_expert_consensus_week_2_2026.json"
-CONSENSUS_DATA_PATH = WEEK_3_PATH if WEEK_3_PATH.exists() else WEEK_2_PATH
+CONSENSUS_DATA_PATH = WEEK_4_PATH if WEEK_4_PATH.exists() else (WEEK_3_PATH if WEEK_3_PATH.exists() else WEEK_2_PATH)
 
 
 class ExpertConsensusPlayerItem(BaseModel):
@@ -65,10 +66,12 @@ class ExpertConsensusWaiverService:
     def load_consensus_data(self, week: int | None = None) -> dict[str, Any]:
         """Loads and caches the expert consensus dataset for the active or requested week."""
         target_path = self.data_path
-        if week == 2 and WEEK_2_PATH.exists():
-            target_path = WEEK_2_PATH
+        if week == 4 and WEEK_4_PATH.exists():
+            target_path = WEEK_4_PATH
         elif week == 3 and WEEK_3_PATH.exists():
             target_path = WEEK_3_PATH
+        elif week == 2 and WEEK_2_PATH.exists():
+            target_path = WEEK_2_PATH
 
         if target_path == self.data_path and self._cache is not None:
             return self._cache

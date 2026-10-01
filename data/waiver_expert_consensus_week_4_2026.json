@@ -31,7 +31,8 @@
           "RotoBaller",
           "FTN Fantasy",
           "PFF"
-        ]
+        ],
+        "week_1_metric": "Week 3: 22.10 FP, 14 carries, 86 rush yds, 1 TD, 4 rec, 35 rec yds in AFC North clash"
       },
       {
         "rank": 2,
@@ -48,7 +49,8 @@
           "CBS Sports",
           "PFF",
           "RotoBaller"
-        ]
+        ],
+        "week_1_metric": "Week 3: 11.00 FP, 10 carries, 50 rush yds, 1 TD in 35-14 Thursday Night victory"
       },
       {
         "rank": 3,
@@ -64,7 +66,8 @@
           "FantasyPros",
           "CBS Sports",
           "NFL.com"
-        ]
+        ],
+        "week_1_metric": "Week 3: 8 carries, 42 rush yds, red-zone goal-line carries in 27-7 win over Philadelphia"
       },
       {
         "rank": 4,
@@ -80,7 +83,8 @@
           "FantasyPros",
           "PFF",
           "Sports Illustrated"
-        ]
+        ],
+        "week_1_metric": "Week 3: 6 carries, 28 yds, high-value handcuff behind Kyren Williams (15 car, 6 rec)"
       },
       {
         "rank": 5,
@@ -95,7 +99,104 @@
         "expert_sources": [
           "CBS Sports",
           "RotoBaller"
-        ]
+        ],
+        "week_1_metric": "Week 3: 8.40 FP, 8 carries, 36 yds, 2 rec, 18 yds in 30-26 win over Rams"
+      },
+      {
+        "rank": 6,
+        "full_name": "Woody Marks",
+        "position": "RB",
+        "pro_team": "HOU",
+        "consensus_tier": "HIGH_PRIORITY",
+        "faab_recommended_pct": 8,
+        "faab_range": "5-10%",
+        "week_3_metric": "Week 3: 9 carries, 44 yds, 3 rec, 22 yds in Houston backfield split",
+        "expert_rationale": "Passing-down role locked down with expanding early-down opportunities.",
+        "expert_sources": [
+          "FantasyPros",
+          "CBS Sports"
+        ],
+        "week_1_metric": "Week 3: 9 carries, 44 yds, 3 rec, 22 yds in Houston backfield split"
+      },
+      {
+        "rank": 7,
+        "full_name": "Tyler Allgeier",
+        "position": "RB",
+        "pro_team": "ARI",
+        "consensus_tier": "CONTINGENT_HANDCUFF",
+        "faab_recommended_pct": 7,
+        "faab_range": "4-8%",
+        "week_3_metric": "Week 3: 8 carries, 38 yds; red-zone short-yardage hammer",
+        "expert_rationale": "Elite standalone goal-line role plus immense contingent value behind Bijan Robinson.",
+        "expert_sources": [
+          "RotoBaller",
+          "PFF"
+        ],
+        "week_1_metric": "Week 3: 8 carries, 38 yds; red-zone short-yardage hammer"
+      },
+      {
+        "rank": 8,
+        "full_name": "Braelon Allen",
+        "position": "RB",
+        "pro_team": "NYJ",
+        "consensus_tier": "CONTINGENT_HANDCUFF",
+        "faab_recommended_pct": 6,
+        "faab_range": "4-8%",
+        "week_3_metric": "Week 3: 7 carries, 34 yds, 1 TD; goal-line conversion back",
+        "expert_rationale": "Physical short-yardage hammer with elite contingent ceiling if Breece Hall misses time.",
+        "expert_sources": [
+          "FantasyPros",
+          "NFL.com"
+        ],
+        "week_1_metric": "Week 3: 7 carries, 34 yds, 1 TD; goal-line conversion back"
+      },
+      {
+        "rank": 9,
+        "full_name": "Kendre Miller",
+        "position": "RB",
+        "pro_team": "NO",
+        "consensus_tier": "BENCH_STASH",
+        "faab_recommended_pct": 5,
+        "faab_range": "3-7%",
+        "week_3_metric": "Week 3: 6 carries, 29 yds, 2 rec, 14 yds",
+        "expert_rationale": "Explosive change-of-pace option in Saints backfield.",
+        "expert_sources": [
+          "CBS Sports",
+          "RotoBaller"
+        ],
+        "week_1_metric": "Week 3: 6 carries, 29 yds, 2 rec, 14 yds"
+      },
+      {
+        "rank": 10,
+        "full_name": "Jordan Mason",
+        "position": "RB",
+        "pro_team": "MIN",
+        "consensus_tier": "CONTINGENT_HANDCUFF",
+        "faab_recommended_pct": 5,
+        "faab_range": "3-7%",
+        "week_3_metric": "Week 3: 5 carries, 24 yds, primary short-yardage substitute in SF",
+        "expert_rationale": "Premier contingency handcuff in Shanahan's elite ground scheme.",
+        "expert_sources": [
+          "FantasyPros",
+          "PFF"
+        ],
+        "week_1_metric": "Week 3: 5 carries, 24 yds, primary short-yardage substitute in SF"
+      },
+      {
+        "rank": 11,
+        "full_name": "Zach Charbonnet",
+        "position": "RB",
+        "pro_team": "SEA",
+        "consensus_tier": "CONTINGENT_HANDCUFF",
+        "faab_recommended_pct": 5,
+        "faab_range": "3-7%",
+        "week_3_metric": "Week 3: 6 carries, 28 yds, 2 rec, 15 yds on 3rd downs",
+        "expert_rationale": "High-volume handcuff and passing down back in Seattle's potent offense.",
+        "expert_sources": [
+          "FantasyPros",
+          "CBS Sports"
+        ],
+        "week_1_metric": "Week 3: 6 carries, 28 yds, 2 rec, 15 yds on 3rd downs"
       }
     ],
     "WR": [
@@ -106,9 +207,9 @@
         "pro_team": "GB",
         "consensus_tier": "MUST_ADD",
         "faab_recommended_pct": 25,
-        "faab_range": "20\u201330%",
+        "faab_range": "20-30%",
         "week_3_metric": "Week 3: 21.50 FP, 12 targets, 5 rec, 100 rec yds, 1 rec TD (28.5% target share)",
-        "expert_rationale": "The consensus #1 overall waiver wire pickup for Week 4. Golden's 4.3 speed and intermediate route tree exploded for 12 targets on Thursday Night Football. Clear focal point of Jordan Love's passing attack with every-week WR2 upside.",
+        "expert_rationale": "The consensus #1 overall waiver wire pickup for Week 4. Golden's 4.3 speed and intermediate route tree exploded for 12 targets on Thursday Night Football.",
         "expert_sources": [
           "FantasyPros",
           "CBS Sports",
@@ -117,7 +218,8 @@
           "FTN Fantasy",
           "PFF",
           "Sports Illustrated"
-        ]
+        ],
+        "week_1_metric": "Week 3: 21.50 FP, 12 targets, 5 rec, 100 rec yds, 1 rec TD (28.5% target share)"
       },
       {
         "rank": 2,
@@ -126,16 +228,17 @@
         "pro_team": "CHI",
         "consensus_tier": "MUST_ADD",
         "faab_recommended_pct": 22,
-        "faab_range": "18\u201326%",
+        "faab_range": "18-26%",
         "week_3_metric": "Week 3: 16.30 FP, 11 targets, 7 rec, 61 yds, 1 TD, 1 rush for 7 yds",
-        "expert_rationale": "Electric rookie separation score (+0.26 ASS). Commanded 11 targets on Monday Night Football as Chicago's primary manufactured-touch weapon. Explosive YAC ability guarantees weekly high floor.",
+        "expert_rationale": "Electric rookie separation score (+0.26 ASS). Commanded 11 targets on Monday Night Football as Chicago's primary manufactured-touch weapon.",
         "expert_sources": [
           "FantasyPros",
           "CBS Sports",
           "NFL.com",
           "RotoBaller",
           "PFF"
-        ]
+        ],
+        "week_1_metric": "Week 3: 16.30 FP, 11 targets, 7 rec, 61 yds, 1 TD, 1 rush for 7 yds"
       },
       {
         "rank": 3,
@@ -144,14 +247,15 @@
         "pro_team": "ARI",
         "consensus_tier": "PRIORITY_STARTER",
         "faab_recommended_pct": 14,
-        "faab_range": "10\u201318%",
+        "faab_range": "10-18%",
         "week_3_metric": "Week 3: 20.40 FP, 8 targets, 5 rec, 94 rec yds, 1 rec TD in 36-30 shootout",
         "expert_rationale": "Primary boundary perimeter weapon for Kyler Murray. High aDOT (14.2) combined with end-zone target monopoly gives him weekly WR2/WR3 upside.",
         "expert_sources": [
           "FantasyPros",
           "CBS Sports",
           "PFF"
-        ]
+        ],
+        "week_1_metric": "Week 3: 20.40 FP, 8 targets, 5 rec, 94 rec yds, 1 rec TD in 36-30 shootout"
       },
       {
         "rank": 4,
@@ -160,43 +264,143 @@
         "pro_team": "LAR",
         "consensus_tier": "HIGH_PRIORITY",
         "faab_recommended_pct": 10,
-        "faab_range": "6\u201312%",
+        "faab_range": "6-12%",
         "week_3_metric": "Week 3: 17.30 FP, 8 targets, 4 rec, 93 rec yds, 1 rec TD on Sunday Night Football",
         "expert_rationale": "Emerging vertical threat in Sean McVay's 11-personnel sets. Absorbing defensive attention away from Davante Adams with deep separation.",
         "expert_sources": [
           "CBS Sports",
           "RotoBaller"
-        ]
+        ],
+        "week_1_metric": "Week 3: 17.30 FP, 8 targets, 4 rec, 93 rec yds, 1 rec TD on Sunday Night Football"
       },
       {
         "rank": 5,
+        "full_name": "Jalen Coker",
+        "position": "WR",
+        "pro_team": "CAR",
+        "consensus_tier": "HIGH_PRIORITY",
+        "faab_recommended_pct": 8,
+        "faab_range": "5-10%",
+        "week_3_metric": "Week 3: 88% slot route participation; targeted in red zone; primary intermediate separator for Bryce Young",
+        "expert_rationale": "Elite route separation metrics (+0.18 ASS). With Adam Thielen on IR, Coker commands Carolina's high-leverage slot targets.",
+        "expert_sources": [
+          "FantasyPros",
+          "PFF",
+          "CBS Sports"
+        ],
+        "week_1_metric": "Week 3: 88% slot route participation; targeted in red zone; primary intermediate separator for Bryce Young"
+      },
+      {
+        "rank": 6,
         "full_name": "Pat Bryant",
         "position": "WR",
         "pro_team": "DEN",
         "consensus_tier": "BENCH_STASH",
         "faab_recommended_pct": 7,
-        "faab_range": "4\u201310%",
+        "faab_range": "4-10%",
         "week_3_metric": "Week 3: 11.40 FP, 2 targets, 2 rec, 44 yds, 1 TD (44-yard explosive TD grab)",
         "expert_rationale": "Rotational deep ball specialist carving out a steady 40%+ route participation rate in Denver.",
         "expert_sources": [
           "FantasyPros",
           "RotoBaller"
-        ]
+        ],
+        "week_1_metric": "Week 3: 11.40 FP, 2 targets, 2 rec, 44 yds, 1 TD (44-yard explosive TD grab)"
       },
       {
-        "rank": 6,
+        "rank": 7,
         "full_name": "Kalif Raymond",
         "position": "WR",
         "pro_team": "CHI",
         "consensus_tier": "DEEP_LEAGUE_FLEX",
         "faab_recommended_pct": 6,
-        "faab_range": "3\u20138%",
+        "faab_range": "3-8%",
         "week_3_metric": "Week 3: 18.00 FP, 7 targets, 6 rec, 90 yds, 1 TD on Monday Night Football",
         "expert_rationale": "Reliable slot separator who stepped into high volume during Case Keenum's starting debut.",
         "expert_sources": [
           "CBS Sports",
           "NFL.com"
-        ]
+        ],
+        "week_1_metric": "Week 3: 18.00 FP, 7 targets, 6 rec, 90 yds, 1 TD on Monday Night Football"
+      },
+      {
+        "rank": 8,
+        "full_name": "Adonai Mitchell",
+        "position": "WR",
+        "pro_team": "NYJ",
+        "consensus_tier": "BENCH_STASH",
+        "faab_recommended_pct": 6,
+        "faab_range": "3-8%",
+        "week_3_metric": "Week 3: 4 targets, 2 rec, 38 yds; 120 unfulfilled air yards",
+        "expert_rationale": "Elite separation score (+0.20 ASS) on downfield routes. Massive positive regression candidate.",
+        "expert_sources": [
+          "FantasyPros",
+          "PFF"
+        ],
+        "week_1_metric": "Week 3: 4 targets, 2 rec, 38 yds; 120 unfulfilled air yards"
+      },
+      {
+        "rank": 9,
+        "full_name": "Brian Thomas Jr.",
+        "position": "WR",
+        "pro_team": "JAX",
+        "consensus_tier": "HIGH_PRIORITY",
+        "faab_recommended_pct": 8,
+        "faab_range": "5-10%",
+        "week_3_metric": "Week 3: 6 targets, 4 rec, 58 yds; explosive vertical playmaker",
+        "expert_rationale": "Trevor Lawrence's primary deep threat facing Cincinnati in Week 4.",
+        "expert_sources": [
+          "FantasyPros",
+          "FTN Fantasy"
+        ],
+        "week_1_metric": "Week 3: 6 targets, 4 rec, 58 yds; explosive vertical playmaker"
+      },
+      {
+        "rank": 10,
+        "full_name": "Khalil Shakir",
+        "position": "WR",
+        "pro_team": "BUF",
+        "consensus_tier": "HIGH_PRIORITY",
+        "faab_recommended_pct": 7,
+        "faab_range": "4-8%",
+        "week_3_metric": "Week 3: 6 targets, 5 rec, 62 yds; 83% catch rate",
+        "expert_rationale": "Josh Allen's most reliable underneath slot target; consistent double-digit PPR floor.",
+        "expert_sources": [
+          "NFL.com",
+          "CBS Sports"
+        ],
+        "week_1_metric": "Week 3: 6 targets, 5 rec, 62 yds; 83% catch rate"
+      },
+      {
+        "rank": 11,
+        "full_name": "Quentin Johnston",
+        "position": "WR",
+        "pro_team": "LAC",
+        "consensus_tier": "STREAMER",
+        "faab_recommended_pct": 5,
+        "faab_range": "3-7%",
+        "week_3_metric": "Week 3: 5 targets, 3 rec, 45 yds, 1 TD",
+        "expert_rationale": "Jim Harbaugh utilizing Johnston as primary perimeter end-zone weapon.",
+        "expert_sources": [
+          "FantasyPros",
+          "RotoBaller"
+        ],
+        "week_1_metric": "Week 3: 5 targets, 3 rec, 45 yds, 1 TD"
+      },
+      {
+        "rank": 12,
+        "full_name": "Devaughn Vele",
+        "position": "WR",
+        "pro_team": "NO",
+        "consensus_tier": "DEEP_LEAGUE_FLEX",
+        "faab_recommended_pct": 4,
+        "faab_range": "2-5%",
+        "week_3_metric": "Week 3: 5 targets, 4 rec, 41 yds",
+        "expert_rationale": "Reliable intermediate target in Sean Payton's quick-game progression.",
+        "expert_sources": [
+          "CBS Sports",
+          "FantasyPros"
+        ],
+        "week_1_metric": "Week 3: 5 targets, 4 rec, 41 yds"
       }
     ],
     "TE": [
@@ -207,9 +411,9 @@
         "pro_team": "NYJ",
         "consensus_tier": "MUST_ADD",
         "faab_recommended_pct": 20,
-        "faab_range": "15\u201325%",
+        "faab_range": "15-25%",
         "week_3_metric": "Week 3: 23.00 FP, 6 targets, 5 rec, 68 yds, 2 rec TDs in Detroit shootout",
-        "expert_rationale": "The #1 tight end pickup of Week 4. Sadiq demonstrated elite seam athleticism and dominated red-zone targets with two scores. In a tight end landscape starved for ceiling, Sadiq represents immediate top-6 positional upside.",
+        "expert_rationale": "The #1 tight end pickup of Week 4. Sadiq demonstrated elite seam athleticism and dominated red-zone targets with two scores. Immediate top-6 positional upside.",
         "expert_sources": [
           "FantasyPros",
           "CBS Sports",
@@ -217,38 +421,107 @@
           "RotoBaller",
           "FTN Fantasy",
           "PFF"
-        ]
+        ],
+        "week_1_metric": "Week 3: 23.00 FP, 6 targets, 5 rec, 68 yds, 2 rec TDs in Detroit shootout"
       },
       {
         "rank": 2,
+        "full_name": "Hunter Henry",
+        "position": "TE",
+        "pro_team": "NE",
+        "consensus_tier": "PRIORITY_STARTER",
+        "faab_recommended_pct": 12,
+        "faab_range": "8-15%",
+        "week_3_metric": "Week 3: 13.80 FP, 7 targets, 5 rec, 48 yds, 1 rec TD; 22.4% target share in New England",
+        "expert_rationale": "Primary red-zone weapon and safety valve in New England. High weekly floor with consistent end-zone volume.",
+        "expert_sources": [
+          "FantasyPros",
+          "CBS Sports",
+          "PFF"
+        ],
+        "week_1_metric": "Week 3: 13.80 FP, 7 targets, 5 rec, 48 yds, 1 rec TD; 22.4% target share in New England"
+      },
+      {
+        "rank": 3,
         "full_name": "Tyler Higbee",
         "position": "TE",
         "pro_team": "LAR",
         "consensus_tier": "PRIORITY_STARTER",
-        "faab_recommended_pct": 12,
-        "faab_range": "8\u201315%",
+        "faab_recommended_pct": 10,
+        "faab_range": "8-14%",
         "week_3_metric": "Week 3: 16.20 FP, 11 targets, 8 rec, 62 yds, 1 rec TD on Sunday Night Football",
         "expert_rationale": "Target hog volume. Matthew Stafford targeted Higbee 11 times as an intermediate safety valve. High-floor PPR TE1 option.",
         "expert_sources": [
           "FantasyPros",
           "CBS Sports",
           "PFF"
-        ]
+        ],
+        "week_1_metric": "Week 3: 16.20 FP, 11 targets, 8 rec, 62 yds, 1 rec TD on Sunday Night Football"
       },
       {
-        "rank": 3,
+        "rank": 4,
+        "full_name": "Mike Gesicki",
+        "position": "TE",
+        "pro_team": "CIN",
+        "consensus_tier": "STREAMING_OPTION",
+        "faab_recommended_pct": 6,
+        "faab_range": "4-8%",
+        "week_3_metric": "Week 3: 11.20 FP, 5 targets, 4 rec, 52 yds in high-volume Bengals passing attack",
+        "expert_rationale": "Functions as a big slot receiver in Joe Burrow's offense; consistent target share in competitive game scripts.",
+        "expert_sources": [
+          "FantasyPros",
+          "RotoBaller",
+          "CBS Sports"
+        ],
+        "week_1_metric": "Week 3: 11.20 FP, 5 targets, 4 rec, 52 yds in high-volume Bengals passing attack"
+      },
+      {
+        "rank": 5,
         "full_name": "Austin Hooper",
         "position": "TE",
         "pro_team": "ATL",
         "consensus_tier": "STREAMER",
         "faab_recommended_pct": 5,
-        "faab_range": "2\u20136%",
+        "faab_range": "2-6%",
         "week_3_metric": "Week 3: 8.10 FP, 2 targets, 2 rec, 11 yds, 1 rec TD on Thursday Night Football",
         "expert_rationale": "Touchdown-dependent streamer in Atlanta's heavy 12-personnel red zone packages.",
         "expert_sources": [
           "RotoBaller",
           "Athlon Sports"
-        ]
+        ],
+        "week_1_metric": "Week 3: 8.10 FP, 2 targets, 2 rec, 11 yds, 1 rec TD on Thursday Night Football"
+      },
+      {
+        "rank": 6,
+        "full_name": "Kyle Pitts Sr.",
+        "position": "TE",
+        "pro_team": "ATL",
+        "consensus_tier": "BENCH_STASH",
+        "faab_recommended_pct": 5,
+        "faab_range": "3-7%",
+        "week_3_metric": "Week 3: 8.40 FP, 4 rec, 44 yds on 5 targets in heavy run script",
+        "expert_rationale": "Elite athletic profile in Falcons offense; buy-low stash if dropped.",
+        "expert_sources": [
+          "FantasyPros",
+          "CBS Sports"
+        ],
+        "week_1_metric": "Week 3: 8.40 FP, 4 rec, 44 yds on 5 targets in heavy run script"
+      },
+      {
+        "rank": 7,
+        "full_name": "Dalton Schultz",
+        "position": "TE",
+        "pro_team": "HOU",
+        "consensus_tier": "STREAMING_OPTION",
+        "faab_recommended_pct": 4,
+        "faab_range": "2-6%",
+        "week_3_metric": "Week 3: 9.10 FP, 4 rec, 51 yds on 6 targets on 3rd downs",
+        "expert_rationale": "High-floor PPR tight end anchored in Houston's potent aerial attack.",
+        "expert_sources": [
+          "FantasyPros",
+          "RotoBaller"
+        ],
+        "week_1_metric": "Week 3: 9.10 FP, 4 rec, 51 yds on 6 targets on 3rd downs"
       }
     ],
     "QB": [
@@ -268,7 +541,8 @@
           "NFL.com",
           "RotoBaller",
           "PFF"
-        ]
+        ],
+        "week_1_metric": "Week 3: 32.66 FP, 24/36, 328 pass yds, 3 pass TDs, 0 INT, 14 rush yds"
       },
       {
         "rank": 2,
@@ -284,7 +558,8 @@
           "FantasyPros",
           "CBS Sports",
           "NFL.com"
-        ]
+        ],
+        "week_1_metric": "Week 3: 31.28 FP, 23/31, 318 pass yds, 3 pass TDs, 0 INT in 36-30 shootout win"
       },
       {
         "rank": 3,
@@ -299,7 +574,40 @@
         "expert_sources": [
           "CBS Sports",
           "RotoBaller"
-        ]
+        ],
+        "week_1_metric": "Week 3: 24.48 FP, 24/34, 247 pass yds, 2 pass TDs, 1 rush TD in MNF upset"
+      },
+      {
+        "rank": 4,
+        "full_name": "Bryce Young",
+        "position": "QB",
+        "pro_team": "CAR",
+        "consensus_tier": "STREAMING_OPTION",
+        "faab_recommended_pct": 5,
+        "faab_range": "3\u20138%",
+        "week_3_metric": "Week 3: 18.20 FP, 21/33, 230 pass yds, 2 pass TDs, 18 rush yds",
+        "expert_rationale": "Shows growth under Dave Canales with increased intermediate pocket poise and scramble equity.",
+        "expert_sources": [
+          "FantasyPros",
+          "CBS Sports"
+        ],
+        "week_1_metric": "Week 3: 18.20 FP, 21/33, 230 pass yds, 2 pass TDs, 18 rush yds"
+      },
+      {
+        "rank": 5,
+        "full_name": "Trevor Lawrence",
+        "position": "QB",
+        "pro_team": "JAX",
+        "consensus_tier": "STREAMING_OPTION",
+        "faab_recommended_pct": 4,
+        "faab_range": "2\u20136%",
+        "week_3_metric": "Week 3: 17.50 FP, 22/35, 238 pass yds, 1 pass TD, 1 rush TD",
+        "expert_rationale": "High-volume passing game facing Cincinnati's vulnerable secondary in Week 4.",
+        "expert_sources": [
+          "FantasyPros",
+          "NFL.com"
+        ],
+        "week_1_metric": "Week 3: 17.50 FP, 22/35, 238 pass yds, 1 pass TD, 1 rush TD"
       }
     ],
     "DST": [
@@ -318,7 +626,8 @@
           "CBS Sports",
           "NFL.com",
           "RotoBaller"
-        ]
+        ],
+        "week_1_metric": "Week 3: 12.00 FP, held Philadelphia to 7 points, 3 sacks, 2 INTs, 1 fumble recovery"
       },
       {
         "rank": 2,
@@ -333,7 +642,8 @@
         "expert_sources": [
           "FantasyPros",
           "PFF"
-        ]
+        ],
+        "week_1_metric": "Week 3: 15.00 FP, 2 INTs, 2 defensive touchdowns in 33-31 thriller"
       },
       {
         "rank": 3,
@@ -348,7 +658,40 @@
         "expert_sources": [
           "FantasyPros",
           "RotoBaller"
-        ]
+        ],
+        "week_1_metric": "Week 3: 8.00 FP, 4 sacks, 1 INT; Week 4 home matchup vs Los Angeles Chargers"
+      },
+      {
+        "rank": 4,
+        "full_name": "Cleveland Browns",
+        "position": "DST",
+        "pro_team": "CLE",
+        "consensus_tier": "STREAMING_OPTION",
+        "faab_recommended_pct": 3,
+        "faab_range": "2\u20135%",
+        "week_3_metric": "Week 3: 9.00 FP, 4 sacks, 1 fumble recovery; Week 4 home TNF clash vs Steelers",
+        "expert_rationale": "Myles Garrett-led front 7 in a low-total (38.5 O/U) division dogfight at Huntington Bank Field.",
+        "expert_sources": [
+          "CBS Sports",
+          "FantasyPros"
+        ],
+        "week_1_metric": "Week 3: 9.00 FP, 4 sacks, 1 fumble recovery; Week 4 home TNF clash vs Steelers"
+      },
+      {
+        "rank": 5,
+        "full_name": "Pittsburgh Steelers",
+        "position": "DST",
+        "pro_team": "PIT",
+        "consensus_tier": "STREAMING_OPTION",
+        "faab_recommended_pct": 3,
+        "faab_range": "2\u20135%",
+        "week_3_metric": "Week 3: 7.00 FP, 3 sacks, 1 INT; Week 4 TNF matchup against Deshaun Watson",
+        "expert_rationale": "T.J. Watt and Alex Highsmith attacking Cleveland's league-leading pressure-to-sack rate (29.4%).",
+        "expert_sources": [
+          "FantasyPros",
+          "NFL.com"
+        ],
+        "week_1_metric": "Week 3: 7.00 FP, 3 sacks, 1 INT; Week 4 TNF matchup against Deshaun Watson"
       }
     ],
     "K": [
@@ -365,7 +708,8 @@
         "expert_sources": [
           "FantasyPros",
           "CBS Sports"
-        ]
+        ],
+        "week_1_metric": "Week 3: 14.00 FP, 4/4 FG, 2/2 XP on Sunday Night Football"
       },
       {
         "rank": 2,
@@ -380,7 +724,8 @@
         "expert_sources": [
           "FantasyPros",
           "NFL.com"
-        ]
+        ],
+        "week_1_metric": "Week 3: 12.00 FP, 3/3 FG, 3/3 XP in 36-30 victory"
       },
       {
         "rank": 3,
@@ -395,7 +740,40 @@
         "expert_sources": [
           "FantasyPros",
           "RotoBaller"
-        ]
+        ],
+        "week_1_metric": "Week 3: 9.00 FP, 2/2 FG, 3/3 XP on Thursday Night Football"
+      },
+      {
+        "rank": 4,
+        "full_name": "Brandon Aubrey",
+        "position": "K",
+        "pro_team": "DAL",
+        "consensus_tier": "STREAMER",
+        "faab_recommended_pct": 2,
+        "faab_range": "1\u20133%",
+        "week_3_metric": "Week 3: 11.00 FP, 3/3 FG including 55-yarder, 2/2 XP",
+        "expert_rationale": "Elite leg range in dome environment at Houston.",
+        "expert_sources": [
+          "FantasyPros",
+          "CBS Sports"
+        ],
+        "week_1_metric": "Week 3: 11.00 FP, 3/3 FG including 55-yarder, 2/2 XP"
+      },
+      {
+        "rank": 5,
+        "full_name": "Jake Bates",
+        "position": "K",
+        "pro_team": "DET",
+        "consensus_tier": "STREAMER",
+        "faab_recommended_pct": 2,
+        "faab_range": "1\u20133%",
+        "week_3_metric": "Week 3: 10.00 FP, 2/2 FG, 4/4 XP in Detroit victory",
+        "expert_rationale": "High scoring ceiling in fast-paced Detroit offense playing outdoors in Carolina.",
+        "expert_sources": [
+          "FantasyPros",
+          "NFL.com"
+        ],
+        "week_1_metric": "Week 3: 10.00 FP, 2/2 FG, 4/4 XP in Detroit victory"
       }
     ]
   }

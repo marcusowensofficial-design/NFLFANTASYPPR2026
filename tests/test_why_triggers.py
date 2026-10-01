@@ -184,7 +184,7 @@ def test_multi_source_convergence_and_divergence_triggers():
     # Player with close projections across all 3 sources
     convergent_player = PlayerModel(
         id=9910,
-        full_name="Breece Hall",
+        full_name="Consensus Stud RB",
         position="RB",
         pro_team="NYJ",
         projected_points=18.0,
