@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "last_updated": "2026-10-08T22:32:24.244342+00:00",
+  "last_updated": "2026-10-08T22:46:44.752120+00:00",
   "total_injuries": 800,
   "injuries": [
     {
@@ -4155,7 +4155,7 @@
       "practice_trend": "DNP (DID NOT PRACTICE)",
       "is_playable": true,
       "is_out": false,
-      "backup_athlete_name": "Josh Jacobs",
+      "backup_athlete_name": "Pierre Strong Jr.",
       "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
     },
     {
@@ -6379,15 +6379,30 @@
       "vacated_opportunity_note": null
     },
     {
+      "athlete_id": 4429025,
+      "name": "Quentin Johnston",
+      "position": "WR",
+      "team": "Los Angeles Chargers",
+      "status": "QUESTIONABLE",
+      "headline": "Johnston (chest) was a limited participant at Thursday's practice.",
+      "notes": "A chest injury has resulted in back-to-back capped sessions for Johnston to kick off Week 5 prep, giving him just one more opportunity to get back to full Friday before the Chargers potentially tag him with a designation for Sunday's game against the Broncos. With Ladd McConkey (foot) not practicing Wednesday or Thursday and potentially trending toward an absence, an active Johnston likely will be the top pass catcher available to QB Justin Herbert this weekend.",
+      "practice_status": "LIMITED",
+      "practice_trend": "LIMITED PARTICIPANT",
+      "is_playable": true,
+      "is_out": false,
+      "backup_athlete_name": "Marquez Valdes-Scantling",
+      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
+    },
+    {
       "athlete_id": 4612826,
       "name": "Ladd McConkey",
       "position": "WR",
       "team": "Los Angeles Chargers",
       "status": "QUESTIONABLE",
-      "headline": "Chargers head coach Jim Harbaugh said that McConkey (foot) is expected to be at practice Wednesday, Kris Rhim of ESPN.com reports.",
-      "notes": "Harbaugh didn't reveal what the extent of McConkey's participation might be, and it's possible that the wideout is limited to rehab work off to the side. McConkey has battled through a couple of injuries this season, the most recent being a foot issue that flared up in the third quarter of Sunday's loss to the Seahawks. The -0-4 Chargers have a critical game this weekend at home against the Broncos.",
-      "practice_status": "LIMITED",
-      "practice_trend": "LIMITED PARTICIPANT",
+      "headline": "McConkey (foot) didn't practice Thursday.",
+      "notes": "McConkey dealt with a foot injury last week before attempting to play through it this past Sunday in Seattle. He eventually exited for good in the third quarter and hasn't practiced since then. Coach Jim Harbaugh termed McConkey \"week-to-week\" Monday, according to Alex Insdorf of BoltBeat.com, so it won't be a surprise if he's ruled out on the Chargers' final Week 5 injury report Friday.",
+      "practice_status": null,
+      "practice_trend": null,
       "is_playable": true,
       "is_out": false,
       "backup_athlete_name": "Brenen Thompson",
@@ -6497,21 +6512,6 @@
       "is_out": false,
       "backup_athlete_name": null,
       "vacated_opportunity_note": null
-    },
-    {
-      "athlete_id": 4429025,
-      "name": "Quentin Johnston",
-      "position": "WR",
-      "team": "Los Angeles Chargers",
-      "status": "QUESTIONABLE",
-      "headline": "Johnston was limited at Wednesday's practice due to a chest injury.",
-      "notes": "The Chargers' receiving corps is banged up at the moment, with all of WR Ladd McConkey (foot, DNP on Wednesday), WR Brenen Thompson (quadriceps, LP) and TE Charlie Kolar (forearm, LP) dealing with health concerns, and WR KeAndre Lambert-Smith (hamstring) and TE David Njoku (fibula) on IR. Johnston has had every opportunity to produce this season, with at least a 75 percent snap share in all four games, but he so far has just nine touches for 111 yards from scrimmage and no TDs. Assuming McConkey isn't able to play Sunday versus the Broncos and Johnston suits up, the latter could be the unquestioned No. 1 pass catcher for QB Justin Herbert.",
-      "practice_status": "LIMITED",
-      "practice_trend": "LIMITED PARTICIPANT",
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": "Marquez Valdes-Scantling",
-      "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
     },
     {
       "athlete_id": 3843769,
@@ -9759,8 +9759,8 @@
       "position": "S",
       "team": "Pittsburgh Steelers",
       "status": "INJURED RESERVE",
-      "headline": "Elliott (undisclosed) returned to practice Thursday, Teresa Varley reports.",
-      "notes": "The 21-day practice window opened Thursday. While Elliott was only back on the practice field in a limited capacity, it was still a step in the right direction. However, despite his presence at practice Thursday, the team might need to wait a few more weeks before he's ready to suit up, with Mike DeFabo of The Athletic reporting his return may happen when the Steelers play the Saints in Paris on Oct. 25.",
+      "headline": "Elliott (undisclosed) returned to practice Thursday, Teresa Varley of the team's official site reports.",
+      "notes": "The 21-day practice window opened Thursday. While Elliott was only back on the practice field in a limited capacity, it was still a step in the right direction. However, despite his presence at practice Thursday, the team might need to wait a few more weeks before he's ready to suit up, with Mike DeFabo of The Athletic reporting his return may not happen until the Steelers play the Saints in Paris on Oct. 25.",
       "practice_status": "LIMITED",
       "practice_trend": "LIMITED PARTICIPANT",
       "is_playable": false,
@@ -10129,21 +10129,6 @@
       "vacated_opportunity_note": null
     },
     {
-      "athlete_id": 4696044,
-      "name": "Kaelon Black",
-      "position": "RB",
-      "team": "San Francisco 49ers",
-      "status": "QUESTIONABLE",
-      "headline": "Black (illness) was limited in Wednesday's practice, Cam Inman of The San Jose Mercury News reports.",
-      "notes": "Black should be fine to handle his normal role Sunday against the Seahawks as Christian McCaffrey's direct backup. The rookie running back has turned 20 carries into just 55 yards (2.75 YPC) over the last three games following a strong Week 1 debut in Australia against the Rams.",
-      "practice_status": "LIMITED",
-      "practice_trend": "LIMITED PARTICIPANT",
-      "is_playable": true,
-      "is_out": false,
-      "backup_athlete_name": "Jordan James",
-      "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
-    },
-    {
       "athlete_id": 16737,
       "name": "Mike Evans",
       "position": "WR",
@@ -10157,6 +10142,21 @@
       "is_out": false,
       "backup_athlete_name": "Jacob Cowing",
       "vacated_opportunity_note": "Expands to high-volume target progression and 2-WR/3-WR set route participation."
+    },
+    {
+      "athlete_id": 4696044,
+      "name": "Kaelon Black",
+      "position": "RB",
+      "team": "San Francisco 49ers",
+      "status": "QUESTIONABLE",
+      "headline": "Black (illness) was limited in Wednesday's practice, Cam Inman of The San Jose Mercury News reports.",
+      "notes": "Black should be fine to handle his normal role Sunday against the Seahawks as Christian McCaffrey's direct backup. The rookie running back has turned 20 carries into just 55 yards (2.75 YPC) over the last three games following a strong Week 1 debut in Australia against the Rams.",
+      "practice_status": "LIMITED",
+      "practice_trend": "LIMITED PARTICIPANT",
+      "is_playable": true,
+      "is_out": false,
+      "backup_athlete_name": "Jordan James",
+      "vacated_opportunity_note": "Primary beneficiary of vacated early-down carries & red-zone volume if starter is sidelined."
     },
     {
       "athlete_id": 4693337,

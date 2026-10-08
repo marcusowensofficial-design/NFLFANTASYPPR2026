@@ -69,7 +69,7 @@ def load_and_enrich_slate(csv_path=None,
                           vegas_path="data/vegas_movement_2026.json",
                           pff_path="data/pff_scouting_2026.json",
                           dvp_path="data/nfl_dvp_proprietary_2026.json" if os.path.exists("data/nfl_dvp_proprietary_2026.json") else "data/draftedge_dvp_seed.json",
-                          wr_metrics_path="data/week_1_receiver_micro_metrics_2026.json",
+                          wr_metrics_path="data/receiver_micro_metrics_2026.json" if os.path.exists("data/receiver_micro_metrics_2026.json") else "data/week_1_receiver_micro_metrics_2026.json",
                           coverage_path="data/week_1_defensive_coverage_2026.json"):
     if csv_path is None:
         if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
@@ -175,7 +175,7 @@ def load_and_enrich_slate(csv_path=None,
     if os.path.exists(wr_metrics_path):
         with open(wr_metrics_path, 'r') as f:
             wr_data = json.load(f)
-            for p in wr_data.get('players', []):
+            for p in wr_data.get('players', wr_data.get('receivers', [])):
                 wr_metrics_dict[p['name']] = p
 
     # Load Week 1 Defensive Coverage Usage & Pass Efficiency

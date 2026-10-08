@@ -5,7 +5,7 @@
       2025,
       2026
     ],
-    "last_updated": "2026-10-08T22:32:25.046101+00:00",
+    "last_updated": "2026-10-08T22:46:45.604847+00:00",
     "as_of_date": "2026-10-08",
     "sample_weeks": 4,
     "total_players_indexed": 1300,
@@ -3352,14 +3352,14 @@
       "pos": "K",
       "position": "K",
       "team": "GB",
-      "depth_chart_rank": 1,
+      "depth_chart_rank": 2,
       "prior_2025": null,
       "in_season_2026": {
         "season": 2026,
         "games": 3,
         "fppg_half": 0.5,
         "fppg_ppr": 0.5,
-        "role_archetype": "KR_RANK_1",
+        "role_archetype": "KR_RANK_2",
         "trajectory": "ACTIVE_2026_CONTRIBUTOR",
         "role_shift_notes": "Active starter/contributor on GB depth chart (KR)."
       },
@@ -24289,14 +24289,14 @@
       "pos": "K",
       "position": "K",
       "team": "GB",
-      "depth_chart_rank": 2,
+      "depth_chart_rank": 1,
       "prior_2025": null,
       "in_season_2026": {
         "season": 2026,
         "games": 3,
         "fppg_half": 0.63,
         "fppg_ppr": 0.63,
-        "role_archetype": "KR_RANK_2",
+        "role_archetype": "KR_RANK_1",
         "trajectory": "ACTIVE_2026_CONTRIBUTOR",
         "role_shift_notes": "Active starter/contributor on GB depth chart (KR)."
       },

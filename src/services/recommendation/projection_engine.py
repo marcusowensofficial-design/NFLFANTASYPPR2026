@@ -33,6 +33,10 @@ from src.services.recommendation.nextgen_advanced_metrics import (
     GoalLinePackageEquity,
     XFPCalculationResult,
 )
+from src.services.recommendation.distribution_engine import (
+    PositionalDistributionEngine,
+    QuantDistributionResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +166,10 @@ def _load_receiver_micro_metrics_cache() -> None:
     global _receiver_micro_metrics_cache
     import json
     from pathlib import Path
-    wr_file = Path(__file__).resolve().parent.parent.parent.parent / "data" / "week_1_receiver_micro_metrics_2026.json"
+    data_dir = Path(__file__).resolve().parent.parent.parent.parent / "data"
+    wr_file = data_dir / "receiver_micro_metrics_2026.json"
+    if not wr_file.exists():
+        wr_file = data_dir / "week_1_receiver_micro_metrics_2026.json"
     if not wr_file.exists():
         return
     mtime = wr_file.stat().st_mtime
@@ -172,7 +179,7 @@ def _load_receiver_micro_metrics_cache() -> None:
         with open(wr_file, encoding="utf-8") as f:
             data = json.load(f)
         players = {}
-        for p in data.get("players", []):
+        for p in data.get("players", data.get("receivers", [])):
             norm = re.sub(r"[^\w\s]", "", p.get("name", "").lower()).strip()
             if norm:
                 players[norm] = p
@@ -229,7 +236,10 @@ def _load_rb_micro_metrics_cache() -> None:
     global _rb_micro_metrics_cache
     import json
     from pathlib import Path
-    rb_file = Path(__file__).resolve().parent.parent.parent.parent / "data" / "week_1_running_back_micro_metrics_2026.json"
+    data_dir = Path(__file__).resolve().parent.parent.parent.parent / "data"
+    rb_file = data_dir / "running_back_micro_metrics_2026.json"
+    if not rb_file.exists():
+        rb_file = data_dir / "week_1_running_back_micro_metrics_2026.json"
     if not rb_file.exists():
         return
     mtime = rb_file.stat().st_mtime
@@ -239,7 +249,7 @@ def _load_rb_micro_metrics_cache() -> None:
         with open(rb_file, encoding="utf-8") as f:
             data = json.load(f)
         players = {}
-        for p in data.get("players", []):
+        for p in data.get("players", data.get("running_backs", [])):
             norm = re.sub(r"[^\w\s]", "", p.get("name", "").lower()).strip()
             if norm:
                 players[norm] = p
@@ -520,6 +530,69 @@ def get_injury_beneficiary_boost(player_name: str, pos: str) -> tuple[float, str
     return 0.0, None
 
 
+_xgboost_model: Any = None
+_xgboost_model_loaded: bool = False
+
+
+def _get_xgboost_model() -> Any:
+    """Lazy load production XGBoost fantasy projection model."""
+    global _xgboost_model, _xgboost_model_loaded
+    if _xgboost_model_loaded:
+        return _xgboost_model
+    _xgboost_model_loaded = True
+    try:
+        import xgboost as xgb
+        from pathlib import Path
+        model_path = Path(__file__).resolve().parent.parent.parent.parent / "models" / "xgboost_fppg_model_2026.json"
+        if model_path.exists():
+            bst = xgb.XGBRegressor()
+            bst.load_model(str(model_path))
+            _xgboost_model = bst
+            logger.info("Successfully loaded production XGBoost model for DFS projections.")
+    except Exception as e:
+        logger.debug(f"Failed to load XGBoost model: {e}")
+    return _xgboost_model
+
+
+def predict_xgboost_points(
+    pos: str,
+    quant_stats: ItemizedStatLine,
+    volume_share: float = 0.0,
+) -> float:
+    """Predict FanDuel Half-PPR fantasy points using the trained XGBoost model."""
+    pos_clean = (pos or "").upper().strip()
+    if pos_clean not in ("QB", "RB", "FB", "WR", "TE"):
+        return 0.0
+
+    model = _get_xgboost_model()
+    if model is None:
+        return 0.0
+
+    try:
+        import pandas as pd
+        tgt_share = (volume_share / 100.0) if pos_clean in ("WR", "TE", "RB") else 0.0
+        air_share = min(0.50, tgt_share * 1.15) if pos_clean in ("WR", "TE") else 0.0
+        feature_dict = {
+            "roll3_targets": [float(quant_stats.targets)],
+            "roll3_carries": [float(quant_stats.rush_att)],
+            "roll3_passing_yards": [float(quant_stats.pass_yds)],
+            "roll3_receiving_yards": [float(quant_stats.rec_yds)],
+            "roll3_rushing_yards": [float(quant_stats.rush_yds)],
+            "roll3_target_share": [float(tgt_share)],
+            "roll3_air_yards_share": [float(air_share)],
+            "pos_QB": [1 if pos_clean == "QB" else 0],
+            "pos_RB": [1 if pos_clean in ("RB", "FB") else 0],
+            "pos_TE": [1 if pos_clean == "TE" else 0],
+            "pos_WR": [1 if pos_clean == "WR" else 0],
+        }
+        df = pd.DataFrame(feature_dict)
+        pred = float(model.predict(df)[0])
+        return max(0.0, round(pred, 2))
+    except Exception as e:
+        logger.debug(f"XGBoost prediction inference error: {e}")
+        return 0.0
+
+
 @dataclass
 class TeamGameScriptContext:
     """Macro Vegas game environment and play distribution for a team."""
@@ -574,6 +647,15 @@ class PlayerProjectionResult(BaseModel):
     floor_points: float
     median_points: float
     ceiling_points: float
+    xgboost_points: float = 0.0
+    ensemble_half_ppr: float = 0.0
+    ensemble_full_ppr: float = 0.0
+    floor_10th: float = 0.0
+    median_50th: float = 0.0
+    ceiling_85th: float = 0.0
+    ceiling_95th: float = 0.0
+    boom_probability_25pt: float = 0.0
+    bust_probability_6pt: float = 0.0
 
 
 class QuantProjectionEngine:
@@ -1334,6 +1416,26 @@ class QuantProjectionEngine:
             else:
                 consensus_pts = round(med, 2)
 
+        # Compute XGBoost ML prediction
+        xgb_half_pts = predict_xgboost_points(pos, quant_stats, volume_share)
+        xgb_full_pts = round(xgb_half_pts + (0.5 * quant_stats.receptions), 2) if xgb_half_pts > 0 else 0.0
+        xgb_pts = xgb_half_pts if is_half else xgb_full_pts
+
+        # Compute Institutional Ensemble Blend
+        # Inverse-Variance weighting: 0.45 Quant Physics + 0.35 XGBoost ML + 0.20 Vegas Props
+        if pos in ("D/ST", "DST", "K", "PK") or xgb_half_pts <= 0.0:
+            ensemble_half = calc_quant_half_ppr
+            ensemble_full = calc_quant_ppr
+        else:
+            if props_pts > 0.0:
+                props_half = props_pts if is_half else max(0.0, props_pts - 0.5 * quant_stats.receptions)
+                props_full = props_pts if not is_half else props_pts + 0.5 * quant_stats.receptions
+                ensemble_half = round((0.45 * calc_quant_half_ppr) + (0.35 * xgb_half_pts) + (0.20 * props_half), 2)
+                ensemble_full = round((0.45 * calc_quant_ppr) + (0.35 * xgb_full_pts) + (0.20 * props_full), 2)
+            else:
+                ensemble_half = round((0.55 * calc_quant_half_ppr) + (0.45 * xgb_half_pts), 2)
+                ensemble_full = round((0.55 * calc_quant_ppr) + (0.45 * xgb_full_pts), 2)
+
         # 7. Resolve Active Projection by User Selection
         requested_source = (projection_source or "MODEL").upper().strip()
         if requested_source == "FANTASYPROS":
@@ -1348,6 +1450,9 @@ class QuantProjectionEngine:
         elif requested_source == "CONSENSUS":
             source_clean = "CONSENSUS"
             active_points = consensus_pts
+        elif requested_source == "ENSEMBLE":
+            source_clean = "ENSEMBLE"
+            active_points = ensemble_half if is_half else ensemble_full
         else:
             source_clean = "MODEL"
             active_points = model_pts if model_pts > 0.0 else consensus_pts
@@ -1403,6 +1508,9 @@ class QuantProjectionEngine:
             "active_projected_points": active_points,
             "consensus_spread": consensus_spread,
             "consensus_agreement": consensus_agreement,
+            "xgboost_pts": xgb_pts,
+            "ensemble_half_ppr": ensemble_half,
+            "ensemble_full_ppr": ensemble_full,
         }
 
         if vacated_note:
@@ -1435,6 +1543,22 @@ class QuantProjectionEngine:
         provenance["opportunity_tier"] = xfp_calc.opportunity_tier
         if "coverage_scheme_note" in locals() and coverage_scheme_note:
             provenance["coverage_scheme_note"] = coverage_scheme_note
+
+        # Parametric Positional Outcome Distribution (GPP percentiles)
+        hvt_share = float(hvt_inside_5 / max(quant_stats.rush_att, 1.0)) if pos in ("RB", "FB") and quant_stats.rush_att > 0 else None
+        dist_res = PositionalDistributionEngine.calculate_distribution(
+            pos=pos,
+            projected_mean=active_points,
+            adot=adot_calc if pos == "WR" else None,
+            hvt_share=hvt_share,
+        )
+        provenance["floor_10th"] = dist_res.floor_10th
+        provenance["median_50th"] = dist_res.median_50th
+        provenance["ceiling_85th"] = dist_res.ceiling_85th
+        provenance["ceiling_95th"] = dist_res.ceiling_95th
+        provenance["boom_probability_25pt"] = dist_res.boom_probability_25pt
+        provenance["bust_probability_6pt"] = dist_res.bust_probability_6pt
+        provenance["distribution_family"] = dist_res.distribution_type
 
         milestone_bonus = round(max(0.0, calc_quant_half_ppr - (calc_quant_ppr - (quant_stats.receptions * 0.5))), 2) if is_half else 0.0
 
@@ -1473,6 +1597,15 @@ class QuantProjectionEngine:
             floor_points=floor_pts,
             median_points=active_points,
             ceiling_points=ceiling_pts,
+            xgboost_points=xgb_pts,
+            ensemble_half_ppr=ensemble_half,
+            ensemble_full_ppr=ensemble_full,
+            floor_10th=dist_res.floor_10th,
+            median_50th=dist_res.median_50th,
+            ceiling_85th=dist_res.ceiling_85th,
+            ceiling_95th=dist_res.ceiling_95th,
+            boom_probability_25pt=dist_res.boom_probability_25pt,
+            bust_probability_6pt=dist_res.bust_probability_6pt,
         )
 
     def _calculate_fantasy_points(

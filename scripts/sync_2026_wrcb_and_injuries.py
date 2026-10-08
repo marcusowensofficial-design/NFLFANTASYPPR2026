@@ -198,6 +198,25 @@ def step_4_expand_and_calibrate_wr_alignments():
                     )
                     added_count += 1
 
+                # Micro-metrics enrichment
+                sep_score = 0.08
+                first_read = 0.20
+                tprr_val = 0.18
+                wopr_val = 0.35
+                arch = "ACTIVE_ROTATION"
+                if rec_info:
+                    sep_score = rec_info.get("separation_score", 0.08)
+                    first_read = rec_info.get("first_read_pct", 0.20)
+                    tprr_val = rec_info.get("tprr", 0.18)
+                    wopr_val = rec_info.get("wopr", 0.35)
+                    arch = rec_info.get("archetype", "ACTIVE_ROTATION")
+                elif rank == 1:
+                    sep_score, first_read, tprr_val, wopr_val, arch = 0.10, 0.24, 0.22, 0.45, "PRIMARY_READ"
+                elif rank == 2:
+                    sep_score, first_read, tprr_val, wopr_val, arch = 0.06, 0.18, 0.17, 0.32, "SECONDARY_TARGET"
+                else:
+                    sep_score, first_read, tprr_val, wopr_val, arch = 0.02, 0.10, 0.12, 0.18, "ROLE_PLAYER"
+
                 cumulative_records.append({
                     "name": name,
                     "team": tm,
@@ -207,6 +226,11 @@ def step_4_expand_and_calibrate_wr_alignments():
                     "pct_wide": p_wide,
                     "target_share": t_share,
                     "route_win_rate": r_win,
+                    "separation_score": sep_score,
+                    "first_read_pct": first_read,
+                    "tprr": tprr_val,
+                    "wopr": wopr_val,
+                    "archetype": arch,
                     "as_of_date": "2026-10-08",
                     "season": 2026,
                     "sample_weeks": 4,
@@ -237,10 +261,15 @@ def step_4_expand_and_calibrate_wr_alignments():
             "total_receivers": len(cumulative_records),
         },
         "receivers": cumulative_records,
+        "players": cumulative_records,
     }
     with open(DATA_DIR / "receiver_micro_metrics_2026.json", "w", encoding="utf-8") as f:
         json.dump(out_rec_metrics, f, indent=2)
     logger.info(f"Saved {DATA_DIR / 'receiver_micro_metrics_2026.json'} with {len(cumulative_records)} receiver tracking records.")
+
+    from scripts.build_running_back_micro_metrics_2026 import build_rb_micro_metrics
+    build_rb_micro_metrics()
+    logger.info("Synchronized cumulative 2026 running back micro-metrics.")
 
 
 def step_5_update_super_brain_and_parquets():

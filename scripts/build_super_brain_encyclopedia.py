@@ -35,10 +35,12 @@ def build_super_brain():
     with open("data/nextgen_micro_metrics_2026.json", "r", encoding="utf-8") as f:
         ng = json.load(f)
 
-    with open("data/week_1_receiver_micro_metrics_2026.json", "r", encoding="utf-8") as f:
+    rec_path = "data/receiver_micro_metrics_2026.json" if os.path.exists("data/receiver_micro_metrics_2026.json") else "data/week_1_receiver_micro_metrics_2026.json"
+    with open(rec_path, "r", encoding="utf-8") as f:
         rec_metrics = json.load(f).get("players", [])
 
-    with open("data/week_1_running_back_micro_metrics_2026.json", "r", encoding="utf-8") as f:
+    rb_path = "data/running_back_micro_metrics_2026.json" if os.path.exists("data/running_back_micro_metrics_2026.json") else "data/week_1_running_back_micro_metrics_2026.json"
+    with open(rb_path, "r", encoding="utf-8") as f:
         rb_metrics = json.load(f).get("players", [])
 
     with open("data/pff_scouting_2026.json", "r", encoding="utf-8") as f:

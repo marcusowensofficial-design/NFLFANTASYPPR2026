@@ -12,7 +12,7 @@
     "pos_TE",
     "pos_WR"
   ],
-  "test_rmse": 5.948389199232534,
-  "test_corr": 0.5454587968952529,
-  "training_samples": 15674
+  "test_rmse": 5.745443060020624,
+  "test_corr": 0.6729118086864948,
+  "training_samples": 5786
 }

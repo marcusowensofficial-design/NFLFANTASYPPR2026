@@ -380,3 +380,137 @@ def test_2026_definitive_stats_and_parquet():
         meta = json.load(f)["metadata"]
     assert meta["as_of_date"] == "2026-10-08"
     assert meta["sample_weeks"] == 4
+
+
+def test_running_back_micro_metrics_2026():
+    """Verify that running_back_micro_metrics_2026.json exists and covers all 32 teams' RBs."""
+    import json
+    from pathlib import Path
+    rb_path = Path("data/running_back_micro_metrics_2026.json")
+    assert rb_path.exists(), "running_back_micro_metrics_2026.json must exist"
+    with open(rb_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    assert "metadata" in data
+    assert data["metadata"]["as_of_date"] == "2026-10-08"
+    assert data["metadata"]["sample_weeks"] == 4
+    rbs = data.get("running_backs", [])
+    assert len(rbs) >= 100, f"Expected at least 100 RBs, found {len(rbs)}"
+
+    # Check key bellcows exist with calibrated metrics
+    rb_map = {r["name"].lower(): r for r in rbs}
+    assert "jahmyr gibbs" in rb_map
+    assert "ashton jeanty" in rb_map
+    assert "bijan robinson" in rb_map
+    assert "d'andre swift" in rb_map
+    gibbs = rb_map["jahmyr gibbs"]
+    assert gibbs["inside_5_carry_share"] >= 0.60
+    assert gibbs["yac_per_attempt"] >= 3.5
+
+
+def test_xgboost_multi_year_training():
+    """Verify that XGBoost model was trained on combined multi-year dataset including 2026."""
+    import json
+    import xgboost as xgb
+    from pathlib import Path
+
+    model_p = Path("models/xgboost_fppg_model_2026.json")
+    schema_p = Path("models/xgboost_feature_schema.json")
+    assert model_p.exists(), "XGBoost 2026 model must exist"
+    assert schema_p.exists(), "XGBoost schema must exist"
+
+    model = xgb.XGBRegressor()
+    model.load_model(str(model_p))
+
+    with open(schema_p, "r", encoding="utf-8") as f:
+        schema = json.load(f)
+
+    assert schema["training_samples"] > 5000, f"Expected >5000 samples, got {schema['training_samples']}"
+    assert schema["test_corr"] > 0.50, f"Expected correlation > 0.50, got {schema['test_corr']}"
+
+
+def test_ensemble_blending_and_xgboost_inference():
+    """Verify that projection engine runs XGBoost inference and computes ensemble blending."""
+    from src.db.models import PlayerModel
+    from src.services.recommendation.projection_engine import quant_projection_engine
+
+    sample_wr = PlayerModel(
+        id=7701,
+        full_name="Amon-Ra St. Brown",
+        position="WR",
+        pro_team="DET",
+        projected_points=16.5,
+    )
+    res_half = quant_projection_engine.calculate_player_projection(
+        sample_wr,
+        scoring_format="HALF_PPR",
+        projection_source="ENSEMBLE",
+    )
+    assert res_half.active_source == "ENSEMBLE"
+    assert res_half.xgboost_points > 0.0, f"Expected XGBoost points > 0, got {res_half.xgboost_points}"
+    assert res_half.ensemble_half_ppr > 0.0, f"Expected Ensemble Half-PPR > 0, got {res_half.ensemble_half_ppr}"
+    assert res_half.projected_points == res_half.ensemble_half_ppr
+
+    res_ppr = quant_projection_engine.calculate_player_projection(
+        sample_wr,
+        scoring_format="PPR",
+        projection_source="ENSEMBLE",
+    )
+    assert res_ppr.ensemble_full_ppr >= res_half.ensemble_half_ppr
+
+
+def test_positional_outcome_distributions():
+    """Verify monotonic percentile ordering and boom/bust probabilities across all positions."""
+    from src.db.models import PlayerModel
+    from src.services.recommendation.projection_engine import quant_projection_engine
+
+    test_players = [
+        ("Josh Allen", "QB", "BUF"),
+        ("Jahmyr Gibbs", "RB", "DET"),
+        ("Justin Jefferson", "WR", "MIN"),
+        ("George Kittle", "TE", "SF"),
+        ("Buffalo Bills", "D/ST", "BUF"),
+        ("Harrison Butker", "K", "KC"),
+    ]
+
+    for name, pos, tm in test_players:
+        p = PlayerModel(id=9900, full_name=name, position=pos, pro_team=tm, projected_points=12.0)
+        res = quant_projection_engine.calculate_player_projection(p, scoring_format="HALF_PPR")
+
+        assert res.floor_10th <= res.median_50th, f"Floor {res.floor_10th} > Median {res.median_50th} for {name}"
+        assert res.median_50th <= res.ceiling_85th, f"Median {res.median_50th} > Ceil 85th {res.ceiling_85th} for {name}"
+        assert res.ceiling_85th <= res.ceiling_95th, f"Ceil 85th {res.ceiling_85th} > Ceil 95th {res.ceiling_95th} for {name}"
+        assert 0.0 <= res.boom_probability_25pt <= 1.0, f"Boom prob out of bounds for {name}: {res.boom_probability_25pt}"
+        assert 0.0 <= res.bust_probability_6pt <= 1.0, f"Bust prob out of bounds for {name}: {res.bust_probability_6pt}"
+
+
+def test_projections_export_files():
+    """Verify exported projection files exist and contain enriched ensemble and percentile schema."""
+    import json
+    import pandas as pd
+    from pathlib import Path
+
+    json_p = Path("data/projections_week_5_2026.json")
+    parquet_p = Path("data/projections_week_5_2026.parquet")
+
+    assert json_p.exists(), "data/projections_week_5_2026.json must exist"
+    assert parquet_p.exists(), "data/projections_week_5_2026.parquet must exist"
+
+    with open(json_p, "r", encoding="utf-8") as f:
+        records = json.load(f)
+    assert len(records) > 0
+
+    first = records[0]
+    expected_keys = [
+        "player", "team", "position", "ensemble_half", "ensemble_full",
+        "quant_half", "xgboost_pts", "floor_10th", "median_50th",
+        "ceiling_85th", "ceiling_95th", "boom_prob_25pt"
+    ]
+    for k in expected_keys:
+        assert k in first, f"Missing key {k} in exported projection"
+
+    df = pd.read_parquet(parquet_p)
+    assert len(df) == len(records)
+    for k in expected_keys:
+        assert k in df.columns, f"Missing column {k} in exported parquet"
+
+

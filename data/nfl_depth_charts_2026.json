@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "last_updated": "2026-10-08T22:32:22.987311+00:00",
+  "last_updated": "2026-10-08T22:46:43.457242+00:00",
   "total_teams": 32,
   "teams": {
     "ARI": {
@@ -4836,8 +4836,13 @@
             "id": 3149687
           },
           {
-            "name": "Josh Jacobs",
+            "name": "Pierre Strong Jr.",
             "rank": 4,
+            "id": 4249836
+          },
+          {
+            "name": "Josh Jacobs",
+            "rank": 5,
             "id": 4047365
           }
         ]
@@ -5049,18 +5054,23 @@
         ],
         "kr": [
           {
-            "name": "Bo Melton",
-            "rank": 1,
-            "id": 4259305
-          },
-          {
             "name": "Skyy Moore",
-            "rank": 2,
+            "rank": 1,
             "id": 4430191
           },
           {
-            "name": "Savion Williams",
+            "name": "Bo Melton",
+            "rank": 2,
+            "id": 4259305
+          },
+          {
+            "name": "Pierre Strong Jr.",
             "rank": 3,
+            "id": 4249836
+          },
+          {
+            "name": "Savion Williams",
+            "rank": 4,
             "id": 4431487
           }
         ],
