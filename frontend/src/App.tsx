@@ -314,6 +314,7 @@ export function App() {
         const curWeek = data.current_week || 1
         setMatchupWeek(curWeek)
         loadMatchups(curWeek)
+        loadIntelData(targetTeam, true, curWeek)
       } else {
         await handleSync(true)
       }

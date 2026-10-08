@@ -61,7 +61,7 @@
         "overall_grade": 71.0,
         "rank": 17,
         "key_tackles": [
-          "Paris Johnson Jr.",
+          "Jayden Williams",
           "Elijah Wilkinson"
         ]
       },
@@ -119,7 +119,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Malcolm DeWalt IV",
+          "name": "Avieon Terrell",
           "grade": 64.0
         },
         "slot_backup": {
@@ -441,7 +441,7 @@
         "overall_grade": 75.8,
         "rank": 14,
         "key_tackles": [
-          "Theo Benedet",
+          "Ozzy Trapilo",
           "Darnell Wright"
         ]
       },
@@ -642,7 +642,7 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "name": "Markquese Bell",
+          "name": "Caleb Downs",
           "role": "SS",
           "grade": 77.0,
           "coverage_grade": 76.0,
@@ -955,7 +955,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Jaylin Smith",
+          "name": "Collin Wright",
           "grade": 64.0
         },
         "slot_backup": {
@@ -1107,7 +1107,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Christian Braswell",
+          "name": "Jaylon Jones",
           "grade": 64.0
         },
         "slot_backup": {
@@ -1335,11 +1335,11 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Jaylen Watson",
+          "name": "Josh Wallace",
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Josh Wallace",
+          "name": "Quentin Lake",
           "grade": 63.0
         },
         "safety_backup": {
@@ -1567,7 +1567,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Tyreek Chappell",
+          "name": "Byron Murphy Jr.",
           "grade": 63.0
         },
         "safety_backup": {
@@ -1639,7 +1639,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Charles Woods",
+          "name": "Channing Canada",
           "grade": 64.0
         },
         "slot_backup": {
@@ -1897,8 +1897,8 @@
         "stuffed_run_pct": 22.5,
         "rank": 7,
         "key_disruptors": [
+          "David Bailey",
           "Kingsley Enagbare",
-          "Will McDonald IV",
           "T'Vondre Sweat"
         ]
       }
@@ -1962,7 +1962,7 @@
         "rank": 2,
         "key_tackles": [
           "Jordan Mailata",
-          "Lane Johnson"
+          "Markel Bell"
         ]
       },
       "defensive_line_front": {
@@ -2010,7 +2010,7 @@
           "name": "Jalen Ramsey"
         },
         "safety": {
-          "name": "Rayshawn Jenkins",
+          "name": "Robert Spears-Jennings",
           "role": "SS",
           "grade": 77.0,
           "coverage_grade": 76.0,
@@ -2019,7 +2019,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Asante Samuel Jr.",
+          "name": "Sean Murphy-Bunting",
           "grade": 64.0
         },
         "slot_backup": {
@@ -2049,7 +2049,7 @@
         "stuffed_run_pct": 24.0,
         "rank": 4,
         "key_disruptors": [
-          "Derrick Harmon",
+          "Yahya Black",
           "Cameron Heyward",
           "Keeanu Benton"
         ]

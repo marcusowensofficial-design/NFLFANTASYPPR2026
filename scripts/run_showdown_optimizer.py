@@ -30,6 +30,7 @@ def run_optimizer(
     exclude_players: list[str] | None = None,
     portfolio_size: int | None = None,
     max_exposure: float = 0.50,
+    max_mvp_exposure: float = 0.25,
 ):
     path = Path(slate_path)
     if not path.exists():
@@ -80,6 +81,7 @@ def run_optimizer(
             df,
             num_lineups=portfolio_size,
             max_flex_exposure=max_exposure,
+            max_mvp_exposure=max_mvp_exposure,
             game_total=vegas_total,
             mode=mode,
             allow_sub3500_punts=allow_sub3500_punts,
@@ -161,6 +163,7 @@ def main():
     parser.add_argument("--exclude", nargs="+", default=None, help="Exclude players from roster")
     parser.add_argument("--portfolio", type=int, default=None, help="Generate a multi-lineup portfolio (e.g. 5 or 20 entries)")
     parser.add_argument("--max-exposure", type=float, default=0.50, help="Max exposure for non-QB players in portfolio (0.0 - 1.0)")
+    parser.add_argument("--max-mvp-exposure", type=float, default=0.25, help="Max MVP exposure for any player in portfolio (0.0 - 1.0)")
 
     args = parser.parse_args()
     run_optimizer(
@@ -176,6 +179,7 @@ def main():
         exclude_players=args.exclude,
         portfolio_size=args.portfolio,
         max_exposure=args.max_exposure,
+        max_mvp_exposure=args.max_mvp_exposure,
     )
 
 

@@ -123,32 +123,48 @@ class FanDuelShowdownOptimizer:
             clean_exclude = [p.strip().lower() for p in exclude_players]
             df = df[~df["name"].str.lower().isin(clean_exclude)].copy()
 
-        # Verified Role & Route Participation Floor:
-        # Rather than an arbitrary dollar cutoff (which blocked viable rotational players like Joshua Palmer at $3,200),
-        # allow players with verified offensive utility (route_share >= 0.35, snap_share >= 0.40, verified_starter,
-        # or proj >= 2.5 and salary >= $3,000), while filtering pure ghost blocking tight ends / depth FB punts.
-        if not allow_sub3500_punts:
-            has_starter_col = "verified_starter" in df.columns
-            has_role_col = "active_role" in df.columns
-            has_route_col = "route_share" in df.columns
-            has_snap_col = "snap_share" in df.columns
+        # 1. Kicker Starter Integrity: Exactly one starting kicker per NFL team
+        # If multiple kickers are listed for a team, keep ONLY the primary starter (highest salary/played)
+        kicker_mask = df["position"] == "K"
+        if kicker_mask.any():
+            kickers_df = df[kicker_mask]
+            primary_kickers = []
+            for tm in kickers_df["team"].unique():
+                tm_ks = kickers_df[kickers_df["team"] == tm].sort_values(by=["salary", "proj"], ascending=False)
+                primary_kickers.append(tm_ks.iloc[0]["name"])
+            # Remove any backup kickers (e.g. Charlie Smyth when Daniel Carlson is active)
+            df = df[~((df["position"] == "K") & (~df["name"].isin(primary_kickers)))].copy()
 
-            viable_role_mask = pd.Series(False, index=df.index)
-            if has_starter_col:
-                viable_role_mask = viable_role_mask | (df["verified_starter"] == True)
-            if has_role_col:
-                viable_role_mask = viable_role_mask | (df["active_role"] == True)
-            if has_route_col:
-                viable_role_mask = viable_role_mask | (df["route_share"] >= 0.35)
-            if has_snap_col:
-                viable_role_mask = viable_role_mask | (df["snap_share"] >= 0.40)
+        # 2. Played & Game Active Verification: Filter out zero-opportunity ghost punts (0 games played)
+        if "Played" in df.columns:
+            played_numeric = pd.to_numeric(df["Played"], errors="coerce").fillna(0)
+            # Eliminate players with 0 games played who are depth/inactive
+            df = df[played_numeric > 0].copy()
 
-            # Keep if >= min_punt_salary OR has verified offensive role OR reasonable projection floor
-            df = df[
-                (df["salary"] >= self.min_punt_salary) | 
-                viable_role_mask | 
-                (df["proj"] >= 4.0)
-            ].copy()
+        # 3. Verified Role & Route Participation Floor:
+        # Enforce minimum role floor: Must be >= min_punt_salary ($3,000) OR have verified starter/route share >= 35%
+        # Strictly disqualify pure ghost sub-$3,000 depth players
+        has_starter_col = "verified_starter" in df.columns
+        has_role_col = "active_role" in df.columns
+        has_route_col = "route_share" in df.columns
+        has_snap_col = "snap_share" in df.columns
+
+        viable_role_mask = pd.Series(False, index=df.index)
+        if has_starter_col:
+            viable_role_mask = viable_role_mask | (df["verified_starter"] == True)
+        if has_role_col:
+            viable_role_mask = viable_role_mask | (df["active_role"] == True)
+        if has_route_col:
+            viable_role_mask = viable_role_mask | (df["route_share"] >= 0.35)
+        if has_snap_col:
+            viable_role_mask = viable_role_mask | (df["snap_share"] >= 0.40)
+
+        # Disqualify sub-$3,000 ghost players unless they have verified offensive role or are D/ST/K
+        df = df[
+            (df["salary"] >= self.min_punt_salary) | 
+            viable_role_mask |
+            df["position"].isin(["K", "D"])
+        ].copy()
 
         df = df.reset_index(drop=True)
         return df

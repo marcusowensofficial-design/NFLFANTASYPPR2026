@@ -69,18 +69,26 @@ class DFSSlateLoader:
         # Auto-detect week from CSV content or SQLite current_week
         eff_week = week
         if eff_week is None:
-            if "DET@BUF" in str(df_raw.to_dict()) or "detvsbuffalo" in str(target_csv).lower():
+            csv_str = str(target_csv).lower()
+            df_content_str = str(df_raw.to_dict())
+            if "det@buf" in df_content_str.lower() or "detvsbuffalo" in csv_str:
                 eff_week = 2
-            elif "9-13" in str(target_csv) or "NO@DET" in str(df_raw.to_dict()) or "BUF@HOU" in str(df_raw.to_dict()):
+            elif "9-13" in csv_str or "no@det" in df_content_str.lower() or "buf@hou" in df_content_str.lower():
                 eff_week = 1
+            elif "9-27" in csv_str or "fdmainslate9-27" in csv_str:
+                eff_week = 3
+            elif "10-04" in csv_str or "10-01" in csv_str or "10-5" in csv_str or "steelersvsbrowns" in csv_str or "falcons-vs-saints" in csv_str or "pit@cle" in df_content_str.lower() or "atl@no" in df_content_str.lower():
+                eff_week = 4
+            elif "10-08" in csv_str or "10-11" in csv_str or "tbvsdal" in csv_str or "tb@dal" in df_content_str.lower():
+                eff_week = 5
             else:
                 try:
                     conn_tmp = sqlite3.connect(DB_PATH)
                     cw = conn_tmp.execute("SELECT current_week FROM leagues LIMIT 1").fetchone()
                     conn_tmp.close()
-                    eff_week = cw[0] if cw and cw[0] else 2
+                    eff_week = cw[0] if cw and cw[0] else 5
                 except Exception:
-                    eff_week = 2
+                    eff_week = 5
 
         # 1. Fetch Schedule & Vegas Lines
         sched = await nfl_schedule_client.fetch_week_schedule(season=season, week=eff_week)

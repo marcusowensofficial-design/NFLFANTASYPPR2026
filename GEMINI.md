@@ -186,3 +186,23 @@
    * **Specialized Tactical Skills:**
      * Single Game Showdown: [`.agents/skills/fanduel-single-game/SKILL.md`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/.agents/skills/fanduel-single-game/SKILL.md)
      * Main Slate Classic: [`.agents/skills/fanduel-main-slate/SKILL.md`](file:///c:/Users/marco/OneDrive/Desktop/fantasydfs/.agents/skills/fanduel-main-slate/SKILL.md)
+
+8. **The World-Class Comprehensive Quant Standard (Mandatory for All Future Scripts & Models):**
+   * **The Zero-Half-Baked-Data Directives:** No script in this workspace shall rely on toy datasets, isolated box-score averages, or partial player dictionaries. All scripts, models, and optimization engines MUST be fully equipped with the complete, world-class 65+ feature quant matrix.
+   * **Mandatory Player-Level Quant Universe (Offensive & Defensive):**
+     1. *Ball-Carrier Creation & Burst:* Rush Yards Over Expected (RYOE & RYOE/att), Yards Before Contact per Attempt (YBC/att), Yards After Contact (YAC/att), Missed Tackles Forced (MTF/att), Stuffed Run Rate (% carries <= 0 yds), Box Count / Loaded Box Rate (% vs 8+ in box).
+     2. *Air Yards & Route-Running Dynamics:* Optical Route Separation Score (ASS), Targets Per Route Run (TPRR) vs Man & Zone, Yards Per Route Run (YPRR) vs Man & Zone, First-Read Target Share (%), Weighted Opportunity Rating (WOPR), Target Share (%), Air Yards Share (%), Average Depth of Target (aDOT) and aDOT variance, Slot vs Perimeter alignment %, Route Participation Rate (%).
+     3. *Target Quality & End-Zone Equity:* Catchable Target Rate (%), Contested Catch Rate (%), End-Zone Target Share, Red-Zone Target Share (Inside-10 & Inside-20), High-Value Touches (HVTs: carries inside the 5-yard line + targets inside the 10-yard line).
+     4. *Passer Mechanics & Pocket Physics:* Time to Throw (TTT), Time to Pressure, Pressure-to-Sack (P2S) Rate, Scramble % under pressure, Checkdown % to RB under pressure, Clean Pocket Passer Rating vs Pressured Passer Rating, CPOE (Completion % Over Expectation) overall and split by down/distance/red-zone.
+     5. *True Opportunity Utility:* TE & RB Pass-Blocking snap % (unmasking illusion routes), Run-Blocking PFF grades, Expected Fantasy Points (xFP) and Fantasy Points Over Expected (FPOE) separating volume from variance.
+   * **Mandatory Team & Macro Game Environment Quant Universe:**
+     1. *Play-Calling Philosophy & Pace:* Pass Rate Over Expected (PROE), Early-Down Pass Frequency (EDPR - 1st & 2nd down), Situational Pace (Neutral Pace sec/snap within 6 pts, Trailing Pace down 7+, Hurry-up/2-min pace).
+     2. *Efficiency & Advanced EPA:* Dropback EPA/Play (Offense & Defense), Rush EPA/Play (Offense & Defense), Pass Success Rate (%), Rush Success Rate (%).
+     3. *Scheme Design & Formations:* Pre-Snap Motion % at snap, Play-Action Pass %, Personnel Grouping Distribution (11, 12, 21, Jumbo goal-line %).
+     4. *Trench Collision Physics:* Adjusted Line Yards (ALY), Adjusted Sack Rate (ASR), Offensive Line PBWR/RBWR vs Defensive Line PRWR/Run Defense Grade, Defensive Pressure Rate %, Stuffed Run Rate %.
+     5. *Defensive Coverage Shell Distributions:* MOFO (Cover 2/4/6) %, MOFC (Cover 1/3) %, Cover 0 Blitz %, Man % vs Zone %.
+     6. *Granular Positional Matchups (Segmented DvP):* Receiving RB DvP vs Pure Rushing RB DvP; Slot WR DvP vs Boundary X/Z WR DvP; Inline Blocking TE DvP vs Big Slot/Move TE DvP.
+     7. *Drive Execution & Coaching Game Theory:* Drive Success Rate (DSR), 3-and-Out Rate %, Red Zone TD Conversion % & Allowed %, Coach 4th-down aggressiveness score.
+     8. *Syndicate Market & Atmospheric Physics:* Syndicate Line Movement Velocity (delta spread, delta total), Implied Team Totals, Sustained Wind Speed (>= 15 mph), Temperature, Dome/Turf indicator.
+   * **Centralized Engine Import Rule:** Every new predictive script, feature transformer, or slate builder MUST import or utilize `src.services.intelligence.world_class_quant_engine` as its standardized institutional data backbone.
+

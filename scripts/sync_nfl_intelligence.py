@@ -124,10 +124,24 @@ async def sync_injuries() -> int:
     return len(injuries)
 
 
-from src.services.matchup.dvp_calculator import calculate_in_house_dvp
+def get_current_season_and_week() -> tuple[int, int]:
+    """Dynamically resolve current NFL season and week from database or default to 2026 Week 5."""
+    try:
+        from src.db.session import SessionLocal
+        from src.db.models import LeagueModel
+        with SessionLocal() as session:
+            l = session.query(LeagueModel).order_by(LeagueModel.last_synced_at.desc()).first()
+            if l and l.current_week:
+                return l.season or 2026, l.current_week
+    except Exception:
+        pass
+    return 2026, 5
 
-async def sync_dvp(season: int = 2026, week: int = 3) -> int:
+
+async def sync_dvp(season: int = 2026, week: int | None = None) -> int:
     """Calculates realized Defense vs Position (DvP) and exports to data/nfl_dvp_proprietary_2026.json."""
+    if week is None:
+        _, week = get_current_season_and_week()
     logger.info(f"Calculating in-house DvP ratings for Season {season}, Week {week}...")
     dvp_res = await calculate_in_house_dvp(season=season, target_week=week)
     total_records = sum(len(records) for records in dvp_res.values())
@@ -135,8 +149,10 @@ async def sync_dvp(season: int = 2026, week: int = 3) -> int:
     return total_records
 
 
-async def sync_vegas_odds(week: int = 3) -> int:
+async def sync_vegas_odds(week: int | None = None) -> int:
     """Fetches week schedule and live betting lines, exporting to data/vegas_movement_2026.json."""
+    if week is None:
+        _, week = get_current_season_and_week()
     nfl_schedule_client.clear_cache()
     games = await nfl_schedule_client.fetch_week_schedule(season=2026, week=week)
 
@@ -175,9 +191,10 @@ async def sync_vegas_odds(week: int = 3) -> int:
     return len(games)
 
 
-
-async def sync_database_and_calibrate(season: int = 2026, week: int = 3):
+async def sync_database_and_calibrate(season: int = 2026, week: int | None = None):
     """Synchronizes ESPN league, Sleeper consensus, and runs bulk projection calibration."""
+    if week is None:
+        _, week = get_current_season_and_week()
     logger.info("=== Starting Database Sync & Projection Calibration ===")
     from src.db.session import SessionLocal
     from src.services.espn_sync import ESPNSyncService
