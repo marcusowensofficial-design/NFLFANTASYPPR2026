@@ -291,35 +291,78 @@ export function App() {
     }
   }, [matchupWeek])
 
-  const loadLeagueData = async () => {
+  const applyLeagueSummary = (summaryData: LeagueSummaryResponse, forceLineupReload = false) => {
+    setLeague(summaryData)
+    try {
+      localStorage.setItem('apex_league_summary', JSON.stringify(summaryData))
+    } catch {}
+
+    const storedTeam = localStorage.getItem('apex_selected_team_id')
+    const currentTargetId = (pendingTeamId && summaryData.teams.some(t => t.id === pendingTeamId))
+      ? pendingTeamId
+      : (selectedTeamId && summaryData.teams.some(t => t.id === selectedTeamId))
+        ? selectedTeamId
+        : (storedTeam && summaryData.teams.some(t => t.id === Number(storedTeam)))
+          ? Number(storedTeam)
+          : (summaryData.user_team_id || (summaryData.teams.length > 0 ? summaryData.teams[0].id : 6))
+
+    if (selectedTeamId !== currentTargetId) {
+      setIsExplicitCompare(false)
+      setSelectedTeamId(currentTargetId)
+    }
+    setPendingTeamId(currentTargetId)
+    setSelectedRosterTeamId(currentTargetId)
+    try {
+      localStorage.setItem('apex_selected_team_id', String(currentTargetId))
+    } catch {}
+
+    loadTeamRoster(currentTargetId)
+    prefetchAllTeamRosters(summaryData.teams)
+    const curWeek = summaryData.current_week || 1
+    setMatchupWeek(curWeek)
+    loadMatchups(curWeek)
+    loadIntelData(currentTargetId, true, curWeek)
+    if (forceLineupReload) {
+      loadTeamLineup(currentTargetId, strategyMode, projectionSource, true)
+      loadWaivers(currentTargetId)
+      loadAllPlayers()
+      loadInjuries()
+      checkInactivesAlerts(currentTargetId)
+    }
+  }
+
+  const loadLeagueData = async (retryCount = 0) => {
     try {
       const res = await fetch('/api/league/summary')
-      if (res.ok) {
+      const isJson = res.headers.get('content-type')?.includes('application/json')
+      if (res.ok && isJson) {
         const data: LeagueSummaryResponse = await res.json()
-        setLeague(data)
-        try {
-          localStorage.setItem('apex_league_summary', JSON.stringify(data))
-        } catch {}
-
-        const storedTeam = localStorage.getItem('apex_selected_team_id')
-        const targetTeam = storedTeam ? Number(storedTeam) : (data.user_team_id || (data.teams.length > 0 ? data.teams[0].id : 6))
-        if (selectedTeamId !== targetTeam) {
-          setIsExplicitCompare(false)
-          setSelectedTeamId(targetTeam)
-        }
-        setPendingTeamId(targetTeam)
-        setSelectedRosterTeamId(targetTeam)
-        loadTeamRoster(targetTeam)
-        prefetchAllTeamRosters(data.teams)
-        const curWeek = data.current_week || 1
-        setMatchupWeek(curWeek)
-        loadMatchups(curWeek)
-        loadIntelData(targetTeam, true, curWeek)
-      } else {
+        applyLeagueSummary(data)
+      } else if (res.status === 404) {
+        // SQLite database has no league synced yet, run initial sync
         await handleSync(true)
+      } else {
+        // Backend temporarily unavailable or warming up: hydrate immediately from cached storage
+        const cached = localStorage.getItem('apex_league_summary')
+        if (cached) {
+          try {
+            applyLeagueSummary(JSON.parse(cached))
+          } catch {}
+        }
+        if (retryCount < 2) {
+          setTimeout(() => loadLeagueData(retryCount + 1), 1500)
+        }
       }
     } catch {
-      await handleSync(true)
+      const cached = localStorage.getItem('apex_league_summary')
+      if (cached) {
+        try {
+          applyLeagueSummary(JSON.parse(cached))
+        } catch {}
+      }
+      if (retryCount < 2) {
+        setTimeout(() => loadLeagueData(retryCount + 1), 1500)
+      }
     }
   }
 
@@ -630,51 +673,77 @@ export function App() {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 45000)
     try {
-      const res = await fetch(`/api/league/sync?force=${force}`, {
-        method: 'POST',
-        signal: controller.signal,
-      })
-      const data = await res.json()
-      setSyncMessage(data.message)
+      try {
+        const res = await fetch(`/api/league/sync?force=${force}`, {
+          method: 'POST',
+          signal: controller.signal,
+        })
+        const isJson = res.headers.get('content-type')?.includes('application/json')
+        if (isJson) {
+          const data = await res.json()
+          if (data.message) {
+            setSyncMessage(data.message)
+          }
+        } else {
+          const text = await res.text()
+          if (text.includes('<!DOCTYPE') || text.startsWith('<')) {
+            setSyncMessage('Backend API offline or unreachable on port 8000. Ensure FastAPI server is running.')
+          } else {
+            setSyncMessage(`Sync notice: Server returned HTTP ${res.status}`)
+          }
+        }
+      } catch (postErr: any) {
+        if (postErr?.name === 'AbortError') {
+          setSyncMessage('Sync timed out after 45 seconds. Loading cached league data...')
+        } else {
+          const msg = String(postErr?.message || postErr)
+          if (msg.includes('Unexpected token') || msg.includes('<!DOCTYPE')) {
+            setSyncMessage('Backend API offline or unreachable on port 8000. Ensure FastAPI server is running.')
+          } else {
+            setSyncMessage(`Sync notice: ${msg}`)
+          }
+        }
+      }
 
-      // Reload fresh league data
-      const summaryRes = await fetch('/api/league/summary', { signal: controller.signal })
-      if (summaryRes.ok) {
-        const summaryData: LeagueSummaryResponse = await summaryRes.json()
-        setLeague(summaryData)
-        try {
-          localStorage.setItem('apex_league_summary', JSON.stringify(summaryData))
-        } catch {}
-
-        // Preserve the team the user intentionally selected; do not revert to Blind Horse
-        const storedTeam = localStorage.getItem('apex_selected_team_id')
-        const currentTargetId = (pendingTeamId && summaryData.teams.some(t => t.id === pendingTeamId))
-          ? pendingTeamId
-          : (selectedTeamId && summaryData.teams.some(t => t.id === selectedTeamId))
-            ? selectedTeamId
-            : (storedTeam && summaryData.teams.some(t => t.id === Number(storedTeam)))
-              ? Number(storedTeam)
-              : (summaryData.user_team_id || (summaryData.teams.length > 0 ? summaryData.teams[0].id : 6))
-
-        setSelectedTeamId(currentTargetId)
-        setPendingTeamId(currentTargetId)
-        setSelectedRosterTeamId(currentTargetId)
-        try {
-          localStorage.setItem('apex_selected_team_id', String(currentTargetId))
-        } catch {}
-        loadTeamLineup(currentTargetId, strategyMode, projectionSource, true)
-        loadWaivers(currentTargetId)
-        loadAllPlayers()
-        loadInjuries()
-        checkInactivesAlerts(currentTargetId)
-        loadIntelData(currentTargetId, true)
-        loadMatchups(summaryData.current_week || 1)
+      // ALWAYS reload league data from SQLite summary regardless of ESPN sync outcome
+      try {
+        const summaryRes = await fetch('/api/league/summary', { signal: controller.signal })
+        const summaryIsJson = summaryRes.headers.get('content-type')?.includes('application/json')
+        if (summaryRes.ok && summaryIsJson) {
+          const summaryData: LeagueSummaryResponse = await summaryRes.json()
+          applyLeagueSummary(summaryData, true)
+        } else {
+          const cached = localStorage.getItem('apex_league_summary')
+          if (cached) {
+            try {
+              applyLeagueSummary(JSON.parse(cached), true)
+            } catch {}
+          }
+        }
+      } catch {
+        const cached = localStorage.getItem('apex_league_summary')
+        if (cached) {
+          try {
+            applyLeagueSummary(JSON.parse(cached), true)
+          } catch {}
+        }
       }
     } catch (err: any) {
       if (err?.name === 'AbortError') {
         setSyncMessage('Sync timed out after 45 seconds. Check connection and try again.')
       } else {
-        setSyncMessage(`Sync failed: ${err?.message || err}`)
+        const msg = String(err?.message || err)
+        if (msg.includes('Unexpected token') || msg.includes('<!DOCTYPE')) {
+          setSyncMessage('Backend API unreachable on port 8000. Ensure FastAPI server is running.')
+        } else {
+          setSyncMessage(`Sync failed: ${msg}`)
+        }
+      }
+      const cached = localStorage.getItem('apex_league_summary')
+      if (cached) {
+        try {
+          applyLeagueSummary(JSON.parse(cached), true)
+        } catch {}
       }
     } finally {
       clearTimeout(timeoutId)
