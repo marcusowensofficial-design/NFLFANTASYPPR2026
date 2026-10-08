@@ -12,6 +12,8 @@ Synthesizes:
 4. Exports dual Parquet tables in data/parquets/ and unified JSON encyclopedia in data/encyclopedia/.
 """
 
+from collections import defaultdict
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -503,6 +505,65 @@ def build_super_brain():
         records_2025.append(row_2025)
         records_2026.append(row_2026)
 
+    # Ingest all 4 completed weeks of actuals to expand 2026 in-season tracking
+    actuals_files = [
+        Path("data/actuals_week1.json"),
+        Path("data/actuals_week2.json"),
+        Path("data/actuals_week3.json"),
+        Path("data/actuals_2026_10_04.json")
+    ]
+    player_actual_scores = defaultdict(list)
+    for af in actuals_files:
+        if af.exists():
+            with open(af, "r", encoding="utf-8") as f:
+                d = json.load(f)
+                p_map = d.get("players", {})
+                for pname, score in p_map.items():
+                    if isinstance(score, (int, float)):
+                        player_actual_scores[pname].append(float(score))
+
+    # Build depth chart lookup
+    dc_players_map = {}
+    for tm, tdata in depth_charts.items():
+        for u in ("offense", "defense", "special_teams"):
+            for slot, athletes in tdata.get(u, {}).items():
+                if isinstance(athletes, list):
+                    for a in athletes:
+                        aname = a.get("name")
+                        if aname:
+                            dc_players_map[aname] = {"team": tm, "slot": slot.upper(), "rank": a.get("rank", 1)}
+
+    for pname, scores in sorted(player_actual_scores.items()):
+        if pname in master_players or pname not in dc_players_map:
+            continue
+        pinfo = dc_players_map[pname]
+        pos = "WR" if "WR" in pinfo["slot"] else ("RB" if "RB" in pinfo["slot"] else ("QB" if "QB" in pinfo["slot"] else ("TE" if "TE" in pinfo["slot"] else ("K" if "PK" in pinfo["slot"] or "K" in pinfo["slot"] else "DST"))))
+        avg_pts = round(sum(scores) / len(scores), 2)
+        in_season = {
+            "season": 2026,
+            "games": len(scores),
+            "fppg_half": avg_pts,
+            "fppg_ppr": avg_pts,
+            "role_archetype": f"{pinfo['slot']}_RANK_{pinfo['rank']}",
+            "trajectory": "ACTIVE_2026_CONTRIBUTOR",
+            "role_shift_notes": f"Active starter/contributor on {pinfo['team']} depth chart ({pinfo['slot']})."
+        }
+        master_players[pname] = {
+            "name": pname,
+            "pos": pos,
+            "position": pos,
+            "team": pinfo["team"],
+            "depth_chart_rank": pinfo["rank"],
+            "prior_2025": None,
+            "in_season_2026": in_season,
+            "provenance_tags": {
+                "prior_tag": "[2025 Prior - Not Tracked]",
+                "current_tag": "[2026 Realized In-Season]"
+            }
+        }
+        row_2026 = {"player_name": pname, "position": pos, "team": pinfo["team"], **in_season}
+        records_2026.append(row_2026)
+
     # 3. Add 32-Team Trench & Scheme Profiles
     teams_encyclopedia = {}
     for team, pff in pff_teams.items():
@@ -526,10 +587,12 @@ def build_super_brain():
         "metadata": {
             "title": "NFL Super Brain Master DFS & Intelligence Knowledge Base",
             "seasons_indexed": [2025, 2026],
-            "last_updated": "2026-09-17T17:50:00Z",
+            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "as_of_date": "2026-10-08",
+            "sample_weeks": 4,
             "total_players_indexed": len(master_players),
             "total_teams_indexed": len(teams_encyclopedia),
-            "source_provenance": "PFF, NextGenStats, nflverse, Sportsbook Props, FantasyPoints Data"
+            "source_provenance": "PFF, NextGenStats, nflverse, Sportsbook Props, FantasyPoints Data, ESPN Analytics"
         },
         "players": master_players,
         "teams": teams_encyclopedia

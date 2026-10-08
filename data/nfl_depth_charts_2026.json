@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "last_updated": "2026-10-08T14:30:30.754011+00:00",
+  "last_updated": "2026-10-08T22:32:22.987311+00:00",
   "total_teams": 32,
   "teams": {
     "ARI": {
@@ -1299,11 +1299,6 @@
             "id": 3915416
           },
           {
-            "name": "Keon Coleman",
-            "rank": 2,
-            "id": 4635008
-          },
-          {
             "name": "Joshua Palmer",
             "rank": 2,
             "id": 4242433
@@ -1327,6 +1322,11 @@
           }
         ],
         "wr3": [
+          {
+            "name": "Keon Coleman",
+            "rank": 1,
+            "id": 4635008
+          },
           {
             "name": "Skyler Bell",
             "rank": 2,
@@ -3429,14 +3429,14 @@
         ],
         "lg": [
           {
-            "name": "T.J. Bass",
+            "name": "Tyler Smith",
             "rank": 1,
-            "id": 4685120
+            "id": 4568652
           },
           {
-            "name": "Tyler Smith",
+            "name": "T.J. Bass",
             "rank": 2,
-            "id": 4568652
+            "id": 4685120
           }
         ],
         "c": [
@@ -3531,13 +3531,8 @@
             "id": 4429676
           },
           {
-            "name": "Emari Demercado",
-            "rank": 3,
-            "id": 4362478
-          },
-          {
             "name": "Malik Davis",
-            "rank": 4,
+            "rank": 3,
             "id": 4240603
           }
         ],
@@ -3710,8 +3705,13 @@
             "id": 3121415
           },
           {
-            "name": "P.J. Locke",
+            "name": "Juanyeh Thomas",
             "rank": 2,
+            "id": 4360590
+          },
+          {
+            "name": "P.J. Locke",
+            "rank": 3,
             "id": 3929850
           }
         ],
@@ -3734,8 +3734,13 @@
         ],
         "nb": [
           {
-            "name": "Caleb Downs",
+            "name": "Reddy Steward",
             "rank": 1,
+            "id": 4428584
+          },
+          {
+            "name": "Caleb Downs",
+            "rank": 2,
             "id": 4870706
           }
         ]
@@ -5083,9 +5088,9 @@
             "id": 4586312
           },
           {
-            "name": "Jayden Higgins",
+            "name": "Tank Dell",
             "rank": 3,
-            "id": 4877706
+            "id": 4366031
           }
         ],
         "wr2": [
@@ -5098,6 +5103,11 @@
             "name": "Jared Wayne",
             "rank": 2,
             "id": 4430681
+          },
+          {
+            "name": "Jayden Higgins",
+            "rank": 3,
+            "id": 4877706
           }
         ],
         "wr3": [
@@ -5107,9 +5117,9 @@
             "id": 4429022
           },
           {
-            "name": "Tank Dell",
+            "name": "Bryce Oliver",
             "rank": 2,
-            "id": 4366031
+            "id": 4362617
           }
         ],
         "lt": [
@@ -5521,13 +5531,18 @@
             "id": 3134448
           },
           {
-            "name": "Woody Marks",
+            "name": "Bryce Oliver",
             "rank": 3,
+            "id": 4362617
+          },
+          {
+            "name": "Woody Marks",
+            "rank": 4,
             "id": 4429059
           },
           {
             "name": "Xavier Hutchinson",
-            "rank": 4,
+            "rank": 5,
             "id": 4686422
           }
         ],
@@ -9210,8 +9225,13 @@
             "id": 2574056
           },
           {
-            "name": "Brenden Schooler",
+            "name": "Mike Brown",
             "rank": 2,
+            "id": 4244310
+          },
+          {
+            "name": "Brenden Schooler",
+            "rank": 3,
             "id": 4047941
           }
         ],
@@ -10818,23 +10838,23 @@
         ],
         "rb": [
           {
-            "name": "Will Shipley",
-            "rank": 1,
-            "id": 4431545
-          },
-          {
             "name": "Saquon Barkley",
-            "rank": 2,
+            "rank": 1,
             "id": 3929630
           },
           {
+            "name": "Will Shipley",
+            "rank": 2,
+            "id": 4431545
+          },
+          {
             "name": "Dameon Pierce",
-            "rank": 4,
+            "rank": 3,
             "id": 4360238
           },
           {
             "name": "Tank Bigsby",
-            "rank": 5,
+            "rank": 4,
             "id": 4429013
           }
         ]
@@ -12501,6 +12521,11 @@
             "name": "Jalon Daniels",
             "rank": 2,
             "id": 4596472
+          },
+          {
+            "name": "Easton Stick",
+            "rank": 3,
+            "id": 3120590
           }
         ],
         "te": [
@@ -12665,6 +12690,11 @@
             "name": "Miles Killebrew",
             "rank": 2,
             "id": 2575164
+          },
+          {
+            "name": "JJ Roberts",
+            "rank": 3,
+            "id": 4566165
           }
         ],
         "fs": [
@@ -13361,18 +13391,13 @@
             "id": 4697815
           },
           {
-            "name": "Kaytron Allen",
-            "rank": 3,
-            "id": 4685246
-          },
-          {
             "name": "Austin Ekeler",
-            "rank": 4,
+            "rank": 3,
             "id": 3068267
           },
           {
             "name": "Jeremy McNichols",
-            "rank": 5,
+            "rank": 4,
             "id": 3127586
           }
         ]

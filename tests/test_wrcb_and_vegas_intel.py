@@ -111,19 +111,32 @@ def test_wr_alignments():
 
 
 def test_wrcb_matchup_analysis_shadow_and_mismatch():
-    """Verify that elite shadow corners trigger shadow alerts, and slot WRs get slot mismatch ratings."""
-    # Justin Jefferson vs Denver (Patrick Surtain II shadow)
+    """Verify that elite shadow corners trigger shadow alerts, and live injured corners trigger backup replacements."""
+    # Healthy shadow baseline: Justin Jefferson vs IND (Sauce Gardner shadow)
     analysis_shadow = wrcb_analyzer.analyze_matchup(
+        player_id=1,
+        full_name="Justin Jefferson",
+        pro_team="MIN",
+        opponent="IND",
+        projected_points=18.5,
+        inactive_player_names=set(),
+    )
+    assert analysis_shadow.is_shadow_projected is True
+    assert analysis_shadow.advantage_rating == "SHADOW_LOCKDOWN"
+    assert analysis_shadow.advantage_score < 0
+    assert "SHADOW ALERT" in analysis_shadow.tactical_takeaway
+
+    # Live Inactive Test: Justin Jefferson vs DEN (Pat Surtain II is DOUBTFUL -> Jahdae Barron promoted)
+    analysis_den_injured = wrcb_analyzer.analyze_matchup(
         player_id=1,
         full_name="Justin Jefferson",
         pro_team="MIN",
         opponent="DEN",
         projected_points=18.5,
     )
-    assert analysis_shadow.is_shadow_projected is True
-    assert analysis_shadow.advantage_rating == "SHADOW_LOCKDOWN"
-    assert analysis_shadow.advantage_score < 0
-    assert "SHADOW ALERT" in analysis_shadow.tactical_takeaway
+    assert analysis_den_injured.primary_cb.is_backup_replacement is True
+    assert analysis_den_injured.primary_cb.name == "Jahdae Barron"
+    assert "BACKUP CB TARGET" in analysis_den_injured.tactical_takeaway or "MAJOR_ADVANTAGE" in analysis_den_injured.advantage_rating
 
     # CeeDee Lamb vs Washington (vulnerable slot corner)
     analysis_slot = wrcb_analyzer.analyze_matchup(
@@ -266,7 +279,7 @@ def test_api_wrcb_and_vegas_endpoints(client):
 
 
 def test_scoring_engine_enrichment_with_wrcb_and_vegas():
-    """Test that evaluate_player in scoring_engine now produces WR/CB and Game Script metadata."""
+    """Test that evaluate_player in scoring_engine produces WR/CB and Game Script metadata, accurately detecting shadow vs backup."""
     player = PlayerModel(
         id=999,
         full_name="Justin Jefferson",
@@ -275,8 +288,30 @@ def test_scoring_engine_enrichment_with_wrcb_and_vegas():
         projected_points=18.0,
         injured=False,
     )
-    game = NFLGame(
+    # 1. Healthy Shadow Test: MIN at IND (Sauce Gardner shadows WR1)
+    game_ind = NFLGame(
         id="501",
+        name="MIN at IND",
+        date="2026-09-13T16:25Z",
+        venue_name="Lucas Oil Stadium",
+        home_team="IND",
+        away_team="MIN",
+        over_under=48.5,
+        spread=-1.5,
+        home_implied_total=25.0,
+        away_implied_total=23.5,
+    )
+    eval_ind = scoring_engine.evaluate_player(player, nfl_game=game_ind)
+    assert eval_ind.wrcb_primary_cb == "Sauce Gardner"
+    assert eval_ind.wrcb_is_shadow is True
+    assert eval_ind.game_script == "SHOOTOUT"
+    assert eval_ind.game_script_label == "High-Ceiling Shootout"
+    assert any("SHADOW ALERT" in r for r in eval_ind.reasons_negative)
+    assert any("Shootout" in r for r in eval_ind.reasons_positive)
+
+    # 2. Live Inactive Test: MIN at DEN (Surtain is DOUBTFUL -> Jahdae Barron promoted)
+    game_den = NFLGame(
+        id="502",
         name="MIN at DEN",
         date="2026-09-13T16:25Z",
         venue_name="Empower Field at Mile High",
@@ -287,10 +322,61 @@ def test_scoring_engine_enrichment_with_wrcb_and_vegas():
         home_implied_total=25.0,
         away_implied_total=23.5,
     )
-    evaluation = scoring_engine.evaluate_player(player, nfl_game=game)
-    assert evaluation.wrcb_primary_cb in ("Patrick Surtain II", "Pat Surtain II")
-    assert evaluation.wrcb_is_shadow is True
-    assert evaluation.game_script == "SHOOTOUT"
-    assert evaluation.game_script_label == "High-Ceiling Shootout"
-    assert any("SHADOW ALERT" in r for r in evaluation.reasons_negative)
-    assert any("Shootout" in r for r in evaluation.reasons_positive)
+    eval_den = scoring_engine.evaluate_player(player, nfl_game=game_den)
+    assert eval_den.wrcb_primary_cb == "Jahdae Barron"
+    assert eval_den.wrcb_is_shadow is False
+
+
+def test_injured_reserve_is_out_fix():
+    """Verify that players with status INJURED RESERVE evaluate to is_out=True and is_playable=False."""
+    import json
+    from src.adapters.nfl.injuries_client import PlayerInjuryReport
+
+    with open("data/injuries_live_2026.json", "r", encoding="utf-8") as f:
+        d = json.load(f)
+
+    ir_players = [
+        PlayerInjuryReport(**{k: inj[k] for k in PlayerInjuryReport.model_fields.keys() if k in inj})
+        for inj in d.get("injuries", [])
+        if "RESERVE" in str(inj.get("status", "")).upper()
+    ]
+    assert len(ir_players) > 0, "Expected at least 1 player on IR in live wire"
+    for p in ir_players:
+        assert p.is_out is True, f"IR player {p.name} should have is_out=True"
+        assert p.is_playable is False, f"IR player {p.name} should have is_playable=False"
+
+
+def test_expanded_active_wr_alignments_no_defaults():
+    """Verify that active starting depth chart receivers exist in KNOWN_WR_ALIGNMENTS with calibrated values."""
+    assert len(KNOWN_WR_ALIGNMENTS) >= 200, f"Expected at least 200 calibrated WRs, found {len(KNOWN_WR_ALIGNMENTS)}"
+
+    # Check key players that were previously missing
+    assert "joshua palmer" in KNOWN_WR_ALIGNMENTS
+    assert "marvin mims jr." in KNOWN_WR_ALIGNMENTS
+    assert "brandin cooks" in KNOWN_WR_ALIGNMENTS
+    assert "andrei iosivas" in KNOWN_WR_ALIGNMENTS
+    assert "troy franklin" in KNOWN_WR_ALIGNMENTS
+    assert "darnell mooney" in KNOWN_WR_ALIGNMENTS
+
+    palmer = KNOWN_WR_ALIGNMENTS["joshua palmer"]
+    assert palmer.target_share > 0.05
+    assert palmer.pct_wide > 0.50
+
+
+def test_2026_definitive_stats_and_parquet():
+    """Verify that player_stats_2026.parquet contains multi-week records and strictly demarcated seasons."""
+    import json
+    import pandas as pd
+    from pathlib import Path
+
+    p26 = Path("data/parquets/player_stats_2026.parquet")
+    assert p26.exists(), "2026 parquet must exist"
+    df26 = pd.read_parquet(p26)
+    assert len(df26) >= 500, f"Expected multi-week expanded 2026 dataset, found {len(df26)} records"
+    assert (df26["season"] == 2026).all(), "All records in 2026 parquet must have season=2026"
+
+    # Verify Super Brain metadata
+    with open("data/encyclopedia/nfl_super_brain_master.json", "r", encoding="utf-8") as f:
+        meta = json.load(f)["metadata"]
+    assert meta["as_of_date"] == "2026-10-08"
+    assert meta["sample_weeks"] == 4

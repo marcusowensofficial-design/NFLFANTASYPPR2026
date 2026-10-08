@@ -86,7 +86,12 @@ class PlayerInjuryReport(BaseModel):
     @property
     def is_out(self) -> bool:
         st = self.status.upper()
-        return st in ("OUT", "DOUBTFUL", "IR", "INACTIVE", "SUSPENDED") or "IR" in st
+        return (
+            st in ("OUT", "DOUBTFUL", "IR", "INACTIVE", "SUSPENDED", "INJURED RESERVE", "PUP", "NFI")
+            or "IR" in st
+            or "RESERVE" in st
+            or "PUP" in st
+        )
 
     @property
     def practice_status(self) -> str | None:

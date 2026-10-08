@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 from pydantic import BaseModel, Field
@@ -11,6 +12,31 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 PFF_SEED_PATH = Path(__file__).resolve().parents[3] / "data" / "pff_scouting_2026.json"
+
+
+def _is_player_inactive(name: str, inactives: set[str]) -> bool:
+    """Robust fuzzy matching to determine if a cornerback is inactive."""
+    if not name or not inactives:
+        return False
+    norm_name = re.sub(r"[^\w\s]", "", name.lower()).strip()
+    if norm_name in inactives or name.lower().strip() in inactives:
+        return True
+    tokens = [t for t in norm_name.split() if t not in ("jr", "sr", "ii", "iii", "iv", "v")]
+    core_name = " ".join(tokens)
+
+    for inact in inactives:
+        norm_inact = re.sub(r"[^\w\s]", "", str(inact).lower()).strip()
+        if norm_name == norm_inact:
+            return True
+        inact_tokens = [t for t in norm_inact.split() if t not in ("jr", "sr", "ii", "iii", "iv", "v")]
+        core_inact = " ".join(inact_tokens)
+        if core_name and core_name == core_inact:
+            return True
+        if tokens and inact_tokens and tokens[-1] == inact_tokens[-1]:
+            fn1, fn2 = tokens[0], inact_tokens[0]
+            if (fn1 in ("pat", "patrick") and fn2 in ("pat", "patrick")) or (fn1 in ("aj", "a.j") and fn2 in ("aj", "a.j")):
+                return True
+    return False
 
 
 class PFFCornerback(BaseModel):
@@ -128,7 +154,7 @@ class PFFScoutingService:
         # 1. Outside 1
         o1 = raw_cbs.get("outside1", {})
         o1_name = o1.get("name", "CB1")
-        if o1_name.lower().strip() in inactives:
+        if _is_player_inactive(o1_name, inactives):
             # Promote outside backup
             bk = backups.get("outside_backup", {"name": "Backup Cornerback", "grade": 60.0})
             result["outside1"] = PFFCornerback(
@@ -157,7 +183,7 @@ class PFFScoutingService:
         # 2. Outside 2
         o2 = raw_cbs.get("outside2", {})
         o2_name = o2.get("name", "CB2")
-        if o2_name.lower().strip() in inactives:
+        if _is_player_inactive(o2_name, inactives):
             bk = backups.get("outside_backup", {"name": "Secondary Backup CB", "grade": 61.0})
             result["outside2"] = PFFCornerback(
                 name=bk.get("name", "Backup CB2"),
@@ -185,7 +211,7 @@ class PFFScoutingService:
         # 3. Slot CB
         slot = raw_cbs.get("slot", {})
         slot_name = slot.get("name", "Nickel CB")
-        if slot_name.lower().strip() in inactives:
+        if _is_player_inactive(slot_name, inactives):
             bk = backups.get("slot_backup", {"name": "Backup Nickel CB", "grade": 62.0})
             result["slot"] = PFFCornerback(
                 name=bk.get("name", "Backup Slot CB"),
@@ -213,7 +239,7 @@ class PFFScoutingService:
         # 4. Safety (Middle of Field / TE defender)
         safety = raw_cbs.get("safety", {})
         safety_name = safety.get("name", "Safety")
-        if safety_name.lower().strip() in inactives:
+        if _is_player_inactive(safety_name, inactives):
             bk = backups.get("safety_backup", {"name": "Backup Safety", "grade": 60.0})
             result["safety"] = PFFCornerback(
                 name=bk.get("name", "Backup Safety"),

@@ -6,6 +6,7 @@ and generates:
 2. src/services/matchup/wrcb_matrix.py (All 32 teams in NFL_CB_DEPTH_CHARTS)
 """
 
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import re
@@ -385,7 +386,7 @@ def sync_defense_data():
     # Save to data/pff_scouting_2026.json
     output_json = {
         "season": 2026,
-        "last_updated": "2026-09-27T13:36:41+00:00",
+        "last_updated": datetime.now(timezone.utc).isoformat(),
         "description": "PFF Advanced Scouting baseline with verified 2026 NFL depth charts, coverage grades, shadow tracking, and trench metrics.",
         "teams": synced_pff_teams
     }

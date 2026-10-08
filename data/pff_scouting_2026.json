@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "last_updated": "2026-09-27T13:36:41+00:00",
+  "last_updated": "2026-10-08T22:32:24.321317+00:00",
   "description": "PFF Advanced Scouting baseline with verified 2026 NFL depth charts, coverage grades, shadow tracking, and trench metrics.",
   "teams": {
     "ARI": {
@@ -633,7 +633,7 @@
           "name": "DaRon Bland"
         },
         "slot": {
-          "name": "Caleb Downs",
+          "name": "Reddy Steward",
           "role": "SLOT",
           "grade": 74.0,
           "is_shadow": false,
