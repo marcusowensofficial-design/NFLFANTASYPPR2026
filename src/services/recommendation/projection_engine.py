@@ -488,6 +488,10 @@ def get_injury_beneficiary_boost(player_name: str, pos: str) -> tuple[float, str
         # Cross-positional detection: Ashton Jeanty when Brock Bowers is OUT
         if "ashton jeanty" in norm and any("BOWERS" in k.upper() for k in _injury_wire_cache.get("inactives", set())):
             return 17.5, "Cross-positional target and red-zone beneficiary with Brock Bowers OUT."
+        if "will shipley" in norm:
+            return 14.5, "Starting RB beneficiary with Saquon Barkley & Tank Bigsby sidelined - primary backfield volume."
+        if "keon coleman" in norm:
+            return 13.8, "Alpha perimeter WR beneficiary following post-hype target breakout."
         return 0.0, None
 
     inj_name = match["injured_name"]
@@ -1071,9 +1075,9 @@ class QuantProjectionEngine:
                 snap_pct = float(im_data["snap_pct"])
                 routes_run = round(context.expected_pass_attempts * (snap_pct / 100.0) * 0.90, 1)
             elif is_wr:
-                if (dc_slot in ("wr1", "wr") and dc_rank == 1) or anchor_baseline >= 14.0:
+                if (dc_slot in ("wr1", "wr") and dc_rank == 1) or anchor_baseline >= 13.0:
                     routes_run = round(context.expected_pass_attempts * 0.92, 1)
-                elif (dc_slot in ("wr2", "wr") and dc_rank == 2) or anchor_baseline >= 10.0:
+                elif (dc_slot in ("wr1", "wr2", "wr") and dc_rank <= 2) or anchor_baseline >= 9.5:
                     routes_run = round(context.expected_pass_attempts * 0.80, 1)
                 elif dc_slot in ("wr3", "slot") or dc_rank >= 3 or anchor_baseline >= 6.5:
                     routes_run = round(context.expected_pass_attempts * 0.58, 1)
@@ -1091,8 +1095,10 @@ class QuantProjectionEngine:
             # Targeted per Route Run (TPRR) & Regression Index adjustment
             prior_tprr = (
                 0.28 if (anchor_baseline >= 14.0 or (fp_ecr is not None and fp_ecr <= 15))
-                else (0.24 if (dc_slot in ("wr1", "wr") and dc_rank == 1) else (0.19 if (dc_slot in ("wr2", "wr") and dc_rank == 2) else 0.14))
-            ) if is_wr else (0.21 if (dc_slot in ("te", "te1") and dc_rank == 1) else 0.12)
+                else (0.24 if (anchor_baseline >= 12.0 or (dc_slot in ("wr1", "wr") and dc_rank == 1))
+                      else (0.19 if (anchor_baseline >= 9.0 or (dc_slot in ("wr1", "wr2", "wr") and dc_rank <= 2))
+                            else 0.14))
+            ) if is_wr else (0.21 if (dc_slot in ("te", "te1") and dc_rank == 1 or anchor_baseline >= 9.0) else 0.12)
             tprr_val = wr_micro.get("tprr") if wr_micro.get("tprr") is not None else im_data.get("tprr")
             if tprr_val is not None:
                 realized_tprr = float(tprr_val) / 100.0 if float(tprr_val) > 1.0 else float(tprr_val)

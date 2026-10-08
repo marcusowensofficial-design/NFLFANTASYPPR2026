@@ -23,10 +23,11 @@ from src.services.recommendation.scoring_engine import StartSitEvaluation
 logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
+WEEK_5_PATH = DATA_DIR / "waiver_expert_consensus_week_5_2026.json"
 WEEK_4_PATH = DATA_DIR / "waiver_expert_consensus_week_4_2026.json"
 WEEK_3_PATH = DATA_DIR / "waiver_expert_consensus_week_3_2026.json"
 WEEK_2_PATH = DATA_DIR / "waiver_expert_consensus_week_2_2026.json"
-CONSENSUS_DATA_PATH = WEEK_4_PATH if WEEK_4_PATH.exists() else (WEEK_3_PATH if WEEK_3_PATH.exists() else WEEK_2_PATH)
+CONSENSUS_DATA_PATH = WEEK_5_PATH if WEEK_5_PATH.exists() else (WEEK_4_PATH if WEEK_4_PATH.exists() else (WEEK_3_PATH if WEEK_3_PATH.exists() else WEEK_2_PATH))
 
 
 class ExpertConsensusPlayerItem(BaseModel):
@@ -56,6 +57,21 @@ class PositionalNeedItem(BaseModel):
     recommended_consensus_targets: list[str] = Field(default_factory=list)
 
 
+class LeagueTeamWaiverProfile(BaseModel):
+    team_id: int
+    team_name: str
+    team_abbrev: str
+    record_str: str
+    is_user_team: bool
+    bye_players: list[str] = Field(default_factory=list)
+    injured_players: list[str] = Field(default_factory=list)
+    positional_needs: list[PositionalNeedItem] = Field(default_factory=list)
+    top_targets: list[str] = Field(default_factory=list)
+    defensive_blocking_intel: str = ""
+    blocking_priority: str = "LOW"  # "URGENT", "HIGH", "MODERATE", "LOW"
+
+
+
 class ExpertConsensusWaiverService:
     """Manages 2026 expert consensus waiver data and team positional need analysis."""
 
@@ -66,7 +82,9 @@ class ExpertConsensusWaiverService:
     def load_consensus_data(self, week: int | None = None) -> dict[str, Any]:
         """Loads and caches the expert consensus dataset for the active or requested week."""
         target_path = self.data_path
-        if week == 4 and WEEK_4_PATH.exists():
+        if week == 5 and WEEK_5_PATH.exists():
+            target_path = WEEK_5_PATH
+        elif week == 4 and WEEK_4_PATH.exists():
             target_path = WEEK_4_PATH
         elif week == 3 and WEEK_3_PATH.exists():
             target_path = WEEK_3_PATH
@@ -78,7 +96,7 @@ class ExpertConsensusWaiverService:
 
         if not target_path.exists():
             logger.warning("Consensus file not found at %s. Using fallback empty dictionary.", target_path)
-            return {"season": 2026, "week": week or 3, "positions": {}}
+            return {"season": 2026, "week": week or 5, "positions": {}}
         try:
             with open(target_path, encoding="utf-8") as f:
                 data = json.load(f)
@@ -87,7 +105,7 @@ class ExpertConsensusWaiverService:
             return data
         except Exception as e:
             logger.error("Error reading consensus data: %s", e)
-            return {"season": 2026, "week": week or 3, "positions": {}}
+            return {"season": 2026, "week": week or 5, "positions": {}}
 
     def ensure_consensus_players_in_db(self, db: Session) -> int:
         """Guarantees that all consensus players exist in the SQLite players table with verified ESPN IDs."""
@@ -95,34 +113,49 @@ class ExpertConsensusWaiverService:
         pos_dict = raw_data.get("positions", {})
         added = 0
 
-        # Deterministic verified ESPN ID mappings for consensus players across Weeks 2 & 3
+        # Deterministic verified ESPN ID mappings for consensus players across Weeks 2–5
         KNOWN_IDS: dict[str, int] = {
-            # Week 3 & Core RBs
-            "Jonah Coleman": 4702555,
+            # Week 5 & Core RBs
+            "Will Shipley": 4431545,
             "Kyle Monangai": 4608686,
-            "Kenny Gainwell": 4371733,
+            "Emanuel Wilson": 4887558,
+            "Brian Robinson Jr.": 4241474,
             "Blake Corum": 4429096,
+            "Samaje Perine": 3116389,
+            "Braelon Allen": 4685247,
+            "Ollie Gordon II": 4711533,
             "Tyler Allgeier": 4373626,
+            "Seth McGowan": 4686468,
+            "Keaton Mitchell": 4596334,
             "Woody Marks": 4429059,
+            "Jonah Coleman": 4702555,
+            "Kenny Gainwell": 4371733,
             "Jacory Croskey-Merritt": 4575131,
             "Rachaad White": 4697815,
-            "Braelon Allen": 4685247,
             "Kaelon Black": 4696044,
             "Jonathon Brooks": 4678008,
             "Jaylen Wright": 4685382,
             "Jordan Mason": 4360569,
             "Kendre Miller": 4429013,
-            "Brian Robinson Jr.": 4241474,
             "Zach Charbonnet": 4426385,
             "Chris Rodriguez Jr.": 4361579,
-            # Week 3 & Core WRs
+            # Week 5 & Core WRs
+            "Keon Coleman": 4635008,
+            "Romeo Doubs": 4361432,
+            "Jameson Williams": 4426388,
+            "Tre' Harris": 4686612,
+            "Tyquan Thornton": 4362921,
+            "Antonio Williams": 5081432,
+            "Khalil Shakir": 4373678,
+            "Brian Thomas Jr.": 4432773,
+            "Chris Bell": 4869961,
+            "Quentin Johnston": 4429025,
+            "Konata Mumpfield": 9975318,
+            "Pat Bryant": 4600981,
             "Tre Tucker": 4428718,
             "Adonai Mitchell": 4597500,
             "Denzel Boston": 4832800,
             "Rashod Bateman": 4360939,
-            "Quentin Johnston": 4429025,
-            "Brian Thomas Jr.": 4432773,
-            "Khalil Shakir": 4373678,
             "Michael Wilson": 4360761,
             "Alec Pierce": 4360078,
             "Kendrick Bourne": 3043093,
@@ -132,23 +165,28 @@ class ExpertConsensusWaiverService:
             "Caleb Douglas": 4869645,
             "Mack Hollins": 3045144,
             "Demarcus Robinson": 3045147,
-            "Tre' Harris": 4686612,
             "Dontayvion Wicks": 4428850,
             "Deebo Samuel Sr.": 3126486,
-            # Week 3 & Core TEs
-            "Kyle Pitts Sr.": 4360248,
-            "Hunter Henry": 3046439,
-            "Dalton Schultz": 3117256,
+            # Week 5 & Core TEs
+            "T.J. Hockenson": 4036133,
+            "Tyler Higbee": 2573401,
             "Kenyon Sadiq": 5083315,
-            "Brenton Strange": 4430539,
-            "Pat Freiermuth": 4361411,
+            "Hunter Henry": 3046439,
             "Mike Gesicki": 3116164,
+            "Brenton Strange": 4430539,
+            "Greg Dulcich": 4367209,
+            "Kyle Pitts Sr.": 4360248,
+            "Dalton Schultz": 3117256,
+            "Pat Freiermuth": 4361411,
             "Michael Mayer": 4429086,
             "David Njoku": 3123076,
-            # Week 3 & Core QBs
+            # Week 5 & Core QBs
+            "Jacoby Brissett": 2578570,
+            "Sam Darnold": 3912547,
+            "Jalon Daniels": 4596472,
+            "Trevor Lawrence": 4360310,
             "Bryce Young": 4685720,
             "Malik Willis": 4242512,
-            "Trevor Lawrence": 4360310,
             "Dak Prescott": 2577417,
             "Bo Nix": 4426338,
             "Baker Mayfield": 3052587,
@@ -156,9 +194,17 @@ class ExpertConsensusWaiverService:
             "Jordan Love": 4036378,
             "Drew Lock": 3924327,
             "Jaxson Dart": 4689114,
-            # Week 3 & Core D/STs
+            # Week 5 & Core D/STs
+            "Saints D/ST": -16018,
+            "New Orleans Saints D/ST": -16018,
+            "Bears D/ST": -16003,
+            "Chicago Bears D/ST": -16003,
+            "Seahawks D/ST": -16026,
+            "Seattle Seahawks D/ST": -16026,
             "Browns D/ST": -16005,
             "Cleveland Browns D/ST": -16005,
+            "Steelers D/ST": -16023,
+            "Pittsburgh Steelers D/ST": -16023,
             "Lions D/ST": -16008,
             "Detroit Lions D/ST": -16008,
             "Patriots D/ST": -16017,
@@ -175,34 +221,54 @@ class ExpertConsensusWaiverService:
             "49ers D/ST": -16025,
             "Carolina Panthers D/ST": -16029,
             "Panthers D/ST": -16029,
-            # Week 3 & Core Ks
-            "Trey Smack": 4869461,
-            "Jake Bates": 4689936,
+            "Cyrus Allen": 4912218,
+            # Week 5 & Core Ks
             "Cairo Santos": 17427,
+            "Harrison Mevis": 4574716,
+            "Eddy Pineiro": 4034949,
+            "Nick Folk": 10621,
+            "Jake Bates": 4689936,
+            "Trey Smack": 4869461,
             "Will Reichard": 4567104,
             "Chase McLaughlin": 3150744,
             "Cam Little": 4686361,
             "Ka'imi Fairbairn": 2971573,
             "Cameron Dicker": 4362081,
+            "Spencer Shrader": 4571557,
+            "Dominic Zvada": 5082424,
+            "Tyler Bass": 3917232,
         }
 
         PROJECTIONS: dict[str, float] = {
-            "Jonah Coleman": 11.8, "Kyle Monangai": 9.5, "Kenny Gainwell": 8.5,
-            "Blake Corum": 8.9, "Tyler Allgeier": 8.2, "Woody Marks": 8.7,
-            "Jacory Croskey-Merritt": 7.8, "Rachaad White": 9.3, "Braelon Allen": 7.2,
-            "Kaelon Black": 7.4, "Jonathon Brooks": 8.0, "Jaylen Wright": 7.5,
+            "Will Shipley": 14.5, "Kyle Monangai": 13.2, "Emanuel Wilson": 13.0,
+            "Brian Robinson Jr.": 11.5, "Blake Corum": 9.5, "Samaje Perine": 9.8,
+            "Braelon Allen": 9.8, "Ollie Gordon II": 10.2, "Tyler Allgeier": 8.5,
+            "Seth McGowan": 8.0, "Keaton Mitchell": 8.5, "Woody Marks": 8.7,
+            "Jonah Coleman": 11.8, "Kenny Gainwell": 8.5, "Jacory Croskey-Merritt": 7.8,
+            "Rachaad White": 9.3, "Kaelon Black": 7.4, "Jonathon Brooks": 8.0,
+            "Jaylen Wright": 7.5,
+            "Keon Coleman": 13.8, "Romeo Doubs": 12.8, "Jameson Williams": 12.5,
+            "Tre' Harris": 10.8, "Tyquan Thornton": 11.0, "Antonio Williams": 9.5,
+            "Khalil Shakir": 10.8, "Brian Thomas Jr.": 11.2, "Chris Bell": 8.8,
+            "Quentin Johnston": 10.8, "Konata Mumpfield": 9.0, "Pat Bryant": 8.2,
             "Tre Tucker": 10.5, "Adonai Mitchell": 11.0, "Denzel Boston": 11.5,
-            "Rashod Bateman": 8.5, "Quentin Johnston": 10.8, "Brian Thomas Jr.": 11.2,
-            "Khalil Shakir": 10.5, "Michael Wilson": 10.2, "Alec Pierce": 7.5,
-            "Xavier Legette": 9.2, "Kendrick Bourne": 6.5, "Kyle Pitts Sr.": 10.5, "Hunter Henry": 10.1,
-            "Dalton Schultz": 10.0, "Kenyon Sadiq": 8.2, "Brenton Strange": 7.8,
-            "Pat Freiermuth": 8.2, "Mike Gesicki": 8.5, "Michael Mayer": 5.8,
-            "Bryce Young": 16.8, "Malik Willis": 15.5, "Trevor Lawrence": 17.2,
+            "Rashod Bateman": 8.5, "Michael Wilson": 10.2, "Alec Pierce": 7.5,
+            "Xavier Legette": 9.2, "Kendrick Bourne": 6.5, "Cyrus Allen": 9.2,
+            "Jalen Coker": 9.5, "Devaughn Vele": 9.0,
+            "T.J. Hockenson": 13.5, "Tyler Higbee": 11.2, "Kenyon Sadiq": 9.8,
+            "Hunter Henry": 10.1, "Mike Gesicki": 9.0, "Brenton Strange": 8.2,
+            "Greg Dulcich": 7.8, "Kyle Pitts Sr.": 10.5, "Dalton Schultz": 10.0,
+            "Pat Freiermuth": 8.2, "Michael Mayer": 6.5,
+            "Jacoby Brissett": 17.5, "Sam Darnold": 17.2, "Jalon Daniels": 16.5,
+            "Trevor Lawrence": 17.2, "Bryce Young": 16.8, "Malik Willis": 15.5,
             "Dak Prescott": 17.0, "Bo Nix": 16.2, "Baker Mayfield": 16.5,
-            "Browns D/ST": 8.5, "Lions D/ST": 7.5, "Patriots D/ST": 7.0,
-            "Packers D/ST": 7.0, "Buccaneers D/ST": 6.5,
-            "Trey Smack": 9.0, "Jake Bates": 8.8, "Cairo Santos": 8.0,
+            "Saints D/ST": 8.5, "Bears D/ST": 8.0, "Seahawks D/ST": 7.5,
+            "Browns D/ST": 7.5, "Steelers D/ST": 7.5, "Lions D/ST": 7.5,
+            "Patriots D/ST": 7.0, "Packers D/ST": 7.0, "Buccaneers D/ST": 6.5,
+            "Cairo Santos": 8.8, "Harrison Mevis": 8.2, "Eddy Pineiro": 8.2,
+            "Nick Folk": 7.8, "Jake Bates": 8.8, "Trey Smack": 9.0,
             "Will Reichard": 8.2, "Chase McLaughlin": 7.8,
+            "Spencer Shrader": 8.5, "Dominic Zvada": 8.2, "Tyler Bass": 9.0,
         }
 
         for pos_key, p_list in pos_dict.items():
@@ -212,8 +278,8 @@ class ExpertConsensusWaiverService:
                 existing = db.execute(
                     select(PlayerModel).where((PlayerModel.id == pid) | (PlayerModel.full_name == name))
                 ).scalars().first()
+                proj = PROJECTIONS.get(name, 8.0)
                 if not existing:
-                    proj = PROJECTIONS.get(name, 8.0)
                     p = PlayerModel(
                         id=pid,
                         full_name=name,
@@ -225,6 +291,12 @@ class ExpertConsensusWaiverService:
                     )
                     db.add(p)
                     added += 1
+                else:
+                    if name in PROJECTIONS:
+                        existing.projected_points = max(existing.projected_points or 0.0, proj)
+                        existing.projected_points_espn = max(existing.projected_points_espn or 0.0, proj)
+                        existing.projected_points_model = max(existing.projected_points_model or 0.0, proj)
+                        added += 1
 
         if added > 0:
             try:
@@ -243,6 +315,7 @@ class ExpertConsensusWaiverService:
         rostered_names: set[str] | None = None,
         rostered_pids: set[int] | None = None,
         rostered_dst_teams: set[str] | None = None,
+        current_week: int = 5,
     ) -> list[PositionalNeedItem]:
         """Diagnoses team roster health, injuries, projection gaps, and bench depth by position.
 
@@ -264,7 +337,7 @@ class ExpertConsensusWaiverService:
                 by_pos[pos].append(e)
 
         # Load consensus data to query position-specific targets
-        raw_data = self.load_consensus_data()
+        raw_data = self.load_consensus_data(week=current_week)
         pos_dict = raw_data.get("positions", {})
 
         def get_top_available_targets(pos: str, count: int = 3) -> list[str]:
@@ -299,21 +372,54 @@ class ExpertConsensusWaiverService:
                 return [p["full_name"] for p in items[:count]]
             return avail
 
+        # Identify bye teams for current week (Week 5: KC, CAR)
+        bye_teams = {"KC", "CAR"} if current_week == 5 else set()
+
         needs: list[PositionalNeedItem] = []
 
         # 1. Tight End (TE) Diagnosis
         tes = by_pos["TE"]
         out_tes = [t for t in tes if t.injury_status in ("OUT", "IR", "INJURY_RESERVE")]
+        bye_tes = [t for t in tes if t.pro_team in bye_teams]
         questionable_tes = [t for t in tes if t.injury_status in ("QUESTIONABLE", "DOUBTFUL")]
-        healthy_tes = [t for t in tes if t.injury_status not in ("OUT", "IR", "INJURY_RESERVE", "QUESTIONABLE", "DOUBTFUL")]
-        healthy_tes.sort(key=lambda x: x.start_score, reverse=True)
+        healthy_active_tes = [
+            t for t in tes
+            if t.injury_status not in ("OUT", "IR", "INJURY_RESERVE", "QUESTIONABLE", "DOUBTFUL")
+            and t.pro_team not in bye_teams
+        ]
+        healthy_active_tes.sort(key=lambda x: x.start_score, reverse=True)
 
         top_te_targets = get_top_available_targets("TE", 3)
-        top_te_str = ", ".join(top_te_targets[:2]) if top_te_targets else "Kyle Pitts Sr. or Hunter Henry"
+        top_te_str = ", ".join(top_te_targets[:2]) if top_te_targets else "T.J. Hockenson or Tyler Higbee"
 
-        if out_tes and (not healthy_tes or healthy_tes[0].projected_points < 11.0):
+        if bye_tes and (not healthy_active_tes or healthy_active_tes[0].projected_points < 10.0):
+            bye_names = ", ".join(f"{t.full_name} ({t.pro_team})" for t in bye_tes)
+            if questionable_tes:
+                q_names = ", ".join(f"{t.full_name} ({t.injury_status})" for t in questionable_tes)
+                needs.append(
+                    PositionalNeedItem(
+                        position="TE",
+                        need_level="CRITICAL_NEED",
+                        need_score=96.0,
+                        primary_driver=f"Emergency Bye & Injury Alert: Starter {bye_names} is ON BYE. Backup {q_names} carries an injury tag, leaving ZERO healthy starting tight ends for Week {current_week}. Immediate wire claim ({top_te_str}) mandatory.",
+                        starter_summary=f"No Active TE for Week {current_week}: {bye_names} (BYE), {q_names}. Urgent Streamer: {top_te_str}.",
+                        recommended_consensus_targets=top_te_targets,
+                    )
+                )
+            else:
+                needs.append(
+                    PositionalNeedItem(
+                        position="TE",
+                        need_level="CRITICAL_NEED",
+                        need_score=92.0,
+                        primary_driver=f"Emergency Bye Week Alert: Primary TE {bye_names} is ON BYE. No high-floor backup rostered. Stream {top_te_str} immediately.",
+                        starter_summary=f"Starter on Bye: {bye_names}. Urgent wire add: {top_te_str}.",
+                        recommended_consensus_targets=top_te_targets,
+                    )
+                )
+        elif out_tes and (not healthy_active_tes or healthy_active_tes[0].projected_points < 11.0):
             inj_names = ", ".join(f"{t.full_name} ({t.injury_status})" for t in out_tes)
-            starter_proj = f"{healthy_tes[0].full_name} ({healthy_tes[0].projected_points:.1f} pts)" if healthy_tes else "None"
+            starter_proj = f"{healthy_active_tes[0].full_name} ({healthy_active_tes[0].projected_points:.1f} pts)" if healthy_active_tes else "None"
             needs.append(
                 PositionalNeedItem(
                     position="TE",
@@ -324,9 +430,9 @@ class ExpertConsensusWaiverService:
                     recommended_consensus_targets=top_te_targets,
                 )
             )
-        elif questionable_tes and (not healthy_tes or healthy_tes[0].projected_points < 10.0):
+        elif questionable_tes and (not healthy_active_tes or healthy_active_tes[0].projected_points < 10.0):
             q_names = ", ".join(f"{t.full_name} ({t.injury_status})" for t in questionable_tes)
-            backup_summary = f"{healthy_tes[0].full_name} ({healthy_tes[0].projected_points:.1f} pts)" if healthy_tes else "No healthy backup"
+            backup_summary = f"{healthy_active_tes[0].full_name} ({healthy_active_tes[0].projected_points:.1f} pts)" if healthy_active_tes else "No healthy backup"
             needs.append(
                 PositionalNeedItem(
                     position="TE",
@@ -337,19 +443,43 @@ class ExpertConsensusWaiverService:
                     recommended_consensus_targets=top_te_targets,
                 )
             )
-        elif not tes or (healthy_tes and healthy_tes[0].start_score < 70.0):
+        elif len(tes) == 1 and not out_tes and not questionable_tes and not bye_tes:
+            lone_te = tes[0]
+            if lone_te.start_score < 75.0 or lone_te.projected_points < 10.0:
+                needs.append(
+                    PositionalNeedItem(
+                        position="TE",
+                        need_level="HIGH_NEED",
+                        need_score=82.0,
+                        primary_driver=f"Lone Tight End Volatility: Only 1 TE on entire roster ({lone_te.full_name}, {lone_te.projected_points:.1f} pts). Zero injury insulation in shallow format. Stash {top_te_str}.",
+                        starter_summary=f"Lone TE: {lone_te.full_name} ({lone_te.projected_points:.1f} pts). Top Add: {top_te_str}.",
+                        recommended_consensus_targets=top_te_targets,
+                    )
+                )
+            else:
+                needs.append(
+                    PositionalNeedItem(
+                        position="TE",
+                        need_level="STABLE",
+                        need_score=25.0,
+                        primary_driver="Solid tight end baseline with reliable weekly route participation.",
+                        starter_summary=f"Starter: {lone_te.full_name} ({lone_te.projected_points:.1f} pts).",
+                        recommended_consensus_targets=top_te_targets[:1],
+                    )
+                )
+        elif not tes or (healthy_active_tes and healthy_active_tes[0].start_score < 70.0):
             needs.append(
                 PositionalNeedItem(
                     position="TE",
                     need_level="HIGH_NEED",
                     need_score=80.0,
                     primary_driver=f"Tight end volume deficit: Starter lacks a top-tier target share or red-zone role. Target {top_te_str}.",
-                    starter_summary=f"Top TE: {healthy_tes[0].full_name if healthy_tes else 'Vacant'} ({healthy_tes[0].projected_points if healthy_tes else 0:.1f} pts).",
+                    starter_summary=f"Top TE: {healthy_active_tes[0].full_name if healthy_active_tes else 'Vacant'} ({healthy_active_tes[0].projected_points if healthy_active_tes else 0:.1f} pts).",
                     recommended_consensus_targets=top_te_targets,
                 )
             )
         else:
-            top_healthy = healthy_tes[0] if healthy_tes else (tes[0] if tes else None)
+            top_healthy = healthy_active_tes[0] if healthy_active_tes else (tes[0] if tes else None)
             needs.append(
                 PositionalNeedItem(
                     position="TE",
@@ -366,7 +496,7 @@ class ExpertConsensusWaiverService:
         wrs.sort(key=lambda x: x.start_score, reverse=True)
         weak_bench_wrs = [w for w in wrs if w.start_score < 56.0 or w.projected_points < 11.5]
         top_wr_targets = get_top_available_targets("WR", 4)
-        top_wr_str = ", ".join(top_wr_targets[:2]) if top_wr_targets else "Tre Tucker, Adonai Mitchell"
+        top_wr_str = ", ".join(top_wr_targets[:2]) if top_wr_targets else "Keon Coleman, Romeo Doubs"
 
         if weak_bench_wrs:
             drop_names = ", ".join(w.full_name for w in weak_bench_wrs[:2])
@@ -375,7 +505,7 @@ class ExpertConsensusWaiverService:
                     position="WR",
                     need_level="HIGH_NEED",
                     need_score=82.0,
-                    primary_driver=f"Low-ceiling bench depth ({drop_names}) provides zero leverage in an 8-team league. Upgrade to Week 3 breakout alphas ({top_wr_str}).",
+                    primary_driver=f"Low-ceiling bench depth ({drop_names}) provides zero leverage in an 8-team league. Upgrade to Week {current_week} breakout alphas ({top_wr_str}).",
                     starter_summary=f"Starters: {wrs[0].full_name if wrs else 'N/A'}, {wrs[1].full_name if len(wrs) > 1 else 'N/A'} (Solid starting core, but expendable bench depth).",
                     recommended_consensus_targets=top_wr_targets,
                 )
@@ -406,17 +536,59 @@ class ExpertConsensusWaiverService:
         # 3. Running Back (RB) Diagnosis
         rbs = by_pos["RB"]
         rbs.sort(key=lambda x: x.start_score, reverse=True)
-        handcuff_rbs = [r for r in rbs if getattr(r, "contingency_score", 0.0) >= 65.0 or r.projected_points < 12.0]
+        bye_rbs = [r for r in rbs if r.pro_team in bye_teams]
+        out_rbs = [r for r in rbs if r.injury_status in ("OUT", "IR", "INJURY_RESERVE")]
+        q_rbs = [r for r in rbs if r.injury_status in ("QUESTIONABLE", "DOUBTFUL")]
+        healthy_active_rbs = [
+            r for r in rbs
+            if r.injury_status not in ("OUT", "IR", "INJURY_RESERVE", "QUESTIONABLE", "DOUBTFUL")
+            and r.pro_team not in bye_teams
+        ]
         top_rb_targets = get_top_available_targets("RB", 3)
-        top_rb_str = top_rb_targets[0] if top_rb_targets else "Jonah Coleman"
+        top_rb_str = top_rb_targets[0] if top_rb_targets else "Will Shipley"
 
-        if len(rbs) < 4 or len(handcuff_rbs) == 0:
+        has_compromised_saquon = any("Saquon" in r.full_name and r.injury_status in ("QUESTIONABLE", "DOUBTFUL", "OUT") for r in rbs)
+
+        if out_rbs and len(healthy_active_rbs) < 2 and len(q_rbs) >= 2:
+            needs.append(
+                PositionalNeedItem(
+                    position="RB",
+                    need_level="CRITICAL_NEED",
+                    need_score=94.0,
+                    primary_driver=f"Critical Backfield Crisis: {out_rbs[0].full_name} on IR; remaining starters ({', '.join(r.full_name for r in q_rbs[:2])}) are both QUESTIONABLE. Severe risk of failing to field two starting RBs. Prioritize {top_rb_str} and Kyle Monangai.",
+                    starter_summary=f"Starters Compromised: {q_rbs[0].full_name} (Q), {q_rbs[1].full_name} (Q). Must add {top_rb_str} immediately.",
+                    recommended_consensus_targets=top_rb_targets,
+                )
+            )
+        elif len(bye_rbs) >= 2:
+            needs.append(
+                PositionalNeedItem(
+                    position="RB",
+                    need_level="HIGH_NEED",
+                    need_score=86.0,
+                    primary_driver=f"Bye Week Backfield Depletion: Both {bye_rbs[0].full_name} and {bye_rbs[1].full_name} are ON BYE. Active ground game reduced to bare minimum. Add {top_rb_str} or Kyle Monangai for Week {current_week} points.",
+                    starter_summary=f"Bye Casualties: {', '.join(r.full_name for r in bye_rbs)}. Top Wire Add: {top_rb_str}.",
+                    recommended_consensus_targets=top_rb_targets,
+                )
+            )
+        elif has_compromised_saquon:
+            needs.append(
+                PositionalNeedItem(
+                    position="RB",
+                    need_level="HIGH_NEED",
+                    need_score=88.0,
+                    primary_driver=f"Workhorse Handcuff Alarm: Saquon Barkley (hamstring DNP) is compromised. Securing direct Philadelphia bellcow replacement Will Shipley ({top_rb_str}) is essential insurance.",
+                    starter_summary="Starter Injured: Saquon Barkley (QUESTIONABLE). Top Wire Handcuff: Will Shipley.",
+                    recommended_consensus_targets=top_rb_targets,
+                )
+            )
+        elif len(rbs) < 4 or len(healthy_active_rbs) < 3:
             needs.append(
                 PositionalNeedItem(
                     position="RB",
                     need_level="HIGH_NEED",
                     need_score=78.0,
-                    primary_driver="Contingency vulnerability: Roster lacks elite workhorse handcuffs who inherit 18+ touches upon injury.",
+                    primary_driver=f"Contingency vulnerability: Roster lacks elite workhorse handcuffs who inherit 18+ touches upon injury. Target {top_rb_str}.",
                     starter_summary=f"Starters: {rbs[0].full_name if rbs else 'N/A'}, {rbs[1].full_name if len(rbs) > 1 else 'N/A'} (Elite starting production, but low bench contingency).",
                     recommended_consensus_targets=top_rb_targets,
                 )
@@ -436,10 +608,24 @@ class ExpertConsensusWaiverService:
         # 4. Quarterback (QB) Diagnosis
         qbs = by_pos["QB"]
         qbs.sort(key=lambda x: x.start_score, reverse=True)
+        bye_qbs = [q for q in qbs if q.pro_team in bye_teams]
+        active_qbs = [q for q in qbs if q.pro_team not in bye_teams and q.injury_status not in ("OUT", "IR", "INJURY_RESERVE")]
         top_qb_targets = get_top_available_targets("QB", 3)
-        top_qb_str = top_qb_targets[0] if top_qb_targets else "Bryce Young"
+        top_qb_str = top_qb_targets[0] if top_qb_targets else "Jacoby Brissett"
 
-        if not qbs or (qbs and qbs[0].start_score < 72.0) or (qbs and qbs[0].injury_status in ("OUT", "IR", "DOUBTFUL")):
+        if bye_qbs and (not active_qbs or active_qbs[0].projected_points < 16.5):
+            starter_name = active_qbs[0].full_name if active_qbs else "None"
+            needs.append(
+                PositionalNeedItem(
+                    position="QB",
+                    need_level="HIGH_NEED",
+                    need_score=86.0,
+                    primary_driver=f"Bye Week QB Vulnerability: QB1 {bye_qbs[0].full_name} is ON BYE. Starting backup {starter_name} lacks ceiling. Streaming {top_qb_str} provides an immediate ceiling surge.",
+                    starter_summary=f"Starter on Bye: {bye_qbs[0].full_name} (BYE). Stream: {top_qb_str}.",
+                    recommended_consensus_targets=top_qb_targets,
+                )
+            )
+        elif not qbs or (qbs and qbs[0].start_score < 72.0) or (qbs and qbs[0].injury_status in ("OUT", "IR", "DOUBTFUL")):
             needs.append(
                 PositionalNeedItem(
                     position="QB",
@@ -475,16 +661,29 @@ class ExpertConsensusWaiverService:
 
         # 5. Defense / Special Teams (D/ST) Diagnosis
         dsts = by_pos["D/ST"]
+        bye_dsts = [d for d in dsts if d.pro_team in bye_teams]
+        active_dsts = [d for d in dsts if d.pro_team not in bye_teams]
         top_dst_targets = get_top_available_targets("DST", 3)
-        top_dst_str = top_dst_targets[0] if top_dst_targets else "Browns D/ST"
+        top_dst_str = top_dst_targets[0] if top_dst_targets else "Saints D/ST"
 
-        if not dsts or (dsts and dsts[0].matchup_grade in ("TOUGH", "AVOID") or dsts[0].projected_points < 7.5):
+        if bye_dsts and not active_dsts:
+            needs.append(
+                PositionalNeedItem(
+                    position="D/ST",
+                    need_level="HIGH_NEED",
+                    need_score=80.0,
+                    primary_driver=f"Bye Week Defense Void: {bye_dsts[0].full_name} is ON BYE. Stream {top_dst_str} immediately.",
+                    starter_summary=f"D/ST on Bye: {bye_dsts[0].full_name}. Stream: {top_dst_str}.",
+                    recommended_consensus_targets=top_dst_targets,
+                )
+            )
+        elif not dsts or (dsts and dsts[0].matchup_grade in ("TOUGH", "AVOID") or dsts[0].projected_points < 7.5):
             needs.append(
                 PositionalNeedItem(
                     position="D/ST",
                     need_level="MODERATE_NEED",
                     need_score=62.0,
-                    primary_driver=f"Streaming opportunity: {top_dst_str} draws a favorable Week 3 matchup with turnover upside.",
+                    primary_driver=f"Streaming opportunity: {top_dst_str} draws a favorable Week {current_week} matchup with turnover upside.",
                     starter_summary=f"Current: {dsts[0].full_name if dsts else 'None'} ({dsts[0].projected_points if dsts else 0:.1f} pts).",
                     recommended_consensus_targets=top_dst_targets,
                 )
@@ -495,7 +694,7 @@ class ExpertConsensusWaiverService:
                     position="D/ST",
                     need_level="LOW_NEED",
                     need_score=30.0,
-                    primary_driver=f"Rostered unit {dsts[0].full_name} has a viable Week 3 matchup.",
+                    primary_driver=f"Rostered unit {dsts[0].full_name} has a viable Week {current_week} matchup.",
                     starter_summary=f"Starter: {dsts[0].full_name}.",
                     recommended_consensus_targets=top_dst_targets[:1],
                 )
@@ -503,10 +702,23 @@ class ExpertConsensusWaiverService:
 
         # 6. Kicker (K) Diagnosis
         ks = by_pos["K"]
+        bye_ks = [k for k in ks if k.pro_team in bye_teams]
+        active_ks = [k for k in ks if k.pro_team not in bye_teams]
         top_k_targets = get_top_available_targets("K", 2)
-        top_k_str = ", ".join(top_k_targets[:2]) if top_k_targets else "Trey Smack or Jake Bates"
+        top_k_str = ", ".join(top_k_targets[:2]) if top_k_targets else "Cairo Santos or Harrison Mevis"
 
-        if not ks or (ks and ks[0].implied_team_total < 21.0 or ks[0].matchup_grade in ("TOUGH", "AVOID")):
+        if bye_ks and not active_ks:
+            needs.append(
+                PositionalNeedItem(
+                    position="K",
+                    need_level="HIGH_NEED",
+                    need_score=85.0,
+                    primary_driver=f"Bye Week Kicker Void: {bye_ks[0].full_name} is ON BYE. Zero kicker points without waiver stream ({top_k_str}).",
+                    starter_summary=f"Kicker on Bye: {bye_ks[0].full_name}. Stream: {top_k_str}.",
+                    recommended_consensus_targets=top_k_targets,
+                )
+            )
+        elif not ks or (ks and ks[0].implied_team_total < 21.0 or ks[0].matchup_grade in ("TOUGH", "AVOID")):
             needs.append(
                 PositionalNeedItem(
                     position="K",
@@ -650,5 +862,131 @@ class ExpertConsensusWaiverService:
 
         return result
 
+    def analyze_league_teams_needs(
+        self,
+        db: Session,
+        league_id: int,
+        current_week: int = 5,
+        user_team_id: int = 6,
+    ) -> list[LeagueTeamWaiverProfile]:
+        """Analyzes all teams in the league to diagnose their Week 5 positional needs, bye casualties,
+        injuries, and generates strategic defensive blocking recommendations for the user."""
+        from src.db.models import TeamModel
+        from src.services.recommendation.scoring_engine import scoring_engine
+
+        teams = db.execute(
+            select(TeamModel).where(TeamModel.league_id == league_id).order_by(TeamModel.id)
+        ).scalars().all()
+
+        # Query all rostered players across the entire league
+        rostered_rows = db.execute(
+            select(PlayerModel.id, PlayerModel.full_name, PlayerModel.pro_team, PlayerModel.position)
+            .join(RosterEntryModel, RosterEntryModel.player_id == PlayerModel.id)
+            .where(RosterEntryModel.league_id == league_id)
+        ).all()
+        rostered_pids = {r[0] for r in rostered_rows}
+        rostered_names = {r[1].lower().replace(".", "").replace("'", "").strip() for r in rostered_rows if r[1]}
+        rostered_names_clean = {
+            r[1].lower().replace(".", "").replace("'", "").replace(" jr", "").replace(" sr", "").replace(" iii", "").replace(" ii", "").strip()
+            for r in rostered_rows if r[1]
+        }
+        rostered_names.update(rostered_names_clean)
+        rostered_dst_teams = {r[2].upper() for r in rostered_rows if r[3] and r[3].upper() in ("D/ST", "DST") and r[2]}
+
+        bye_teams = {"KC", "CAR"} if current_week == 5 else set()
+
+        profiles: list[LeagueTeamWaiverProfile] = []
+
+        for t in teams:
+            entries = db.execute(
+                select(RosterEntryModel, PlayerModel)
+                .join(PlayerModel, RosterEntryModel.player_id == PlayerModel.id)
+                .where(
+                    RosterEntryModel.league_id == league_id,
+                    RosterEntryModel.team_id == t.id,
+                )
+            ).all()
+
+            user_evals = [scoring_engine.evaluate_player(p, league_size=8) for _, p in entries]
+
+            # Collect bye players and injured players
+            bye_players = [
+                f"{p.full_name} ({p.position} - {p.pro_team})"
+                for _, p in entries
+                if p.pro_team in bye_teams
+            ]
+            injured_players = [
+                f"{p.full_name} ({p.position} - {p.injury_status})"
+                for _, p in entries
+                if p.injury_status in ("QUESTIONABLE", "DOUBTFUL", "OUT", "IR", "INJURY_RESERVE", "DAY_TO_DAY")
+            ]
+
+            needs = self.analyze_team_positional_needs(
+                user_roster_evaluations=user_evals,
+                league_size=8,
+                rostered_names=rostered_names,
+                rostered_pids=rostered_pids,
+                rostered_dst_teams=rostered_dst_teams,
+                current_week=current_week,
+            )
+
+            # Top targets for this team
+            top_targets_set: list[str] = []
+            for n in needs:
+                if n.need_level in ("CRITICAL_NEED", "HIGH_NEED", "MODERATE_NEED"):
+                    for tgt in n.recommended_consensus_targets[:2]:
+                        if tgt not in top_targets_set:
+                            top_targets_set.append(tgt)
+            top_targets = top_targets_set[:4]
+
+            # Generate defensive blocking intelligence
+            is_user = (t.id == user_team_id)
+            if is_user:
+                intel = "🛡️ YOUR ROSTER: Submit priority $0 claim by placing Tyreek Hill into IR slot. Secure T.J. Hockenson (#1 TE) and Will Shipley (#1 RB)."
+                prio = "LOW"
+            elif any("Saquon" in ip for ip in injured_players):
+                intel = f"🚨 URGENT BLOCK TARGET: {t.name} has Saquon Barkley injured (hamstring DNP) and Travis Kelce ON BYE. Snagging Will Shipley and T.J. Hockenson starves their starting lineup of viable replacements!"
+                prio = "URGENT"
+            elif any("Achane" in ip for ip in injured_players) and len(injured_players) >= 5:
+                intel = f"⚠️ HIGH BLOCK TARGET: {t.name} has Achane on IR with Love & Stevenson questionable. Claiming Will Shipley or Kyle Monangai denies their only starting RB solutions!"
+                prio = "HIGH"
+            elif len(bye_players) >= 3:
+                intel = f"⚡ HIGH BLOCK TARGET: {t.name} is gutted by 4 Week 5 Byes ({', '.join(b.split(' ')[0] for b in bye_players[:3])}). Blocking Kyle Monangai and Cairo Santos denies their fill-in starters."
+                prio = "HIGH"
+            elif any("Mahomes" in bp for bp in bye_players):
+                intel = f"💡 MODERATE BLOCK TARGET: {t.name} has Patrick Mahomes on bye and Kirk Cousins facing Denver. Grabbing Jacoby Brissett prevents their top QB streaming pivot."
+                prio = "MODERATE"
+            elif len([e for e in user_evals if e.position == 'TE']) == 1:
+                intel = f"💡 MODERATE BLOCK TARGET: {t.name} has only 1 tight end on the roster. Stashing T.J. Hockenson or Tyler Higbee blocks their only positional upgrade path."
+                prio = "MODERATE"
+            elif any("Lamar" in ip for ip in injured_players):
+                intel = f"💡 MODERATE BLOCK TARGET: {t.name} has Lamar Jackson nursing an ankle injury. Stashing Jacoby Brissett or Sam Darnold denies their elite QB insurance."
+                prio = "MODERATE"
+            else:
+                intel = "Standard league competitor. Roster is relatively balanced; monitor weekend practice reports."
+                prio = "LOW"
+
+            profiles.append(
+                LeagueTeamWaiverProfile(
+                    team_id=t.id,
+                    team_name=t.name,
+                    team_abbrev=t.abbrev,
+                    record_str=t.record_str,
+                    is_user_team=is_user,
+                    bye_players=bye_players,
+                    injured_players=injured_players,
+                    positional_needs=needs,
+                    top_targets=top_targets,
+                    defensive_blocking_intel=intel,
+                    blocking_priority=prio,
+                )
+            )
+
+        # Sort so highest blocking priority and user team are at top
+        prio_order = {"URGENT": 0, "HIGH": 1, "MODERATE": 2, "LOW": 3}
+        profiles.sort(key=lambda p: (0 if p.is_user_team else 1, prio_order.get(p.blocking_priority, 4)))
+        return profiles
+
 
 expert_consensus_service = ExpertConsensusWaiverService()
+

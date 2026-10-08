@@ -102,12 +102,12 @@ def get_consensus_waiver_board(
     team_id: int | None = Query(default=None, description="Optional team ID"),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    """Retrieve the full 2026 Week 3 Internet Expert Consensus Waiver Board with live league availability."""
+    """Retrieve the full 2026 Week 5 Internet Expert Consensus Waiver Board with live league availability."""
     from src.services.waiver.expert_consensus_service import expert_consensus_service
     league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
     if not league:
-        raw = expert_consensus_service.load_consensus_data()
-        return {"season": 2026, "week": 3, "positions": raw.get("positions", {}), "positional_needs": []}
+        raw = expert_consensus_service.load_consensus_data(week=5)
+        return {"season": 2026, "week": 5, "positions": raw.get("positions", {}), "positional_needs": []}
 
     target_team_id = team_id or league.user_team_id or 1
     expert_consensus_service.ensure_consensus_players_in_db(db)
@@ -144,6 +144,7 @@ def get_consensus_waiver_board(
         rostered_names=rostered_names,
         rostered_pids=rostered_pids,
         rostered_dst_teams=rostered_dst_teams,
+        current_week=league.current_week,
     )
     board = expert_consensus_service.get_consensus_board_with_availability(db, league.id, target_team_id, needs)
 
@@ -155,4 +156,34 @@ def get_consensus_waiver_board(
         "positions": {pos: [p.model_dump() for p in players] for pos, players in board.items()},
         "consensus_board": {pos: [p.model_dump() for p in players] for pos, players in board.items()},
     }
+
+
+@router.get("/league-needs")
+def get_league_waiver_needs(
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Retrieve full Week 5 positional needs diagnostic, bye casualties, and defensive blocking
+    radar across all teams in the league."""
+    from src.services.waiver.expert_consensus_service import expert_consensus_service
+
+    league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+    if not league:
+        raise HTTPException(status_code=404, detail="No league data found. Sync ESPN first.")
+
+    user_team_id = league.user_team_id or 6
+    profiles = expert_consensus_service.analyze_league_teams_needs(
+        db=db,
+        league_id=league.id,
+        current_week=league.current_week,
+        user_team_id=user_team_id,
+    )
+
+    return {
+        "success": True,
+        "season": 2026,
+        "week": league.current_week,
+        "user_team_id": user_team_id,
+        "teams": [p.model_dump() for p in profiles],
+    }
+
 

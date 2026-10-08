@@ -510,6 +510,8 @@ export interface WaiverUpgradeRecommendation {
 }
 
 export interface WaiverAnalysisResult {
+  season?: number
+  week?: number
   user_team_id: number
   total_available_scanned: number
   top_upgrades: WaiverUpgradeRecommendation[]
@@ -526,6 +528,29 @@ export interface WaiverAnalysisResult {
   positional_needs?: PositionalNeedItem[]
   consensus_board?: Record<string, ExpertConsensusPlayerItem[]>
 }
+
+export interface LeagueTeamWaiverProfile {
+  team_id: number
+  team_name: string
+  team_abbrev: string
+  record_str: string
+  is_user_team: boolean
+  bye_players: string[]
+  injured_players: string[]
+  positional_needs: PositionalNeedItem[]
+  top_targets: string[]
+  defensive_blocking_intel: string
+  blocking_priority: 'URGENT' | 'HIGH' | 'MODERATE' | 'LOW'
+}
+
+export interface LeagueNeedsResponse {
+  success: boolean
+  season: number
+  week: number
+  user_team_id: number
+  teams: LeagueTeamWaiverProfile[]
+}
+
 
 export interface TradePlayerSummary {
   player_id: number

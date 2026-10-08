@@ -1299,6 +1299,11 @@
             "id": 3915416
           },
           {
+            "name": "Keon Coleman",
+            "rank": 2,
+            "id": 4635008
+          },
+          {
             "name": "Joshua Palmer",
             "rank": 2,
             "id": 4242433
@@ -1322,11 +1327,6 @@
           }
         ],
         "wr3": [
-          {
-            "name": "Keon Coleman",
-            "rank": 1,
-            "id": 4635008
-          },
           {
             "name": "Skyler Bell",
             "rank": 2,
@@ -10818,23 +10818,23 @@
         ],
         "rb": [
           {
-            "name": "Saquon Barkley",
-            "rank": 1,
-            "id": 3929630
-          },
-          {
             "name": "Will Shipley",
-            "rank": 2,
+            "rank": 1,
             "id": 4431545
           },
           {
+            "name": "Saquon Barkley",
+            "rank": 2,
+            "id": 3929630
+          },
+          {
             "name": "Dameon Pierce",
-            "rank": 3,
+            "rank": 4,
             "id": 4360238
           },
           {
             "name": "Tank Bigsby",
-            "rank": 4,
+            "rank": 5,
             "id": 4429013
           }
         ]

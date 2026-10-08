@@ -13,7 +13,7 @@ def test_consensus_data_integrity_and_sources():
     and is backed by verified national fantasy outlets."""
     data = expert_consensus_service.load_consensus_data()
     assert data["season"] == 2026
-    assert data["week"] in (2, 3, 4)
+    assert data["week"] in (2, 3, 4, 5)
     assert "FantasyPros" in data["expert_sources"]
     assert "CBS Sports" in data["expert_sources"]
     assert "NFL.com" in data["expert_sources"]
@@ -59,7 +59,10 @@ def test_analyze_team_positional_needs_diagnoses_injuries_and_deficits():
     # 1. TE should be diagnosed with high/critical need due to Questionable starter and no backup
     assert "TE" in needs_by_pos
     assert needs_by_pos["TE"].need_level in ("CRITICAL_NEED", "HIGH_NEED")
-    assert "Mike Gesicki" in needs_by_pos["TE"].recommended_consensus_targets or "Hunter Henry" in needs_by_pos["TE"].recommended_consensus_targets
+    assert any(
+        t in needs_by_pos["TE"].recommended_consensus_targets
+        for t in ("T.J. Hockenson", "Tyler Higbee", "Kenyon Sadiq", "Mike Gesicki", "Hunter Henry")
+    )
 
     # 2. QB should be stable with healthy Jalen Hurts
     assert "QB" in needs_by_pos

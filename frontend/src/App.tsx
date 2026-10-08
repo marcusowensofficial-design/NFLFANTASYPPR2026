@@ -1292,6 +1292,13 @@ export function App() {
         <WaiversTab
           waivers={waivers}
           onOpenGameLog={handleOpenGameLog}
+          selectedTeamId={selectedTeamId}
+          onSelectTeam={(teamId) => {
+            setSelectedTeamId(teamId)
+            setPendingTeamId(teamId)
+            loadWaivers(teamId)
+          }}
+          allTeams={league?.teams || []}
         />
       )}
 

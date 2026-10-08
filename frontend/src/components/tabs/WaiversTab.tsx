@@ -1,19 +1,47 @@
 import React, { useState, useMemo } from 'react'
-import type { WaiverAnalysisResult, PositionalNeedItem } from '../../types'
+import type { WaiverAnalysisResult, PositionalNeedItem, LeagueTeamWaiverProfile, LeagueNeedsResponse } from '../../types'
 import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 
 export interface WaiversTabProps {
   waivers: WaiverAnalysisResult | null
   onOpenGameLog?: (playerId: number | string, name?: string, pos?: string, team?: string) => void
+  selectedTeamId?: number
+  onSelectTeam?: (teamId: number) => void
+  allTeams?: Array<{ id: number; name: string; abbrev?: string; is_user_team?: boolean }>
 }
 
-type TacticalCategory = 'ALL' | 'PRIORITY' | 'CONSENSUS_RADAR' | 'HANDCUFFS' | 'BREAKOUTS' | 'STREAMERS' | 'LEDGER'
+type TacticalCategory = 'ALL' | 'PRIORITY' | 'CONSENSUS_RADAR' | 'LEAGUE_RADAR' | 'HANDCUFFS' | 'BREAKOUTS' | 'STREAMERS' | 'LEDGER'
 
-export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }) => {
+export const WaiversTab: React.FC<WaiversTabProps> = ({
+  waivers,
+  onOpenGameLog,
+  selectedTeamId,
+  onSelectTeam,
+  allTeams,
+}) => {
   const [activeCategory, setActiveCategory] = useState<TacticalCategory>('ALL')
   const [consensusPosFilter, setConsensusPosFilter] = useState<string>('ALL')
   const [consensusAvailOnly, setConsensusAvailOnly] = useState<boolean>(false)
   const [consensusSearch, setConsensusSearch] = useState<string>('')
+  const [leagueProfiles, setLeagueProfiles] = useState<LeagueTeamWaiverProfile[] | null>(null)
+  const [isLoadingLeague, setIsLoadingLeague] = useState<boolean>(false)
+
+  const loadLeagueNeeds = async () => {
+    if (leagueProfiles && leagueProfiles.length > 0) return
+    setIsLoadingLeague(true)
+    try {
+      const res = await fetch('/api/waiver/league-needs')
+      if (res.ok) {
+        const data: LeagueNeedsResponse = await res.json()
+        setLeagueProfiles(data.teams)
+      }
+    } catch (err) {
+      console.error('Failed to load league waiver needs:', err)
+    } finally {
+      setIsLoadingLeague(false)
+    }
+  }
+
 
   // Flatten consensus players across all positions
   const allConsensusPlayers = useMemo(() => {
@@ -102,6 +130,38 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
 
   return (
     <div className="waiver-tab-container">
+      {/* Team Selection Header Bar */}
+      {allTeams && allTeams.length > 0 && onSelectTeam && (
+        <div className="waiver-header-control-bar">
+          <div className="waiver-header-team-badge">
+            <span className="team-badge-icon">🏈</span>
+            <span className="team-badge-label">Inspecting Team:</span>
+            <select
+              className="waiver-team-dropdown"
+              value={selectedTeamId || waivers.user_team_id}
+              onChange={(e) => onSelectTeam(Number(e.target.value))}
+            >
+              {allTeams.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} {t.is_user_team ? '★ (Your Team)' : `(${t.abbrev || `Team ${t.id}`})`}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="waiver-header-actions">
+            <button
+              className={`btn btn-sm ${activeCategory === 'LEAGUE_RADAR' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => {
+                setActiveCategory('LEAGUE_RADAR')
+                loadLeagueNeeds()
+              }}
+            >
+              🌐 8-Team League Radar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Executive Waiver Directive Banner */}
       {waivers.executive_summary && (
         <div className="waiver-executive-banner">
@@ -148,7 +208,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
                 <span style={{ fontSize: '18px' }}>🎯</span>
                 <h3 className="positional-needs-title">Roster Positional Needs Diagnostic</h3>
                 <span className="pill purple" style={{ fontSize: '11px', fontWeight: 700 }}>
-                  Week 3 2026 Intelligence
+                  Week {waivers.week || 5} 2026 Intelligence
                 </span>
               </div>
               <p className="positional-needs-desc">
@@ -223,6 +283,15 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
           )}
         </button>
         <button
+          className={`waiver-nav-btn league-tab-highlight ${activeCategory === 'LEAGUE_RADAR' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveCategory('LEAGUE_RADAR')
+            loadLeagueNeeds()
+          }}
+        >
+          🌐 League Needs & Denial ({leagueProfiles?.length || 8})
+        </button>
+        <button
           className={`waiver-nav-btn ${activeCategory === 'PRIORITY' ? 'active' : ''}`}
           onClick={() => setActiveCategory('PRIORITY')}
         >
@@ -265,11 +334,11 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '22px' }}>🏆</span>
                 <h3 className="card-title" style={{ color: '#38bdf8' }}>
-                  2026 Week 3 Expert Consensus Wire Board
+                  2026 Week {waivers.week || 5} Expert Consensus Wire Board
                 </h3>
               </div>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
-                Synthesizes national consensus rankings from <strong>FantasyPros, CBS Sports, NFL.com, RotoBaller, FTN, PFF, SI, and Athlon Sports</strong> — cross-referenced live with your league wire.
+                Synthesizes national consensus rankings from <strong>FantasyPros, CBS Sports, NFL.com, RotoBaller, FTN, PFF, SI, Athlon Sports, and Fantasy Life</strong> — cross-referenced live with your league wire.
               </p>
             </div>
             <span className="pill emerald">Live Wire Synchronized</span>
@@ -480,14 +549,180 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({ waivers, onOpenGameLog }
         </div>
       )}
 
+      {/* 2026 8-TEAM LEAGUE POSITIONAL NEEDS & DEFENSIVE DENIAL RADAR */}
+      {activeCategory === 'LEAGUE_RADAR' && (
+        <div className="card league-radar-container-card" style={{ marginBottom: '24px' }}>
+          <div className="card-header league-radar-header">
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '24px' }}>🌐</span>
+                <h3 className="card-title" style={{ color: '#38bdf8' }}>
+                  2026 Week {waivers.week || 5} League-Wide Positional Needs & Denial Radar
+                </h3>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
+                Forensically cross-references all 8 rosters against Week 5 Byes (KC, CAR), live injury reports, and starter fragility. Identifies each rival's desperate targets and reveals high-leverage <strong>defensive waiver claim blocks</strong> for your team.
+              </p>
+            </div>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                setLeagueProfiles(null)
+                loadLeagueNeeds()
+              }}
+              title="Refresh league diagnostic"
+            >
+              🔄 Refresh League Intel
+            </button>
+          </div>
+
+          {isLoadingLeague ? (
+            <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <div className="spinner" style={{ margin: '0 auto 16px' }} />
+              <p style={{ fontSize: '14px', fontWeight: 600 }}>
+                Scanning all 8 league rosters, Week 5 bye casualties, and consensus wire matches...
+              </p>
+            </div>
+          ) : (
+            <div className="league-radar-grid">
+              {(leagueProfiles || []).map((team) => {
+                const isUser = team.is_user_team
+                const isUrgent = team.blocking_priority === 'URGENT'
+                const isHigh = team.blocking_priority === 'HIGH'
+                const isMod = team.blocking_priority === 'MODERATE'
+
+                return (
+                  <div
+                    key={team.team_id}
+                    className={`league-team-card ${
+                      isUser ? 'team-card-user' : isUrgent ? 'team-card-urgent' : isHigh ? 'team-card-high' : isMod ? 'team-card-mod' : ''
+                    }`}
+                  >
+                    {/* Card Header */}
+                    <div className="league-card-header">
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <h4 className="league-card-title">{team.team_name}</h4>
+                          <span className="league-card-abbrev">({team.team_abbrev})</span>
+                        </div>
+                        <div className="league-card-record">
+                          Record: <strong>{team.record_str}</strong>
+                        </div>
+                      </div>
+                      <div>
+                        {isUser ? (
+                          <span className="pill emerald" style={{ fontWeight: 800 }}>🛡️ YOUR ROSTER</span>
+                        ) : isUrgent ? (
+                          <span className="pill rose" style={{ fontWeight: 800 }}>🚨 URGENT BLOCK</span>
+                        ) : isHigh ? (
+                          <span className="pill amber" style={{ fontWeight: 800 }}>⚠️ HIGH BLOCK</span>
+                        ) : isMod ? (
+                          <span className="pill cyan" style={{ fontWeight: 800 }}>⚡ MODERATE BLOCK</span>
+                        ) : (
+                          <span className="pill slate" style={{ fontWeight: 800 }}>✅ LOW THREAT</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Casualties: Byes & Injuries */}
+                    <div className="league-card-section">
+                      <div className="section-label">Week 5 Casualties:</div>
+                      <div className="casualties-wrap">
+                        {team.bye_players.length > 0 && (
+                          <div className="casualty-group">
+                            <span className="casualty-badge bye">
+                              🏝️ {team.bye_players.length} on BYE:
+                            </span>
+                            <span className="casualty-names">{team.bye_players.join(', ')}</span>
+                          </div>
+                        )}
+                        {team.injured_players.length > 0 && (
+                          <div className="casualty-group">
+                            <span className="casualty-badge inj">
+                              🏥 {team.injured_players.length} Injured:
+                            </span>
+                            <span className="casualty-names">{team.injured_players.join(', ')}</span>
+                          </div>
+                        )}
+                        {team.bye_players.length === 0 && team.injured_players.length === 0 && (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                            Healthy starting core with zero byes
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Top Diagnosed Positional Needs */}
+                    <div className="league-card-section">
+                      <div className="section-label">Diagnosed Lineup Needs:</div>
+                      <div className="needs-pills-row">
+                        {team.positional_needs
+                          .filter((n) => n.need_level !== 'STABLE' && n.need_level !== 'LOW_NEED')
+                          .map((n) => (
+                            <div key={n.position} className="team-need-item">
+                              <div className="team-need-pos-row">
+                                <span className="team-need-pos">{n.position}</span>
+                                {getNeedLevelBadge(n.need_level)}
+                              </div>
+                              <div className="team-need-driver">{n.primary_driver}</div>
+                            </div>
+                          ))}
+                        {team.positional_needs.filter((n) => n.need_level !== 'STABLE' && n.need_level !== 'LOW_NEED').length === 0 && (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                            Balanced roster depth across all slots
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Top Wire Targets */}
+                    {team.top_targets.length > 0 && (
+                      <div className="league-card-section">
+                        <div className="section-label">Top Available Wire Targets Eyed:</div>
+                        <div className="wire-targets-pills">
+                          {team.top_targets.map((tgt) => (
+                            <span key={tgt} className="wire-target-pill">
+                              🎯 {tgt}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Defensive Denial Callout Box */}
+                    <div className="defensive-denial-box">
+                      <div className="denial-title">Defensive Denial & Blocking Strategy:</div>
+                      <div className="denial-text">{team.defensive_blocking_intel}</div>
+                    </div>
+
+                    {/* Action Button */}
+                    {onSelectTeam && (
+                      <button
+                        className="btn btn-secondary btn-sm inspect-team-btn"
+                        onClick={() => {
+                          onSelectTeam(team.team_id)
+                          setActiveCategory('ALL')
+                        }}
+                      >
+                        Inspect {team.team_name} Upgrades ➔
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Primary Waiver Upgrades Feed (Shown for ALL, PRIORITY, HANDCUFFS, BREAKOUTS) */}
-      {activeCategory !== 'STREAMERS' && activeCategory !== 'LEDGER' && activeCategory !== 'CONSENSUS_RADAR' && (
+      {activeCategory !== 'STREAMERS' && activeCategory !== 'LEDGER' && activeCategory !== 'CONSENSUS_RADAR' && activeCategory !== 'LEAGUE_RADAR' && (
         <div className="card" style={{ marginBottom: '24px' }}>
           <div className="card-header">
             <div>
               <h3 className="card-title">🎯 Human-Pro Lineup Upgrades & Tactical Wire Claims</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
-                Every recommendation is tailored to diagnosed roster needs and cross-referenced with 2026 Week 3 expert consensus value.
+                Every recommendation is tailored to diagnosed roster needs and cross-referenced with 2026 Week {waivers.week || 5} expert consensus value.
               </p>
             </div>
             <span className="pill emerald">8-Man Depth Calibrated</span>
