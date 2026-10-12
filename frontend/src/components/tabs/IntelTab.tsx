@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import type {
   WRCBMatchupAnalysis,
   VegasIntelligenceResponse,
@@ -124,7 +124,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
     fetchPffScoutingData()
   }, [league?.current_week])
 
-  const fetchTale = async () => {
+  const fetchTale = useCallback(async () => {
     setIsLoadingTale(true)
     try {
       const week = league?.current_week || 1
@@ -142,11 +142,11 @@ export const IntelTab: React.FC<IntelTabProps> = ({
     } finally {
       setIsLoadingTale(false)
     }
-  }
+  }, [league?.current_week, selectedTeamId, league?.user_team_id])
 
   useEffect(() => {
     fetchTale()
-  }, [league?.current_week, selectedTeamId, taleRefreshKey])
+  }, [fetchTale, taleRefreshKey])
 
   // Fetch current week matchups if not provided or to guarantee fresh week matchups
   useEffect(() => {

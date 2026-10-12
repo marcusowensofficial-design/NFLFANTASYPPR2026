@@ -99,18 +99,6 @@ export function DfsTab({
   // Overall DvP explainer modal
   const [showDvpLegendModal, setShowDvpLegendModal] = useState<boolean>(false)
 
-  // Load available slates on mount
-  useEffect(() => {
-    loadSlates()
-  }, [])
-
-  // Load slate data when selected slate or projection source changes
-  useEffect(() => {
-    if (selectedSlate) {
-      loadSlateData(selectedSlate, currentSource)
-    }
-  }, [selectedSlate, currentSource])
-
   const loadSlates = async () => {
     try {
       const res = await fetch('/api/dfs/slates')
@@ -146,6 +134,18 @@ export function DfsTab({
       setIsLoadingSlate(false)
     }
   }
+
+  // Load available slates on mount
+  useEffect(() => {
+    loadSlates()
+  }, [])
+
+  // Load slate data when selected slate or projection source changes
+  useEffect(() => {
+    if (selectedSlate) {
+      loadSlateData(selectedSlate, currentSource)
+    }
+  }, [selectedSlate, currentSource])
 
   // Handle CSV file upload
   const handleFileUpload = async (file: File) => {

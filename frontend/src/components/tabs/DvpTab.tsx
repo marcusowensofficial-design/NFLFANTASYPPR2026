@@ -163,6 +163,7 @@ export const DvpTab: React.FC<DvpTabProps> = ({
         setDvpSyncMsg('⚠️ Sync completed with cached baseline.')
       }
     } catch (err) {
+      console.error('DvP sync error:', err)
       setDvpSyncMsg('❌ Sync encountered a network error.')
     } finally {
       setIsSyncingDvp(false)

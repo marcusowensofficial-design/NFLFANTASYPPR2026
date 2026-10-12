@@ -70,18 +70,6 @@ export function VegasTab({
   const [propsPosFilter, setPropsPosFilter] = useState<string>('ALL')
   const [copiedSlate, setCopiedSlate] = useState<boolean>(false)
 
-  // Sync selectedWeek if league loaded with valid week
-  useEffect(() => {
-    if (league?.current_week && league.current_week !== selectedWeek) {
-      setSelectedWeek(league.current_week)
-    }
-  }, [league?.current_week])
-
-  // Fetch Vegas Intelligence & Props for the selected week
-  useEffect(() => {
-    loadVegasForWeek(selectedWeek)
-  }, [selectedWeek, selectedTeamId])
-
   const loadVegasForWeek = async (week: number) => {
     setIsLoadingVegas(true)
     setIsLoadingProps(true)
@@ -111,6 +99,18 @@ export function VegasTab({
       setIsLoadingProps(false)
     }
   }
+
+  // Sync selectedWeek if league loaded with valid week
+  useEffect(() => {
+    if (league?.current_week && league.current_week !== selectedWeek) {
+      setSelectedWeek(league.current_week)
+    }
+  }, [league?.current_week, selectedWeek])
+
+  // Fetch Vegas Intelligence & Props for the selected week
+  useEffect(() => {
+    loadVegasForWeek(selectedWeek)
+  }, [selectedWeek, selectedTeamId])
 
   // Roster set for quick lookup
   const userRosterTeamPids = useMemo(() => {

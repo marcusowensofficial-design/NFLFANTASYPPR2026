@@ -175,8 +175,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
         if (res.ok) {
           setMarketBuzz(await res.json())
         }
-      } catch (err) {
-        // Ignore fetch error
+      } catch {
+        // Silently handle offline/missing market buzz
       }
     }
     fetchMarketBuzz()

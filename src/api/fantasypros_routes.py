@@ -294,3 +294,27 @@ async def get_streamers(
         )
 
     return recommendations
+
+
+@router.post("/sync", response_model=SyncResponse)
+async def sync_fantasypros_intelligence(
+    week: int | None = Query(default=None, description="NFL week number to sync"),
+    season: int = Query(default=2026, description="NFL season"),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Trigger real-time FantasyPros consensus rankings, projections, and player calibration sync."""
+    league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+    eff_week = week or (league.current_week if league else 1)
+    eff_season = season or (league.season if league else 2026)
+    league_id = league.id if league else None
+
+    result = await fantasypros_sync_service.sync_league_intelligence(
+        league_id=league_id,
+        season=eff_season,
+        week=eff_week,
+    )
+    return {
+        "success": bool(result.get("success", False)),
+        "message": str(result.get("message", "Sync completed")),
+        "enriched_count": int(result.get("enriched_count", 0)),
+    }

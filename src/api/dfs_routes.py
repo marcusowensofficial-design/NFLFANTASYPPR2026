@@ -33,6 +33,22 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
 SLATES_MAP: dict[str, dict[str, Any]] = {
+    "showdown_w5_mnf": {
+        "id": "showdown_w5_mnf",
+        "name": "Week 5 MNF Island: Buffalo at LA Rams ($60k)",
+        "games_count": 1,
+        "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
+        "is_showdown": True,
+        "default_csv": str(DATA_DIR / "10-12-26-bills-vs-rams-singlegameslate.csv"),
+    },
+    "showdown_w5_tnf": {
+        "id": "showdown_w5_tnf",
+        "name": "Week 5 TNF Archive: Dallas at Tampa Bay ($60k)",
+        "games_count": 1,
+        "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
+        "is_showdown": True,
+        "default_csv": str(DATA_DIR / "DallascowboysvsTampabaybucs10-8-26singlegameslatesalaries.csv"),
+    },
     "main": {
         "id": "main",
         "name": "Week 4 Main Slate ($60k Classic)",
@@ -131,6 +147,18 @@ def _resolve_csv_path(slate_id: str) -> str:
         if uploaded_path.exists():
             return str(uploaded_path)
         raise HTTPException(status_code=404, detail="No uploaded FanDuel CSV found. Please upload one first.")
+
+    # Week 5 MNF checks (Tonight: Buffalo at LA Rams, 10/12/2026)
+    if sid in ("showdown_w5_mnf", "buf_lar", "lar_buf", "showdown_buf_lar", "mnf_w5", "bills_rams"):
+        w5_mnf = DATA_DIR / "10-12-26-bills-vs-rams-singlegameslate.csv"
+        if w5_mnf.exists():
+            return str(w5_mnf)
+
+    # Week 5 TNF checks (Dallas at Tampa Bay, 10/08/2026)
+    if sid in ("showdown_w5_tnf", "dal_tb", "tb_dal", "showdown_dal_tb", "tnf_w5", "cowboys_bucs"):
+        w5_tnf = DATA_DIR / "DallascowboysvsTampabaybucs10-8-26singlegameslatesalaries.csv"
+        if w5_tnf.exists():
+            return str(w5_tnf)
 
     # Week 4 Main Slate checks
     if sid in ("main", "main_week4", "week4", "week4_main", "w4_main"):
