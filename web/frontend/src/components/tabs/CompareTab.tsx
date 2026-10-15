@@ -841,7 +841,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
             </div>
             <div className="duel-guide-feature-item">
               <div className="duel-guide-feature-title">🛡️ Defense-vs-Position</div>
-              <div className="duel-guide-feature-text">Full DvP star ratings & positional defensive rankings for Week {league?.current_week || 2}.</div>
+              <div className="duel-guide-feature-text">Full DvP star ratings & positional defensive rankings for Week {league?.current_week || 6}.</div>
             </div>
             <div className="duel-guide-feature-item">
               <div className="duel-guide-feature-title">🎲 Vegas Sharp Props</div>

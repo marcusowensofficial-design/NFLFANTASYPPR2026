@@ -486,9 +486,9 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
                     </span>
                   </div>
 
-                  {/* Realized Week 1 Metric Callout */}
+                  {/* Realized Metric Callout */}
                   <div className="consensus-metric-box">
-                    <div className="metric-tag">📊 WEEK 1 REALIZED METRICS:</div>
+                    <div className="metric-tag">📊 RECENT REALIZED METRICS:</div>
                     <div className="metric-text">{item.week_1_metric}</div>
                   </div>
 
@@ -521,7 +521,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
                           onOpenGameLog(item.player_id!, item.full_name, item.position, item.pro_team)
                         }
                       >
-                        📊 View Week 1 Box & Target Log
+                        📊 View Box & Target Log
                       </button>
                     </div>
                   )}
@@ -557,11 +557,11 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '24px' }}>🌐</span>
                 <h3 className="card-title" style={{ color: '#38bdf8' }}>
-                  2026 Week {waivers.week || 5} League-Wide Positional Needs & Denial Radar
+                  2026 Week {waivers.week || 6} League-Wide Positional Needs & Denial Radar
                 </h3>
               </div>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
-                Forensically cross-references all 8 rosters against Week 5 Byes (KC, CAR), live injury reports, and starter fragility. Identifies each rival's desperate targets and reveals high-leverage <strong>defensive waiver claim blocks</strong> for your team.
+                Forensically cross-references all 8 rosters against Week {waivers.week || 6} Byes (CIN, DET, MIA, MIN), live injury reports, and starter fragility. Identifies each rival's desperate targets and reveals high-leverage <strong>defensive waiver claim blocks</strong> for your team.
               </p>
             </div>
             <button
@@ -580,7 +580,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
             <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
               <div className="spinner" style={{ margin: '0 auto 16px' }} />
               <p style={{ fontSize: '14px', fontWeight: 600 }}>
-                Scanning all 8 league rosters, Week 5 bye casualties, and consensus wire matches...
+                Scanning all 8 league rosters, Week {waivers.week || 6} bye casualties (CIN, DET, MIA, MIN), and consensus wire matches...
               </p>
             </div>
           ) : (
@@ -626,7 +626,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
 
                     {/* Casualties: Byes & Injuries */}
                     <div className="league-card-section">
-                      <div className="section-label">Week 5 Casualties:</div>
+                      <div className="section-label">Week {waivers.week || 6} Casualties:</div>
                       <div className="casualties-wrap">
                         {team.bye_players.length > 0 && (
                           <div className="casualty-group">

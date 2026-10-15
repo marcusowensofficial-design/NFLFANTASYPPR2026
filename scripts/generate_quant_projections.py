@@ -382,7 +382,7 @@ def export_projections(results: list[dict[str, Any]], week: int) -> tuple[str, s
 def main():
     parser = argparse.ArgumentParser(description="Generate Quant NFL Projections (PPR & Half-PPR)")
     parser.add_argument("--mode", choices=["ppr", "half-ppr", "both"], default="both", help="Scoring format mode")
-    parser.add_argument("--week", type=int, default=5, help="NFL Regular Season Week")
+    parser.add_argument("--week", type=int, default=6, help="NFL Regular Season Week")
     parser.add_argument("--limit", type=int, default=30, help="Number of top players to display")
     parser.add_argument("--source", default="MODEL", choices=["MODEL", "CONSENSUS", "FANTASYPROS", "ESPN", "ENSEMBLE"])
     parser.add_argument("--ensemble", action="store_true", help="Enable Institutional Inverse-Variance Ensemble Blend")

@@ -48,6 +48,14 @@ def _find_csv(filename: str) -> Path:
 
 
 SLATES_MAP: dict[str, dict[str, Any]] = {
+    "showdown_w6_tnf": {
+        "id": "showdown_w6_tnf",
+        "name": "Week 6 TNF Island: Seattle at Denver ($60k)",
+        "games_count": 1,
+        "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
+        "is_showdown": True,
+        "default_csv": str(_find_csv("10-15-26-seahawks-vs-broncos-singlegameslate.csv")),
+    },
     "showdown_w5_mnf": {
         "id": "showdown_w5_mnf",
         "name": "Week 5 MNF Island: Buffalo at LA Rams ($60k)",

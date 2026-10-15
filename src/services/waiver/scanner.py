@@ -133,7 +133,7 @@ class WaiverScanner:
         injuries_by_athlete: dict[int, Any] | None = None,
         weather_by_team: dict[str, Any] | None = None,
         league_size: int = 8,
-        current_week: int = 5,
+        current_week: int = 6,
         next_week_games: list[Any] | None = None,
     ) -> WaiverAnalysisResult:
         # 0. Ensure 2026 expert consensus players are present in PlayerModel (for production/full DBs)

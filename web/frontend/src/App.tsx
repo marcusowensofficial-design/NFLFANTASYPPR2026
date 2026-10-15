@@ -318,7 +318,7 @@ export function App() {
 
     loadTeamRoster(currentTargetId)
     prefetchAllTeamRosters(summaryData.teams)
-    const curWeek = summaryData.current_week || 1
+    const curWeek = summaryData.current_week || 6
     setMatchupWeek(curWeek)
     loadMatchups(curWeek)
     loadIntelData(currentTargetId, true, curWeek)
@@ -642,7 +642,7 @@ export function App() {
     const seq = ++intelReqSeq.current
     try {
       setIsLoadingIntel(true)
-      const effWeek = targetWeek || league?.current_week || 2
+      const effWeek = targetWeek || league?.current_week || 6
       const [wrcbRes, vegasRes] = await Promise.all([
         fetch(`/api/analysis/wrcb-matrix?team_id=${teamId}&week=${effWeek}`),
         fetch(`/api/analysis/vegas-environments?team_id=${teamId}&week=${effWeek}`),
@@ -1370,7 +1370,7 @@ export function App() {
 
       {activeTab === 'fantasypros' && (
         <FantasyProsTab
-          currentWeek={league?.current_week || 2}
+          currentWeek={league?.current_week || 6}
           onSyncSuccess={() => {
             loadLeagueData()
             loadTeamLineup(selectedTeamId, strategyMode, projectionSource, true)
@@ -1435,7 +1435,7 @@ export function App() {
           toggleMoveSelection={toggleMoveSelection}
           onExecutePush={handleExecutePush}
           isPushing={isPushing}
-          currentWeek={league?.current_week || 2}
+          currentWeek={league?.current_week || 6}
         />
       )}
 

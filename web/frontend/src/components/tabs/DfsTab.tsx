@@ -24,7 +24,7 @@ export function DfsTab({
 }: DfsTabProps = {}) {
   // Slate state
   const [slates, setSlates] = useState<DFSSlateInfo[]>([])
-  const [selectedSlate, setSelectedSlate] = useState<string>('main')
+  const [selectedSlate, setSelectedSlate] = useState<string>('showdown_w6_tnf')
   const [slateData, setSlateData] = useState<DFSSlateDataResponse | null>(null)
   const [uploadResult, setUploadResult] = useState<DFSUploadResponse | null>(null)
   const [isUploading, setIsUploading] = useState<boolean>(false)

@@ -81,7 +81,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
     const fetchMarketBuzz = async () => {
       setIsLoadingMarket(true)
       try {
-        const week = league?.current_week || 1
+        const week = league?.current_week || 6
         const res = await fetch(`/api/analysis/market-sentiment/buzz?week=${week}`)
         if (res.ok) {
           const data: PlayerMarketSentimentItem[] = await res.json()
@@ -101,7 +101,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
       setIsLoadingComposite(true)
       setIsLoadingTrenches(true)
       try {
-        const week = league?.current_week || 2
+        const week = league?.current_week || 6
         const [compRes, trenchRes] = await Promise.all([
           fetch(`/api/analysis/pff/composite-defense?week=${week}`),
           fetch(`/api/analysis/pff/trenches?week=${week}`)
@@ -127,7 +127,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
   const fetchTale = useCallback(async () => {
     setIsLoadingTale(true)
     try {
-      const week = league?.current_week || 1
+      const week = league?.current_week || 6
       const effectiveTeamId = selectedTeamId ?? league?.user_team_id
       const teamParam = effectiveTeamId ? `&team_id=${effectiveTeamId}` : ''
       const res = await fetch(`/api/analysis/h2h-tale-of-the-tape?week=${week}${teamParam}`)
@@ -152,7 +152,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
   useEffect(() => {
     const fetchCurrentMatchups = async () => {
       try {
-        const week = league?.current_week || 1
+        const week = league?.current_week || 6
         const res = await fetch(`/api/league/matchups?week=${week}`)
         if (res.ok) {
           const data: MatchupResponseItem[] = await res.json()
@@ -932,7 +932,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
             </div>
 
             {p.dvp_fpa.is_baseline && (
-              <Tooltip term="DVP_BASELINE" title="Week 1 Baseline Logic">
+              <Tooltip term="DVP_BASELINE" title="Defensive Baseline Logic">
                 <span style={{ fontSize: '10px', color: 'var(--accent-cyan)', fontStyle: 'italic', cursor: 'help' }}>
                   ℹ️ 2025-26 Weighted Baseline
                 </span>
@@ -1207,7 +1207,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span className="pill cyan" style={{ fontWeight: 700 }}>
-              Week {league?.current_week || 1} Intel
+              Week {league?.current_week || 6} Intel
             </span>
             <button
               type="button"
@@ -1960,13 +1960,13 @@ export const IntelTab: React.FC<IntelTabProps> = ({
           <div className="intel-dvp-banner" style={{ borderLeft: '4px solid var(--accent-purple, #8b5cf6)' }}>
             <div className="intel-dvp-banner-content">
               <div className="intel-dvp-banner-title">
-                <span>🏈 Week {league?.current_week || 2} Prediction Market Intelligence (Polymarket Integration)</span>
+                <span>🏈 Week {league?.current_week || 6} Prediction Market Intelligence (Polymarket Integration)</span>
                 <span className="pill purple" style={{ fontSize: '10px', fontWeight: 800 }}>
                   Real-Money Crowd Probabilities
                 </span>
               </div>
               <p className="intel-dvp-banner-text">
-                Week {league?.current_week || 2} brings critical depth chart adjustments, utilization shifts, and market overreactions following Week 1. <strong>Polymarket</strong> aggregates real-money crowd bets into live implied probabilities—pricing true starting quarterback battles, Thursday/Sunday game-time injury risks, and rookie target ceilings before kickoff.
+                Week {league?.current_week || 6} brings critical depth chart adjustments, utilization shifts, and in-season market pricing. <strong>Polymarket</strong> aggregates real-money crowd bets into live implied probabilities—pricing true starting quarterback battles, Thursday/Sunday game-time injury risks, and rookie target ceilings before kickoff.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
                 <span className="pill cyan" style={{ fontSize: '10.5px' }}>
@@ -2180,7 +2180,7 @@ export const IntelTab: React.FC<IntelTabProps> = ({
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span className="pill emerald" style={{ fontSize: '11px', fontWeight: 800, padding: '4px 10px' }}>
-                📅 Week {league?.current_week || 2} Matchups Active
+                📅 Week {league?.current_week || 6} Matchups Active
               </span>
             </div>
           </div>

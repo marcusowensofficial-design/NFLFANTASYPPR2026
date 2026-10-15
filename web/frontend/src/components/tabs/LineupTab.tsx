@@ -170,7 +170,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
   useEffect(() => {
     const fetchMarketBuzz = async () => {
       try {
-        const week = league?.current_week || 1
+        const week = league?.current_week || 6
         const res = await fetch(`/api/analysis/market-sentiment/buzz?week=${week}`)
         if (res.ok) {
           setMarketBuzz(await res.json())
@@ -452,7 +452,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
             <span style={{ fontSize: '24px' }}>🏈</span>
             <div>
               <strong style={{ color: '#c084fc', fontSize: '15px' }}>
-                Week {league?.current_week || 2} Kickoff & Market Volatility Alert ({marketAlerts.length} Starter{marketAlerts.length > 1 ? 's' : ''} Flagged):
+                Week {league?.current_week || 6} Kickoff & Market Volatility Alert ({marketAlerts.length} Starter{marketAlerts.length > 1 ? 's' : ''} Flagged):
               </strong>
               <div style={{ fontSize: '12.5px', color: '#e9d5ff', marginTop: '2px' }}>
                 Polymarket prediction crowd odds detect volatile starting roles, decoy risks, or Thursday FLEX positioning.
@@ -515,7 +515,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                 </span>
               </div>
               <div className="projection-source-desc">
-                Re-solves optimal lineup & displays individual source stats for Week {league?.current_week || 1} (PPR scoring)
+                Re-solves optimal lineup & displays individual source stats for Week {league?.current_week || 6} (PPR scoring)
               </div>
             </div>
           </div>
@@ -802,7 +802,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
       <div className="card" style={{ marginBottom: '24px' }}>
         <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h3 className="card-title">⭐ Optimal Starting Lineup (Week {league?.current_week || 1})</h3>
+            <h3 className="card-title">⭐ Optimal Starting Lineup (Week {league?.current_week || 6})</h3>
             <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
               <span className="pill emerald">Maximum StartScore</span>
               <span className="pill zinc" style={{ fontSize: '11px' }}>QB • RB • RB • WR • WR • TE • FLEX • KICKER • DST</span>
