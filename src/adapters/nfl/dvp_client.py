@@ -104,7 +104,7 @@ class DvPClient:
                 eff_week = week
                 if eff_week is None:
                     league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
-                    eff_week = league.current_week if league else 2
+                    eff_week = league.current_week if league else 6
 
                 records = db.execute(
                     select(DefenseVsPositionModel).where(

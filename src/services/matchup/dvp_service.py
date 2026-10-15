@@ -82,7 +82,7 @@ class DvPService:
     def _get_db(self) -> Session:
         return self._external_db if self._external_db is not None else SessionLocal()
 
-    async def sync_dvp_data(self, season: int = 2026, week: int = 3) -> dict[str, Any]:
+    async def sync_dvp_data(self, season: int = 2026, week: int = 6) -> dict[str, Any]:
         """Scrapes or loads latest DvP data from DraftEdge and upserts to database."""
         db = self._get_db()
         should_close = self._external_db is None
@@ -120,7 +120,7 @@ class DvPService:
                             rank_softness=r["rank_softness"],
                             rank_defense=r["rank_defense"],
                             tier=r["tier"],
-                            tier_label=r["tier_label"],
+                            tier_label=r.get("tier_label", "Neutral Matchup"),
                             dk_fpa=r["dk_fpa"],
                             fd_fpa=r.get("fd_fpa"),
                             vs_avg=r["vs_avg"],
@@ -141,7 +141,7 @@ class DvPService:
                         existing.rank_softness = r["rank_softness"]
                         existing.rank_defense = r["rank_defense"]
                         existing.tier = r["tier"]
-                        existing.tier_label = r["tier_label"]
+                        existing.tier_label = r.get("tier_label", existing.tier_label)
                         existing.dk_fpa = r["dk_fpa"]
                         existing.fd_fpa = r.get("fd_fpa")
                         existing.vs_avg = r["vs_avg"]
@@ -192,7 +192,7 @@ class DvPService:
     def get_dvp_ratings(
         self,
         season: int = 2026,
-        week: int = 2,
+        week: int = 6,
         position: str | None = None,
         pro_team: str | None = None,
     ) -> list[dict[str, Any]]:
@@ -267,7 +267,7 @@ class DvPService:
         opponent_team: str,
         position: str,
         season: int = 2026,
-        week: int = 2,
+        week: int = 6,
     ) -> dict[str, Any] | None:
         """Retrieves exact DvP matchup details for an opponent defense and offensive position."""
         opp = opponent_team.upper().strip()
@@ -334,7 +334,7 @@ class DvPService:
             if should_close:
                 db.close()
 
-    def get_dvp_status(self, season: int = 2026, week: int = 2) -> dict[str, Any]:
+    def get_dvp_status(self, season: int = 2026, week: int = 6) -> dict[str, Any]:
         """Provides status and data freshness diagnostics."""
         db = self._get_db()
         should_close = self._external_db is None

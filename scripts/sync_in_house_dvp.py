@@ -19,7 +19,7 @@ from src.services.matchup.dvp_service import dvp_service
 
 async def main():
     parser = argparse.ArgumentParser(description="Calculate and sync in-house DvP ratings to database.")
-    parser.add_argument("--week", type=int, default=2, help="Current regular season week to calculate (default: 2)")
+    parser.add_argument("--week", type=int, default=6, help="Current regular season week to calculate (default: 6)")
     parser.add_argument("--season", type=int, default=2026, help="NFL Season year (default: 2026)")
     args = parser.parse_args()
 
@@ -29,7 +29,7 @@ async def main():
 
     # Print summary top smash matchups
     print("\n" + "=" * 80)
-    print("🏆 TOP IN-HOUSE SMASH MATCHUPS PER POSITION (Week 2):")
+    print(f"🏆 TOP IN-HOUSE SMASH MATCHUPS PER POSITION (Week {args.week}):")
     print("=" * 80)
     for pos in ["QB", "RB", "WR", "TE"]:
         ratings = dvp_service.get_dvp_ratings(season=args.season, week=args.week, position=pos)

@@ -716,6 +716,7 @@ async def calculate_in_house_dvp(
                 "team_name": entry["team_name"],
                 "position": pos,
                 "tier": tier_code,
+                "tier_label": tier_label,
                 "half_ppr_fpa": entry["blended_half"],  # Half-PPR (0.5 rec, FanDuel DFS standard)
                 "full_ppr_fpa": entry["blended_full"],  # Full-PPR (1.0 rec, ESPN Fantasy standard)
                 "dk_fpa": entry["blended_half"],  # Backward-compatibility alias for Half-PPR
