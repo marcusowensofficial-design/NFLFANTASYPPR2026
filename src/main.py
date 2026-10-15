@@ -200,7 +200,8 @@ async def test_espn_connection_endpoint(payload: ConnectionTestRequest) -> Conne
 # -----------------------------------------------------------------------------
 # Frontend Static Asset & Single-Page Application (SPA) Serving
 # -----------------------------------------------------------------------------
-frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+_web_dist = Path(__file__).resolve().parent.parent / "web" / "frontend" / "dist"
+frontend_dist = _web_dist if _web_dist.exists() else (Path(__file__).resolve().parent.parent / "frontend" / "dist")
 
 if (frontend_dist / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="assets")

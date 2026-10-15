@@ -31,6 +31,21 @@ def _np_default(o: Any) -> Any:
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
+SLATES_DIR = DATA_DIR / "slates"
+
+
+def _find_csv(filename: str) -> Path:
+    p_slates = SLATES_DIR / filename
+    if p_slates.exists():
+        return p_slates
+    p_data = DATA_DIR / filename
+    if p_data.exists():
+        return p_data
+    p_root = PROJECT_ROOT / filename
+    if p_root.exists():
+        return p_root
+    return p_slates
+
 
 SLATES_MAP: dict[str, dict[str, Any]] = {
     "showdown_w5_mnf": {
@@ -39,7 +54,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
         "is_showdown": True,
-        "default_csv": str(DATA_DIR / "10-12-26-bills-vs-rams-singlegameslate.csv"),
+        "default_csv": str(_find_csv("10-12-26-bills-vs-rams-singlegameslate.csv")),
     },
     "showdown_w5_tnf": {
         "id": "showdown_w5_tnf",
@@ -47,7 +62,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
         "is_showdown": True,
-        "default_csv": str(DATA_DIR / "DallascowboysvsTampabaybucs10-8-26singlegameslatesalaries.csv"),
+        "default_csv": str(_find_csv("DallascowboysvsTampabaybucs10-8-26singlegameslatesalaries.csv")),
     },
     "main": {
         "id": "main",
@@ -55,7 +70,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 13,
         "platform": "FanDuel ($60k Cap)",
         "is_showdown": False,
-        "default_csv": str(DATA_DIR / "FanDuel-NFL-2026 MDT-10 MDT-04 MDT-134747-players-list.csv"),
+        "default_csv": str(_find_csv("FanDuel-NFL-2026 MDT-10 MDT-04 MDT-134747-players-list.csv")),
     },
     "showdown_w4_mnf": {
         "id": "showdown_w4_mnf",
@@ -63,7 +78,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
         "is_showdown": True,
-        "default_csv": str(DATA_DIR / "10-5-26-falcons-vs-saintssinglegameslate.csv"),
+        "default_csv": str(_find_csv("10-5-26-falcons-vs-saintssinglegameslate.csv")),
     },
     "showdown_w4_tnf": {
         "id": "showdown_w4_tnf",
@@ -71,7 +86,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
         "is_showdown": True,
-        "default_csv": str(DATA_DIR / "steelersvsbrowns10-1-26singlegameslaterostersnsalaries.csv"),
+        "default_csv": str(_find_csv("steelersvsbrowns10-1-26singlegameslaterostersnsalaries.csv")),
     },
     "main_week3": {
         "id": "main_week3",
@@ -79,7 +94,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 13,
         "platform": "FanDuel ($60k Cap)",
         "is_showdown": False,
-        "default_csv": str(DATA_DIR / "FDMAINSLATE9-27-2026SUNDAYGAMES.csv"),
+        "default_csv": str(_find_csv("FDMAINSLATE9-27-2026SUNDAYGAMES.csv")),
     },
     "main_week2": {
         "id": "main_week2",
@@ -87,7 +102,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 13,
         "platform": "FanDuel ($60k Cap)",
         "is_showdown": False,
-        "default_csv": str(DATA_DIR / "9-20-26-main-slate-rosters-salaries-fd-week2.csv"),
+        "default_csv": str(_find_csv("9-20-26-main-slate-rosters-salaries-fd-week2.csv")),
     },
     "showdown_w2_mnf": {
         "id": "showdown_w2_mnf",
@@ -95,7 +110,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
         "is_showdown": True,
-        "default_csv": str(DATA_DIR / "NYGVSLAR9-21-26singlegameslate.csv"),
+        "default_csv": str(_find_csv("NYGVSLAR9-21-26singlegameslate.csv")),
     },
     "showdown_dal_nyg": {
         "id": "showdown_dal_nyg",
@@ -103,7 +118,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
         "is_showdown": True,
-        "default_csv": str(DATA_DIR / "DALLASVSNYGSINGLEGAMESLATE.csv"),
+        "default_csv": str(_find_csv("DALLASVSNYGSINGLEGAMESLATE.csv")),
     },
     "showdown_tnf": {
         "id": "showdown_tnf",
@@ -111,7 +126,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
         "is_showdown": True,
-        "default_csv": str(DATA_DIR / "detvsbuffalosinglegameslaterostersnsalaries.csv"),
+        "default_csv": str(_find_csv("detvsbuffalosinglegameslaterostersnsalaries.csv")),
     },
     "showdown_w1_mnf": {
         "id": "showdown_w1_mnf",
@@ -119,7 +134,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 1,
         "platform": "FanDuel Showdown (1.5x MVP + 5 FLEX)",
         "is_showdown": True,
-        "default_csv": str(DATA_DIR / "KCVSBRONCOSSINGLEGAMESLATE9-14-26.csv"),
+        "default_csv": str(_find_csv("KCVSBRONCOSSINGLEGAMESLATE9-14-26.csv")),
     },
     "main_week1": {
         "id": "main_week1",
@@ -127,7 +142,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 13,
         "platform": "FanDuel ($60k Cap)",
         "is_showdown": False,
-        "default_csv": str(DATA_DIR / "mainslate9-13-2026.csv") if (DATA_DIR / "mainslate9-13-2026.csv").exists() else str(DATA_DIR / "FanDuel-NFL-2026 MDT-09 MDT-13 MDT-133104-players-list.csv"),
+        "default_csv": str(_find_csv("mainslate9-13-2026.csv")),
     },
     "early": {
         "id": "early",
@@ -135,7 +150,7 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
         "games_count": 8,
         "platform": "FanDuel ($60k Cap)",
         "is_showdown": False,
-        "default_csv": str(DATA_DIR / "earlyonlysalariesandrosters.csv") if (DATA_DIR / "earlyonlysalariesandrosters.csv").exists() else str(PROJECT_ROOT / "earlyonlysalariesandrosters.csv"),
+        "default_csv": str(_find_csv("earlyonlysalariesandrosters.csv")),
     },
 }
 
@@ -143,90 +158,87 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
 def _resolve_csv_path(slate_id: str) -> str:
     sid = slate_id.lower().strip()
     if sid == "uploaded":
-        uploaded_path = DATA_DIR / "uploaded_fanduel.csv"
+        uploaded_path = _find_csv("uploaded_fanduel.csv")
         if uploaded_path.exists():
             return str(uploaded_path)
         raise HTTPException(status_code=404, detail="No uploaded FanDuel CSV found. Please upload one first.")
 
     # Week 5 MNF checks (Tonight: Buffalo at LA Rams, 10/12/2026)
     if sid in ("showdown_w5_mnf", "buf_lar", "lar_buf", "showdown_buf_lar", "mnf_w5", "bills_rams"):
-        w5_mnf = DATA_DIR / "10-12-26-bills-vs-rams-singlegameslate.csv"
+        w5_mnf = _find_csv("10-12-26-bills-vs-rams-singlegameslate.csv")
         if w5_mnf.exists():
             return str(w5_mnf)
 
     # Week 5 TNF checks (Dallas at Tampa Bay, 10/08/2026)
     if sid in ("showdown_w5_tnf", "dal_tb", "tb_dal", "showdown_dal_tb", "tnf_w5", "cowboys_bucs"):
-        w5_tnf = DATA_DIR / "DallascowboysvsTampabaybucs10-8-26singlegameslatesalaries.csv"
+        w5_tnf = _find_csv("DallascowboysvsTampabaybucs10-8-26singlegameslatesalaries.csv")
         if w5_tnf.exists():
             return str(w5_tnf)
 
     # Week 4 Main Slate checks
     if sid in ("main", "main_week4", "week4", "week4_main", "w4_main"):
-        w4_main = DATA_DIR / "FanDuel-NFL-2026 MDT-10 MDT-04 MDT-134747-players-list.csv"
+        w4_main = _find_csv("FanDuel-NFL-2026 MDT-10 MDT-04 MDT-134747-players-list.csv")
         if w4_main.exists():
             return str(w4_main)
 
     # Week 4 MNF checks
     if sid in ("showdown_w4_mnf", "atl_no", "no_atl", "showdown_atl_no", "mnf_w4", "falcons_saints"):
-        w4_mnf = DATA_DIR / "10-5-26-falcons-vs-saintssinglegameslate.csv"
+        w4_mnf = _find_csv("10-5-26-falcons-vs-saintssinglegameslate.csv")
         if w4_mnf.exists():
             return str(w4_mnf)
 
     # Week 4 TNF checks
     if sid in ("showdown_w4_tnf", "pit_cle", "cle_pit", "showdown_pit_cle", "tnf_w4", "steelers_browns"):
-        w4_tnf = DATA_DIR / "steelersvsbrowns10-1-26singlegameslaterostersnsalaries.csv"
+        w4_tnf = _find_csv("steelersvsbrowns10-1-26singlegameslaterostersnsalaries.csv")
         if w4_tnf.exists():
             return str(w4_tnf)
 
     # Week 3 Main Slate checks
     if sid in ("week3", "week3_main", "main_week3", "w3_main"):
-        w3_main = DATA_DIR / "FDMAINSLATE9-27-2026SUNDAYGAMES.csv"
+        w3_main = _find_csv("FDMAINSLATE9-27-2026SUNDAYGAMES.csv")
         if w3_main.exists():
             return str(w3_main)
 
     # Week 2 MNF checks
     if sid in ("showdown_w2_mnf", "nyg_lar", "lar_nyg", "showdown_nyg_lar", "mnf_w2"):
-        w2_mnf = DATA_DIR / "NYGVSLAR9-21-26singlegameslate.csv"
+        w2_mnf = _find_csv("NYGVSLAR9-21-26singlegameslate.csv")
         if w2_mnf.exists():
             return str(w2_mnf)
 
     # Week 2 Main Slate checks
     if sid in ("main_week2", "week2", "week2_main", "w2_main"):
-        week2_main = DATA_DIR / "9-20-26-main-slate-rosters-salaries-fd-week2.csv"
+        week2_main = _find_csv("9-20-26-main-slate-rosters-salaries-fd-week2.csv")
         if week2_main.exists():
             return str(week2_main)
 
     # Check for Dallas vs NYG showdown
     if sid in ("showdown_dal_nyg", "dal_nyg", "dal@nyg", "cowboys_giants", "giants_cowboys", "dallas_nyg"):
-        dal_path = DATA_DIR / "DALLASVSNYGSINGLEGAMESLATE.csv"
+        dal_path = _find_csv("DALLASVSNYGSINGLEGAMESLATE.csv")
         if dal_path.exists():
             return str(dal_path)
 
     # Check for TNF showdown variants (Week 2 DET@BUF)
     if sid in ("showdown_tnf", "det_buf", "tnf", "showdown"):
-        tnf_path = DATA_DIR / "detvsbuffalosinglegameslaterostersnsalaries.csv"
+        tnf_path = _find_csv("detvsbuffalosinglegameslaterostersnsalaries.csv")
         if tnf_path.exists():
             return str(tnf_path)
 
     # Check for Week 1 MNF showdown
     if sid in ("showdown_w1_mnf", "kc_den", "mnf", "kc@den"):
-        w1_mnf = DATA_DIR / "KCVSBRONCOSSINGLEGAMESLATE9-14-26.csv"
+        w1_mnf = _find_csv("KCVSBRONCOSSINGLEGAMESLATE9-14-26.csv")
         if w1_mnf.exists():
             return str(w1_mnf)
 
     # Week 1 Archives checks
     if sid in ("main_week1", "week1", "week1_main"):
-        w1_path = DATA_DIR / "mainslate9-13-2026.csv"
+        w1_path = _find_csv("mainslate9-13-2026.csv")
         if w1_path.exists():
             return str(w1_path)
 
     if sid in ("early", "early_week1"):
-        root_early = PROJECT_ROOT / "earlyonlysalariesandrosters.csv"
-        if root_early.exists():
-            return str(root_early)
-        data_early = DATA_DIR / "earlyonlysalariesandrosters.csv"
-        if data_early.exists():
-            return str(data_early)
+        early_path = _find_csv("earlyonlysalariesandrosters.csv")
+        if early_path.exists():
+            return str(early_path)
 
     slate_info = SLATES_MAP.get(sid)
     if slate_info and os.path.exists(slate_info["default_csv"]):

@@ -4,7 +4,7 @@
 [![React 19](https://img.shields.io/badge/react-19.2+-61dafb.svg)](https://react.dev/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
 [![Vite](https://img.shields.io/badge/vite-8.2+-646cff.svg)](https://vitejs.dev/)
-[![Tests](https://img.shields.io/badge/tests-123%20passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-179%20passed-brightgreen.svg)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A **local-first personal fantasy football analytics platform, institutional DFS quant engine, and automated lineup optimizer** designed for 8-team PPR leagues during the 2026 NFL season. Inspired by the functional utility of FantasyPros My Playbook and PFF Greenline, but built entirely on verified live data, explainable deterministic Start/Sit scoring, Integer Linear Programming (ILP) roster optimization, WR/CB shadow coverage analysis, Vegas game script environments, and 1-click roster execution back to ESPN.
@@ -308,50 +308,55 @@ fantasydfs/
 │       │   └── scoring_engine.py       # Multi-factor normalized scoring composite
 │       ├── trade/                      # 2-for-1 consolidation trade recommendation engine
 │       └── waiver/                     # Waiver wire efficiency & deadweight bench analyzer
-├── frontend/                           # React 19 + Vite Frontend Dashboard
-│   ├── src/
-│   │   ├── App.tsx                     # Orchestrator coordinating all 9 tabs & global sync
-│   │   ├── types.ts                    # Strongly-typed TypeScript interfaces
-│   │   ├── main.tsx                    # React application entrypoint
-│   │   ├── index.css                   # Custom dark-mode glassmorphism design system
-│   │   └── components/
-│   │       ├── modals/
-│   │       │   └── PreFlightPushModal.tsx   # 1-Click ESPN push review & diff confirmation
-│   │       ├── shared/
-│   │       │   ├── InstitutionalStatCard.tsx# Itemized NFL box-score stats drawer
-│   │       │   ├── InjuryStatusPill.tsx     # Interactive injury badge with practice progression
-│   │       │   ├── MatchupRatingKey.tsx     # Collapsible star rating legend
-│   │       │   ├── MatchupStarRating.tsx    # 1-to-5 star defensive matchup indicator
-│   │       │   ├── Tooltip.tsx              # Dual-tier (Beginner/Expert) hover glossary & tips
-│   │       │   └── WhyHelpers.tsx           # Provenance driver badges & formula helpers
-│   │       └── tabs/
-│   │           ├── LineupTab.tsx            # Tab 1: Optimal Lineup & interactive swap sandbox
-│   │           ├── CompareTab.tsx           # Tab 2: Head-to-Head Start/Sit Comparator (2-4 players)
-│   │           ├── IntelTab.tsx             # Tab 3: WR/CB Matchups, Vegas Game Script & Tale of the Tape
-│   │           ├── WaiversTab.tsx           # Tab 4: Waiver Upgrades & Bench Architecture Audit
-│   │           ├── TradesTab.tsx            # Tab 5: 2-for-1 Consolidation Trade Analyzer
-│   │           ├── InjuriesTab.tsx          # Tab 6: Live NFL Injury Wire & practice reports
-│   │           ├── LeagueTab.tsx            # Tab 7: Official League Standings & Roster Explorer
-│   │           ├── FantasyProsTab.tsx       # Tab 8: FantasyPros Consensus ECR & Streamers
-│   │           └── SettingsTab.tsx          # Tab 9: SQLite-Persisted Weights & Backtest Tuning
-├── tests/                              # Pytest Automated Test Suite (123 tests, 100% pass)
-│   ├── test_8man_ppr_expert_enhancements.py
-│   ├── test_8team_advanced_features.py
-│   ├── test_8team_features.py
+├── web/                                # Dedicated Website Platform
+│   ├── frontend/                       # React 18 + Vite Frontend Dashboard
+│   │   ├── src/
+│   │   │   ├── App.tsx                 # Orchestrator coordinating all 12 tabs & global sync
+│   │   │   ├── types.ts                # Strongly-typed TypeScript interfaces
+│   │   │   ├── main.tsx                # React application entrypoint
+│   │   │   ├── index.css               # Modern dark-mode glassmorphism design system
+│   │   │   └── components/
+│   │   │       ├── modals/             # PreFlightPushModal, CommandPalette, GameLogs
+│   │   │       ├── shared/             # Tooltip, InjuryStatusPill, StatCards, Logos
+│   │   │       └── tabs/               # All 12 Dashboard Tabs (Lineup, DFS, Intel, etc.)
+│   └── backend/                        # Website Backend Entrypoint & Router Registry
+│       ├── main.py                     # FastAPI application proxy
+│       └── routes.py                   # Registry of all 10 API routers
+├── research/                           # DFS Quantitative Research Lab
+│   ├── slates/                         # Dedicated Game Slate Solvers (16 historical scripts)
+│   ├── backtests/                      # Historical Backtesters & Monte Carlo Simulators
+│   ├── audits/                         # Ad-Hoc Player, Defensive & Box Score Audits
+│   ├── scratch/                        # Archived Exploratory Scratch Scripts
+│   └── tests/                          # Standalone Research Verification Scripts
+├── data/                               # Structured Data Lake
+│   ├── slates/                         # Raw FanDuel Salary CSVs
+│   ├── historical/                     # Realized Box Scores, Outcomes & Past Waivers
+│   ├── reports/                        # Master Post-Mortems & Quantitative Reports
+│   └── [Active Live Data]              # SQLite fantasy.db, Depth Charts, Live Injuries, Props
+├── tests/                              # Pytest Automated Test Suite (179 tests, 100% pass)
+│   ├── test_8team_ppr.py               # Master Consolidated 8-Team PPR Suite (24 tests)
 │   ├── test_all_features_e2e.py
 │   ├── test_analytics_and_optimizer.py
 │   ├── test_api.py
 │   ├── test_db_and_sync.py
+│   ├── test_dfs_api.py
+│   ├── test_draftedge_dvp.py
 │   ├── test_dst_dvp_matchups.py
-│   ├── test_elite_8team_upgrades.py
 │   ├── test_enhanced_features.py
 │   ├── test_espn_client.py
+│   ├── test_expert_consensus_waiver_service.py
 │   ├── test_fantasypros_integration.py
+│   ├── test_injury_wire.py
+│   ├── test_institutional_quant_model.py
+│   ├── test_live_actual_scoring.py
 │   ├── test_matchups_and_accuracy.py
+│   ├── test_polymarket_and_sentiment.py
 │   ├── test_props_and_tiers.py
 │   ├── test_roster_ordering.py
 │   ├── test_sleeper_projections.py
 │   ├── test_start_sit_factor_scores.py
+│   ├── test_vegas_team_selector.py
+│   ├── test_waiver_pro_engine.py
 │   ├── test_why_triggers.py
 │   └── test_wrcb_and_vegas_intel.py
 ├── Dockerfile                          # Multi-stage container definition (Node 20 + Python 3.11)
@@ -359,7 +364,6 @@ fantasydfs/
 ├── Procfile                            # Web server process runner
 ├── start.bat                           # 1-Click Windows launcher (Backend + Frontend)
 ├── start.ps1                           # PowerShell dual-service startup script
-├── test_espn.bat                       # 1-Click ESPN connection diagnostic test
 └── pyproject.toml                      # Project metadata, dependencies & pytest config
 ```
 

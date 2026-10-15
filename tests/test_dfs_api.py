@@ -65,7 +65,11 @@ def test_optimize_dfs_cash_mode(client: TestClient):
 
 def test_upload_slate_csv(client: TestClient):
     """Test uploading a custom FanDuel CSV slate."""
-    with open("earlyonlysalariesandrosters.csv", "r", encoding="utf-8") as f:
+    from pathlib import Path
+    csv_file = Path("data/slates/earlyonlysalariesandrosters.csv")
+    if not csv_file.exists():
+        csv_file = Path("earlyonlysalariesandrosters.csv")
+    with open(csv_file, "r", encoding="utf-8") as f:
         csv_content = f.read()
 
     res = client.post("/api/dfs/upload-slate", json={

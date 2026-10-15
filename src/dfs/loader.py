@@ -39,9 +39,9 @@ class DFSSlateLoader:
         self.data_dir = data_dir
 
     def find_latest_fanduel_csv(self) -> str | None:
-        """Locates the latest FanDuel NFL player list CSV in the data directory."""
-        pattern = os.path.join(self.data_dir, "FanDuel-NFL-*.csv")
-        matches = glob.glob(pattern)
+        """Locates the latest FanDuel NFL player list CSV in data/slates or data directory."""
+        matches = glob.glob(os.path.join(self.data_dir, "slates", "FanDuel-NFL-*.csv"))
+        matches.extend(glob.glob(os.path.join(self.data_dir, "FanDuel-NFL-*.csv")))
         if not matches:
             return None
         # Sort by modification time descending

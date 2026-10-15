@@ -16,10 +16,10 @@ if (-not (Test-Path $VenvPython)) {
 }
 
 # 2. Check frontend dependencies
-$FrontendModules = Join-Path $ProjectRoot "frontend\node_modules"
+$FrontendModules = Join-Path $ProjectRoot "web\frontend\node_modules"
 if (-not (Test-Path $FrontendModules)) {
     Write-Host "[INFO] Installing frontend npm packages..." -ForegroundColor Yellow
-    Push-Location (Join-Path $ProjectRoot "frontend")
+    Push-Location (Join-Path $ProjectRoot "web\frontend")
     & npm install
     Pop-Location
 }

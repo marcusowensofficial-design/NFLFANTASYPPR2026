@@ -1,6 +1,6 @@
 @echo off
 title Apex Fantasy Frontend (Port 5173)
-cd /d "%~dp0..\frontend"
+cd /d "%~dp0..\web\frontend"
 
 echo ======================================================================
 echo    APEX FANTASY FRONTEND (VITE + REACT)

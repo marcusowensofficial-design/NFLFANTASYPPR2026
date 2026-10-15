@@ -2,12 +2,12 @@
 
 # Stage 1: Build the Vite / React frontend
 FROM node:20-alpine AS frontend-builder
-WORKDIR /app/frontend
+WORKDIR /app/web/frontend
 
-COPY frontend/package*.json ./
+COPY web/frontend/package*.json ./
 RUN npm install
 
-COPY frontend/ ./
+COPY web/frontend/ ./
 RUN npm run build
 
 # Stage 2: Python Backend
@@ -27,15 +27,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend source code, reference data, and tests
+# Copy backend source code, reference data, web layer, and tests
 COPY src/ ./src/
+COPY web/ ./web/
 COPY data/ ./data/
 COPY scripts/ ./scripts/
 COPY tests/ ./tests/
 COPY pyproject.toml .
 
-# Copy pre-built frontend from stage 1 into frontend/dist
-COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+# Copy pre-built frontend from stage 1 into web/frontend/dist and frontend/dist
+COPY --from=frontend-builder /app/web/frontend/dist ./web/frontend/dist
+COPY --from=frontend-builder /app/web/frontend/dist ./frontend/dist
 
 # Ensure SQLite data folder exists
 RUN mkdir -p /app/data

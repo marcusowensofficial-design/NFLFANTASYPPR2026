@@ -19,9 +19,9 @@ if not exist ".venv\Scripts\activate.bat" (
 )
 
 REM 2. Verify frontend dependencies
-if not exist "frontend\node_modules" (
+if not exist "web\frontend\node_modules" (
     echo [INFO] Installing frontend packages...
-    pushd frontend
+    pushd web\frontend
     call npm install
     popd
 )
