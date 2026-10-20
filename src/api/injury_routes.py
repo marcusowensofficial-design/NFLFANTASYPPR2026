@@ -41,6 +41,7 @@ async def get_injuries(
     team: str | None = Query(default=None, description="Filter by NFL team display name or abbreviation"),
     position: str | None = Query(default=None, description="Filter by position (QB, RB, WR, TE, K, D/ST)"),
     status: str | None = Query(default=None, description="Filter by status (QUESTIONABLE, OUT, IR, ACTIVE)"),
+    practice_status: str | None = Query(default=None, description="Filter by practice status (DNP, LIMITED, FULL, NOT_REPORTED)"),
     search: str | None = Query(default=None, description="Search by player name"),
     limit: int = Query(default=100, ge=1, le=800, description="Max items to return"),
     force: bool = Query(default=False, description="Bypass cache and fetch live updates"),
@@ -64,12 +65,33 @@ async def get_injuries(
 
     filtered: list[PlayerInjuryReport] = []
     for inj in results:
-        if team and team.lower() not in inj.team.lower():
+        if team:
+            t_clean = resolve_team_abbrev(team)
+            t_abbr = resolve_team_abbrev(inj.team)
+            if t_clean != t_abbr and team.lower() not in inj.team.lower():
+                continue
+        if position and position.strip().upper() not in ("ALL", "") and inj.position.upper() != position.strip().upper():
             continue
-        if position and inj.position.upper() != position.upper():
-            continue
-        if status and status.upper() not in inj.status.upper():
-            continue
+        if status:
+            st_clean = status.strip().upper()
+            st = inj.status.upper()
+            if st_clean == "OUT":
+                if not inj.is_out:
+                    continue
+            elif st_clean in ("IR", "INJURED RESERVE", "RESERVE"):
+                if not (st in ("IR", "INJURED RESERVE") or "IR" in st or "RESERVE" in st):
+                    continue
+            elif st_clean == "ACTIVE":
+                if inj.is_out or "QUESTIONABLE" in st:
+                    continue
+            elif st_clean not in ("ALL", ""):
+                if st_clean not in st:
+                    continue
+        if practice_status and practice_status.strip().upper() not in ("ALL", ""):
+            ps_clean = practice_status.strip().upper()
+            curr_ps = (inj.practice_status or "NOT_REPORTED").upper()
+            if curr_ps != ps_clean and (inj.practice_status or "").upper() != ps_clean:
+                continue
         if search and search.lower() not in inj.name.lower():
             continue
         filtered.append(inj)

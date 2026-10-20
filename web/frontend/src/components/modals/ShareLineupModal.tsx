@@ -66,7 +66,7 @@ export const ShareLineupModal: React.FC<ShareLineupModalProps> = ({
             <div>
               <h3 className="share-modal-title">Export & Share Lineup Card</h3>
               <p className="share-modal-subtitle">
-                {league?.name || 'League'} • Week {league?.current_week || 6} • {startersTotal.toFixed(1)} Projected FPTS
+                {league?.name || 'League'} • Week {league?.current_week || 7} • {startersTotal.toFixed(1)} Projected FPTS
               </p>
             </div>
           </div>

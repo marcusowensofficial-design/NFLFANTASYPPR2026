@@ -32,6 +32,22 @@ logger = logging.getLogger(__name__)
 DB_PATH = os.path.abspath("data/fantasy.db")
 
 
+def parse_slate_date(date_str: str) -> str:
+    """Parses date strings like '10-18', '10-18-26', or ISO format into 2026 ISO UTC timestamps."""
+    if not date_str:
+        return "2026-10-18T17:00:00Z"
+    s = str(date_str).strip()
+    m = re.search(r"(\d{1,2})[-/](\d{1,2})(?:[-/](\d{2,4}))?", s)
+    if m:
+        month = int(m.group(1))
+        day = int(m.group(2))
+        year = int(m.group(3)) if m.group(3) else 2026
+        if year < 100:
+            year += 2000
+        return f"{year:04d}-{month:02d}-{day:02d}T17:00:00Z"
+    return s
+
+
 class DFSSlateLoader:
     """Ingests DFS CSVs and enriches player pools with Vegas and DvP metrics."""
 
@@ -81,14 +97,18 @@ class DFSSlateLoader:
                 eff_week = 4
             elif "10-08" in csv_str or "10-11" in csv_str or "tbvsdal" in csv_str or "tb@dal" in df_content_str.lower():
                 eff_week = 5
+            elif "10-15" in csv_str or "seahawks-vs-broncos" in csv_str:
+                eff_week = 6
+            elif "10-18" in csv_str or "mainslate10-18" in csv_str:
+                eff_week = 7
             else:
                 try:
                     conn_tmp = sqlite3.connect(DB_PATH)
                     cw = conn_tmp.execute("SELECT current_week FROM leagues LIMIT 1").fetchone()
                     conn_tmp.close()
-                    eff_week = cw[0] if cw and cw[0] else 5
+                    eff_week = cw[0] if cw and cw[0] else 7
                 except Exception:
-                    eff_week = 5
+                    eff_week = 7
 
         # 1. Fetch Schedule & Vegas Lines
         sched = await nfl_schedule_client.fetch_week_schedule(season=season, week=eff_week)
@@ -99,6 +119,7 @@ class DFSSlateLoader:
                 "opponent": g.away_team,
                 "is_home": True,
                 "game": f"{g.away_team}@{g.home_team}",
+                "game_date": g.date,
                 "game_ou": g.over_under,
                 "spread": g.spread,
                 "team_implied": g.home_implied_total,
@@ -113,6 +134,7 @@ class DFSSlateLoader:
                 "opponent": g.home_team,
                 "is_home": False,
                 "game": f"{g.away_team}@{g.home_team}",
+                "game_date": g.date,
                 "game_ou": g.over_under,
                 "spread": -g.spread,
                 "team_implied": g.away_implied_total,
@@ -323,6 +345,7 @@ class DFSSlateLoader:
                     "opponent": opp,
                     "is_home": is_home,
                     "game": game_str,
+                    "game_date": parse_slate_date(str(target_csv)),
                     "game_ou": 44.5,
                     "spread": 0.0,
                     "team_implied": 22.25,
@@ -597,6 +620,7 @@ class DFSSlateLoader:
                 "scheme_note": scheme_note,
                 # Vegas Metrics
                 "game": v.get("game"),
+                "game_date": v.get("game_date") or parse_slate_date(str(target_csv)),
                 "is_home": v.get("is_home"),
                 "is_dome": v.get("is_dome"),
                 "game_ou": v.get("game_ou"),

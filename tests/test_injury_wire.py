@@ -4,8 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.main import app
-from src.adapters.nfl.injuries_client import PlayerInjuryReport, nfl_injuries_client
-from src.adapters.nfl.depthchart_client import TeamDepthChart, DepthChartAthlete
+from src.adapters.nfl.injuries_client import PlayerInjuryReport, nfl_injuries_client, NFLInjuriesClient
+from src.adapters.nfl.depthchart_client import TeamDepthChart, DepthChartAthlete, NFLDepthChartClient, nfl_depthchart_client
 
 
 def test_practice_trend_parsing():
@@ -134,3 +134,172 @@ def test_api_injuries_endpoint_with_force():
         assert "practice_trend" in item
         assert "decoy_risk" in item
         assert "backup_player_name" in item
+
+
+def test_practice_nlp_negative_guards():
+    """Verify negative guards prevent false positives for practice squad, barring setbacks, and limited action."""
+    # Guard 1: "practice squad" should not be marked as practice participation
+    inj_ps = PlayerInjuryReport(
+        athlete_id=20,
+        name="Depth CB",
+        position="CB",
+        team="PHI",
+        status="ACTIVE",
+        headline="Signed to active roster",
+        notes="Promoted from the practice squad to the active roster Tuesday",
+    )
+    assert inj_ps.practice_status is None or inj_ps.practice_status == "NOT_REPORTED"
+
+    # Guard 2: "Barring any setbacks" should not trigger SETBACK trend
+    inj_barring = PlayerInjuryReport(
+        athlete_id=21,
+        name="Lead RB",
+        position="RB",
+        team="NE",
+        status="QUESTIONABLE",
+        headline="Estimated as full participant",
+        notes="Barring any setbacks, he is expected to carry a normal workload Sunday",
+    )
+    assert inj_barring.practice_trend != "SETBACK (DNP)"
+
+    # Guard 3: "Limited action on Sunday" should not trigger LIMITED practice status
+    inj_game_action = PlayerInjuryReport(
+        athlete_id=22,
+        name="WR3",
+        position="WR",
+        team="DEN",
+        status="ACTIVE",
+        headline="Played limited snaps in Week 6",
+        notes="Caught 2 passes for 18 yards in limited action during Sunday's game",
+    )
+    assert inj_game_action.practice_status != "LIMITED"
+
+
+@pytest.mark.anyio
+async def test_offline_disk_fallback_injuries(monkeypatch):
+    """Verify NFLInjuriesClient falls back to local data/injuries_live_2026.json when network is offline."""
+    import httpx
+    async def mock_get(*args, **kwargs):
+        raise httpx.ConnectError("Simulated offline network")
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
+    client = NFLInjuriesClient()
+    results = await client.fetch_injuries(force=True)
+    assert len(results) == 800
+    # Verify 100% of records have non-zero athlete IDs
+    assert all(aid > 0 for aid in results.keys())
+    # Spot check that practice status and decoy risk are populated
+    any_dnp = any(r.practice_status == "DNP" for r in results.values())
+    assert any_dnp
+
+
+@pytest.mark.anyio
+async def test_offline_disk_fallback_depthcharts(monkeypatch):
+    """Verify NFLDepthChartClient falls back to local data/nfl_depth_charts_2026.json for all 32 teams."""
+    import httpx
+    async def mock_get(*args, **kwargs):
+        raise httpx.ConnectError("Simulated offline network")
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
+    client = NFLDepthChartClient()
+    all_charts = await client.fetch_all_depth_charts(force=True)
+    assert len(all_charts) >= 32
+    for team in ("KC", "SF", "GB", "BUF", "DET", "WAS"):
+        assert team in all_charts
+        assert all_charts[team].pro_team in ("KC", "SF", "GB", "BUF", "DET", "WAS", "WSH")
+
+
+@pytest.mark.anyio
+async def test_depthchart_washington_abbreviations():
+    """Verify both WAS and WSH resolve Washington depth chart cleanly without errors."""
+    chart_was = await nfl_depthchart_client.fetch_team_depth_chart("WAS")
+    chart_wsh = await nfl_depthchart_client.fetch_team_depth_chart("WSH")
+    assert chart_was is not None
+    assert chart_wsh is not None
+    assert chart_was.pro_team in ("WAS", "WSH")
+    assert chart_wsh.pro_team in ("WAS", "WSH")
+
+
+def test_injury_report_type_aliases_and_team_model():
+    """Verify InjuryReport alias and TeamInjuries data structures."""
+    from src.adapters.nfl.injuries_client import InjuryReport, TeamInjuries
+    assert InjuryReport is PlayerInjuryReport
+
+    report_out = PlayerInjuryReport(athlete_id=101, name="P1", position="RB", team="KC", status="OUT")
+    report_q = PlayerInjuryReport(athlete_id=102, name="P2", position="WR", team="KC", status="QUESTIONABLE")
+    report_act = PlayerInjuryReport(athlete_id=103, name="P3", position="QB", team="KC", status="ACTIVE")
+
+    team_inj = TeamInjuries(pro_team="KC", injuries=[report_out, report_q, report_act])
+    assert team_inj.total_count == 3
+    assert team_inj.out_count == 1
+    assert team_inj.questionable_count == 1
+
+
+def test_api_team_abbreviation_filtering():
+    """Verify /api/injuries supports team abbreviations like KC, SF, GB, WAS."""
+    client = TestClient(app)
+    for team_abbr in ("KC", "SF", "GB", "WAS"):
+        resp = client.get(f"/api/injuries?team={team_abbr}&limit=50")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["matched_count"] > 0
+        for item in data["injuries"]:
+            assert item["team_abbr"] == ("WAS" if team_abbr in ("WAS", "WSH") else team_abbr)
+
+
+def test_api_status_out_filtering_includes_ir():
+    """Verify /api/injuries?status=OUT matches all ruled out players including IR, PUP, and OUT."""
+    client = TestClient(app)
+    resp = client.get("/api/injuries?status=OUT&limit=50")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["matched_count"] > 0
+    for item in data["injuries"]:
+        assert item["is_out"] is True
+
+
+def test_api_team_alias_wsh_filtering():
+    """Verify /api/injuries?team=WSH matches Washington records identically to WAS."""
+    client = TestClient(app)
+    resp_was = client.get("/api/injuries?team=WAS&limit=50")
+    resp_wsh = client.get("/api/injuries?team=WSH&limit=50")
+    assert resp_was.status_code == 200
+    assert resp_wsh.status_code == 200
+    assert resp_was.json()["matched_count"] > 0
+    assert resp_wsh.json()["matched_count"] == resp_was.json()["matched_count"]
+
+
+def test_api_status_ir_filtering():
+    """Verify /api/injuries?status=IR matches players with INJURED RESERVE status."""
+    client = TestClient(app)
+    resp = client.get("/api/injuries?status=IR&limit=100")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["matched_count"] > 0
+    for item in data["injuries"]:
+        assert "IR" in item["status"] or "RESERVE" in item["status"]
+
+
+def test_api_practice_status_filtering():
+    """Verify /api/injuries?practice_status=DNP filters exclusively for DNP players."""
+    client = TestClient(app)
+    resp = client.get("/api/injuries?practice_status=DNP&limit=100")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["matched_count"] > 0
+    for item in data["injuries"]:
+        assert item["practice_status"] == "DNP"
+
+
+def test_parenthesized_dnp_parsing():
+    """Verify parenthesized (DNP) and trailing punctuation parse properly as DNP."""
+    inj = PlayerInjuryReport(
+        athlete_id=99,
+        name="Test WR",
+        position="WR",
+        team="KC",
+        status="QUESTIONABLE",
+        headline="Knee - (DNP)",
+    )
+    assert inj.practice_status == "DNP"
+

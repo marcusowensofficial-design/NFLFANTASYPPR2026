@@ -209,17 +209,18 @@ class NFLScheduleClient:
             except Exception as e:
                 logger.debug(f"Error loading {vegas_path}: {e}")
 
-        # 2. Check nfl_2026_weeks_1_3.json master schedule
-        data_path = Path(__file__).resolve().parent.parent.parent.parent / "data" / "nfl_2026_weeks_1_3.json"
-        if data_path.exists():
-            try:
-                with open(data_path, "r", encoding="utf-8") as f:
-                    weeks_data = json.load(f)
-                week_key = str(week)
-                if week_key in weeks_data:
-                    return [NFLGame(**g) for g in weeks_data[week_key]]
-            except Exception as e:
-                logger.debug(f"Error loading {data_path}: {e}")
+        # 2. Check nfl_2026_weeks_1_6.json or nfl_2026_weeks_1_3.json master schedule
+        for schedule_filename in ["nfl_2026_weeks_1_6.json", "nfl_2026_weeks_1_3.json"]:
+            data_path = Path(__file__).resolve().parent.parent.parent.parent / "data" / schedule_filename
+            if data_path.exists():
+                try:
+                    with open(data_path, "r", encoding="utf-8") as f:
+                        weeks_data = json.load(f)
+                    week_key = str(week)
+                    if week_key in weeks_data:
+                        return [NFLGame(**g) for g in weeks_data[week_key]]
+                except Exception as e:
+                    logger.debug(f"Error loading {data_path}: {e}")
 
         if week == 1:
             return [
@@ -258,6 +259,23 @@ class NFLScheduleClient:
                 NFLGame(id="401872942", name="Miami Dolphins at San Francisco 49ers", date="2026-09-20T20:25Z", venue_name="Levi's Stadium", is_dome=False, home_team="SF", away_team="MIA", over_under=44.5, spread=-13.5, home_implied_total=29.0, away_implied_total=15.5),
                 NFLGame(id="401872945", name="Indianapolis Colts at Kansas City Chiefs", date="2026-09-21T00:20Z", venue_name="Arrowhead Stadium", is_dome=False, home_team="KC", away_team="IND", over_under=46.5, spread=-6.5, home_implied_total=26.5, away_implied_total=20.0),
                 NFLGame(id="401872947", name="New York Giants at Los Angeles Rams", date="2026-09-22T00:15Z", venue_name="SoFi Stadium", is_dome=False, home_team="LAR", away_team="NYG", over_under=47.5, spread=-7.0, home_implied_total=27.25, away_implied_total=20.25),
+            ]
+        elif week == 7:
+            return [
+                NFLGame(id="401873010", name="New England Patriots at Chicago Bears", date="2026-10-23T00:15Z", venue_name="Soldier Field", is_dome=False, home_team="CHI", away_team="NE", over_under=50.5, spread=-3.0, home_implied_total=26.75, away_implied_total=23.75),
+                NFLGame(id="401873011", name="Pittsburgh Steelers at New Orleans Saints", date="2026-10-25T13:30Z", venue_name="Stade de France", is_dome=False, home_team="NO", away_team="PIT", over_under=44.5, spread=3.5, home_implied_total=20.5, away_implied_total=24.0),
+                NFLGame(id="401873017", name="San Francisco 49ers at Atlanta Falcons", date="2026-10-25T17:00Z", venue_name="Mercedes-Benz Stadium", is_dome=True, home_team="ATL", away_team="SF", over_under=50.5, spread=3.0, home_implied_total=23.75, away_implied_total=26.75),
+                NFLGame(id="401873013", name="Cleveland Browns at Tennessee Titans", date="2026-10-25T17:00Z", venue_name="Nissan Stadium", is_dome=False, home_team="TEN", away_team="CLE", over_under=38.5, spread=1.5, home_implied_total=18.5, away_implied_total=20.0),
+                NFLGame(id="401873014", name="Indianapolis Colts at Minnesota Vikings", date="2026-10-25T17:00Z", venue_name="U.S. Bank Stadium", is_dome=True, home_team="MIN", away_team="IND", over_under=41.5, spread=-6.5, home_implied_total=24.0, away_implied_total=17.5),
+                NFLGame(id="401873015", name="Miami Dolphins at New York Jets", date="2026-10-25T17:00Z", venue_name="MetLife Stadium", is_dome=False, home_team="NYJ", away_team="MIA", over_under=38.5, spread=-4.5, home_implied_total=21.5, away_implied_total=17.0),
+                NFLGame(id="401873018", name="Tampa Bay Buccaneers at Carolina Panthers", date="2026-10-25T17:00Z", venue_name="Bank of America Stadium", is_dome=False, home_team="CAR", away_team="TB", over_under=44.5, spread=-3.5, home_implied_total=24.0, away_implied_total=20.5),
+                NFLGame(id="401873012", name="Cincinnati Bengals at Baltimore Ravens", date="2026-10-25T17:00Z", venue_name="M&T Bank Stadium", is_dome=False, home_team="BAL", away_team="CIN", over_under=51.5, spread=-3.0, home_implied_total=27.25, away_implied_total=24.25),
+                NFLGame(id="401873016", name="New York Giants at Houston Texans", date="2026-10-25T17:00Z", venue_name="Reliant Stadium", is_dome=True, home_team="HOU", away_team="NYG", over_under=42.5, spread=-10.0, home_implied_total=26.25, away_implied_total=16.25),
+                NFLGame(id="401873019", name="Denver Broncos at Arizona Cardinals", date="2026-10-25T20:05Z", venue_name="State Farm Stadium", is_dome=True, home_team="ARI", away_team="DEN", over_under=43.5, spread=4.5, home_implied_total=19.5, away_implied_total=24.0),
+                NFLGame(id="401873020", name="Green Bay Packers at Detroit Lions", date="2026-10-25T20:25Z", venue_name="Ford Field", is_dome=True, home_team="DET", away_team="GB", over_under=53.5, spread=-3.0, home_implied_total=28.25, away_implied_total=25.25),
+                NFLGame(id="401873021", name="Los Angeles Rams at Las Vegas Raiders", date="2026-10-25T20:25Z", venue_name="Allegiant Stadium", is_dome=True, home_team="LV", away_team="LAR", over_under=47.5, spread=4.5, home_implied_total=21.5, away_implied_total=26.0),
+                NFLGame(id="401873022", name="Kansas City Chiefs at Seattle Seahawks", date="2026-10-26T00:20Z", venue_name="Lumen Field", is_dome=False, home_team="SEA", away_team="KC", over_under=42.5, spread=-2.5, home_implied_total=22.5, away_implied_total=20.0),
+                NFLGame(id="401873009", name="Dallas Cowboys at Philadelphia Eagles", date="2026-10-27T00:15Z", venue_name="Lincoln Financial Field", is_dome=False, home_team="PHI", away_team="DAL", over_under=44.5, spread=4.5, home_implied_total=20.0, away_implied_total=24.5),
             ]
         return []
 

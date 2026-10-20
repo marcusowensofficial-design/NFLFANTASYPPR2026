@@ -135,7 +135,7 @@ def get_current_season_and_week() -> tuple[int, int]:
                 return l.season or 2026, l.current_week
     except Exception:
         pass
-    return 2026, 6
+    return 2026, 7
 
 
 async def sync_dvp(season: int = 2026, week: int | None = None) -> int:

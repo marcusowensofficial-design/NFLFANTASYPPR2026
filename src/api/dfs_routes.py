@@ -74,11 +74,11 @@ SLATES_MAP: dict[str, dict[str, Any]] = {
     },
     "main": {
         "id": "main",
-        "name": "Week 4 Main Slate ($60k Classic)",
-        "games_count": 13,
+        "name": "Week 7 Main Slate ($60k Classic)",
+        "games_count": 10,
         "platform": "FanDuel ($60k Cap)",
         "is_showdown": False,
-        "default_csv": str(_find_csv("FanDuel-NFL-2026 MDT-10 MDT-04 MDT-134747-players-list.csv")),
+        "default_csv": str(_find_csv("mainslate10-18-26.csv")),
     },
     "showdown_w4_mnf": {
         "id": "showdown_w4_mnf",
@@ -183,8 +183,14 @@ def _resolve_csv_path(slate_id: str) -> str:
         if w5_tnf.exists():
             return str(w5_tnf)
 
+    # Week 7 Main Slate checks
+    if sid in ("main", "main_week7", "week7", "week7_main", "w7_main"):
+        w7_main = _find_csv("mainslate10-18-26.csv")
+        if w7_main.exists():
+            return str(w7_main)
+
     # Week 4 Main Slate checks
-    if sid in ("main", "main_week4", "week4", "week4_main", "w4_main"):
+    if sid in ("main_week4", "week4", "week4_main", "w4_main"):
         w4_main = _find_csv("FanDuel-NFL-2026 MDT-10 MDT-04 MDT-134747-players-list.csv")
         if w4_main.exists():
             return str(w4_main)
@@ -394,6 +400,36 @@ async def get_available_slates() -> list[dict[str, Any]]:
             "last_modified": last_modified,
         })
     return available
+
+
+@router.get("/salaries")
+async def get_dfs_salaries(
+    slate: str | None = Query(default=None, description="Slate ID (e.g. 'main', 'early')"),
+    slate_id: str | None = Query(default=None, description="Slate ID alias"),
+    projection_source: str = Query(default="MODEL", description="Projection source: MODEL, CONSENSUS, FANTASYPROS, SLEEPER, ESPN"),
+) -> dict[str, Any]:
+    """Returns salary catalog and player pool for the specified DFS slate."""
+    target_slate = slate or slate_id or "main"
+    csv_path = _resolve_csv_path(target_slate)
+    try:
+        slate_df = await dfs_engine.get_slate(csv_path=csv_path, projection_source=projection_source)
+    except Exception as e:
+        logger.error(f"Failed to load salaries for {target_slate}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to load slate: {e}")
+
+    if slate_df is None or slate_df.empty:
+        raise HTTPException(status_code=404, detail=f"No salary data found for slate '{target_slate}'.")
+
+    records = json.loads(slate_df.to_json(orient="records"))
+    slate_info = SLATES_MAP.get(target_slate.lower(), {})
+    return {
+        "success": True,
+        "slate": target_slate,
+        "slate_name": slate_info.get("name", target_slate),
+        "total_players": len(records),
+        "games_count": slate_info.get("games_count", len(slate_df["game"].dropna().unique()) if "game" in slate_df.columns else 0),
+        "players": records,
+    }
 
 
 @router.get("/slate-data")

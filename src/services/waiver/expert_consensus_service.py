@@ -23,12 +23,13 @@ from src.services.recommendation.scoring_engine import StartSitEvaluation
 logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
+WEEK_7_PATH = DATA_DIR / "waiver_expert_consensus_week_7_2026.json"
 WEEK_6_PATH = DATA_DIR / "waiver_expert_consensus_week_6_2026.json"
 WEEK_5_PATH = DATA_DIR / "waiver_expert_consensus_week_5_2026.json"
 WEEK_4_PATH = DATA_DIR / "waiver_expert_consensus_week_4_2026.json"
 WEEK_3_PATH = DATA_DIR / "waiver_expert_consensus_week_3_2026.json"
 WEEK_2_PATH = DATA_DIR / "waiver_expert_consensus_week_2_2026.json"
-CONSENSUS_DATA_PATH = WEEK_6_PATH if WEEK_6_PATH.exists() else (WEEK_5_PATH if WEEK_5_PATH.exists() else (WEEK_4_PATH if WEEK_4_PATH.exists() else (WEEK_3_PATH if WEEK_3_PATH.exists() else WEEK_2_PATH)))
+CONSENSUS_DATA_PATH = WEEK_7_PATH if WEEK_7_PATH.exists() else (WEEK_6_PATH if WEEK_6_PATH.exists() else (WEEK_5_PATH if WEEK_5_PATH.exists() else (WEEK_4_PATH if WEEK_4_PATH.exists() else (WEEK_3_PATH if WEEK_3_PATH.exists() else WEEK_2_PATH))))
 
 
 class ExpertConsensusPlayerItem(BaseModel):
@@ -83,7 +84,9 @@ class ExpertConsensusWaiverService:
     def load_consensus_data(self, week: int | None = None) -> dict[str, Any]:
         """Loads and caches the expert consensus dataset for the active or requested week."""
         target_path = self.data_path
-        if week == 6 and WEEK_6_PATH.exists():
+        if week == 7 and WEEK_7_PATH.exists():
+            target_path = WEEK_7_PATH
+        elif week == 6 and WEEK_6_PATH.exists():
             target_path = WEEK_6_PATH
         elif week == 5 and WEEK_5_PATH.exists():
             target_path = WEEK_5_PATH
@@ -318,7 +321,7 @@ class ExpertConsensusWaiverService:
         rostered_names: set[str] | None = None,
         rostered_pids: set[int] | None = None,
         rostered_dst_teams: set[str] | None = None,
-        current_week: int = 6,
+        current_week: int = 7,
     ) -> list[PositionalNeedItem]:
         """Diagnoses team roster health, injuries, projection gaps, and bench depth by position.
 
@@ -375,8 +378,8 @@ class ExpertConsensusWaiverService:
                 return [p["full_name"] for p in items[:count]]
             return avail
 
-        # Identify bye teams for current week (Week 6: CIN, DET, MIA, MIN | Week 5: KC, CAR)
-        bye_teams = {"CIN", "DET", "MIA", "MIN"} if current_week == 6 else ({"KC", "CAR"} if current_week == 5 else set())
+        # Identify bye teams for current week (Week 7: BUF, JAX, LAC, WSH | Week 6: CIN, DET, MIA, MIN | Week 5: KC, CAR)
+        bye_teams = {"BUF", "JAX", "LAC", "WSH"} if current_week == 7 else ({"CIN", "DET", "MIA", "MIN"} if current_week == 6 else ({"KC", "CAR"} if current_week == 5 else set()))
 
         needs: list[PositionalNeedItem] = []
 
@@ -628,7 +631,7 @@ class ExpertConsensusWaiverService:
                     recommended_consensus_targets=top_qb_targets,
                 )
             )
-        elif not qbs or (qbs and qbs[0].start_score < 72.0) or (qbs and qbs[0].injury_status in ("OUT", "IR", "DOUBTFUL")):
+        elif not qbs or (qbs and qbs[0].start_score < 72.0 and qbs[0].projected_points < 18.0) or (qbs and qbs[0].injury_status in ("OUT", "IR", "DOUBTFUL")):
             needs.append(
                 PositionalNeedItem(
                     position="QB",
@@ -639,7 +642,7 @@ class ExpertConsensusWaiverService:
                     recommended_consensus_targets=top_qb_targets,
                 )
             )
-        elif len(qbs) == 1 and qbs[0].start_score >= 80.0 and qbs[0].injury_status not in ("OUT", "IR", "QUESTIONABLE"):
+        elif len(qbs) == 1 and (qbs[0].start_score >= 80.0 or qbs[0].projected_points >= 18.0) and qbs[0].injury_status not in ("OUT", "IR", "QUESTIONABLE"):
             needs.append(
                 PositionalNeedItem(
                     position="QB",
@@ -869,7 +872,7 @@ class ExpertConsensusWaiverService:
         self,
         db: Session,
         league_id: int,
-        current_week: int = 6,
+        current_week: int = 7,
         user_team_id: int = 6,
     ) -> list[LeagueTeamWaiverProfile]:
         """Analyzes all teams in the league to diagnose their Week 5 positional needs, bye casualties,
@@ -896,7 +899,7 @@ class ExpertConsensusWaiverService:
         rostered_names.update(rostered_names_clean)
         rostered_dst_teams = {r[2].upper() for r in rostered_rows if r[3] and r[3].upper() in ("D/ST", "DST") and r[2]}
 
-        bye_teams = {"CIN", "DET", "MIA", "MIN"} if current_week == 6 else ({"KC", "CAR"} if current_week == 5 else set())
+        bye_teams = {"BUF", "JAX", "LAC", "WSH"} if current_week == 7 else ({"CIN", "DET", "MIA", "MIN"} if current_week == 6 else ({"KC", "CAR"} if current_week == 5 else set()))
 
         profiles: list[LeagueTeamWaiverProfile] = []
 

@@ -82,7 +82,7 @@ class DvPService:
     def _get_db(self) -> Session:
         return self._external_db if self._external_db is not None else SessionLocal()
 
-    async def sync_dvp_data(self, season: int = 2026, week: int = 6) -> dict[str, Any]:
+    async def sync_dvp_data(self, season: int = 2026, week: int = 7) -> dict[str, Any]:
         """Scrapes or loads latest DvP data from DraftEdge and upserts to database."""
         db = self._get_db()
         should_close = self._external_db is None
@@ -192,7 +192,7 @@ class DvPService:
     def get_dvp_ratings(
         self,
         season: int = 2026,
-        week: int = 6,
+        week: int = 7,
         position: str | None = None,
         pro_team: str | None = None,
     ) -> list[dict[str, Any]]:
@@ -267,7 +267,7 @@ class DvPService:
         opponent_team: str,
         position: str,
         season: int = 2026,
-        week: int = 6,
+        week: int = 7,
     ) -> dict[str, Any] | None:
         """Retrieves exact DvP matchup details for an opponent defense and offensive position."""
         opp = opponent_team.upper().strip()
@@ -334,7 +334,7 @@ class DvPService:
             if should_close:
                 db.close()
 
-    def get_dvp_status(self, season: int = 2026, week: int = 6) -> dict[str, Any]:
+    def get_dvp_status(self, season: int = 2026, week: int = 7) -> dict[str, Any]:
         """Provides status and data freshness diagnostics."""
         db = self._get_db()
         should_close = self._external_db is None

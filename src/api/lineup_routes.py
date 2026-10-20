@@ -69,6 +69,7 @@ class LineupPushResponse(BaseModel):
 
 
 @router.get("/optimal", response_model=OptimizedLineupResult)
+@router.get("/optimize", response_model=OptimizedLineupResult)
 async def get_optimal_lineup(
     team_id: int | None = Query(default=None, description="Optional team ID (defaults to user team)"),
     mode: str = Query(default="BALANCED", description="Strategy mode: BALANCED, CEILING, FLOOR, or AUTO"),

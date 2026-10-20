@@ -690,7 +690,7 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span className="pill cyan" style={{ fontWeight: 700 }}>
-              Week {league?.current_week || 6} DvP Matrix
+              Week {league?.current_week || 7} DvP Matrix
             </span>
             <button
               type="button"
@@ -713,7 +713,7 @@ const SortArrowIcon: React.FC<{ isActive: boolean; isAsc: boolean }> = ({ isActi
             <span className="pill cyan" style={{ fontSize: '10px' }}>Half-PPR (FanDuel) & Full-PPR (ESPN)</span>
           </div>
           <p className="intel-dvp-banner-text">
-            Rankings evaluate defensive generosity per position group and overall as a composite unit. For <strong>Week {league?.current_week || 6}</strong>, ratings blend realized game data with the weighted 2025-26 baseline. Click any column header to sort high-to-low or low-to-high.
+            Rankings evaluate defensive generosity per position group and overall as a composite unit. For <strong>Week {league?.current_week || 7}</strong>, ratings blend realized game data with the weighted 2025-26 baseline. Click any column header to sort high-to-low or low-to-high.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
             <span className="pill purple" style={{ fontSize: '10.5px' }}>

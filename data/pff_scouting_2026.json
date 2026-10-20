@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "last_updated": "2026-10-08T22:46:44.825210+00:00",
+  "last_updated": "2026-10-20T17:15:40.678116+00:00",
   "description": "PFF Advanced Scouting baseline with verified 2026 NFL depth charts, coverage grades, shadow tracking, and trench metrics.",
   "teams": {
     "ARI": {
@@ -43,7 +43,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Starling Thomas V",
+          "name": "Will Johnson",
           "grade": 64.0
         },
         "slot_backup": {
@@ -101,7 +101,7 @@
           "fpts_per_route": 0.31
         },
         "slot": {
-          "name": "Billy Bowman Jr.",
+          "name": "Sydney Brown",
           "role": "SLOT",
           "grade": 74.0,
           "is_shadow": false,
@@ -123,7 +123,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Sydney Brown",
+          "name": "Billy Bowman Jr.",
           "grade": 63.0
         },
         "safety_backup": {
@@ -149,7 +149,7 @@
         "stuffed_run_pct": 19.5,
         "rank": 19,
         "key_disruptors": [
-          "LaCale London",
+          "Maason Smith",
           "Brandon Dorlus",
           "Gervon Dexter Sr."
         ]
@@ -244,7 +244,7 @@
           "name": "Christian Benford"
         },
         "outside2": {
-          "name": "Maxwell Hairston",
+          "name": "Davison Igbinosun",
           "role": "RWR",
           "grade": 73.0,
           "is_shadow": false,
@@ -271,7 +271,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Davison Igbinosun",
+          "name": "Dorian Strong",
           "grade": 64.0
         },
         "slot_backup": {
@@ -366,7 +366,7 @@
         "rank": 30,
         "key_tackles": [
           "Rasheed Walker",
-          "Monroe Freeling"
+          "Taylor Moton"
         ]
       },
       "defensive_line_front": {
@@ -378,7 +378,7 @@
         "rank": 31,
         "key_disruptors": [
           "Derrick Brown",
-          "Bobby Brown III",
+          "Tershawn Wharton",
           "Lee Hunter"
         ]
       }
@@ -405,7 +405,7 @@
           "name": "Tyrique Stevenson Sr."
         },
         "slot": {
-          "name": "Cam Lewis",
+          "name": "Kyler Gordon",
           "role": "SLOT",
           "grade": 74.0,
           "is_shadow": false,
@@ -427,11 +427,11 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Malik Muhammad II",
+          "name": "Nick McCloud",
           "grade": 63.0
         },
         "safety_backup": {
-          "name": "Xavier Woods",
+          "name": "Cam Lewis",
           "grade": 66.0
         }
       },
@@ -441,7 +441,7 @@
         "overall_grade": 75.8,
         "rank": 14,
         "key_tackles": [
-          "Ozzy Trapilo",
+          "Theo Benedet",
           "Darnell Wright"
         ]
       },
@@ -453,7 +453,7 @@
         "stuffed_run_pct": 22.5,
         "rank": 10,
         "key_disruptors": [
-          "Montez Sweat",
+          "Austin Booker",
           "James Lynch",
           "Grady Jarrett"
         ]
@@ -633,7 +633,7 @@
           "name": "DaRon Bland"
         },
         "slot": {
-          "name": "Reddy Steward",
+          "name": "Caleb Downs",
           "role": "SLOT",
           "grade": 74.0,
           "is_shadow": false,
@@ -655,7 +655,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Caleb Downs",
+          "name": "Derion Kendrick",
           "grade": 63.0
         },
         "safety_backup": {
@@ -794,7 +794,7 @@
           "name": "Roger McCreary"
         },
         "safety": {
-          "name": "Christian Izien",
+          "name": "Keith Abney II",
           "role": "SS",
           "grade": 77.0,
           "coverage_grade": 76.0,
@@ -803,11 +803,11 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Keith Abney II",
+          "name": "Khalil Dorsey",
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Roger McCreary",
+          "name": "Christian Izien",
           "grade": 63.0
         },
         "safety_backup": {
@@ -911,7 +911,7 @@
         "key_disruptors": [
           "Karl Brooks",
           "Devonte Wyatt",
-          "Javon Hargrave"
+          "Chris McClellan"
         ]
       }
     },
@@ -955,7 +955,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Collin Wright",
+          "name": "Bryce Hall",
           "grade": 64.0
         },
         "slot_backup": {
@@ -1061,7 +1061,7 @@
         "stuffed_run_pct": 15.5,
         "rank": 24,
         "key_disruptors": [
-          "Arden Key",
+          "Jaylahn Tuimoloau",
           "Laiatu Latu",
           "Grover Stewart"
         ]
@@ -1125,7 +1125,7 @@
         "overall_grade": 70.2,
         "rank": 20,
         "key_tackles": [
-          "Anton Harrison",
+          "Walker Little",
           "Cole Van Lanen"
         ]
       },
@@ -1277,7 +1277,7 @@
         "overall_grade": 80.5,
         "rank": 10,
         "key_tackles": [
-          "Rashawn Slater",
+          "Travis Burke",
           "Joe Alt"
         ]
       },
@@ -1365,9 +1365,9 @@
         "stuffed_run_pct": 18.0,
         "rank": 18,
         "key_disruptors": [
-          "Kobie Turner",
+          "Braden Fiske",
           "Aaron Donald",
-          "Poona Ford"
+          "Ty Hamilton"
         ]
       }
     },
@@ -1384,7 +1384,7 @@
           "fpts_per_route": 0.27
         },
         "outside2": {
-          "name": "Hezekiah Masses",
+          "name": "Darien Porter",
           "role": "RWR",
           "grade": 73.0,
           "is_shadow": false,
@@ -1478,7 +1478,7 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "name": "Michael Taaffe",
+          "name": "Dante Trader Jr.",
           "role": "SS",
           "grade": 77.0,
           "coverage_grade": 76.0,
@@ -1639,11 +1639,11 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Channing Canada",
+          "name": "Charles Woods",
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Marcus Jones",
+          "name": "Kindle Vildor",
           "grade": 63.0
         },
         "safety_backup": {
@@ -1715,7 +1715,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Mike Reid",
+          "name": "Decamerion Richardson",
           "grade": 64.0
         },
         "slot_backup": {
@@ -1822,7 +1822,7 @@
         "rank": 20,
         "key_disruptors": [
           "Shelby Harris",
-          "Chauncey Golston",
+          "Darius Alexander",
           "DJ Reader"
         ]
       }
@@ -2296,13 +2296,13 @@
           "name": "Cor'Dale Flott"
         },
         "outside2": {
+          "name": "Joshua Williams",
           "role": "RWR",
-          "grade": 75.0,
+          "grade": 73.0,
           "is_shadow": false,
-          "targets_per_route": 0.18,
-          "catch_rate": 0.6,
-          "fpts_per_route": 0.27,
-          "name": "Alontae Taylor"
+          "targets_per_route": 0.2,
+          "catch_rate": 0.63,
+          "fpts_per_route": 0.31
         },
         "slot": {
           "name": "Marcus Harris",
@@ -2327,7 +2327,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Marcus Harris",
+          "name": "Isaiah Oliver",
           "grade": 63.0
         },
         "safety_backup": {
@@ -2359,8 +2359,8 @@
         ]
       }
     },
-    "WSH": {
-      "team_name": "Washington Commanders",
+    "WAS": {
+      "team_name": "WAS Team",
       "cornerbacks": {
         "outside1": {
           "role": "LWR",
@@ -2372,7 +2372,7 @@
           "name": "Rasul Douglas"
         },
         "outside2": {
-          "name": "Fabian Moreau",
+          "name": "Trey Amos",
           "role": "RWR",
           "grade": 73.0,
           "is_shadow": false,
@@ -2399,7 +2399,83 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
+          "name": "Fabian Moreau",
+          "grade": 64.0
+        },
+        "slot_backup": {
+          "name": "Mike Sainristil",
+          "grade": 63.0
+        },
+        "safety_backup": {
+          "name": "Jeremy Reaves",
+          "grade": 66.0
+        }
+      },
+      "offensive_line": {
+        "pass_block_grade": 72.0,
+        "run_block_grade": 72.0,
+        "overall_grade": 72.0,
+        "rank": 16,
+        "key_tackles": [
+          "Brandon Coleman",
+          "Josh Conerly Jr."
+        ]
+      },
+      "defensive_line_front": {
+        "pass_rush_grade": 72.0,
+        "run_defense_grade": 72.0,
+        "overall_grade": 72.0,
+        "pressure_rate_pct": 30.0,
+        "stuffed_run_pct": 18.0,
+        "rank": 16,
+        "key_disruptors": [
+          "Tim Settle",
+          "Javon Kinlaw",
+          "Daron Payne"
+        ]
+      }
+    },
+    "WSH": {
+      "team_name": "Washington Commanders",
+      "cornerbacks": {
+        "outside1": {
+          "role": "LWR",
+          "grade": 77.5,
+          "is_shadow": false,
+          "targets_per_route": 0.18,
+          "catch_rate": 0.6,
+          "fpts_per_route": 0.28,
+          "name": "Rasul Douglas"
+        },
+        "outside2": {
           "name": "Trey Amos",
+          "role": "RWR",
+          "grade": 73.0,
+          "is_shadow": false,
+          "targets_per_route": 0.2,
+          "catch_rate": 0.63,
+          "fpts_per_route": 0.31
+        },
+        "slot": {
+          "name": "Amik Robertson",
+          "role": "SLOT",
+          "grade": 74.0,
+          "is_shadow": false,
+          "targets_per_route": 0.17,
+          "catch_rate": 0.58,
+          "fpts_per_route": 0.25
+        },
+        "safety": {
+          "name": "Nick Cross",
+          "role": "SS",
+          "grade": 77.0,
+          "coverage_grade": 76.0,
+          "run_def_grade": 78.0
+        }
+      },
+      "backup_cornerbacks": {
+        "outside_backup": {
+          "name": "Fabian Moreau",
           "grade": 64.0
         },
         "slot_backup": {

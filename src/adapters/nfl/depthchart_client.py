@@ -7,6 +7,7 @@ and backfield hierarchies for year-long PPR strategy.
 
 import asyncio
 import logging
+from pathlib import Path
 import re
 import time
 from typing import Any
@@ -16,6 +17,8 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 ESPN_DEPTHCHART_BASE_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{team}/depthcharts"
+
+LOCAL_DEPTHCHARTS_PATH = Path(__file__).resolve().parent.parent.parent.parent / "data" / "nfl_depth_charts_2026.json"
 
 ALL_NFL_TEAMS = [
     "ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE",
@@ -151,7 +154,7 @@ class TeamDepthChart(BaseModel):
 
 
 class NFLDepthChartClient:
-    """Async client managing real-time post-preseason official NFL depth charts."""
+    """Async client managing real-time post-preseason official NFL depth charts with disk fallback."""
 
     def __init__(self, timeout: float = 10.0, cache_ttl_seconds: float = 3600.0):
         self.timeout = timeout
@@ -159,28 +162,90 @@ class NFLDepthChartClient:
         self._cache: dict[str, TeamDepthChart] = {}
         self._lock = asyncio.Lock()
 
-    async def fetch_team_depth_chart(self, team: str, force: bool = False) -> TeamDepthChart | None:
-        """Fetches and parses the official depth chart for a single NFL team."""
-        team_clean = team.upper().strip()
-        now = time.time()
+    def clear_cache(self) -> None:
+        """Clear the in-memory depth charts cache."""
+        self._cache.clear()
 
-        if not force and team_clean in self._cache:
-            chart = self._cache[team_clean]
-            if (now - chart.last_updated) < self.cache_ttl:
-                return chart
+    def _load_all_from_disk(self) -> dict[str, TeamDepthChart]:
+        """Loads all 32 teams from local data/nfl_depth_charts_2026.json."""
+        import json
+        if not LOCAL_DEPTHCHARTS_PATH.exists():
+            logger.error(f"Local depth chart cache not found at {LOCAL_DEPTHCHARTS_PATH}")
+            return {}
 
-        url = ESPN_DEPTHCHART_BASE_URL.format(team=team_clean.lower())
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            try:
-                resp = await client.get(url)
-                if resp.status_code != 200:
-                    logger.warning(f"ESPN depth chart API returned HTTP {resp.status_code} for team {team_clean}")
-                    return self._cache.get(team_clean)
-                data = resp.json()
-            except Exception as e:
-                logger.warning(f"Failed to fetch depth chart for {team_clean}: {e}")
-                return self._cache.get(team_clean)
+        try:
+            with open(LOCAL_DEPTHCHARTS_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to read/parse {LOCAL_DEPTHCHARTS_PATH}: {e}")
+            return {}
 
+        mtime = LOCAL_DEPTHCHARTS_PATH.stat().st_mtime
+        teams_dict = data.get("teams", {})
+        loaded: dict[str, TeamDepthChart] = {}
+
+        for team_code, team_data in teams_dict.items():
+            team_clean = team_code.upper().strip()
+            offense: dict[str, list[DepthChartAthlete]] = {}
+            defense: dict[str, list[DepthChartAthlete]] = {}
+            special_teams: dict[str, list[DepthChartAthlete]] = {}
+
+            for unit_key, unit_dict in (
+                ("offense", offense),
+                ("defense", defense),
+                ("special_teams", special_teams),
+            ):
+                for slot, ath_list in team_data.get(unit_key, {}).items():
+                    slot_clean = slot.lower()
+                    athletes: list[DepthChartAthlete] = []
+                    for idx, a in enumerate(ath_list):
+                        try:
+                            ath_id = int(a.get("id") or a.get("athlete_id") or 0)
+                            name = a.get("name") or a.get("display_name") or "Unknown"
+                            short_name = a.get("short_name") or name
+                            rank = int(a.get("rank") or (idx + 1))
+                            injuries = a.get("injuries") or []
+                            athletes.append(
+                                DepthChartAthlete(
+                                    athlete_id=ath_id,
+                                    display_name=name,
+                                    short_name=short_name,
+                                    rank=rank,
+                                    position_slot=slot_clean,
+                                    injuries=injuries,
+                                )
+                            )
+                        except Exception as parse_err:
+                            logger.debug(f"Error parsing athlete {a}: {parse_err}")
+                    if athletes:
+                        unit_dict[slot_clean] = athletes
+
+            chart = TeamDepthChart(
+                pro_team=team_clean,
+                last_updated=mtime,
+                offense=offense,
+                defense=defense,
+                special_teams=special_teams,
+            )
+            loaded[team_clean] = chart
+            if team_clean == "WSH":
+                loaded["WAS"] = chart
+            elif team_clean == "WAS":
+                loaded["WSH"] = chart
+
+        logger.info(f"Loaded {len(loaded)} NFL depth charts from local disk cache ({LOCAL_DEPTHCHARTS_PATH.name})")
+        return loaded
+
+    def _load_team_from_disk(self, team_clean: str) -> TeamDepthChart | None:
+        """Loads a single team's depth chart from local data/nfl_depth_charts_2026.json."""
+        all_disk = self._load_all_from_disk()
+        for t, chart in all_disk.items():
+            if t not in self._cache:
+                self._cache[t] = chart
+        canonical = "WSH" if team_clean in ("WAS", "WSH") else team_clean
+        return all_disk.get(canonical) or all_disk.get(team_clean)
+
+    def _parse_espn_team_depth_chart(self, team_clean: str, data: dict[str, Any], timestamp: float) -> TeamDepthChart:
         offense: dict[str, list[DepthChartAthlete]] = {}
         defense: dict[str, list[DepthChartAthlete]] = {}
         special_teams: dict[str, list[DepthChartAthlete]] = {}
@@ -223,17 +288,66 @@ class NFLDepthChartClient:
 
         chart = TeamDepthChart(
             pro_team=team_clean,
-            last_updated=now,
+            last_updated=timestamp,
             offense=offense,
             defense=defense,
             special_teams=special_teams,
         )
-
-        self._cache[team_clean] = chart
         return chart
 
+    async def fetch_team_depth_chart(self, team: str, force: bool = False) -> TeamDepthChart | None:
+        """Fetches and parses the official depth chart for a single NFL team with disk fallback."""
+        team_clean = team.upper().strip()
+        now = time.time()
+
+        if not force and team_clean in self._cache:
+            chart = self._cache[team_clean]
+            if (now - chart.last_updated) < self.cache_ttl:
+                return chart
+
+        # Map Washington abbreviation to slug 'wsh' for ESPN operations API
+        team_slug = "wsh" if team_clean in ("WAS", "WSH") else team_clean.lower()
+        url = ESPN_DEPTHCHART_BASE_URL.format(team=team_slug)
+        data = None
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                resp = await client.get(url)
+                if resp.status_code == 200:
+                    data = resp.json()
+                else:
+                    logger.warning(
+                        f"ESPN depth chart API returned HTTP {resp.status_code} for team {team_clean}. "
+                        f"Falling back to local disk cache."
+                    )
+        except Exception as e:
+            logger.warning(
+                f"Failed to fetch live ESPN depth chart for {team_clean}: {e}. "
+                f"Falling back to local disk cache."
+            )
+
+        if data and data.get("depthchart"):
+            chart = self._parse_espn_team_depth_chart(team_clean, data, now)
+            if chart:
+                self._cache[team_clean] = chart
+                if team_clean == "WSH":
+                    self._cache["WAS"] = chart
+                elif team_clean == "WAS":
+                    self._cache["WSH"] = chart
+                return chart
+
+        fallback_chart = self._load_team_from_disk(team_clean)
+        if fallback_chart:
+            self._cache[team_clean] = fallback_chart
+            if team_clean == "WSH":
+                self._cache["WAS"] = fallback_chart
+            elif team_clean == "WAS":
+                self._cache["WSH"] = fallback_chart
+            return fallback_chart
+
+        return self._cache.get(team_clean)
+
     async def fetch_all_depth_charts(self, force: bool = False) -> dict[str, TeamDepthChart]:
-        """Fetches official depth charts for all 32 NFL franchises concurrently."""
+        """Fetches official depth charts for all 32 NFL franchises concurrently with complete disk fallback."""
         tasks = [self.fetch_team_depth_chart(team, force=force) for team in ALL_NFL_TEAMS]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -241,6 +355,19 @@ class NFLDepthChartClient:
         for team, res in zip(ALL_NFL_TEAMS, results):
             if isinstance(res, TeamDepthChart):
                 out[team] = res
+
+        if len(out) < len(ALL_NFL_TEAMS):
+            disk_charts = self._load_all_from_disk()
+            for team, chart in disk_charts.items():
+                if team not in out:
+                    out[team] = chart
+                    self._cache[team] = chart
+
+        if "WSH" in out and "WAS" not in out:
+            out["WAS"] = out["WSH"]
+        elif "WAS" in out and "WSH" not in out:
+            out["WSH"] = out["WAS"]
+
         return out
 
     async def get_player_depth_role(self, pro_team: str, player_name: str, position: str) -> dict[str, Any]:
@@ -259,3 +386,4 @@ class NFLDepthChartClient:
 
 
 nfl_depthchart_client = NFLDepthChartClient()
+

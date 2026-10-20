@@ -66,6 +66,8 @@ yarn-error.log*
 *.sublime-workspace
 .DS_Store
 Thumbs.db
+.agents/teamwork/
+
 
 # Scratch Analysis
 scratch/
