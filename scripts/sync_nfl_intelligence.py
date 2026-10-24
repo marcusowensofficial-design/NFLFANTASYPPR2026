@@ -143,8 +143,9 @@ async def sync_dvp(season: int = 2026, week: int | None = None) -> int:
     if week is None:
         _, week = get_current_season_and_week()
     logger.info(f"Calculating in-house DvP ratings for Season {season}, Week {week}...")
-    dvp_res = await calculate_in_house_dvp(season=season, target_week=week)
-    total_records = sum(len(records) for records in dvp_res.values())
+    from src.services.matchup.dvp_service import dvp_service
+    res = await dvp_service.sync_dvp_data(season=season, week=week)
+    total_records = res.get("total_records", 0)
     logger.info(f"Exported {total_records} team DvP records across all positions")
     return total_records
 
@@ -227,7 +228,7 @@ async def main():
     parser = argparse.ArgumentParser(description="Master NFL Intelligence Synchronizer")
     parser.add_argument("--with-db", action="store_true", help="Also sync ESPN, Sleeper, and calibrate database projections")
     parser.add_argument("--season", type=int, default=2026, help="NFL season year (default: 2026)")
-    parser.add_argument("--week", type=int, default=3, help="NFL week number (default: 3)")
+    parser.add_argument("--week", type=int, default=7, help="NFL week number (default: 7)")
     args = parser.parse_args()
 
     logger.info(f"=== Starting Master NFL Intelligence Sync (Season {args.season}, Week {args.week}) ===")

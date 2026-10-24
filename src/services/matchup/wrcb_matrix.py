@@ -61,7 +61,7 @@ NFL_CB_DEPTH_CHARTS: dict[str, dict[str, CornerbackProfile]] = {
         "slot": CornerbackProfile(name="Max Melton", team="ARI", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "ATL": {
-        "outside1": CornerbackProfile(name="C.J. Henderson", team="ATL", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
+        "outside1": CornerbackProfile(name="A.J. Terrell Jr.", team="ATL", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
         "outside2": CornerbackProfile(name="Mike Hughes", team="ATL", slot_role="RWR", coverage_grade=73.0, is_shadow=False, targets_per_route_allowed=0.2, fpts_per_route_allowed=0.31, catch_rate_allowed=0.63),
         "slot": CornerbackProfile(name="Sydney Brown", team="ATL", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
@@ -171,7 +171,7 @@ NFL_CB_DEPTH_CHARTS: dict[str, dict[str, CornerbackProfile]] = {
         "slot": CornerbackProfile(name="Jonas Sanker", team="NO", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },
     "NYG": {
-        "outside1": CornerbackProfile(name="Deonte Banks", team="NYG", slot_role="LWR", coverage_grade=76.5, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
+        "outside1": CornerbackProfile(name="Paulson Adebo", team="NYG", slot_role="LWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
         "outside2": CornerbackProfile(name="Greg Newsome II", team="NYG", slot_role="RWR", coverage_grade=76.0, is_shadow=False, targets_per_route_allowed=0.18, fpts_per_route_allowed=0.27, catch_rate_allowed=0.59),
         "slot": CornerbackProfile(name="Dru Phillips", team="NYG", slot_role="SLOT", coverage_grade=74.0, is_shadow=False, targets_per_route_allowed=0.17, fpts_per_route_allowed=0.25, catch_rate_allowed=0.58),
     },

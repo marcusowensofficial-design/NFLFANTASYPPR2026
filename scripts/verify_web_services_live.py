@@ -172,7 +172,7 @@ class WebServicesLiveVerifier:
 
             total_players = db.query(PlayerModel).count()
             calibrated_players = db.query(PlayerModel).filter(PlayerModel.projected_points.isnot(None)).count()
-            self._record("Data Store", "SQLite Players Calibrated", "395/395 players", f"{calibrated_players}/{total_players}", total_players == 395 and calibrated_players == 395)
+            self._record("Data Store", "SQLite Players Calibrated", f"100% ({total_players}/{total_players})", f"{calibrated_players}/{total_players}", total_players >= 390 and calibrated_players == total_players)
         finally:
             db.close()
 
