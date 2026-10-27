@@ -135,7 +135,7 @@ def get_current_season_and_week() -> tuple[int, int]:
                 return l.season or 2026, l.current_week
     except Exception:
         pass
-    return 2026, 7
+    return 2026, 8
 
 
 async def sync_dvp(season: int = 2026, week: int | None = None) -> int:
@@ -228,7 +228,7 @@ async def main():
     parser = argparse.ArgumentParser(description="Master NFL Intelligence Synchronizer")
     parser.add_argument("--with-db", action="store_true", help="Also sync ESPN, Sleeper, and calibrate database projections")
     parser.add_argument("--season", type=int, default=2026, help="NFL season year (default: 2026)")
-    parser.add_argument("--week", type=int, default=7, help="NFL week number (default: 7)")
+    parser.add_argument("--week", type=int, default=8, help="NFL week number (default: 8)")
     args = parser.parse_args()
 
     logger.info(f"=== Starting Master NFL Intelligence Sync (Season {args.season}, Week {args.week}) ===")

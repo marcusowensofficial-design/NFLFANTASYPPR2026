@@ -23,13 +23,14 @@ from src.services.recommendation.scoring_engine import StartSitEvaluation
 logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
+WEEK_8_PATH = DATA_DIR / "waiver_expert_consensus_week_8_2026.json"
 WEEK_7_PATH = DATA_DIR / "waiver_expert_consensus_week_7_2026.json"
 WEEK_6_PATH = DATA_DIR / "waiver_expert_consensus_week_6_2026.json"
 WEEK_5_PATH = DATA_DIR / "waiver_expert_consensus_week_5_2026.json"
 WEEK_4_PATH = DATA_DIR / "waiver_expert_consensus_week_4_2026.json"
 WEEK_3_PATH = DATA_DIR / "waiver_expert_consensus_week_3_2026.json"
 WEEK_2_PATH = DATA_DIR / "waiver_expert_consensus_week_2_2026.json"
-CONSENSUS_DATA_PATH = WEEK_7_PATH if WEEK_7_PATH.exists() else (WEEK_6_PATH if WEEK_6_PATH.exists() else (WEEK_5_PATH if WEEK_5_PATH.exists() else (WEEK_4_PATH if WEEK_4_PATH.exists() else (WEEK_3_PATH if WEEK_3_PATH.exists() else WEEK_2_PATH))))
+CONSENSUS_DATA_PATH = WEEK_8_PATH if WEEK_8_PATH.exists() else (WEEK_7_PATH if WEEK_7_PATH.exists() else (WEEK_6_PATH if WEEK_6_PATH.exists() else (WEEK_5_PATH if WEEK_5_PATH.exists() else (WEEK_4_PATH if WEEK_4_PATH.exists() else (WEEK_3_PATH if WEEK_3_PATH.exists() else WEEK_2_PATH)))))
 
 
 class ExpertConsensusPlayerItem(BaseModel):
@@ -84,7 +85,9 @@ class ExpertConsensusWaiverService:
     def load_consensus_data(self, week: int | None = None) -> dict[str, Any]:
         """Loads and caches the expert consensus dataset for the active or requested week."""
         target_path = self.data_path
-        if week == 7 and WEEK_7_PATH.exists():
+        if week == 8 and WEEK_8_PATH.exists():
+            target_path = WEEK_8_PATH
+        elif week == 7 and WEEK_7_PATH.exists():
             target_path = WEEK_7_PATH
         elif week == 6 and WEEK_6_PATH.exists():
             target_path = WEEK_6_PATH
@@ -321,7 +324,7 @@ class ExpertConsensusWaiverService:
         rostered_names: set[str] | None = None,
         rostered_pids: set[int] | None = None,
         rostered_dst_teams: set[str] | None = None,
-        current_week: int = 7,
+        current_week: int = 8,
     ) -> list[PositionalNeedItem]:
         """Diagnoses team roster health, injuries, projection gaps, and bench depth by position.
 
@@ -378,8 +381,8 @@ class ExpertConsensusWaiverService:
                 return [p["full_name"] for p in items[:count]]
             return avail
 
-        # Identify bye teams for current week (Week 7: BUF, JAX, LAC, WSH | Week 6: CIN, DET, MIA, MIN | Week 5: KC, CAR)
-        bye_teams = {"BUF", "JAX", "LAC", "WSH"} if current_week == 7 else ({"CIN", "DET", "MIA", "MIN"} if current_week == 6 else ({"KC", "CAR"} if current_week == 5 else set()))
+        # Identify bye teams for current week (Week 8: HOU, NO, NYG, SF | Week 7: BUF, JAX, LAC, WSH | Week 6: CIN, DET, MIA, MIN | Week 5: KC, CAR)
+        bye_teams = {"HOU", "NO", "NYG", "SF"} if current_week == 8 else ({"BUF", "JAX", "LAC", "WSH"} if current_week == 7 else ({"CIN", "DET", "MIA", "MIN"} if current_week == 6 else ({"KC", "CAR"} if current_week == 5 else set())))
 
         needs: list[PositionalNeedItem] = []
 
@@ -872,10 +875,10 @@ class ExpertConsensusWaiverService:
         self,
         db: Session,
         league_id: int,
-        current_week: int = 7,
+        current_week: int = 8,
         user_team_id: int = 6,
     ) -> list[LeagueTeamWaiverProfile]:
-        """Analyzes all teams in the league to diagnose their Week 5 positional needs, bye casualties,
+        """Analyzes all teams in the league to diagnose their Week 8 positional needs, bye casualties,
         injuries, and generates strategic defensive blocking recommendations for the user."""
         from src.db.models import TeamModel
         from src.services.recommendation.scoring_engine import scoring_engine
@@ -899,7 +902,7 @@ class ExpertConsensusWaiverService:
         rostered_names.update(rostered_names_clean)
         rostered_dst_teams = {r[2].upper() for r in rostered_rows if r[3] and r[3].upper() in ("D/ST", "DST") and r[2]}
 
-        bye_teams = {"BUF", "JAX", "LAC", "WSH"} if current_week == 7 else ({"CIN", "DET", "MIA", "MIN"} if current_week == 6 else ({"KC", "CAR"} if current_week == 5 else set()))
+        bye_teams = {"HOU", "NO", "NYG", "SF"} if current_week == 8 else ({"BUF", "JAX", "LAC", "WSH"} if current_week == 7 else ({"CIN", "DET", "MIA", "MIN"} if current_week == 6 else ({"KC", "CAR"} if current_week == 5 else set())))
 
         profiles: list[LeagueTeamWaiverProfile] = []
 

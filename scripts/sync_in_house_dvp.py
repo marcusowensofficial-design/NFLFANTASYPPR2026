@@ -19,7 +19,7 @@ from src.services.matchup.dvp_service import dvp_service
 
 async def main():
     parser = argparse.ArgumentParser(description="Calculate and sync in-house DvP ratings to database.")
-    parser.add_argument("--week", type=int, default=7, help="Current regular season week to calculate (default: 7)")
+    parser.add_argument("--week", type=int, default=8, help="Current regular season week to calculate (default: 8)")
     parser.add_argument("--season", type=int, default=2026, help="NFL Season year (default: 2026)")
     args = parser.parse_args()
 

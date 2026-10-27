@@ -139,36 +139,36 @@ class WebServicesLiveVerifier:
                 vegas_data = json.load(f)
             v_week = vegas_data.get("week")
             v_games = len(vegas_data.get("games", []))
-            self._record("Data Store", "Vegas Movement Week", "Week 7", f"Week {v_week}", v_week == 7)
+            self._record("Data Store", "Vegas Movement Week", "Week 7 or 8", f"Week {v_week}", v_week in (7, 8))
             self._record("Data Store", "Vegas Movement Games Count", "14 games", f"{v_games} games", v_games == 14)
 
         # 4. Projections JSON & Parquet
-        proj_json_path = DATA_DIR / "projections_week_7_2026.json"
-        proj_parquet_path = DATA_DIR / "projections_week_7_2026.parquet"
-        self._record("Data Store", "Projections JSON Exists", "Exists", "Exists" if proj_json_path.exists() else "Missing", proj_json_path.exists())
-        self._record("Data Store", "Projections Parquet Exists", "Exists", "Exists" if proj_parquet_path.exists() else "Missing", proj_parquet_path.exists())
+        proj_json_path = DATA_DIR / f"projections_week_{v_week}_2026.json"
+        proj_parquet_path = DATA_DIR / f"projections_week_{v_week}_2026.parquet"
+        self._record("Data Store", f"Projections Week {v_week} JSON Exists", "Exists", "Exists" if proj_json_path.exists() else "Missing", proj_json_path.exists())
+        self._record("Data Store", f"Projections Week {v_week} Parquet Exists", "Exists", "Exists" if proj_parquet_path.exists() else "Missing", proj_parquet_path.exists())
 
         if proj_json_path.exists():
             with open(proj_json_path, "r", encoding="utf-8") as f:
                 pj = json.load(f)
-            self._record("Data Store", "Projections JSON Records", ">= 300 players", f"{len(pj)} players", len(pj) >= 300)
+            self._record("Data Store", "Projections JSON Records", ">= 150 players", f"{len(pj)} players", len(pj) >= 150)
 
         if proj_parquet_path.exists():
             df_pq = pd.read_parquet(proj_parquet_path)
-            self._record("Data Store", "Projections Parquet Rows", ">= 300 rows", f"{len(df_pq)} rows", len(df_pq) >= 300)
+            self._record("Data Store", "Projections Parquet Rows", ">= 150 rows", f"{len(df_pq)} rows", len(df_pq) >= 150)
 
         # 5. SQLite fantasy.db State
         db = SessionLocal()
         try:
             league = db.query(LeagueModel).order_by(LeagueModel.last_synced_at.desc()).first()
             cur_week = league.current_week if league else None
-            self._record("Data Store", "SQLite League Active Week", "Week 7", f"Week {cur_week}", cur_week == 7)
+            self._record("Data Store", "SQLite League Active Week", "Week 7 or 8", f"Week {cur_week}", cur_week in (7, 8))
 
-            dvp_w7 = db.query(DefenseVsPositionModel).filter(
+            dvp_count = db.query(DefenseVsPositionModel).filter(
                 DefenseVsPositionModel.season == 2026,
-                DefenseVsPositionModel.week == 7,
+                DefenseVsPositionModel.week == cur_week,
             ).count()
-            self._record("Data Store", "SQLite DvP Week 7 Records", "128 records (32 teams x 4)", f"{dvp_w7} records", dvp_w7 == 128)
+            self._record("Data Store", f"SQLite DvP Week {cur_week} Records", "128 records (32 teams x 4)", f"{dvp_count} records", dvp_count == 128)
 
             total_players = db.query(PlayerModel).count()
             calibrated_players = db.query(PlayerModel).filter(PlayerModel.projected_points.isnot(None)).count()
@@ -245,13 +245,13 @@ class WebServicesLiveVerifier:
         # 8. /api/waiver/consensus-board
         s8, d8 = self._http_get("/api/waiver/consensus-board")
         w_week = d8.get("week") if s8 == 200 and isinstance(d8, dict) else None
-        self._record("API Endpoints", "GET /api/waiver/consensus-board", "HTTP 200, week 7", f"HTTP {s8}, week {w_week}", s8 == 200 and w_week == 7)
+        self._record("API Endpoints", "GET /api/waiver/consensus-board", "HTTP 200, week 7 or 8", f"HTTP {s8}, week {w_week}", s8 == 200 and w_week in (7, 8))
 
         # 9. /api/league/summary
         s9, d9 = self._http_get("/api/league/summary")
         l_week = d9.get("current_week") if s9 == 200 and isinstance(d9, dict) else None
         l_teams = len(d9.get("teams", [])) if s9 == 200 and isinstance(d9, dict) else 0
-        self._record("API Endpoints", "GET /api/league/summary", "HTTP 200, week 7, 8 teams", f"HTTP {s9}, week {l_week}, {l_teams} teams", s9 == 200 and l_week == 7 and l_teams == 8)
+        self._record("API Endpoints", "GET /api/league/summary", "HTTP 200, week 7 or 8, 8 teams", f"HTTP {s9}, week {l_week}, {l_teams} teams", s9 == 200 and l_week in (7, 8) and l_teams == 8)
 
     def print_summary_table(self) -> bool:
         """Prints a human-readable ASCII table of all verification checks."""

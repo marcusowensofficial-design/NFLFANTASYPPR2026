@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "last_updated": "2026-10-24T22:53:01.064005+00:00",
+  "last_updated": "2026-10-27T16:59:40.666823+00:00",
   "description": "PFF Advanced Scouting baseline with verified 2026 NFL depth charts, coverage grades, shadow tracking, and trench metrics.",
   "teams": {
     "ARI": {
@@ -92,7 +92,7 @@
           "fpts_per_route": 0.27
         },
         "outside2": {
-          "name": "Mike Hughes",
+          "name": "C.J. Henderson",
           "role": "RWR",
           "grade": 73.0,
           "is_shadow": false,
@@ -101,7 +101,7 @@
           "fpts_per_route": 0.31
         },
         "slot": {
-          "name": "Sydney Brown",
+          "name": "Billy Bowman Jr.",
           "role": "SLOT",
           "grade": 74.0,
           "is_shadow": false,
@@ -119,11 +119,11 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "C.J. Henderson",
+          "name": "Avieon Terrell",
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Billy Bowman Jr.",
+          "name": "Mike Hughes",
           "grade": 63.0
         },
         "safety_backup": {
@@ -366,7 +366,7 @@
         "rank": 30,
         "key_tackles": [
           "Rasheed Walker",
-          "Taylor Moton"
+          "Monroe Freeling"
         ]
       },
       "defensive_line_front": {
@@ -1688,7 +1688,7 @@
           "fpts_per_route": 0.27
         },
         "outside2": {
-          "name": "Quincy Riley",
+          "name": "Martin Emerson Jr.",
           "role": "RWR",
           "grade": 73.0,
           "is_shadow": false,
@@ -2287,6 +2287,15 @@
       "team_name": "Tennessee Titans",
       "cornerbacks": {
         "outside1": {
+          "name": "Joshua Williams",
+          "role": "LWR",
+          "grade": 76.0,
+          "is_shadow": false,
+          "targets_per_route": 0.18,
+          "catch_rate": 0.59,
+          "fpts_per_route": 0.27
+        },
+        "outside2": {
           "role": "LWR",
           "grade": 72.0,
           "is_shadow": false,
@@ -2294,15 +2303,6 @@
           "catch_rate": 0.63,
           "fpts_per_route": 0.31,
           "name": "Cor'Dale Flott"
-        },
-        "outside2": {
-          "name": "Joshua Williams",
-          "role": "RWR",
-          "grade": 73.0,
-          "is_shadow": false,
-          "targets_per_route": 0.2,
-          "catch_rate": 0.63,
-          "fpts_per_route": 0.31
         },
         "slot": {
           "name": "Marcus Harris",
@@ -2323,11 +2323,11 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Micah Robinson",
+          "name": "Alontae Taylor",
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Marcus Harris",
+          "name": "Alontae Taylor",
           "grade": 63.0
         },
         "safety_backup": {
