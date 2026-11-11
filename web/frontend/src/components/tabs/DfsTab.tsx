@@ -9,7 +9,7 @@ import { DfsRosterBoard } from './DfsRosterBoard'
 import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 import './DfsTab.css'
 
-export type ProjectionSourceType = 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'
+export type ProjectionSourceType = 'MODEL' | 'ENSEMBLE' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'
 
 interface DfsTabProps {
   projectionSource?: ProjectionSourceType
@@ -34,7 +34,7 @@ export function DfsTab({
   // Projection source state (synced with parent prop or localStorage fallback)
   const [internalSource, setInternalSource] = useState<ProjectionSourceType>(() => {
     const saved = localStorage.getItem('agy_projection_source')
-    if (saved === 'MODEL' || saved === 'CONSENSUS' || saved === 'FANTASYPROS' || saved === 'SLEEPER' || saved === 'ESPN') {
+    if (saved === 'MODEL' || saved === 'ENSEMBLE' || saved === 'CONSENSUS' || saved === 'FANTASYPROS' || saved === 'SLEEPER' || saved === 'ESPN') {
       return saved as ProjectionSourceType
     }
     return 'MODEL'
@@ -501,7 +501,7 @@ export function DfsTab({
                 setSlates((prev) => prev.filter((s) => s.id !== 'uploaded'))
                 setSelectedSlate('main')
               }}
-              title="Reset to default Week 2 Main Slate"
+              title="Reset to default Main Slate"
               style={{ color: '#f87171', borderColor: 'rgba(248, 113, 113, 0.4)' }}
             >
               <span>✕</span>
@@ -671,6 +671,8 @@ export function DfsTab({
               <span style={{ color: 'var(--accent-cyan)', marginLeft: '8px' }}>
                 {currentSource === 'MODEL'
                   ? '⚡ Quant Model (Vegas Script + DvP Calibrated)'
+                  : currentSource === 'ENSEMBLE'
+                  ? '🧠 Ensemble (35% Quant + 55% XGBoost ML + 10% Props)'
                   : currentSource === 'CONSENSUS'
                   ? '⭐ Multi-Source Consensus (Bayesian Ensemble)'
                   : currentSource === 'FANTASYPROS'
@@ -693,6 +695,13 @@ export function DfsTab({
             title="Our quantitative Vegas micro-volume script projection engine"
           >
             <span>⚡ Quant Model</span>
+          </button>
+          <button
+            className={`dfs-source-btn ${currentSource === 'ENSEMBLE' ? 'active' : ''}`}
+            onClick={() => handleSourceChange('ENSEMBLE')}
+            title="Out-of-sample calibrated Half-PPR blend (35% Quant + 55% XGBoost ML + 10% Props)"
+          >
+            <span>🧠 Ensemble</span>
           </button>
           <button
             className={`dfs-source-btn ${currentSource === 'CONSENSUS' ? 'active' : ''}`}

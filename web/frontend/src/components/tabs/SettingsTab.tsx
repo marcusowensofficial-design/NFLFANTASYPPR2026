@@ -257,6 +257,63 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Multi-Week Model vs Competitors Accuracy Leaderboard */}
+      {backtest?.source_leaderboard && backtest.source_leaderboard.length > 0 && (
+        <div className="card" style={{ gridColumn: '1 / -1' }}>
+          <div className="card-header">
+            <h3 className="card-title">📊 Multi-Week Accuracy Leaderboard (Model vs. Competitors)</h3>
+            <span className="pill cyan">
+              {backtest.scoring_format || 'HALF_PPR'} • Weeks {backtest.evaluated_weeks?.length ? `${backtest.evaluated_weeks[0]}–${backtest.evaluated_weeks[backtest.evaluated_weeks.length - 1]}` : `1–${backtest.total_weeks_audited}`}
+            </span>
+          </div>
+
+          <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '14px' }}>
+            Out-of-sample retrospective comparison across all logged completed 2026 NFL weeks (lower MAE/RMSE = more accurate; Floor &lt;10th target ~10%, Ceil &gt;85th target ~15%).
+          </p>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', textAlign: 'left' }}>
+                  <th style={{ padding: '8px 10px' }}>Rank</th>
+                  <th style={{ padding: '8px 10px' }}>Projection Engine</th>
+                  <th style={{ padding: '8px 10px' }}>Wks / N</th>
+                  <th style={{ padding: '8px 10px' }}>MAE</th>
+                  <th style={{ padding: '8px 10px' }}>RMSE</th>
+                  <th style={{ padding: '8px 10px' }}>Bias</th>
+                  <th style={{ padding: '8px 10px' }}>Corr r</th>
+                  <th style={{ padding: '8px 10px' }}>Floor &lt;10% / Ceil &gt;85%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {backtest.source_leaderboard.map((row, idx) => (
+                  <tr
+                    key={row.source}
+                    style={{
+                      borderBottom: '1px solid var(--border-subtle)',
+                      background: row.source === 'ENSEMBLE' || row.source === 'MODEL' ? 'rgba(56, 189, 248, 0.06)' : 'transparent',
+                    }}
+                  >
+                    <td style={{ padding: '8px 10px', fontWeight: 700 }}>#{idx + 1}</td>
+                    <td style={{ padding: '8px 10px', fontWeight: 600 }}>{row.display_name}</td>
+                    <td style={{ padding: '8px 10px' }}>{row.weeks_evaluated}w / {row.sample_size}</td>
+                    <td style={{ padding: '8px 10px', fontWeight: 700, color: 'var(--accent-cyan)' }}>{row.mae.toFixed(2)}</td>
+                    <td style={{ padding: '8px 10px' }}>{row.rmse.toFixed(2)}</td>
+                    <td style={{ padding: '8px 10px' }}>{row.bias >= 0 ? `+${row.bias.toFixed(2)}` : row.bias.toFixed(2)}</td>
+                    <td style={{ padding: '8px 10px' }}>{row.corr_r.toFixed(3)}</td>
+                    <td style={{ padding: '8px 10px', color: 'var(--text-secondary)' }}>
+                      {row.coverage_10th_pct !== null && row.coverage_10th_pct !== undefined
+                        ? `${row.coverage_10th_pct.toFixed(1)}% / ${row.coverage_85th_pct?.toFixed(1) ?? '-'}%`
+                        : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

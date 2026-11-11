@@ -129,11 +129,11 @@ def test_ceiling_vs_floor_strategy_modes():
         "rec_td": 0.1,
     }
 
-    eval_boom_ceiling = scoring_engine.evaluate_player(wr_boom, mode="CEILING")
-    eval_floor_ceiling = scoring_engine.evaluate_player(wr_floor, mode="CEILING")
+    eval_boom_ceiling = scoring_engine.evaluate_player(wr_boom, mode="CEILING", week=1)
+    eval_floor_ceiling = scoring_engine.evaluate_player(wr_floor, mode="CEILING", week=1)
 
-    eval_boom_floor = scoring_engine.evaluate_player(wr_boom, mode="FLOOR")
-    eval_floor_floor = scoring_engine.evaluate_player(wr_floor, mode="FLOOR")
+    eval_boom_floor = scoring_engine.evaluate_player(wr_boom, mode="FLOOR", week=1)
+    eval_floor_floor = scoring_engine.evaluate_player(wr_floor, mode="FLOOR", week=1)
 
     assert eval_boom_ceiling.ceiling_score > eval_floor_ceiling.ceiling_score
     assert eval_floor_floor.floor_score > eval_boom_floor.floor_score
@@ -462,8 +462,8 @@ def test_consolidation_trade_analyzer_2_for_1(db_session):
     db_session.commit()
 
     user_evals = [
-        scoring_engine.evaluate_player(user_wr, league_size=8),
-        scoring_engine.evaluate_player(user_rb, league_size=8),
+        scoring_engine.evaluate_player(user_wr, league_size=8, week=1),
+        scoring_engine.evaluate_player(user_rb, league_size=8, week=1),
     ]
 
     trade_res = trade_analyzer.analyze_consolidation_trades(
@@ -473,6 +473,7 @@ def test_consolidation_trade_analyzer_2_for_1(db_session):
         user_roster_evaluations=user_evals,
         free_agent_pool=[fa_wire],
         league_size=8,
+        week=1,
     )
 
     assert trade_res.total_trades_analyzed > 0

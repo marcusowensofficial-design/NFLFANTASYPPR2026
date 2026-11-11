@@ -72,9 +72,9 @@ export function App() {
     if (saved === 'BALANCED' || saved === 'CEILING' || saved === 'FLOOR' || saved === 'AUTO') return saved
     return 'BALANCED'
   })
-  const [projectionSource, setProjectionSource] = useState<'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'>(() => {
+  const [projectionSource, setProjectionSource] = useState<'MODEL' | 'ENSEMBLE' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'>(() => {
     const saved = localStorage.getItem('agy_projection_source')
-    if (saved === 'MODEL' || saved === 'CONSENSUS' || saved === 'FANTASYPROS' || saved === 'SLEEPER' || saved === 'ESPN') return saved
+    if (saved === 'MODEL' || saved === 'ENSEMBLE' || saved === 'CONSENSUS' || saved === 'FANTASYPROS' || saved === 'SLEEPER' || saved === 'ESPN') return saved
     return 'MODEL'
   })
   const [lineupViewMode, setLineupViewMode] = useState<'split' | 'unified'>(() => {
@@ -183,7 +183,7 @@ export function App() {
   const [injuriesFeed, setInjuriesFeed] = useState<InjuryFeedResponse | null>(null)
   const [isLoadingInjuries, setIsLoadingInjuries] = useState<boolean>(false)
   const [matchups, setMatchups] = useState<MatchupResponseItem[]>([])
-  const [matchupWeek, setMatchupWeek] = useState<number>(1)
+  const [matchupWeek, setMatchupWeek] = useState<number>(10)
   const [selectedRosterTeamId, setSelectedRosterTeamId] = useState<number>(1)
   const [teamRosterData, setTeamRosterData] = useState<TeamRosterResponse | null>(null)
   const [teamRostersCache, setTeamRostersCache] = useState<Record<number, TeamRosterResponse>>({})
@@ -318,7 +318,7 @@ export function App() {
 
     loadTeamRoster(currentTargetId)
     prefetchAllTeamRosters(summaryData.teams)
-    const curWeek = summaryData.current_week || 7
+    const curWeek = summaryData.current_week || 10
     setMatchupWeek(curWeek)
     loadMatchups(curWeek)
     loadIntelData(currentTargetId, true, curWeek)
@@ -642,7 +642,7 @@ export function App() {
     const seq = ++intelReqSeq.current
     try {
       setIsLoadingIntel(true)
-      const effWeek = targetWeek || league?.current_week || 7
+      const effWeek = targetWeek || league?.current_week || 10
       const [wrcbRes, vegasRes] = await Promise.all([
         fetch(`/api/analysis/wrcb-matrix?team_id=${teamId}&week=${effWeek}`),
         fetch(`/api/analysis/vegas-environments?team_id=${teamId}&week=${effWeek}`),
@@ -759,7 +759,7 @@ export function App() {
     }
   }
 
-  const handleProjectionSourceChange = (newSource: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN') => {
+  const handleProjectionSourceChange = (newSource: 'MODEL' | 'ENSEMBLE' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN') => {
     setProjectionSource(newSource)
     loadTeamLineup(selectedTeamId, strategyMode, newSource, true)
     if (compareIds.length >= 2) {
@@ -1015,9 +1015,21 @@ export function App() {
             </div>
             <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span className="pill gold" style={{ fontSize: '11px', padding: '3px 10px', fontWeight: 800, background: 'rgba(234, 179, 8, 0.15)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.35)', display: 'inline-flex', alignItems: 'center', gap: '6px', letterSpacing: '0.03em' }}>
-                {league?.current_week === 1
-                  ? '🏈 KICKOFF TODAY: NE @ SEA (WED 9-9-26 6:20 P.M. MDT)'
-                  : '🏈 WEEK 2 TNF: DET @ BUF (THU 9-17-26 6:15 P.M. MDT • 53.5 O/U)'}
+                {(() => {
+                  const effWeek = league?.current_week || vegasData?.week || 10
+                  const earliestGame = vegasData?.games?.length
+                    ? [...vegasData.games].sort((a, b) => (a.game_date || '').localeCompare(b.game_date || ''))[0]
+                    : null
+                  if (earliestGame) {
+                    const ouLabel = earliestGame.over_under ? ` • ${earliestGame.over_under.toFixed(1)} O/U` : ''
+                    const d = earliestGame.game_date ? new Date(earliestGame.game_date) : null
+                    const timeStr = d && !Number.isNaN(d.getTime())
+                      ? d.toLocaleString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Phoenix' }).toUpperCase() + ' MST'
+                      : ''
+                    return `🏈 WEEK ${effWeek} KICKOFF: ${earliestGame.away_team} @ ${earliestGame.home_team}${timeStr ? ` (${timeStr}${ouLabel})` : ''}`
+                  }
+                  return `🏈 WEEK ${effWeek} TNF: WSH @ NYG (THU 11-12-26 6:15 P.M. MST • 41.5 O/U)`
+                })()}
               </span>
               {inactivesAlerts.length > 0 && (
                 <span className="pill rose" style={{ fontSize: '11px', padding: '3px 10px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -1370,7 +1382,7 @@ export function App() {
 
       {activeTab === 'fantasypros' && (
         <FantasyProsTab
-          currentWeek={league?.current_week || 7}
+          currentWeek={league?.current_week || 10}
           onSyncSuccess={() => {
             loadLeagueData()
             loadTeamLineup(selectedTeamId, strategyMode, projectionSource, true)
@@ -1435,7 +1447,7 @@ export function App() {
           toggleMoveSelection={toggleMoveSelection}
           onExecutePush={handleExecutePush}
           isPushing={isPushing}
-          currentWeek={league?.current_week || 7}
+          currentWeek={league?.current_week || 10}
         />
       )}
 

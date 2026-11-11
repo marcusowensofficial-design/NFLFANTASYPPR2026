@@ -26,47 +26,53 @@ class QuantDistributionResult(BaseModel):
 class PositionalDistributionEngine:
     """Parametric distribution model calibrated against historical NFL DFS outcome variances."""
 
-    # Baseline Coefficient of Variation (std_dev / mean) by position & archetype
+    # Baseline Coefficient of Variation (std_dev / mean) empirically calibrated against 2025-2026 W1-W7 outcome errors
     CV_REGIMES = {
         "QB": {
-            "DUAL_THREAT": 0.36,
-            "POCKET": 0.30,
-            "DEFAULT": 0.32,
+            "DUAL_THREAT": 0.44,
+            "POCKET": 0.40,
+            "DEFAULT": 0.42,
         },
         "RB": {
-            "TRUE_BELLCOW": 0.40,
-            "COMMITTEE_LEAD": 0.48,
-            "PASSING_DOWN": 0.52,
-            "DEFAULT": 0.45,
+            "TRUE_BELLCOW": 0.56,
+            "COMMITTEE_LEAD": 0.65,
+            "PASSING_DOWN": 0.68,
+            "DEFAULT": 0.62,
         },
         "WR": {
-            "ALPHA_TARGET_MONSTER": 0.46,
-            "VERTICAL_FIELD_STRETCHER": 0.65,
-            "SLOT_VACUUM": 0.42,
-            "DEFAULT": 0.52,
+            "ALPHA_TARGET_MONSTER": 0.62,
+            "VERTICAL_FIELD_STRETCHER": 0.78,
+            "SLOT_VACUUM": 0.58,
+            "DEFAULT": 0.68,
         },
         "TE": {
-            "ALPHA_RECEIVING_TE": 0.48,
-            "INLINE_BLOCKING_TD_DEPENDENT": 0.68,
-            "DEFAULT": 0.55,
+            "ALPHA_RECEIVING_TE": 0.64,
+            "INLINE_BLOCKING_TD_DEPENDENT": 0.80,
+            "DEFAULT": 0.72,
         },
         "DST": {
-            "ELITE_SACK_TURNOVER": 0.62,
-            "DEFAULT": 0.70,
+            "ELITE_SACK_TURNOVER": 0.72,
+            "DEFAULT": 0.78,
         },
         "K": {
-            "DOME_HIGH_OPPORTUNITY": 0.38,
-            "DEFAULT": 0.44,
+            "DOME_HIGH_OPPORTUNITY": 0.48,
+            "DEFAULT": 0.55,
         },
     }
 
     @classmethod
     def get_cv(cls, pos: str, archetype: Optional[str] = None) -> float:
         clean_pos = (pos or "").upper().strip()
-        regime = cls.CV_REGIMES.get(clean_pos, {"DEFAULT": 0.45})
+        if clean_pos == "D/ST":
+            clean_pos = "DST"
+        elif clean_pos == "PK":
+            clean_pos = "K"
+        elif clean_pos == "FB":
+            clean_pos = "RB"
+        regime = cls.CV_REGIMES.get(clean_pos, {"DEFAULT": 0.58})
         if archetype and archetype.upper() in regime:
             return regime[archetype.upper()]
-        return regime.get("DEFAULT", 0.45)
+        return regime.get("DEFAULT", 0.58)
 
     @classmethod
     def calculate_distribution(
@@ -87,6 +93,12 @@ class PositionalDistributionEngine:
             hvt_share: Optional High-Value Touch share (tightens RB floor)
         """
         clean_pos = (pos or "FLEX").upper().strip()
+        if clean_pos == "D/ST":
+            clean_pos = "DST"
+        elif clean_pos == "PK":
+            clean_pos = "K"
+        elif clean_pos == "FB":
+            clean_pos = "RB"
         mean = max(0.1, float(projected_mean))
 
         cv = cls.get_cv(clean_pos, archetype)

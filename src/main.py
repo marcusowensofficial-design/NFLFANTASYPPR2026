@@ -55,6 +55,8 @@ async def lifespan(app: FastAPI):
     # Initialize SQLite database and tables
     logger.info("Initializing SQLite database tables...")
     init_db()
+    from src.adapters.nfl.dvp_client import dvp_client
+    dvp_client.ensure_hydrated()
     # Trigger non-blocking intelligence auto-sync
     asyncio.create_task(_auto_sync_intelligence_if_stale())
     yield

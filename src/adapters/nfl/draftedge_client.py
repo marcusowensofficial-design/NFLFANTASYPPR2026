@@ -159,12 +159,21 @@ class DraftEdgeClient:
         if not tbody:
             return []
 
+        thead = table.find("thead")
+        header_cells: list[str] = []
+        if thead:
+            header_rows = thead.find_all("tr")
+            if header_rows:
+                header_cells = [th.get_text(strip=True).lower() for th in header_rows[-1].find_all("th")]
+        has_this_week_col = any("this week" in h for h in header_cells)
+
         rows = tbody.find_all("tr")
         results: list[dict[str, Any]] = []
 
         for tr in rows:
             tds = tr.find_all("td")
-            if len(tds) < 13:
+            row_offset = 1 if (has_this_week_col or len(tds) >= 15) else 0
+            if len(tds) < 13 + row_offset:
                 continue
 
             td_texts = [td.get_text(strip=True) for td in tds]
@@ -197,39 +206,42 @@ class DraftEdgeClient:
                     pro_team = FULL_TEAM_NAME_MAP.get(slug, slug)
             pro_team = pro_team or "UNK"
 
-            dk_fpa = parse_clean_float(td_texts[2]) or 0.0
-            fd_fpa = parse_clean_float(td_texts[3])
-            vs_avg = parse_clean_float(td_texts[4]) or 0.0
-            prior_season_fpa = parse_clean_float(td_texts[5]) or 0.0
-            current_season_fpa = parse_clean_float(td_texts[6])
-            last4_fpa = parse_clean_float(td_texts[7])
-            trend = td_texts[-1] if len(td_texts) >= 14 else "Stable"
+            dk_fpa = parse_clean_float(td_texts[2 + row_offset]) or 0.0
+            fd_fpa = parse_clean_float(td_texts[3 + row_offset])
+            vs_avg = parse_clean_float(td_texts[4 + row_offset]) or 0.0
+            prior_season_fpa = parse_clean_float(td_texts[5 + row_offset]) or 0.0
+            current_season_fpa = parse_clean_float(td_texts[6 + row_offset])
+            last4_fpa = parse_clean_float(td_texts[7 + row_offset])
+            trend_idx = 13 + row_offset
+            trend = td_texts[trend_idx] if len(td_texts) > trend_idx and td_texts[trend_idx] else (
+                td_texts[-1] if (len(td_texts) >= 14 and td_texts[-1]) else "Stable"
+            )
 
             # Position-specific supporting columns
             supporting_stats: dict[str, float] = {}
             if position == "QB":
                 supporting_stats = {
-                    "pass_yds": parse_clean_float(td_texts[8]) or 0.0,
-                    "pass_td": parse_clean_float(td_texts[9]) or 0.0,
-                    "int": parse_clean_float(td_texts[10]) or 0.0,
-                    "sacks": parse_clean_float(td_texts[11]) or 0.0,
-                    "qb_rush_yds": parse_clean_float(td_texts[12]) or 0.0,
+                    "pass_yds": parse_clean_float(td_texts[8 + row_offset]) or 0.0,
+                    "pass_td": parse_clean_float(td_texts[9 + row_offset]) or 0.0,
+                    "int": parse_clean_float(td_texts[10 + row_offset]) or 0.0,
+                    "sacks": parse_clean_float(td_texts[11 + row_offset]) or 0.0,
+                    "qb_rush_yds": parse_clean_float(td_texts[12 + row_offset]) or 0.0,
                 }
             elif position == "RB":
                 supporting_stats = {
-                    "rush_yds": parse_clean_float(td_texts[8]) or 0.0,
-                    "rush_td": parse_clean_float(td_texts[9]) or 0.0,
-                    "targets": parse_clean_float(td_texts[10]) or 0.0,
-                    "rec": parse_clean_float(td_texts[11]) or 0.0,
-                    "rec_yds": parse_clean_float(td_texts[12]) or 0.0,
+                    "rush_yds": parse_clean_float(td_texts[8 + row_offset]) or 0.0,
+                    "rush_td": parse_clean_float(td_texts[9 + row_offset]) or 0.0,
+                    "targets": parse_clean_float(td_texts[10 + row_offset]) or 0.0,
+                    "rec": parse_clean_float(td_texts[11 + row_offset]) or 0.0,
+                    "rec_yds": parse_clean_float(td_texts[12 + row_offset]) or 0.0,
                 }
             elif position in ("WR", "TE"):
                 supporting_stats = {
-                    "targets": parse_clean_float(td_texts[8]) or 0.0,
-                    "rec": parse_clean_float(td_texts[9]) or 0.0,
-                    "rec_yds": parse_clean_float(td_texts[10]) or 0.0,
-                    "rec_td": parse_clean_float(td_texts[11]) or 0.0,
-                    "rec_20_plus": parse_clean_float(td_texts[12]) or 0.0,
+                    "targets": parse_clean_float(td_texts[8 + row_offset]) or 0.0,
+                    "rec": parse_clean_float(td_texts[9 + row_offset]) or 0.0,
+                    "rec_yds": parse_clean_float(td_texts[10 + row_offset]) or 0.0,
+                    "rec_td": parse_clean_float(td_texts[11 + row_offset]) or 0.0,
+                    "rec_20_plus": parse_clean_float(td_texts[12 + row_offset]) or 0.0,
                 }
 
             # rank_defense: 1 = hardest/strongest defense vs position, 32 = worst defense vs position

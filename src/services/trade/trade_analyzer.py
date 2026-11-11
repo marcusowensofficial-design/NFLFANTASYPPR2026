@@ -69,6 +69,7 @@ class TradeAnalyzer:
         user_roster_evaluations: list[StartSitEvaluation],
         free_agent_pool: list[PlayerModel] | None = None,
         league_size: int = 8,
+        week: int | None = None,
     ) -> ConsolidationTradeAnalysisResult:
         # 1. Fetch user roster entries to know who is starting vs bench
         user_entries = db.execute(
@@ -95,7 +96,7 @@ class TradeAnalyzer:
 
         unowned_players = [p for p in free_agent_pool if p.id not in all_rostered_pids]
         fa_evals: list[StartSitEvaluation] = [
-            scoring_engine.evaluate_player(p, league_size=league_size)
+            scoring_engine.evaluate_player(p, league_size=league_size, week=week)
             for p in unowned_players
         ]
 
@@ -155,7 +156,7 @@ class TradeAnalyzer:
 
             rival_entry_map = {e.player_id: e for e in rival_entries}
             rival_evals = [
-                scoring_engine.evaluate_player(p, league_size=league_size)
+                scoring_engine.evaluate_player(p, league_size=league_size, week=week)
                 for p in rival_players
             ]
 

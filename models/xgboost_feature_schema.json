@@ -10,9 +10,49 @@
     "pos_QB",
     "pos_RB",
     "pos_TE",
-    "pos_WR"
+    "pos_WR",
+    "roll3_pts_half_ppr",
+    "roll6_pts_half_ppr",
+    "roll3_receptions",
+    "roll3_pass_att",
+    "roll6_targets",
+    "roll6_carries",
+    "roll6_target_share"
   ],
-  "test_rmse": 5.745443060020624,
-  "test_corr": 0.6729118086864948,
-  "training_samples": 5786
+  "test_rmse": 5.59172707000919,
+  "test_mae": 4.046381287021491,
+  "test_corr": 0.6594789698744885,
+  "training_samples": 13830,
+  "trained_through": "2026 W9",
+  "cv_holdout": "2026 W8-W9",
+  "position_cv_metrics": {
+    "QB": {
+      "n": 73,
+      "mae": 6.726,
+      "rmse": 8.523,
+      "bias": 1.301,
+      "r": 0.558
+    },
+    "RB": {
+      "n": 170,
+      "mae": 4.271,
+      "rmse": 5.878,
+      "bias": 0.421,
+      "r": 0.623
+    },
+    "WR": {
+      "n": 253,
+      "mae": 3.799,
+      "rmse": 5.271,
+      "bias": -0.134,
+      "r": 0.613
+    },
+    "TE": {
+      "n": 159,
+      "mae": 2.969,
+      "rmse": 3.783,
+      "bias": 0.485,
+      "r": 0.643
+    }
+  }
 }

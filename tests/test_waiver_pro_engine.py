@@ -113,7 +113,14 @@ def test_league_ownership_name_shield_blocks_ghost_duplicates(db_session):
     # Ghost unrostered record in DB with different ID 4258183
     ghost_london = PlayerModel(id=4258183, full_name="Drake London", position="WR", pro_team="ATL", projected_points=15.4)
     # Legit unowned free agent
-    legit_fa = PlayerModel(id=805, full_name="Quentin Johnston", position="WR", pro_team="LAC", projected_points=10.5)
+    legit_fa = PlayerModel(
+        id=805,
+        full_name="Quentin Johnston",
+        position="WR",
+        pro_team="LAC",
+        projected_points=18.1,
+        projected_stats_json='{"targets": 8.5, "receptions": 6.0, "rec_yds": 85.0, "rec_td": 0.6}',
+    )
 
     db_session.add_all([starter, mickey_london, ghost_london, legit_fa])
     db_session.commit()

@@ -40,6 +40,41 @@ from src.services.recommendation.distribution_engine import (
 
 logger = logging.getLogger(__name__)
 
+_NFL_BYE_WEEKS_2026: dict[int, set[str]] = {
+    5: {"KC", "CAR"},
+    6: {"CIN", "DET", "MIA", "MIN"},
+    7: {"BUF", "JAX", "LAC", "WSH"},
+    8: {"HOU", "NO", "NYG", "SF"},
+    9: {"PIT", "TEN"},
+    10: {"CHI", "DEN", "PHI", "TB"},
+    11: {"ATL", "CLE", "GB", "LAR", "NE", "SEA"},
+    12: set(),
+    13: {"BAL", "IND", "LV", "NYJ"},
+    14: {"ARI", "DAL"},
+}
+
+
+def _norm_team(team: str | None) -> str:
+    t = (team or "").upper().strip()
+    return {"WAS": "WSH", "JAC": "JAX", "LA": "LAR"}.get(t, t)
+
+
+def _get_current_nfl_week() -> int:
+    try:
+        from sqlalchemy import select
+        from src.db.models import LeagueModel
+        from src.db.session import SessionLocal
+        db = SessionLocal()
+        try:
+            lg = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+            if lg and lg.current_week:
+                return int(lg.current_week)
+        finally:
+            db.close()
+    except Exception:
+        pass
+    return 10
+
 
 def ecr_to_projected_ppr(ecr_rank: float | None, pos: str, pos_rank_str: str | None = None) -> float:
     """Map Expert Consensus Rank (ECR) to empirical weekly PPR point expectations using non-linear decay curves."""
@@ -132,30 +167,6 @@ def _load_injury_wire_cache() -> None:
                         "team": inj.get("team"),
                         "status": st,
                         "note": inj.get("vacated_opportunity_note"),
-                    }
-                # Additional high-confidence backfield & target beneficiaries
-                if "JACOBS" in norm_name.upper():
-                    beneficiaries["marshawn lloyd"] = {
-                        "injured_name": "Josh Jacobs",
-                        "pos": "RB",
-                        "team": "GB",
-                        "status": "OUT",
-                        "note": "Primary starting running back with Josh Jacobs sidelined.",
-                    }
-                    beneficiaries["emanuel wilson"] = {
-                        "injured_name": "Josh Jacobs",
-                        "pos": "RB",
-                        "team": "GB",
-                        "status": "OUT",
-                        "note": "Rotational goal-line and change-of-pace back with Josh Jacobs sidelined.",
-                    }
-                if "TUCKER" in norm_name.upper():
-                    beneficiaries["bucky irving"] = {
-                        "injured_name": "Sean Tucker",
-                        "pos": "RB",
-                        "team": "TB",
-                        "status": "DOUBTFUL",
-                        "note": "Consolidated workhorse bellcow role with Sean Tucker doubtful.",
                     }
         _injury_wire_cache = {"mtime": mtime, "inactives": inactives, "beneficiaries": beneficiaries}
     except Exception as e:
@@ -495,13 +506,9 @@ def get_injury_beneficiary_boost(player_name: str, pos: str) -> tuple[float, str
                 match = v
                 break
     if not match:
-        # Cross-positional detection: Ashton Jeanty when Brock Bowers is OUT
+        # Cross-positional detection: team RB1 when TE1 Bowers is ruled OUT on live wire
         if "ashton jeanty" in norm and any("BOWERS" in k.upper() for k in _injury_wire_cache.get("inactives", set())):
             return 17.5, "Cross-positional target and red-zone beneficiary with Brock Bowers OUT."
-        if "will shipley" in norm:
-            return 14.5, "Starting RB beneficiary with Saquon Barkley & Tank Bigsby sidelined - primary backfield volume."
-        if "keon coleman" in norm:
-            return 13.8, "Alpha perimeter WR beneficiary following post-hype target breakout."
         return 0.0, None
 
     inj_name = match["injured_name"]
@@ -532,18 +539,26 @@ def get_injury_beneficiary_boost(player_name: str, pos: str) -> tuple[float, str
 
 _xgboost_model: Any = None
 _xgboost_model_loaded: bool = False
+_xgboost_schema_features: list[str] | None = None
+_weekly_usage_df_cache: dict[str, Any] = {"mtime": 0, "df": None}
 
 
 def _get_xgboost_model() -> Any:
-    """Lazy load production XGBoost fantasy projection model."""
-    global _xgboost_model, _xgboost_model_loaded
+    """Lazy load production XGBoost fantasy projection model and feature schema."""
+    global _xgboost_model, _xgboost_model_loaded, _xgboost_schema_features
     if _xgboost_model_loaded:
         return _xgboost_model
     _xgboost_model_loaded = True
     try:
+        import json
         import xgboost as xgb
         from pathlib import Path
-        model_path = Path(__file__).resolve().parent.parent.parent.parent / "models" / "xgboost_fppg_model_2026.json"
+        models_dir = Path(__file__).resolve().parent.parent.parent.parent / "models"
+        model_path = models_dir / "xgboost_fppg_model_2026.json"
+        schema_path = models_dir / "xgboost_feature_schema.json"
+        if schema_path.exists():
+            with open(schema_path, encoding="utf-8") as sf:
+                _xgboost_schema_features = json.load(sf).get("features")
         if model_path.exists():
             bst = xgb.XGBRegressor()
             bst.load_model(str(model_path))
@@ -554,10 +569,62 @@ def _get_xgboost_model() -> Any:
     return _xgboost_model
 
 
+def _get_trailing_usage_from_parquet(
+    player_name: str, cutoff_week: int | None = None
+) -> dict[str, float] | None:
+    """Compute leak-free trailing 3-game and 6-game means from historical weekly stats."""
+    global _weekly_usage_df_cache
+    if not player_name:
+        return None
+    try:
+        import pandas as pd
+        from pathlib import Path
+        pq_path = Path(__file__).resolve().parent.parent.parent.parent / "data" / "parquets" / "weekly_player_stats_2025_2026.parquet"
+        if not pq_path.exists():
+            return None
+        mtime = pq_path.stat().st_mtime
+        if _weekly_usage_df_cache.get("mtime") != mtime or _weekly_usage_df_cache.get("df") is None:
+            df = pd.read_parquet(pq_path)
+            if "gp" in df.columns:
+                df = df[df["gp"] > 0].copy()
+            if "norm_name" not in df.columns:
+                df["norm_name"] = df["player_name"].astype(str).str.lower().str.replace(r"[^\w\s]", "", regex=True).str.strip()
+            df = df.sort_values(["season", "week"]).reset_index(drop=True)
+            _weekly_usage_df_cache = {"mtime": mtime, "df": df}
+        df = _weekly_usage_df_cache["df"]
+        norm = re.sub(r"[^\w\s]", "", player_name.lower()).strip()
+        sub = df[df["norm_name"] == norm]
+        if sub.empty:
+            return None
+        if cutoff_week is not None:
+            sub = sub[(sub["season"] < 2026) | ((sub["season"] == 2026) & (sub["week"] < cutoff_week))]
+        if sub.empty:
+            return None
+        tail3 = sub.tail(3)
+        tail6 = sub.tail(6)
+        out: dict[str, float] = {}
+        metrics = (
+            "targets", "carries", "passing_yards", "receiving_yards", "rushing_yards",
+            "target_share", "air_yards_share", "pts_half_ppr", "receptions", "pass_att",
+        )
+        for m in metrics:
+            v3 = float(tail3[m].fillna(0.0).mean()) if m in tail3.columns else 0.0
+            v6 = float(tail6[m].fillna(0.0).mean()) if m in tail6.columns else 0.0
+            out[f"roll3_{m}"] = v3
+            out[f"roll6_{m}"] = v6
+        return out
+    except Exception:
+        return None
+
+
 def predict_xgboost_points(
     pos: str,
     quant_stats: ItemizedStatLine,
     volume_share: float = 0.0,
+    player_name: str = "",
+    cutoff_week: int | None = None,
+    im_data: dict[str, Any] | None = None,
+    use_explicit_stats: bool = False,
 ) -> float:
     """Predict FanDuel Half-PPR fantasy points using the trained XGBoost model."""
     pos_clean = (pos or "").upper().strip()
@@ -570,22 +637,40 @@ def predict_xgboost_points(
 
     try:
         import pandas as pd
-        tgt_share = (volume_share / 100.0) if pos_clean in ("WR", "TE", "RB") else 0.0
+        trailing = None if use_explicit_stats else _get_trailing_usage_from_parquet(player_name, cutoff_week=cutoff_week)
+        im = im_data or {}
+
+        tgt_share = (volume_share / 100.0) if pos_clean in ("WR", "TE", "RB", "FB") else 0.0
         air_share = min(0.50, tgt_share * 1.15) if pos_clean in ("WR", "TE") else 0.0
+        est_half = (
+            (quant_stats.pass_yds * 0.04) + (quant_stats.pass_td * 4.0) - quant_stats.pass_int
+            + (quant_stats.rush_yds * 0.1) + (quant_stats.rush_td * 6.0)
+            + (quant_stats.receptions * 0.5) + (quant_stats.rec_yds * 0.1) + (quant_stats.rec_td * 6.0)
+        )
+
         feature_dict = {
-            "roll3_targets": [float(quant_stats.targets)],
-            "roll3_carries": [float(quant_stats.rush_att)],
-            "roll3_passing_yards": [float(quant_stats.pass_yds)],
-            "roll3_receiving_yards": [float(quant_stats.rec_yds)],
-            "roll3_rushing_yards": [float(quant_stats.rush_yds)],
-            "roll3_target_share": [float(tgt_share)],
-            "roll3_air_yards_share": [float(air_share)],
-            "pos_QB": [1 if pos_clean == "QB" else 0],
-            "pos_RB": [1 if pos_clean in ("RB", "FB") else 0],
-            "pos_TE": [1 if pos_clean == "TE" else 0],
-            "pos_WR": [1 if pos_clean == "WR" else 0],
+            "roll3_targets": float(trailing["roll3_targets"]) if trailing else float(im.get("targets", quant_stats.targets)),
+            "roll3_carries": float(trailing["roll3_carries"]) if trailing else float(im.get("carries", im.get("rush_att", quant_stats.rush_att))),
+            "roll3_passing_yards": float(trailing["roll3_passing_yards"]) if trailing else float(im.get("pass_yds", quant_stats.pass_yds)),
+            "roll3_receiving_yards": float(trailing["roll3_receiving_yards"]) if trailing else float(im.get("rec_yds", quant_stats.rec_yds)),
+            "roll3_rushing_yards": float(trailing["roll3_rushing_yards"]) if trailing else float(im.get("rush_yds", quant_stats.rush_yds)),
+            "roll3_target_share": float(trailing["roll3_target_share"]) if trailing else float(tgt_share),
+            "roll3_air_yards_share": float(trailing["roll3_air_yards_share"]) if trailing else float(air_share),
+            "pos_QB": 1 if pos_clean == "QB" else 0,
+            "pos_RB": 1 if pos_clean in ("RB", "FB") else 0,
+            "pos_TE": 1 if pos_clean == "TE" else 0,
+            "pos_WR": 1 if pos_clean == "WR" else 0,
+            "roll3_pts_half_ppr": float(trailing["roll3_pts_half_ppr"]) if trailing else float(im.get("actual_fp", est_half)),
+            "roll6_pts_half_ppr": float(trailing["roll6_pts_half_ppr"]) if trailing else float(im.get("actual_fp", est_half)),
+            "roll3_receptions": float(trailing["roll3_receptions"]) if trailing else float(im.get("receptions", quant_stats.receptions)),
+            "roll3_pass_att": float(trailing["roll3_pass_att"]) if trailing else float(im.get("pass_att", quant_stats.pass_att)),
+            "roll6_targets": float(trailing["roll6_targets"]) if trailing else float(im.get("targets", quant_stats.targets)),
+            "roll6_carries": float(trailing["roll6_carries"]) if trailing else float(im.get("carries", im.get("rush_att", quant_stats.rush_att))),
+            "roll6_target_share": float(trailing["roll6_target_share"]) if trailing else float(tgt_share),
         }
-        df = pd.DataFrame(feature_dict)
+        schema_cols = _xgboost_schema_features or list(feature_dict.keys())[:11]
+        ordered = {col: [feature_dict.get(col, 0.0)] for col in schema_cols}
+        df = pd.DataFrame(ordered)
         pred = float(model.predict(df)[0])
         return max(0.0, round(pred, 2))
     except Exception as e:
@@ -663,10 +748,10 @@ class QuantProjectionEngine:
 
     def __init__(
         self,
-        model_weight: float = 0.30,
-        fantasypros_weight: float = 0.25,
-        props_weight: float = 0.20,
-        sleeper_weight: float = 0.15,
+        model_weight: float = 0.22,
+        fantasypros_weight: float = 0.23,
+        props_weight: float = 0.10,
+        sleeper_weight: float = 0.35,
         espn_weight: float = 0.10,
     ):
         self.model_weight = model_weight
@@ -680,10 +765,13 @@ class QuantProjectionEngine:
         pro_team: str,
         nfl_game: NFLGame | None = None,
         weather: WeatherReport | None = None,
+        week: int | None = None,
     ) -> TeamGameScriptContext:
         """Derive macro expected plays and pass/run distribution from Vegas lines."""
-        team = pro_team.upper().strip()
-        if team == "FA":
+        team = _norm_team(pro_team)
+        eff_week = week or _get_current_nfl_week()
+        is_bye_week = not nfl_game and team in _NFL_BYE_WEEKS_2026.get(eff_week, set())
+        if team == "FA" or is_bye_week:
             return TeamGameScriptContext(
                 pro_team=team,
                 opponent="BYE",
@@ -718,7 +806,7 @@ class QuantProjectionEngine:
             )
 
         is_home = nfl_game.is_home_for_team(team)
-        opp = nfl_game.get_opponent_for_team(team) or "BYE"
+        opp = _norm_team(nfl_game.get_opponent_for_team(team) or "BYE")
         itt = nfl_game.get_implied_total_for_team(team)
         team_spread = nfl_game.spread if is_home else -nfl_game.spread
         ou = nfl_game.over_under
@@ -765,13 +853,14 @@ class QuantProjectionEngine:
         weather: WeatherReport | None = None,
         projection_source: str = "MODEL",
         scoring_format: str = "PPR",
+        week: int | None = None,
     ) -> PlayerProjectionResult:
         """Calculates multi-source reconciled projection for a single player in PPR or HALF_PPR format."""
         source_clean = (projection_source or "MODEL").upper().strip()
         scoring_format_clean = "HALF_PPR" if "HALF" in (scoring_format or "").upper() else "PPR"
         is_half = scoring_format_clean == "HALF_PPR"
         pos = player.position.upper()
-        context = self.build_game_script_context(player.pro_team, nfl_game, weather)
+        context = self.build_game_script_context(player.pro_team, nfl_game, weather, week=week)
 
         if context.opponent == "BYE":
             zero_stats = ItemizedStatLine()
@@ -924,98 +1013,160 @@ class QuantProjectionEngine:
         live_td_prob = props_data.anytime_td_prob if (is_live_prop and props_data.anytime_td_prob > 0.0) else None
 
         is_real_indexed_player = bool(dc_slot or is_live_prop or im_data)
-        has_explicit_stats = bool(raw_espn_stats and any(k in raw_espn_stats for k in ("targets", "rush_att", "pass_att", "rush_yds", "rec_yds", "pass_yds")))
+        has_explicit_stats = bool(
+            raw_espn_stats
+            and any(k in raw_espn_stats for k in ("rush_yds", "rec_yds", "pass_yds", "receptions"))
+        )
         is_mock_test_override = bool(has_explicit_stats and ("calculated_ppr" not in raw_espn_stats or (8000 <= (getattr(player, "id", 0) or 0) <= 8999)))
         use_explicit_stats = bool(has_explicit_stats and (is_mock_test_override or not is_real_indexed_player))
 
         if pos == "QB":
-            has_explicit_pass_att = "pass_att" in raw_espn_stats
-            pass_att = float(raw_espn_stats["pass_att"]) if (use_explicit_stats and has_explicit_pass_att) else context.expected_pass_attempts
-            cpoe = float(im_data.get("cpoe", 0.0))
-            cmp_pct = max(0.58, min(0.74, (0.655 + cpoe * 0.008) * total_efficiency_adj))
-            pass_cmp = float(raw_espn_stats["pass_cmp"]) if (use_explicit_stats and "pass_cmp" in raw_espn_stats) else round(pass_att * cmp_pct, 1)
-
-            # Passing Yards - scale with efficiency and high-total environments
-            base_ypa = 7.30
-            if context.implied_team_total >= 25.5 or context.over_under >= 48.0:
-                base_ypa = 7.75
-            elif context.over_under <= 42.0:
-                base_ypa = 6.65
-            model_pass_yds = round(pass_att * max(5.8, min(9.2, base_ypa * total_efficiency_adj)), 1)
-            if use_explicit_stats and "pass_yds" in raw_espn_stats:
-                pass_yds = float(raw_espn_stats["pass_yds"])
-            elif live_pass_yds is not None:
-                pass_yds = round(0.40 * model_pass_yds + 0.60 * live_pass_yds, 1)
-            else:
-                pass_yds = model_pass_yds
-
-            # Dual-Threat vs Immobile QB Detection & Next-Gen Pressure Redistribution
             ng_qb = get_player_nextgen_metrics(p_name, "QB")
             scramble_pct = float(ng_qb.get("scramble_pct_pressured", im_data.get("scramble_pct", 5.0)))
             checkdown_pct = float(ng_qb.get("checkdown_pct_pressured", 14.0))
             p2s_rate = float(ng_qb.get("p2s_rate", 15.0))
             is_dual_threat = (
-                scramble_pct >= 8.0
-                or any(dt.lower() in p_name.lower() for dt in ("josh allen", "jalen hurts", "lamar jackson", "jayden daniels", "kyler murray", "anthony richardson", "justin fields"))
+                scramble_pct >= 7.5
+                or float(im_data.get("rush_att", 0.0)) >= 4.0
+                or float(ng_qb.get("designed_rush_share", 0.0)) >= 0.15
                 or (use_explicit_stats and float(raw_espn_stats.get("rush_att", 0.0)) >= 4.0)
             )
 
-            qb_redist = QBPressureRedistributor.calculate_redistribution(
-                is_dual_threat=is_dual_threat,
-                scramble_rate_pressured=scramble_pct,
-                checkdown_rate_pressured=checkdown_pct,
-                p2s_rate=p2s_rate,
-                opp_pressure_pct=opp_pressure_pct,
+            # Backup QB Starter Gating: prevent non-starting QBs from inheriting full 36.5 pass attempts
+            norm_team_code = _norm_team(player.pro_team)
+            qb1_inactive = any(
+                _norm_team(v.get("team")) == norm_team_code
+                and str(v.get("slot", "")).startswith("qb")
+                and int(v.get("rank", 9)) == 1
+                and v.get("name")
+                and is_player_inactive_on_wire(v["name"])
+                for v in _depth_charts_cache.get("players", {}).values()
+            )
+            market_qb_max = max(
+                float(espn_proj or 0.0),
+                float(fp_r2p or 0.0),
+                float(getattr(player, "projected_points_sleeper_half", 0.0) or 0.0),
+                float(getattr(player, "projected_points_sleeper", 0.0) or 0.0),
+                float(getattr(player, "projected_points", 0.0) or 0.0),
+                float(vacated_floor or 0.0),
+            )
+            _fp_pos_str = str(getattr(player, "fp_pos_rank", "") or "").upper().strip()
+            _qb_m = re.search(r"(\d+)", _fp_pos_str) if "QB" in _fp_pos_str else None
+            _fp_qb_rank = int(_qb_m.group(1)) if _qb_m else None
+            _ecr_val = getattr(player, "fp_rank_ecr", None)
+            _max_source_pts = max(
+                float(getattr(player, "projected_points", 0.0) or 0.0),
+                float(getattr(player, "projected_points_espn", 0.0) or 0.0),
+                float(getattr(player, "projected_points_fp", 0.0) or 0.0),
+                float(getattr(player, "projected_points_sleeper", 0.0) or 0.0),
+            )
+            _unindexed_backup = not bool(dc_info) and (
+                (_fp_qb_rank is not None and _fp_qb_rank >= 33)
+                or (_ecr_val is not None and _ecr_val > 150)
+                or (not is_real_indexed_player and _fp_qb_rank is None and _ecr_val is None and _max_source_pts <= 4.0)
+            )
+            is_backup_qb = (
+                not use_explicit_stats
+                and ((bool(dc_info) and dc_rank >= 2) or _unindexed_backup)
+                and not qb1_inactive
+                and market_qb_max < 8.0
             )
 
-            # Touchdown share of team TDs: In shootouts (ITT >= 25.0 or OU >= 48.0), QBs monopolize 75-80% of team TDs
-            td_share_rate = 0.78 if (context.implied_team_total >= 25.0 or context.over_under >= 48.0) else 0.65
-
-            if is_dual_threat:
-                rush_att_base = float(raw_espn_stats.get("rush_att", 6.5)) if use_explicit_stats else max(5.0, float(im_data.get("rush_att", 6.5)))
-                if is_severe_pass_pressure:
-                    rush_att = rush_att_base + max(2.2, qb_redist["qb_rush_att_boost"])
-                    model_rush_yds = round(rush_att * 6.2, 1) + 14.0
-                    rush_yds = float(raw_espn_stats.get("rush_yds", model_rush_yds)) if (use_explicit_stats and "rush_yds" in raw_espn_stats) else (round(0.40 * model_rush_yds + 0.60 * live_rush_yds, 1) if live_rush_yds is not None else model_rush_yds)
-                    rush_td = float(raw_espn_stats.get("rush_td", 0.55)) if (use_explicit_stats and "rush_td" in raw_espn_stats) else float(im_data.get("rush_tds", 0.55))
-                    pass_yds = round(pass_yds * 0.94, 1)
-                    pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * 0.045, 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * 0.045, 2)
-                    pass_int = float(raw_espn_stats.get("pass_int", round(pass_att * 0.018, 2))) if (use_explicit_stats and "pass_int" in raw_espn_stats) else round(pass_att * 0.018, 2)
+            if is_backup_qb:
+                if market_qb_max < 2.5:
+                    pass_att = pass_cmp = pass_yds = pass_td = pass_int = 0.0
+                    rush_att = rush_yds = rush_td = 0.0
                 else:
-                    rush_att = rush_att_base
-                    model_rush_yds = round(rush_att * 5.8, 1)
-                    rush_yds = float(raw_espn_stats.get("rush_yds", model_rush_yds)) if (use_explicit_stats and "rush_yds" in raw_espn_stats) else (round(0.40 * model_rush_yds + 0.60 * live_rush_yds, 1) if live_rush_yds is not None else model_rush_yds)
-                    rush_td = float(raw_espn_stats.get("rush_td", 0.45)) if (use_explicit_stats and "rush_td" in raw_espn_stats) else float(im_data.get("rush_tds", 0.45))
-                    pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * max(0.035, min(0.085, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * max(0.035, min(0.085, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2)
-                    pass_int = float(raw_espn_stats.get("pass_int", round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2))) if (use_explicit_stats and "pass_int" in raw_espn_stats) else round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2)
-                hvt_inside_5 = round(0.45, 2)
-                hvt_inside_10 = round(context.expected_team_tds * td_share_rate, 2)
+                    spot_frac = min(0.40, market_qb_max / 20.0)
+                    pass_att = round(context.expected_pass_attempts * spot_frac, 1)
+                    pass_cmp = round(pass_att * 0.62, 1)
+                    pass_yds = round(pass_att * 6.5, 1)
+                    pass_td = round(pass_att * 0.035, 2)
+                    pass_int = round(pass_att * 0.02, 2)
+                    rush_att = round(max(1.0, market_qb_max * 0.4), 1)
+                    rush_yds = round(rush_att * 4.5, 1)
+                    rush_td = round(0.05 * spot_frac * 2.0, 2)
+                hvt_inside_5 = 0.0
+                hvt_inside_10 = 0.0
             else:
-                # Pocket passer
-                if is_severe_pass_pressure:
-                    pass_att = round(pass_att * 0.90, 1)
-                    pass_cmp = round(pass_cmp * 0.88, 1)
-                    pass_yds = round(pass_yds * 0.88, 1)
-                    pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * 0.038, 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * 0.038, 2)
-                    pass_int = float(raw_espn_stats.get("pass_int", round(pass_att * 0.026, 2))) if (use_explicit_stats and "pass_int" in raw_espn_stats) else round(pass_att * 0.026, 2)
-                    rush_att = 1.5
-                    rush_yds = 4.0
-                    rush_td = 0.02
-                else:
-                    pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * max(0.025, min(0.080, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * max(0.025, min(0.080, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2)
-                    pass_int = float(raw_espn_stats.get("pass_int", round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2))) if (use_explicit_stats and "pass_int" in raw_espn_stats) else round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2)
-                    rush_att = float(raw_espn_stats.get("rush_att", 2.0)) if (use_explicit_stats and "rush_att" in raw_espn_stats) else 2.0
-                    rush_yds = float(raw_espn_stats.get("rush_yds", 7.0)) if (use_explicit_stats and "rush_yds" in raw_espn_stats) else 7.0
-                    rush_td = float(raw_espn_stats.get("rush_td", 0.05)) if (use_explicit_stats and "rush_td" in raw_espn_stats) else 0.05
-                hvt_inside_5 = round(0.05, 2)
-                hvt_inside_10 = round(context.expected_team_tds * td_share_rate, 2)
+                has_explicit_pass_att = "pass_att" in raw_espn_stats
+                pass_att = float(raw_espn_stats["pass_att"]) if (use_explicit_stats and has_explicit_pass_att) else context.expected_pass_attempts
+                cpoe = float(im_data.get("cpoe", 0.0))
+                cmp_pct = max(0.58, min(0.74, (0.655 + cpoe * 0.008) * total_efficiency_adj))
+                pass_cmp = float(raw_espn_stats["pass_cmp"]) if (use_explicit_stats and "pass_cmp" in raw_espn_stats) else round(pass_att * cmp_pct, 1)
 
-            # If not a real player and anchor_baseline is higher (e.g. mock Elite QB with 24.5 pts):
-            if not is_real_indexed_player and not use_explicit_stats and anchor_baseline >= 18.0:
-                scale_f = anchor_baseline / 16.5
-                pass_yds = round(pass_yds * scale_f, 1)
-                pass_td = round(pass_td * scale_f, 2)
-                rush_yds = round(rush_yds * scale_f, 1)
+                # Passing Yards - scale with efficiency and high-total environments
+                base_ypa = 7.30
+                if context.implied_team_total >= 25.5 or context.over_under >= 48.0:
+                    base_ypa = 7.75
+                elif context.over_under <= 42.0:
+                    base_ypa = 6.65
+                model_pass_yds = round(pass_att * max(5.8, min(9.2, base_ypa * total_efficiency_adj)), 1)
+                if use_explicit_stats and "pass_yds" in raw_espn_stats:
+                    pass_yds = float(raw_espn_stats["pass_yds"])
+                elif live_pass_yds is not None:
+                    pass_yds = round(0.40 * model_pass_yds + 0.60 * live_pass_yds, 1)
+                else:
+                    pass_yds = model_pass_yds
+
+                qb_redist = QBPressureRedistributor.calculate_redistribution(
+                    is_dual_threat=is_dual_threat,
+                    scramble_rate_pressured=scramble_pct,
+                    checkdown_rate_pressured=checkdown_pct,
+                    p2s_rate=p2s_rate,
+                    opp_pressure_pct=opp_pressure_pct,
+                )
+
+                # Touchdown share of team TDs (avoiding double-count with QB rushing TDs via shrinkage)
+                td_share_rate = 0.72 if (context.implied_team_total >= 25.0 or context.over_under >= 48.0) else 0.62
+
+                if is_dual_threat:
+                    rush_att_base = float(raw_espn_stats.get("rush_att", 6.5)) if use_explicit_stats else max(4.2, min(9.5, float(im_data.get("rush_att", 6.0))))
+                    raw_r_td = float(im_data.get("rush_tds", 0.25))
+                    shrunk_rush_td = round(min(0.46, max(0.05, 0.50 * raw_r_td + 0.50 * 0.22)), 2)
+                    if is_severe_pass_pressure:
+                        rush_att = rush_att_base + max(2.0, qb_redist["qb_rush_att_boost"])
+                        model_rush_yds = round(rush_att * 5.8, 1) + 12.0
+                        rush_yds = float(raw_espn_stats.get("rush_yds", model_rush_yds)) if (use_explicit_stats and "rush_yds" in raw_espn_stats) else (round(0.40 * model_rush_yds + 0.60 * live_rush_yds, 1) if live_rush_yds is not None else model_rush_yds)
+                        rush_td = float(raw_espn_stats.get("rush_td", shrunk_rush_td)) if (use_explicit_stats and "rush_td" in raw_espn_stats) else shrunk_rush_td
+                        pass_yds = round(pass_yds * 0.94, 1)
+                        pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * 0.045, 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * 0.045, 2)
+                        pass_int = float(raw_espn_stats.get("pass_int", round(pass_att * 0.018, 2))) if (use_explicit_stats and "pass_int" in raw_espn_stats) else round(pass_att * 0.018, 2)
+                    else:
+                        rush_att = rush_att_base
+                        model_rush_yds = round(rush_att * 5.5, 1)
+                        rush_yds = float(raw_espn_stats.get("rush_yds", model_rush_yds)) if (use_explicit_stats and "rush_yds" in raw_espn_stats) else (round(0.40 * model_rush_yds + 0.60 * live_rush_yds, 1) if live_rush_yds is not None else model_rush_yds)
+                        rush_td = float(raw_espn_stats.get("rush_td", shrunk_rush_td)) if (use_explicit_stats and "rush_td" in raw_espn_stats) else shrunk_rush_td
+                        pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * max(0.032, min(0.078, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * max(0.032, min(0.078, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2)
+                        pass_int = float(raw_espn_stats.get("pass_int", round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2))) if (use_explicit_stats and "pass_int" in raw_espn_stats) else round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2)
+                    hvt_inside_5 = round(0.45, 2)
+                    hvt_inside_10 = round(context.expected_team_tds * td_share_rate, 2)
+                else:
+                    # Pocket passer
+                    if is_severe_pass_pressure:
+                        pass_att = round(pass_att * 0.90, 1)
+                        pass_cmp = round(pass_cmp * 0.88, 1)
+                        pass_yds = round(pass_yds * 0.88, 1)
+                        pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * 0.038, 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * 0.038, 2)
+                        pass_int = float(raw_espn_stats.get("pass_int", round(pass_att * 0.026, 2))) if (use_explicit_stats and "pass_int" in raw_espn_stats) else round(pass_att * 0.026, 2)
+                        rush_att = 1.5
+                        rush_yds = 4.0
+                        rush_td = 0.02
+                    else:
+                        pass_td = float(raw_espn_stats.get("pass_td", round(pass_att * max(0.025, min(0.075, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2))) if (use_explicit_stats and "pass_td" in raw_espn_stats) else round(pass_att * max(0.025, min(0.075, (context.expected_team_tds * td_share_rate) / max(pass_att, 1.0))), 2)
+                        pass_int = float(raw_espn_stats.get("pass_int", round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2))) if (use_explicit_stats and "pass_int" in raw_espn_stats) else round(pass_att * max(0.012, min(0.032, 0.018 / max(0.8, total_efficiency_adj))), 2)
+                        rush_att = float(raw_espn_stats.get("rush_att", 2.0)) if (use_explicit_stats and "rush_att" in raw_espn_stats) else 2.0
+                        rush_yds = float(raw_espn_stats.get("rush_yds", 7.0)) if (use_explicit_stats and "rush_yds" in raw_espn_stats) else 7.0
+                        rush_td = float(raw_espn_stats.get("rush_td", 0.05)) if (use_explicit_stats and "rush_td" in raw_espn_stats) else 0.05
+                    hvt_inside_5 = round(0.05, 2)
+                    hvt_inside_10 = round(context.expected_team_tds * td_share_rate, 2)
+
+                # If not a real player and anchor_baseline is higher (e.g. mock Elite QB with 24.5 pts):
+                if not is_real_indexed_player and not use_explicit_stats and anchor_baseline >= 18.0:
+                    scale_f = anchor_baseline / 16.81
+                    pass_yds = round(pass_yds * scale_f, 1)
+                    pass_td = round(pass_td * scale_f, 2)
+                    rush_yds = round(rush_yds * scale_f, 1)
 
             quant_stats = ItemizedStatLine(
                 pass_att=pass_att,
@@ -1027,7 +1178,7 @@ class QuantProjectionEngine:
                 rush_yds=rush_yds,
                 rush_td=rush_td,
             )
-            volume_share = 100.0
+            volume_share = 100.0 if (pass_att > 0 or use_explicit_stats) else 0.0
 
         elif pos in ("RB", "FB"):
             rb_micro = get_running_back_micro_metrics(p_name, getattr(player, "pro_team", ""))
@@ -1133,6 +1284,18 @@ class QuantProjectionEngine:
             hvt_inside_5 = round(inside_5_share * (context.expected_team_tds * 0.75), 2)
             hvt_inside_10 = round((inside_5_share * (context.expected_team_tds * 0.75)) + (tgt_share * context.expected_team_tds * 0.35), 2)
 
+            if not is_real_indexed_player and not rb_micro and not use_explicit_stats and anchor_baseline > 0:
+                synth_ppr = (rush_yds * 0.1) + (rush_td * 6.0) + rec + (rec_yds * 0.1) + (rec_td * 6.0)
+                if synth_ppr > anchor_baseline * 1.15 or synth_ppr < anchor_baseline * 0.85:
+                    scale_rb = anchor_baseline / max(synth_ppr, 1.0)
+                    rush_att = round(rush_att * scale_rb, 1)
+                    rush_yds = round(rush_yds * scale_rb, 1)
+                    rush_td = round(rush_td * scale_rb, 2)
+                    targets = round(targets * scale_rb, 1)
+                    rec = round(rec * scale_rb, 1)
+                    rec_yds = round(rec_yds * scale_rb, 1)
+                    rec_td = round(rec_td * scale_rb, 2)
+
             quant_stats = ItemizedStatLine(
                 rush_att=rush_att,
                 rush_yds=rush_yds,
@@ -1180,13 +1343,12 @@ class QuantProjectionEngine:
                 else (0.24 if (anchor_baseline >= 12.0 or (dc_slot in ("wr1", "wr") and dc_rank == 1))
                       else (0.19 if (anchor_baseline >= 9.0 or (dc_slot in ("wr1", "wr2", "wr") and dc_rank <= 2))
                             else 0.14))
-            ) if is_wr else (0.21 if (dc_slot in ("te", "te1") and dc_rank == 1 or anchor_baseline >= 9.0) else 0.12)
+            ) if is_wr else (0.22 if ((dc_slot in ("te", "te1") and dc_rank == 1) or anchor_baseline >= 9.0) else 0.11)
             tprr_val = wr_micro.get("tprr") if wr_micro.get("tprr") is not None else im_data.get("tprr")
             if tprr_val is not None:
                 realized_tprr = float(tprr_val) / 100.0 if float(tprr_val) > 1.0 else float(tprr_val)
-                # Bayesian empirical shrinkage: regress early-season 1-game samples towards talent prior
-                # For proven alphas (ECR top 15 or 14+ baseline), weight established talent 75% over 1-game noise
-                blend_w = 0.25 if (anchor_baseline >= 14.0 or (fp_ecr is not None and fp_ecr <= 15)) else 0.40
+                # Mid/late season Bayesian weighting: W1-W9 realized target rate earns 60-65% weight
+                blend_w = 0.60 if (anchor_baseline >= 14.0 or (fp_ecr is not None and fp_ecr <= 15)) else 0.65
                 base_tprr = round(blend_w * realized_tprr + (1.0 - blend_w) * prior_tprr, 3)
             else:
                 base_tprr = prior_tprr
@@ -1344,31 +1506,35 @@ class QuantProjectionEngine:
 
         # 4. Sportsbook Props Signal (from real multi-book consensus lines)
         raw_props = round(props_data.implied_ppr_points, 2) if props_data.implied_ppr_points > 0 else 0.0
-        props_pts = round(max(0.0, raw_props - (quant_stats.receptions * 0.5)), 2) if is_half and raw_props > 0 else raw_props
+        half_discount = min(raw_props * 0.25, quant_stats.receptions * 0.5) if raw_props > 0 else 0.0
+        props_pts = round(max(0.0, raw_props - half_discount), 2) if is_half and raw_props > 0 else raw_props
 
-        # 5. Extract Multi-Source Signals
+        # 5. Extract Independent First-Party Model & External Market Signals (no circular DB lock-in)
         target_quant_pts = calc_quant_half_ppr if is_half else calc_quant_ppr
-
-        if getattr(player, "projected_points_model", 0.0) and player.projected_points_model > 0.0:
-            raw_model = float(player.projected_points_model)
-            model_pts = round(raw_model - (quant_stats.receptions * 0.5), 2) if is_half else round(raw_model, 2)
-        elif not is_real_indexed_player and getattr(player, "projected_points", 0.0) and player.projected_points > 0.0:
-            model_pts = round(player.projected_points, 2)
-        elif target_quant_pts > 0.0:
-            # Proprietary model is completely independent from ESPN!
+        if target_quant_pts > 0.0 or is_real_indexed_player:
             model_pts = round(target_quant_pts, 2)
+        elif getattr(player, "projected_points", 0.0) and player.projected_points > 0.0:
+            model_pts = round(float(player.projected_points), 2)
         else:
             model_pts = 0.0
 
         raw_fp = float(fp_r2p) if fp_r2p is not None and fp_r2p > 0.0 else ecr_baseline_pts
-        fp_pts = round(raw_fp - (quant_stats.receptions * 0.5), 2) if is_half and raw_fp > 0 else round(raw_fp, 2)
+        fp_disc = min(raw_fp * 0.25, quant_stats.receptions * 0.5) if raw_fp > 0 else 0.0
+        fp_pts = round(max(0.0, raw_fp - fp_disc), 2) if is_half and raw_fp > 0 else round(raw_fp, 2)
 
         raw_espn = float(espn_proj) if espn_proj > 0.0 else 0.0
-        espn_pts = round(raw_espn - (quant_stats.receptions * 0.5), 2) if is_half and raw_espn > 0 else round(raw_espn, 2)
+        espn_disc = min(raw_espn * 0.25, quant_stats.receptions * 0.5) if raw_espn > 0 else 0.0
+        espn_pts = round(max(0.0, raw_espn - espn_disc), 2) if is_half and raw_espn > 0 else round(raw_espn, 2)
 
-        sleeper_raw = getattr(player, "projected_points_sleeper", 0.0) or 0.0
-        raw_slp = float(sleeper_raw) if sleeper_raw > 0.0 else 0.0
-        sleeper_pts = round(raw_slp - (quant_stats.receptions * 0.5), 2) if is_half and raw_slp > 0 else round(raw_slp, 2)
+        sleeper_half_native = float(getattr(player, "projected_points_sleeper_half", 0.0) or 0.0)
+        sleeper_raw = float(getattr(player, "projected_points_sleeper", 0.0) or 0.0)
+        if is_half and sleeper_half_native > 0.0:
+            sleeper_pts = round(sleeper_half_native, 2)
+        elif sleeper_raw > 0.0:
+            slp_disc = min(sleeper_raw * 0.25, quant_stats.receptions * 0.5) if is_half else 0.0
+            sleeper_pts = round(max(0.0, sleeper_raw - slp_disc), 2)
+        else:
+            sleeper_pts = 0.0
 
         # 6. Bayesian Outlier-Clamped Consensus Ensembling
         valid_signals = [p for p in (model_pts, fp_pts, props_pts, sleeper_pts, espn_pts) if p > 0.0]
@@ -1416,13 +1582,24 @@ class QuantProjectionEngine:
             else:
                 consensus_pts = round(med, 2)
 
-        # Compute XGBoost ML prediction
-        xgb_half_pts = predict_xgboost_points(pos, quant_stats, volume_share)
+        # Compute XGBoost ML prediction using leak-free trailing usage logs
+        if pos == "QB" and volume_share <= 0.0 and model_pts <= 0.0:
+            xgb_half_pts = 0.0
+        else:
+            xgb_half_pts = predict_xgboost_points(
+                pos,
+                quant_stats,
+                volume_share,
+                player_name=p_name,
+                cutoff_week=week,
+                im_data=im_data,
+                use_explicit_stats=use_explicit_stats,
+            )
         xgb_full_pts = round(xgb_half_pts + (0.5 * quant_stats.receptions), 2) if xgb_half_pts > 0 else 0.0
         xgb_pts = xgb_half_pts if is_half else xgb_full_pts
 
         # Compute Institutional Ensemble Blend
-        # Inverse-Variance weighting: 0.45 Quant Physics + 0.35 XGBoost ML + 0.20 Vegas Props
+        # Out-of-sample W8-W9 calibrated weighting: 0.35 Quant Physics + 0.55 XGBoost ML + 0.10 Vegas Props
         if pos in ("D/ST", "DST", "K", "PK") or xgb_half_pts <= 0.0:
             ensemble_half = calc_quant_half_ppr
             ensemble_full = calc_quant_ppr
@@ -1430,11 +1607,11 @@ class QuantProjectionEngine:
             if props_pts > 0.0:
                 props_half = props_pts if is_half else max(0.0, props_pts - 0.5 * quant_stats.receptions)
                 props_full = props_pts if not is_half else props_pts + 0.5 * quant_stats.receptions
-                ensemble_half = round((0.45 * calc_quant_half_ppr) + (0.35 * xgb_half_pts) + (0.20 * props_half), 2)
-                ensemble_full = round((0.45 * calc_quant_ppr) + (0.35 * xgb_full_pts) + (0.20 * props_full), 2)
+                ensemble_half = round((0.35 * calc_quant_half_ppr) + (0.55 * xgb_half_pts) + (0.10 * props_half), 2)
+                ensemble_full = round((0.35 * calc_quant_ppr) + (0.55 * xgb_full_pts) + (0.10 * props_full), 2)
             else:
-                ensemble_half = round((0.55 * calc_quant_half_ppr) + (0.45 * xgb_half_pts), 2)
-                ensemble_full = round((0.55 * calc_quant_ppr) + (0.45 * xgb_full_pts), 2)
+                ensemble_half = round((0.38 * calc_quant_half_ppr) + (0.62 * xgb_half_pts), 2)
+                ensemble_full = round((0.38 * calc_quant_ppr) + (0.62 * xgb_full_pts), 2)
 
         # 7. Resolve Active Projection by User Selection
         requested_source = (projection_source or "MODEL").upper().strip()
@@ -1463,13 +1640,7 @@ class QuantProjectionEngine:
         else:
             reconciled_stats = self._reconcile_itemized_to_points(quant_stats, active_points, pos, scoring_format_clean)
 
-        # 9. Probabilistic Floor & Ceiling
-        std_est = getattr(player, "fp_rank_std", 1.2) or 1.2
-        volatility_factor = max(0.18, min(0.42, 0.22 + (std_est * 0.05)))
-        floor_pts = round(max(0.0, active_points * (1.0 - (volatility_factor * 1.5))), 1)
-        ceiling_pts = round(active_points * (1.0 + (volatility_factor * 2.0)), 1)
-
-        # Provenance audit package
+        # 9. Provenance Audit Package & Parametric Distribution
         provenance = {
             "team": player.pro_team,
             "opponent": context.opponent,
@@ -1517,7 +1688,7 @@ class QuantProjectionEngine:
             provenance["vacated_opportunity"] = vacated_note
             provenance["is_injury_beneficiary"] = True
 
-        # Calculate Expected Fantasy Points (xFP) and FPOE (Coiled Spring vs Mirage)
+        # Parametric Positional Outcome Distribution (GPP percentiles & Floor/Ceiling parity)
         adot_calc = float(adot) if ("adot" in locals() and adot is not None) else (10.5 if pos == "WR" else 6.5)
         ez_targets = float(quant_stats.rec_td * 1.8) if pos in ("WR", "TE", "RB") else 0.0
         c_in_5 = float(hvt_inside_5)
@@ -1544,7 +1715,6 @@ class QuantProjectionEngine:
         if "coverage_scheme_note" in locals() and coverage_scheme_note:
             provenance["coverage_scheme_note"] = coverage_scheme_note
 
-        # Parametric Positional Outcome Distribution (GPP percentiles)
         hvt_share = float(hvt_inside_5 / max(quant_stats.rush_att, 1.0)) if pos in ("RB", "FB") and quant_stats.rush_att > 0 else None
         dist_res = PositionalDistributionEngine.calculate_distribution(
             pos=pos,
@@ -1552,6 +1722,8 @@ class QuantProjectionEngine:
             adot=adot_calc if pos == "WR" else None,
             hvt_share=hvt_share,
         )
+        floor_pts = min(active_points, dist_res.floor_10th) if active_points > 0 else 0.0
+        ceiling_pts = max(active_points, dist_res.ceiling_85th) if active_points > 0 else 0.0
         provenance["floor_10th"] = dist_res.floor_10th
         provenance["median_50th"] = dist_res.median_50th
         provenance["ceiling_85th"] = dist_res.ceiling_85th
@@ -1750,6 +1922,74 @@ class QuantProjectionEngine:
 
         scaled.calculated_ppr = target_pts
         return scaled
+
+    @staticmethod
+    def normalize_team_projections(
+        pairs: list[tuple[PlayerModel, PlayerProjectionResult]],
+        scoring_format: str = "HALF_PPR",
+    ) -> None:
+        """Apply team-level conservation limits across non-QB skill volume so team targets/carries stay realistic."""
+        by_team: dict[str, list[tuple[PlayerModel, PlayerProjectionResult]]] = {}
+        for pl, res in pairs:
+            tm = _norm_team(getattr(pl, "pro_team", ""))
+            if tm and tm != "FA" and res.projected_points > 0:
+                by_team.setdefault(tm, []).append((pl, res))
+
+        is_half = "HALF" in (scoring_format or "").upper()
+        for tm, group in by_team.items():
+            pass_cap = max((r.team_pass_att for _, r in group if r.team_pass_att > 0), default=0.0)
+            rush_cap = max((r.team_rush_att for _, r in group if r.team_rush_att > 0), default=0.0)
+            if pass_cap <= 0 and rush_cap <= 0:
+                continue
+
+            catchers = [(pl, r) for pl, r in group if pl.position.upper() in ("WR", "TE", "RB", "FB") and r.itemized_stats.targets > 0]
+            total_tgts = sum(r.itemized_stats.targets for _, r in catchers)
+            if pass_cap > 0 and total_tgts > pass_cap * 1.05:
+                tgt_scale = (pass_cap * 1.02) / total_tgts
+                for pl, r in catchers:
+                    r.itemized_stats.targets = round(r.itemized_stats.targets * tgt_scale, 1)
+                    r.itemized_stats.receptions = round(r.itemized_stats.receptions * tgt_scale, 1)
+                    r.itemized_stats.rec_yds = round(r.itemized_stats.rec_yds * tgt_scale, 1)
+                    r.itemized_stats.rec_td = round(r.itemized_stats.rec_td * tgt_scale, 2)
+                    rec_pts_loss = r.projected_points * (1.0 - tgt_scale) * (0.65 if pl.position.upper() in ("WR", "TE") else 0.20)
+                    r.projected_points = round(max(0.0, r.projected_points - rec_pts_loss), 2)
+                    r.active_points = r.projected_points
+                    r.model_points = round(max(0.0, r.model_points - rec_pts_loss), 2)
+                    if is_half:
+                        if r.projected_half_ppr_points > 0:
+                            r.projected_half_ppr_points = round(max(0.0, r.projected_half_ppr_points - rec_pts_loss), 2)
+                        if r.ensemble_half_ppr > 0:
+                            r.ensemble_half_ppr = round(max(0.0, r.ensemble_half_ppr - rec_pts_loss), 2)
+                    else:
+                        if r.projected_ppr_points > 0:
+                            r.projected_ppr_points = round(max(0.0, r.projected_ppr_points - rec_pts_loss), 2)
+                        if r.ensemble_full_ppr > 0:
+                            r.ensemble_full_ppr = round(max(0.0, r.ensemble_full_ppr - rec_pts_loss), 2)
+
+            rbs = [(pl, r) for pl, r in group if pl.position.upper() in ("RB", "FB") and r.itemized_stats.rush_att > 0]
+            total_carries = sum(r.itemized_stats.rush_att for _, r in rbs)
+            qb_rushes = sum(r.itemized_stats.rush_att for pl, r in group if pl.position.upper() == "QB")
+            avail_rb_cap = max(10.0, rush_cap - qb_rushes)
+            if rush_cap > 0 and total_carries > avail_rb_cap * 1.05:
+                rush_scale = (avail_rb_cap * 1.02) / total_carries
+                for pl, r in rbs:
+                    r.itemized_stats.rush_att = round(r.itemized_stats.rush_att * rush_scale, 1)
+                    r.itemized_stats.rush_yds = round(r.itemized_stats.rush_yds * rush_scale, 1)
+                    r.itemized_stats.rush_td = round(r.itemized_stats.rush_td * rush_scale, 2)
+                    rush_pts_loss = r.projected_points * (1.0 - rush_scale) * 0.72
+                    r.projected_points = round(max(0.0, r.projected_points - rush_pts_loss), 2)
+                    r.active_points = r.projected_points
+                    r.model_points = round(max(0.0, r.model_points - rush_pts_loss), 2)
+                    if is_half:
+                        if r.projected_half_ppr_points > 0:
+                            r.projected_half_ppr_points = round(max(0.0, r.projected_half_ppr_points - rush_pts_loss), 2)
+                        if r.ensemble_half_ppr > 0:
+                            r.ensemble_half_ppr = round(max(0.0, r.ensemble_half_ppr - rush_pts_loss), 2)
+                    else:
+                        if r.projected_ppr_points > 0:
+                            r.projected_ppr_points = round(max(0.0, r.projected_ppr_points - rush_pts_loss), 2)
+                        if r.ensemble_full_ppr > 0:
+                            r.ensemble_full_ppr = round(max(0.0, r.ensemble_full_ppr - rush_pts_loss), 2)
 
 
 quant_projection_engine = QuantProjectionEngine()

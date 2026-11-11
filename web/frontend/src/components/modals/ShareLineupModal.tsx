@@ -29,7 +29,7 @@ export const ShareLineupModal: React.FC<ShareLineupModalProps> = ({
   )
 
   const generateMarkdown = () => {
-    const week = league?.current_week ?? 1
+    const week = league?.current_week ?? 10
     const leagueName = league?.name ?? 'Fantasy League'
     let text = `🏈 **${leagueName.toUpperCase()} — WEEK ${week} OPTIMAL LINEUP**\n`
     text += `⚡ Total Projection: **${startersTotal.toFixed(1)} fpts** | Strategy: *${strategyMode}* | Source: *${projectionSource}*\n`
@@ -66,7 +66,7 @@ export const ShareLineupModal: React.FC<ShareLineupModalProps> = ({
             <div>
               <h3 className="share-modal-title">Export & Share Lineup Card</h3>
               <p className="share-modal-subtitle">
-                {league?.name || 'League'} • Week {league?.current_week || 7} • {startersTotal.toFixed(1)} Projected FPTS
+                {league?.name || 'League'} • Week {league?.current_week || 10} • {startersTotal.toFixed(1)} Projected FPTS
               </p>
             </div>
           </div>

@@ -610,12 +610,29 @@ export interface WeeklyAuditMetrics {
   efficiency_pct: number
 }
 
+export interface SourceAccuracyMetrics {
+  source: string
+  display_name: string
+  weeks_evaluated: number
+  sample_size: number
+  mae: number
+  rmse: number
+  bias: number
+  corr_r: number
+  coverage_10th_pct?: number | null
+  coverage_85th_pct?: number | null
+  coverage_95th_pct?: number | null
+}
+
 export interface BacktestReport {
   total_weeks_audited: number
   overall_accuracy_pct: number
   overall_efficiency_pct: number
   current_weights: ScoringWeights
   weekly_breakdowns: WeeklyAuditMetrics[]
+  scoring_format?: string
+  evaluated_weeks?: number[]
+  source_leaderboard?: SourceAccuracyMetrics[]
 }
 
 export interface PlayerDirectoryItem {

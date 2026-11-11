@@ -93,6 +93,7 @@ def normalize_sleeper_stats(stats: dict[str, Any]) -> dict[str, float]:
     def_td = out.get("def_td", 0.0)
 
     pts_ppr = out.get("pts_ppr", 0.0)
+    pts_half_ppr = out.get("pts_half_ppr", max(0.0, pts_ppr - (0.5 * rec)) if pts_ppr > 0 else 0.0)
 
     unified: dict[str, float] = {
         **out,
@@ -137,6 +138,8 @@ def normalize_sleeper_stats(stats: dict[str, Any]) -> dict[str, float]:
         "def_pa": pts_allow,
         "calculated_ppr": pts_ppr,
         "points_ppr": pts_ppr,
+        "pts_half_ppr": pts_half_ppr,
+        "points_half_ppr": pts_half_ppr,
     }
     return unified
 

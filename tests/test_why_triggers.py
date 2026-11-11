@@ -191,9 +191,9 @@ def test_multi_source_convergence_and_divergence_triggers():
         projected_points_model=18.2,
         projected_points_fp=17.8,
         projected_points_espn=18.0,
-        projected_stats_json='{"rush_att": 16.0, "rush_yds": 75.0, "rush_td": 0.6, "targets": 5.0, "receptions": 4.0, "rec_yds": 35.0, "rec_td": 0.2}',
+        projected_stats_json='{"rush_att": 16.0, "rush_yds": 69.0, "rush_td": 0.6, "targets": 5.0, "receptions": 4.0, "rec_yds": 35.0, "rec_td": 0.0}',
     )
-    eval_conv = scoring_engine.evaluate_player(convergent_player)
+    eval_conv = scoring_engine.evaluate_player(convergent_player, week=1)
     assert any("Multi-Source Convergence" in r for r in eval_conv.reasons_positive)
 
     # Player with wide projection divergence across sources
@@ -204,11 +204,11 @@ def test_multi_source_convergence_and_divergence_triggers():
         pro_team="MIA",
         projected_points=14.0,
         projected_points_model=19.5,
-        projected_points_fp=10.0,
-        projected_points_espn=12.5,
+        projected_points_fp=8.5,
+        projected_points_espn=8.0,
         projected_stats_json='{"targets": 7.0, "receptions": 4.0, "rec_yds": 65.0, "rec_td": 0.4}',
     )
-    eval_div = scoring_engine.evaluate_player(divergent_player)
+    eval_div = scoring_engine.evaluate_player(divergent_player, week=1)
     assert any("Multi-Source Model Divergence" in r for r in eval_div.reasons_negative)
 
 

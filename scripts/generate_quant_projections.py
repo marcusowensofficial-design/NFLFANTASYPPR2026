@@ -17,10 +17,15 @@ from typing import Any
 # Ensure project root is on sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+
 from src.db.session import SessionLocal
-from src.db.models import PlayerModel
+from src.db.models import PlayerModel, WeeklyProjectionHistoryModel
+from src.adapters.nfl.dvp_client import dvp_client
 from src.adapters.nfl.schedule_client import nfl_schedule_client
 from src.services.recommendation.projection_engine import (
+    QuantProjectionEngine,
+    _norm_team,
     quant_projection_engine,
     get_receiver_micro_metrics,
     get_team_trench_metrics,
@@ -39,7 +44,7 @@ def run_slate_projections(
     print(f"\n================================================================================")
     print(f"  FANDUEL DFS SLATE PROJECTION ENGINE: {os.path.basename(csv_path)}")
     if use_ensemble:
-        print(f"  [MODE: Institutional Inverse-Variance Ensemble (45% Quant + 35% XGB + 20% Props)]")
+        print(f"  [MODE: Institutional Inverse-Variance Ensemble (35% Quant + 55% XGB + 10% Props)]")
     print(f"================================================================================")
 
     df = asyncio.run(dfs_loader.load_slate(csv_path))
@@ -215,24 +220,36 @@ def run_database_projections(
 
     db = SessionLocal()
     try:
+        dvp_client.ensure_hydrated(season=2026, week=week)
         players = db.query(PlayerModel).all()
         games = asyncio.run(nfl_schedule_client.fetch_week_schedule(season=2026, week=week))
-        game_map = {g.home_team: g for g in games}
-        game_map.update({g.away_team: g for g in games})
+        game_map: dict[str, Any] = {}
+        for g in games:
+            ht = g.home_team.upper().strip()
+            at = g.away_team.upper().strip()
+            game_map[ht] = g
+            game_map[at] = g
+            game_map[_norm_team(ht)] = g
+            game_map[_norm_team(at)] = g
 
-        results = []
+        ppr_pairs: list[tuple[PlayerModel, Any]] = []
+        half_pairs: list[tuple[PlayerModel, Any]] = []
+        eval_rows: list[tuple[PlayerModel, Any, Any, Any]] = []
+
         for p in players:
             if not p.position or p.position.upper() not in ("QB", "RB", "WR", "TE", "K", "D/ST", "DST"):
                 continue
 
-            nfl_game = game_map.get(p.pro_team.upper() if p.pro_team else "")
-            
+            team_norm = _norm_team(p.pro_team or "")
+            nfl_game = game_map.get(team_norm)
+
             # Full-PPR Evaluation
             eval_ppr = quant_projection_engine.calculate_player_projection(
                 p,
                 nfl_game=nfl_game,
                 projection_source=resolved_source,
                 scoring_format="PPR",
+                week=week,
             )
             # Half-PPR Evaluation
             eval_half = quant_projection_engine.calculate_player_projection(
@@ -240,17 +257,60 @@ def run_database_projections(
                 nfl_game=nfl_game,
                 projection_source=resolved_source,
                 scoring_format="HALF_PPR",
+                week=week,
             )
+            ppr_pairs.append((p, eval_ppr))
+            half_pairs.append((p, eval_half))
+            eval_rows.append((p, nfl_game, eval_ppr, eval_half))
 
+        # Apply team-level pass/rush conservation normalization before persisting or filtering
+        QuantProjectionEngine.normalize_team_projections(ppr_pairs, scoring_format="PPR")
+        QuantProjectionEngine.normalize_team_projections(half_pairs, scoring_format="HALF_PPR")
+
+        history_rows: list[dict[str, Any]] = []
+        results = []
+        for p, nfl_game, eval_ppr, eval_half in eval_rows:
             p_ppr = eval_ppr.projected_points
             p_half = eval_half.projected_points
             delta = round(p_ppr - p_half, 2)
+            is_bye = eval_half.model_provenance.get("reason") == "BYE week" or nfl_game is None
 
-            # Filter out practice squad / zero-projection benchwarmers
-            if p_ppr < 4.0 and p_half < 4.0:
+            for fmt_label, ev in (("HALF_PPR", eval_half), ("PPR", eval_ppr)):
+                is_half_fmt = fmt_label == "HALF_PPR"
+                history_rows.append({
+                    "player_id": p.id,
+                    "player_name": p.full_name,
+                    "position": p.position.upper(),
+                    "pro_team": p.pro_team or "FA",
+                    "season": 2026,
+                    "week": week,
+                    "scoring_format": fmt_label,
+                    "model_pts": float(ev.model_points or 0.0),
+                    "quant_pts": float(ev.projected_half_ppr_points if is_half_fmt else ev.projected_ppr_points),
+                    "xgboost_pts": float(ev.xgboost_points or 0.0),
+                    "ensemble_pts": float(ev.ensemble_half_ppr if is_half_fmt else ev.ensemble_full_ppr),
+                    "props_pts": float(ev.props_points or 0.0),
+                    "consensus_pts": float(ev.consensus_points or 0.0),
+                    "fp_pts": float(ev.fp_points or 0.0),
+                    "sleeper_pts": float(
+                        (p.projected_points_sleeper_half or ev.sleeper_points or 0.0)
+                        if is_half_fmt
+                        else (p.projected_points_sleeper or ev.sleeper_points or 0.0)
+                    ),
+                    "espn_pts": float(ev.espn_points or 0.0),
+                    "floor_10th": float(ev.floor_10th or 0.0),
+                    "median_50th": float(ev.median_50th or 0.0),
+                    "ceiling_85th": float(ev.ceiling_85th or 0.0),
+                    "ceiling_95th": float(ev.ceiling_95th or 0.0),
+                    "is_bye": bool(is_bye),
+                })
+
+            # Filter BYE / practice squad / zero-projection benchwarmers from active export
+            if is_bye or (p_ppr < 4.0 and p_half < 4.0):
                 continue
 
-            opp = nfl_game.get_opponent_for_team(p.pro_team.upper()) if nfl_game else "OPP"
+            team_norm = _norm_team(p.pro_team or "")
+            opp = nfl_game.get_opponent_for_team(team_norm) if nfl_game else "BYE"
 
             results.append({
                 "player_id": p.id,
@@ -278,6 +338,36 @@ def run_database_projections(
                 "bust_prob_6pt": eval_half.bust_probability_6pt,
                 "tprr_vs_zone": eval_half.tprr_vs_zone,
             })
+
+        if history_rows:
+            chunk_size = 250
+            for idx in range(0, len(history_rows), chunk_size):
+                batch = history_rows[idx : idx + chunk_size]
+                ins = sqlite_insert(WeeklyProjectionHistoryModel).values(batch)
+                stmt = ins.on_conflict_do_update(
+                    index_elements=["player_id", "season", "week", "scoring_format"],
+                    set_={
+                        "player_name": ins.excluded.player_name,
+                        "position": ins.excluded.position,
+                        "pro_team": ins.excluded.pro_team,
+                        "model_pts": ins.excluded.model_pts,
+                        "quant_pts": ins.excluded.quant_pts,
+                        "xgboost_pts": ins.excluded.xgboost_pts,
+                        "ensemble_pts": ins.excluded.ensemble_pts,
+                        "props_pts": ins.excluded.props_pts,
+                        "consensus_pts": ins.excluded.consensus_pts,
+                        "fp_pts": ins.excluded.fp_pts,
+                        "sleeper_pts": ins.excluded.sleeper_pts,
+                        "espn_pts": ins.excluded.espn_pts,
+                        "floor_10th": ins.excluded.floor_10th,
+                        "median_50th": ins.excluded.median_50th,
+                        "ceiling_85th": ins.excluded.ceiling_85th,
+                        "ceiling_95th": ins.excluded.ceiling_95th,
+                        "is_bye": ins.excluded.is_bye,
+                    },
+                )
+                db.execute(stmt)
+            db.commit()
 
         # Sort based on mode
         if mode == "half-ppr":
@@ -382,7 +472,7 @@ def export_projections(results: list[dict[str, Any]], week: int) -> tuple[str, s
 def main():
     parser = argparse.ArgumentParser(description="Generate Quant NFL Projections (PPR & Half-PPR)")
     parser.add_argument("--mode", choices=["ppr", "half-ppr", "both"], default="both", help="Scoring format mode")
-    parser.add_argument("--week", type=int, default=8, help="NFL Regular Season Week (default: 8)")
+    parser.add_argument("--week", type=int, default=10, help="NFL Regular Season Week (default: 10)")
     parser.add_argument("--limit", type=int, default=30, help="Number of top players to display")
     parser.add_argument("--source", default="MODEL", choices=["MODEL", "CONSENSUS", "FANTASYPROS", "ESPN", "ENSEMBLE"])
     parser.add_argument("--ensemble", action="store_true", help="Enable Institutional Inverse-Variance Ensemble Blend")

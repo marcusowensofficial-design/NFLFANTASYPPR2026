@@ -103,7 +103,7 @@ export const renderFactorDetailBox = (
 interface CompareTabProps {
   strategyMode: 'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO'
   onStrategyChange: (mode: 'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO') => void
-  projectionSource: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'
+  projectionSource: 'MODEL' | 'ENSEMBLE' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'
   selectedTeamId: number
   league: LeagueSummaryResponse | null
   allPlayers: PlayerDirectoryItem[]
@@ -344,7 +344,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <span className="pill cyan">Transparent Formula</span>
           <span className="pill emerald" style={{ fontSize: '11px' }}>
-            {projectionSource === 'MODEL' ? '🤖 Model Projections' : projectionSource === 'CONSENSUS' ? '⭐ Consensus' : projectionSource === 'FANTASYPROS' ? '🌐 FP Consensus' : projectionSource === 'SLEEPER' ? '📱 Sleeper (RotoWire)' : '🏈 ESPN Direct'}
+            {projectionSource === 'MODEL' ? '🤖 Model Projections' : projectionSource === 'ENSEMBLE' ? '🧠 Ensemble (Quant+XGB+Props)' : projectionSource === 'CONSENSUS' ? '⭐ Consensus' : projectionSource === 'FANTASYPROS' ? '🌐 FP Consensus' : projectionSource === 'SLEEPER' ? '📱 Sleeper (RotoWire)' : '🏈 ESPN Direct'}
           </span>
         </div>
       </div>
@@ -841,7 +841,7 @@ export const CompareTab: React.FC<CompareTabProps> = ({
             </div>
             <div className="duel-guide-feature-item">
               <div className="duel-guide-feature-title">🛡️ Defense-vs-Position</div>
-              <div className="duel-guide-feature-text">Full DvP star ratings & positional defensive rankings for Week {league?.current_week || 7}.</div>
+              <div className="duel-guide-feature-text">Full DvP star ratings & positional defensive rankings for Week {league?.current_week || 10}.</div>
             </div>
             <div className="duel-guide-feature-item">
               <div className="duel-guide-feature-title">🎲 Vegas Sharp Props</div>

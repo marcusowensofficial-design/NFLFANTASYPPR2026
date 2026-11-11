@@ -1,13 +1,13 @@
 {
   "season": 2026,
-  "last_updated": "2026-10-27T16:59:40.666823+00:00",
+  "last_updated": "2026-11-11T15:26:55.720757+00:00",
   "description": "PFF Advanced Scouting baseline with verified 2026 NFL depth charts, coverage grades, shadow tracking, and trench metrics.",
   "teams": {
     "ARI": {
       "team_name": "Arizona Cardinals",
       "cornerbacks": {
         "outside1": {
-          "name": "Garrett Williams",
+          "name": "Kalen King",
           "role": "LWR",
           "grade": 76.0,
           "is_shadow": false,
@@ -43,11 +43,11 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Will Johnson",
+          "name": "Garrett Williams",
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Kalen King",
+          "name": "Kei'Trel Clark",
           "grade": 63.0
         },
         "safety_backup": {
@@ -101,7 +101,7 @@
           "fpts_per_route": 0.31
         },
         "slot": {
-          "name": "Billy Bowman Jr.",
+          "name": "Sydney Brown",
           "role": "SLOT",
           "grade": 74.0,
           "is_shadow": false,
@@ -110,11 +110,11 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "grade": 89.5,
-          "coverage_grade": 91.0,
-          "run_def_grade": 83.5,
-          "name": "Jessie Bates III",
-          "role": "SS"
+          "name": "DeMarcco Hellams",
+          "role": "SS",
+          "grade": 77.0,
+          "coverage_grade": 76.0,
+          "run_def_grade": 78.0
         }
       },
       "backup_cornerbacks": {
@@ -123,7 +123,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Mike Hughes",
+          "name": "Billy Bowman Jr.",
           "grade": 63.0
         },
         "safety_backup": {
@@ -262,16 +262,16 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "name": "Cole Bishop",
-          "role": "SS",
-          "grade": 77.0,
-          "coverage_grade": 76.0,
-          "run_def_grade": 78.0
+          "grade": 81.0,
+          "coverage_grade": 81.0,
+          "run_def_grade": 80.0,
+          "name": "Amani Hooker",
+          "role": "SS"
         }
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Dorian Strong",
+          "name": "Te'Cory Couch",
           "grade": 64.0
         },
         "slot_backup": {
@@ -279,7 +279,7 @@
           "grade": 63.0
         },
         "safety_backup": {
-          "name": "C.J. Gardner-Johnson",
+          "name": "Cole Bishop",
           "grade": 66.0
         }
       },
@@ -311,7 +311,7 @@
       "team_name": "Carolina Panthers",
       "cornerbacks": {
         "outside1": {
-          "name": "Akayleb Evans",
+          "name": "Malcolm DeWalt IV",
           "role": "LWR",
           "grade": 76.0,
           "is_shadow": false,
@@ -347,7 +347,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Mike Jackson",
+          "name": "Akayleb Evans",
           "grade": 64.0
         },
         "slot_backup": {
@@ -427,7 +427,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Nick McCloud",
+          "name": "Kyler Gordon",
           "grade": 63.0
         },
         "safety_backup": {
@@ -642,7 +642,7 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "name": "Caleb Downs",
+          "name": "P.J. Locke",
           "role": "SS",
           "grade": 77.0,
           "coverage_grade": 76.0,
@@ -758,7 +758,7 @@
         "rank": 15,
         "key_disruptors": [
           "Zach Allen",
-          "Eyioma Uwazurike",
+          "Malcolm Roach",
           "D.J. Jones"
         ]
       }
@@ -955,7 +955,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Bryce Hall",
+          "name": "Jaylin Smith",
           "grade": 64.0
         },
         "slot_backup": {
@@ -1098,11 +1098,11 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "name": "Eric Murray",
-          "role": "SS",
-          "grade": 77.0,
-          "coverage_grade": 76.0,
-          "run_def_grade": 78.0
+          "grade": 89.5,
+          "coverage_grade": 91.0,
+          "run_def_grade": 83.5,
+          "name": "Jessie Bates III",
+          "role": "SS"
         }
       },
       "backup_cornerbacks": {
@@ -1165,13 +1165,13 @@
           "fpts_per_route": 0.31
         },
         "slot": {
+          "name": "Jadon Canady",
           "role": "SLOT",
-          "grade": 85.0,
+          "grade": 74.0,
           "is_shadow": false,
-          "targets_per_route": 0.15,
-          "catch_rate": 0.54,
-          "fpts_per_route": 0.22,
-          "name": "L'Jarius Sneed"
+          "targets_per_route": 0.17,
+          "catch_rate": 0.58,
+          "fpts_per_route": 0.25
         },
         "safety": {
           "grade": 78.0,
@@ -1187,7 +1187,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Jadon Canady",
+          "name": "L'Jarius Sneed",
           "grade": 63.0
         },
         "safety_backup": {
@@ -1250,11 +1250,11 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "grade": 86.5,
-          "coverage_grade": 85.0,
-          "run_def_grade": 88.0,
-          "name": "Derwin James Jr.",
-          "role": "SS"
+          "name": "Tony Jefferson",
+          "role": "SS",
+          "grade": 77.0,
+          "coverage_grade": 76.0,
+          "run_def_grade": 78.0
         }
       },
       "backup_cornerbacks": {
@@ -1277,8 +1277,8 @@
         "overall_grade": 80.5,
         "rank": 10,
         "key_tackles": [
-          "Travis Burke",
-          "Joe Alt"
+          "Joe Alt",
+          "Travis Burke"
         ]
       },
       "defensive_line_front": {
@@ -1299,7 +1299,7 @@
       "team_name": "Los Angeles Rams",
       "cornerbacks": {
         "outside1": {
-          "name": "Jaylen Watson",
+          "name": "Josh Wallace",
           "role": "LWR",
           "grade": 76.0,
           "is_shadow": false,
@@ -1335,11 +1335,11 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Josh Wallace",
+          "name": "Cam Lampkin",
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Quentin Lake",
+          "name": "Josh Wallace",
           "grade": 63.0
         },
         "safety_backup": {
@@ -1411,7 +1411,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Jermod McCoy",
+          "name": "Hezekiah Masses",
           "grade": 64.0
         },
         "slot_backup": {
@@ -1441,7 +1441,7 @@
         "stuffed_run_pct": 20.0,
         "rank": 12,
         "key_disruptors": [
-          "Jonah Laulu",
+          "Folorunso Fatukasi",
           "Tonka Hemingway",
           "Adam Butler"
         ]
@@ -1491,11 +1491,11 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Reese Taylor",
+          "name": "Chris Johnson",
           "grade": 63.0
         },
         "safety_backup": {
-          "name": "Zayne Anderson",
+          "name": "Michael Taaffe",
           "grade": 66.0
         }
       },
@@ -1643,7 +1643,7 @@
           "grade": 64.0
         },
         "slot_backup": {
-          "name": "Kindle Vildor",
+          "name": "Marcus Jones",
           "grade": 63.0
         },
         "safety_backup": {
@@ -1733,7 +1733,7 @@
         "overall_grade": 81.0,
         "rank": 9,
         "key_tackles": [
-          "Asim Richards",
+          "Kelvin Banks Jr.",
           "Taliese Fuaga"
         ]
       },
@@ -1755,13 +1755,13 @@
       "team_name": "New York Giants",
       "cornerbacks": {
         "outside1": {
-          "name": "Paulson Adebo",
           "role": "LWR",
-          "grade": 76.0,
+          "grade": 76.5,
           "is_shadow": false,
           "targets_per_route": 0.18,
           "catch_rate": 0.59,
-          "fpts_per_route": 0.27
+          "fpts_per_route": 0.27,
+          "name": "Deonte Banks"
         },
         "outside2": {
           "role": "RWR",
@@ -1782,7 +1782,7 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "name": "Tyler Nubin",
+          "name": "Ar'Darius Washington",
           "role": "SS",
           "grade": 77.0,
           "coverage_grade": 76.0,
@@ -1791,7 +1791,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Deonte Banks",
+          "name": "Paulson Adebo",
           "grade": 64.0
         },
         "slot_backup": {
@@ -1899,7 +1899,7 @@
         "key_disruptors": [
           "David Bailey",
           "Kingsley Enagbare",
-          "T'Vondre Sweat"
+          "Darrell Jackson Jr."
         ]
       }
     },
@@ -1973,9 +1973,9 @@
         "stuffed_run_pct": 21.5,
         "rank": 10,
         "key_disruptors": [
-          "Jalen Carter",
+          "Byron Young",
           "Moro Ojomo",
-          "Jordan Davis"
+          "Jalen Carter"
         ]
       }
     },
@@ -2162,7 +2162,7 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "name": "Marques Sigle",
+          "name": "Malik Mustapha",
           "role": "SS",
           "grade": 77.0,
           "coverage_grade": 76.0,
@@ -2171,7 +2171,7 @@
       },
       "backup_cornerbacks": {
         "outside_backup": {
-          "name": "Jack Jones",
+          "name": "Renardo Green",
           "grade": 64.0
         },
         "slot_backup": {
@@ -2314,11 +2314,11 @@
           "fpts_per_route": 0.25
         },
         "safety": {
-          "grade": 81.0,
-          "coverage_grade": 81.0,
-          "run_def_grade": 80.0,
-          "name": "Amani Hooker",
-          "role": "SS"
+          "name": "Tony Adams",
+          "role": "SS",
+          "grade": 77.0,
+          "coverage_grade": 76.0,
+          "run_def_grade": 78.0
         }
       },
       "backup_cornerbacks": {
@@ -2353,9 +2353,9 @@
         "stuffed_run_pct": 20.0,
         "rank": 17,
         "key_disruptors": [
-          "John Franklin-Myers",
+          "Jacob Martin",
           "Jermaine Johnson II",
-          "Jeffery Simmons"
+          "John Franklin-Myers"
         ]
       }
     },
@@ -2429,9 +2429,9 @@
         "stuffed_run_pct": 18.0,
         "rank": 16,
         "key_disruptors": [
-          "Tim Settle",
-          "Javon Kinlaw",
-          "Daron Payne"
+          "Charles Omenihu",
+          "Shy Tuttle",
+          "Tim Settle"
         ]
       }
     },
@@ -2505,9 +2505,9 @@
         "stuffed_run_pct": 17.5,
         "rank": 26,
         "key_disruptors": [
-          "Tim Settle",
-          "Javon Kinlaw",
-          "Daron Payne"
+          "Charles Omenihu",
+          "Shy Tuttle",
+          "Tim Settle"
         ]
       }
     }

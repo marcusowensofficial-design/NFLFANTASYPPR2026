@@ -39,11 +39,13 @@ def test_optimal_lineup_starter_ordering(client):
     expected_slots = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "K", "D/ST"]
     assert starter_slot_names == expected_slots, f"Got: {starter_slot_names}"
 
-    # Verify bench count and IR slots
-    assert len(data["bench"]) == 7
+    # Verify bench count and IR slots (8 non-starter slots total across active bench + IR)
+    assert len(data["bench"]) + len(data["ir"]) == 8
+    assert len(data["bench"]) in (7, 8)
     assert data["bench_slots_count"] == 7
     assert data["ir_slots_count"] in (1, 2)
-    assert len(data["ir"]) == 0  # 0 players on IR
+    assert len(data["ir"]) <= data["ir_slots_count"]
+    assert all("player_id" in p for p in data["ir"])
 
 
 def test_team_roster_ordering_in_league_api(client):
@@ -61,6 +63,9 @@ def test_team_roster_ordering_in_league_api(client):
     expected_starter_slots = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "K", "D/ST"]
     assert slot_names[:9] == expected_starter_slots, f"Got: {slot_names[:9]}"
 
-    # Next 7 slots must be bench (BE)
-    assert all(s == "BE" for s in slot_names[9:]), f"Remaining slots: {slot_names[9:]}"
-    assert len(slot_names[9:]) == 7
+    # Next 7 slots must be bench (BE), followed by any IR slots
+    trailing_slots = slot_names[9:]
+    be_slots = [s for s in trailing_slots if s == "BE"]
+    ir_slots = [s for s in trailing_slots if s == "IR"]
+    assert len(be_slots) == 7, f"Expected 7 BE slots, got: {trailing_slots}"
+    assert trailing_slots == be_slots + ir_slots, f"Remaining slots out of canonical order: {trailing_slots}"

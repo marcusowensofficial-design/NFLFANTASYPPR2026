@@ -63,9 +63,31 @@ class DvPClient:
     def __init__(self, profiles: dict[str, DvPProfile] | None = None, auto_hydrate: bool = False):
         import copy
         self.profiles = {k: copy.deepcopy(v) for k, v in (profiles or DEFAULT_DVP_PROFILES).items()}
+        self._hydrated = False
         if auto_hydrate:
-            self.hydrate_from_draftedge()
-            self.hydrate_from_db()
+            self.ensure_hydrated()
+
+    def reset_to_defaults(self) -> None:
+        """Restore bundled default DvP profiles (used for test isolation)."""
+        import copy
+        self.profiles = {k: copy.deepcopy(v) for k, v in DEFAULT_DVP_PROFILES.items()}
+        self._hydrated = False
+
+    def _resolve_team(self, team_code: str) -> str:
+        """Normalize incoming team aliases (WAS/JAC/LA) onto canonical DvP profile keys (WSH/JAX/LAR)."""
+        opp = (team_code or "").upper().strip()
+        if opp in self.profiles:
+            return opp
+        alias_map = {"WAS": "WSH", "WSH": "WAS", "JAC": "JAX", "JAX": "JAC", "LA": "LAR"}
+        return alias_map.get(opp, opp)
+
+    def ensure_hydrated(self, season: int = 2026, week: int | None = None) -> None:
+        """Idempotently hydrate DvP profiles once from proprietary JSON and SQLite defense_vs_position."""
+        if self._hydrated:
+            return
+        self.hydrate_from_draftedge()
+        self.hydrate_from_db(season=season, week=week)
+        self._hydrated = True
 
     def hydrate_from_draftedge(self) -> None:
         """Hydrate team DvP ranks with proprietary in-house DvP or DraftEdge calibrated rankings."""
@@ -83,7 +105,7 @@ class DvPClient:
                 pos_attr_map = {"QB": "qb_rank", "RB": "rb_rank", "WR": "wr_rank", "TE": "te_rank"}
                 for pos, attr in pos_attr_map.items():
                     for item in seed_data.get(pos, []):
-                        team = item.get("pro_team")
+                        team = self._resolve_team(item.get("pro_team") or "")
                         # 1 = toughest/stingiest, 32 = softest/worst defense
                         def_rank = item.get("rank_defense")
                         if def_rank is None and item.get("rank_softness"):
@@ -104,7 +126,7 @@ class DvPClient:
                 eff_week = week
                 if eff_week is None:
                     league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
-                    eff_week = league.current_week if league else 6
+                    eff_week = league.current_week if league else 10
 
                 records = db.execute(
                     select(DefenseVsPositionModel).where(
@@ -121,7 +143,7 @@ class DvPClient:
 
                 pos_attr_map = {"QB": "qb_rank", "RB": "rb_rank", "WR": "wr_rank", "TE": "te_rank"}
                 for r in records:
-                    team = r.pro_team.upper().strip() if r.pro_team else ""
+                    team = self._resolve_team(r.pro_team or "")
                     pos = r.position.upper().strip() if r.position else ""
                     attr = pos_attr_map.get(pos)
                     if team and attr and team in self.profiles:
@@ -152,10 +174,7 @@ class DvPClient:
 
     def get_position_rank(self, opponent_team: str, position: str) -> int:
         """Returns rank 1-32 (1 = toughest vs position, 32 = softest vs position)."""
-        opp = opponent_team.upper().strip()
-        if opp not in self.profiles:
-            alias_map = {"WAS": "WSH", "WSH": "WAS", "JAC": "JAX", "LA": "LAR"}
-            opp = alias_map.get(opp, opp)
+        opp = self._resolve_team(opponent_team)
         profile = self.profiles.get(opp)
         if not profile:
             return 16  # Neutral middle rank fallback
@@ -178,13 +197,13 @@ class DvPClient:
 
     def get_overall_rank(self, opponent_team: str) -> int:
         """Returns overall defensive rank 1-32 (1 = best defense, 32 = worst defense)."""
-        opp = opponent_team.upper().strip()
+        opp = self._resolve_team(opponent_team)
         profile = self.profiles.get(opp)
         return profile.overall_def_rank if profile else 16
 
     def get_overall_off_rank(self, opponent_team: str) -> int:
         """Returns overall offensive rank 1-32 (1 = best offense, 32 = worst offense)."""
-        opp = opponent_team.upper().strip()
+        opp = self._resolve_team(opponent_team)
         profile = self.profiles.get(opp)
         return profile.overall_off_rank if profile else 16
 
@@ -215,6 +234,7 @@ class DvPClient:
         position: str,
         opponent_implied_total: float | None = None,
         spread: float | None = None,
+        team_implied_total: float | None = None,
     ) -> tuple[float, str]:
         """Calculates 0-100 MatchupScore using non-linear calibrated curve centered at 70 (neutral).
         Incorporates Vegas Implied Team Totals and Spreads when available as objective market anchors.
@@ -249,9 +269,10 @@ class DvPClient:
                 blended_delta += spread_bonus
         else:
             blended_delta = (0.75 * pos_delta) + (0.25 * overall_delta)
-            if opponent_implied_total is not None and opponent_implied_total > 0:
+            env_total = team_implied_total if (team_implied_total is not None and team_implied_total > 0) else opponent_implied_total
+            if env_total is not None and env_total > 0:
                 # Offensive scoring environment adjustment
-                env_delta = max(-0.8, min(0.8, (opponent_implied_total - 21.5) / 7.0))
+                env_delta = max(-0.8, min(0.8, (env_total - 21.5) / 7.0))
                 blended_delta = (0.70 * pos_delta) + (0.20 * overall_delta) + (0.10 * env_delta)
 
         score = round(70.0 + (blended_delta * 26.0), 1)
@@ -377,7 +398,7 @@ class DvPClient:
                 'rush_rank': int,
                 'detail': str | None
         """
-        opp = opponent_team.upper().strip()
+        opp = self._resolve_team(opponent_team)
         profile = self.profiles.get(opp)
         if not profile:
             return {

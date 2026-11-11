@@ -31,7 +31,7 @@ router = APIRouter(prefix="/api/recommendation", tags=["Recommendation"])
 class CompareRequest(BaseModel):
     player_ids: list[int] = Field(min_length=2, max_length=4, description="List of 2 to 4 player IDs to compare")
     mode: str = Field(default="BALANCED", description="Strategy mode: BALANCED, CEILING, or FLOOR")
-    projection_source: str = Field(default="MODEL", description="Projection source: MODEL, FANTASYPROS, SLEEPER, ESPN, or CONSENSUS")
+    projection_source: str = Field(default="MODEL", description="Projection source: MODEL, ENSEMBLE, FANTASYPROS, SLEEPER, ESPN, or CONSENSUS")
 
 
 class ScoringSettings(BaseModel):

@@ -277,6 +277,23 @@ class NFLScheduleClient:
                 NFLGame(id="401873022", name="Kansas City Chiefs at Seattle Seahawks", date="2026-10-26T00:20Z", venue_name="Lumen Field", is_dome=False, home_team="SEA", away_team="KC", over_under=42.5, spread=-2.5, home_implied_total=22.5, away_implied_total=20.0),
                 NFLGame(id="401873009", name="Dallas Cowboys at Philadelphia Eagles", date="2026-10-27T00:15Z", venue_name="Lincoln Financial Field", is_dome=False, home_team="PHI", away_team="DAL", over_under=44.5, spread=4.5, home_implied_total=20.0, away_implied_total=24.5),
             ]
+        elif week == 10:
+            return [
+                NFLGame(id="401873052", name="Washington Commanders at New York Giants", date="2026-11-13T01:15Z", venue_name="MetLife Stadium", is_dome=False, home_team="NYG", away_team="WSH", over_under=41.5, spread=-2.5, home_implied_total=22.0, away_implied_total=19.5),
+                NFLGame(id="401873053", name="New England Patriots at Detroit Lions", date="2026-11-15T14:30Z", venue_name="FC Bayern Munich Stadium", is_dome=False, home_team="DET", away_team="NE", over_under=51.5, spread=-2.5, home_implied_total=27.0, away_implied_total=24.5),
+                NFLGame(id="401873058", name="Kansas City Chiefs at Atlanta Falcons", date="2026-11-15T18:00Z", venue_name="Mercedes-Benz Stadium", is_dome=True, home_team="ATL", away_team="KC", over_under=45.5, spread=3.5, home_implied_total=21.0, away_implied_total=24.5),
+                NFLGame(id="401873056", name="Houston Texans at Cleveland Browns", date="2026-11-15T18:00Z", venue_name="Huntington Bank Field", is_dome=False, home_team="CLE", away_team="HOU", over_under=39.5, spread=4.5, home_implied_total=17.5, away_implied_total=22.0),
+                NFLGame(id="401873060", name="Minnesota Vikings at Green Bay Packers", date="2026-11-15T18:00Z", venue_name="Lambeau Field", is_dome=False, home_team="GB", away_team="MIN", over_under=41.5, spread=-3.5, home_implied_total=22.5, away_implied_total=19.0),
+                NFLGame(id="401873057", name="Jacksonville Jaguars at Tennessee Titans", date="2026-11-15T18:00Z", venue_name="Nissan Stadium", is_dome=False, home_team="TEN", away_team="JAX", over_under=46.5, spread=10.5, home_implied_total=18.0, away_implied_total=28.5),
+                NFLGame(id="401873059", name="Miami Dolphins at Indianapolis Colts", date="2026-11-15T18:00Z", venue_name="Lucas Oil Stadium", is_dome=True, home_team="IND", away_team="MIA", over_under=38.5, spread=-3.5, home_implied_total=21.0, away_implied_total=17.5),
+                NFLGame(id="401873055", name="Carolina Panthers at New Orleans Saints", date="2026-11-15T18:00Z", venue_name="Caesars Superdome", is_dome=True, home_team="NO", away_team="CAR", over_under=48.5, spread=-2.5, home_implied_total=25.5, away_implied_total=23.0),
+                NFLGame(id="401873054", name="Buffalo Bills at New York Jets", date="2026-11-15T18:00Z", venue_name="MetLife Stadium", is_dome=False, home_team="NYJ", away_team="BUF", over_under=50.5, spread=8.5, home_implied_total=21.0, away_implied_total=29.5),
+                NFLGame(id="401873062", name="Seattle Seahawks at Las Vegas Raiders", date="2026-11-15T21:05Z", venue_name="Allegiant Stadium", is_dome=True, home_team="LV", away_team="SEA", over_under=40.5, spread=6.5, home_implied_total=17.0, away_implied_total=23.5),
+                NFLGame(id="401873061", name="Los Angeles Rams at Arizona Cardinals", date="2026-11-15T21:05Z", venue_name="State Farm Stadium", is_dome=True, home_team="ARI", away_team="LAR", over_under=39.5, spread=9.5, home_implied_total=15.0, away_implied_total=24.5),
+                NFLGame(id="401873063", name="San Francisco 49ers at Dallas Cowboys", date="2026-11-15T21:25Z", venue_name="AT&T Stadium", is_dome=True, home_team="DAL", away_team="SF", over_under=55.5, spread=4.5, home_implied_total=25.5, away_implied_total=30.0),
+                NFLGame(id="401873064", name="Pittsburgh Steelers at Cincinnati Bengals", date="2026-11-16T01:20Z", venue_name="Paycor Stadium", is_dome=False, home_team="CIN", away_team="PIT", over_under=49.5, spread=-3.5, home_implied_total=26.5, away_implied_total=23.0),
+                NFLGame(id="401873065", name="Los Angeles Chargers at Baltimore Ravens", date="2026-11-17T01:15Z", venue_name="M&T Bank Stadium", is_dome=False, home_team="BAL", away_team="LAC", over_under=38.5, spread=-4.5, home_implied_total=21.5, away_implied_total=17.0),
+            ]
         return []
 
 

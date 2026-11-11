@@ -1,12 +1,13 @@
 """Backtesting and weight tuning evaluator comparing recommendations against actual fantasy points."""
 
 import logging
+import math
 from typing import Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.db.models import PlayerModel, RosterEntryModel
+from src.db.models import PlayerModel, RosterEntryModel, WeeklyProjectionHistoryModel
 from src.services.recommendation.scoring_engine import (
     ScoringWeights,
     StartSitEvaluation,
@@ -28,12 +29,29 @@ class WeeklyAuditMetrics(BaseModel):
     efficiency_pct: float
 
 
+class SourceAccuracyMetrics(BaseModel):
+    source: str
+    display_name: str
+    weeks_evaluated: int
+    sample_size: int
+    mae: float
+    rmse: float
+    bias: float
+    corr_r: float
+    coverage_10th_pct: float | None = None
+    coverage_85th_pct: float | None = None
+    coverage_95th_pct: float | None = None
+
+
 class BacktestReport(BaseModel):
     total_weeks_audited: int
     overall_accuracy_pct: float
     overall_efficiency_pct: float
     current_weights: ScoringWeights
     weekly_breakdowns: list[WeeklyAuditMetrics]
+    scoring_format: str = "HALF_PPR"
+    evaluated_weeks: list[int] = Field(default_factory=list)
+    source_leaderboard: list[SourceAccuracyMetrics] = Field(default_factory=list)
 
 
 class WeightTuningResult(BaseModel):
@@ -195,6 +213,103 @@ class BacktestingEvaluator:
                 else f"Grid search complete ({len(candidate_profiles)} profiles tested): current weights are optimal."
             ),
         )
+
+    def build_source_leaderboard(
+        self,
+        db: Session,
+        season: int = 2026,
+        max_week: int | None = None,
+        scoring_format: str = "HALF_PPR",
+    ) -> tuple[list[int], list[SourceAccuracyMetrics]]:
+        """Aggregate multi-week MAE, RMSE, Bias, Pearson r, and coverage across projection sources."""
+        fmt = "HALF_PPR" if "HALF" in (scoring_format or "").upper() else "PPR"
+        stmt = select(WeeklyProjectionHistoryModel).where(
+            WeeklyProjectionHistoryModel.season == season,
+            WeeklyProjectionHistoryModel.scoring_format == fmt,
+            WeeklyProjectionHistoryModel.actual_pts.isnot(None),
+            WeeklyProjectionHistoryModel.is_bye.is_(False),
+        )
+        if max_week is not None and max_week > 0:
+            stmt = stmt.where(WeeklyProjectionHistoryModel.week <= max_week)
+
+        rows = db.execute(stmt).scalars().all()
+        if not rows:
+            return [], []
+
+        evaluated_weeks = sorted({int(r.week) for r in rows})
+        source_specs = [
+            ("ENSEMBLE", "Ensemble (Quant+XGB+Props)", "ensemble_pts", True),
+            ("MODEL", "Quant Model", "quant_pts", True),
+            ("XGBOOST", "XGBoost ML", "xgboost_pts", False),
+            ("SLEEPER", "Sleeper", "sleeper_pts", False),
+            ("CONSENSUS", "Consensus", "consensus_pts", False),
+            ("FANTASYPROS", "FantasyPros", "fp_pts", False),
+            ("ESPN", "ESPN", "espn_pts", False),
+            ("PROPS", "Vegas Props", "props_pts", False),
+        ]
+
+        leaderboard: list[SourceAccuracyMetrics] = []
+        for src_code, label, col_name, track_cov in source_specs:
+            pairs: list[tuple[float, float]] = []
+            weeks_seen: set[int] = set()
+            cov_rows: list[tuple[float, float, float, float]] = []
+
+            for r in rows:
+                pred = float(getattr(r, col_name) or 0.0)
+                act = float(r.actual_pts or 0.0)
+                if pred <= 0.0:
+                    continue
+                if max(float(r.quant_pts or 0.0), float(r.sleeper_pts or 0.0), act) < 4.0:
+                    continue
+                pairs.append((pred, act))
+                weeks_seen.add(int(r.week))
+                if track_cov and float(r.floor_10th or 0.0) > 0.0 and float(r.ceiling_95th or 0.0) > 0.0:
+                    cov_rows.append((act, float(r.floor_10th), float(r.ceiling_85th), float(r.ceiling_95th)))
+
+            n = len(pairs)
+            if n == 0:
+                continue
+
+            abs_errs = [abs(p - a) for p, a in pairs]
+            sq_errs = [(p - a) ** 2 for p, a in pairs]
+            diffs = [p - a for p, a in pairs]
+            mae = round(sum(abs_errs) / n, 3)
+            rmse = round(math.sqrt(sum(sq_errs) / n), 3)
+            bias = round(sum(diffs) / n, 3)
+
+            mean_p = sum(p for p, _ in pairs) / n
+            mean_a = sum(a for _, a in pairs) / n
+            cov = sum((p - mean_p) * (a - mean_a) for p, a in pairs)
+            var_p = sum((p - mean_p) ** 2 for p, _ in pairs)
+            var_a = sum((a - mean_a) ** 2 for _, a in pairs)
+            denom = math.sqrt(var_p * var_a)
+            corr_r = round(cov / denom, 3) if denom > 0 else 0.0
+
+            cov10 = cov85 = cov95 = None
+            if cov_rows:
+                cn = len(cov_rows)
+                cov10 = round(100.0 * sum(1 for a, f10, _, _ in cov_rows if a < f10) / cn, 1)
+                cov85 = round(100.0 * sum(1 for a, _, c85, _ in cov_rows if a > c85) / cn, 1)
+                cov95 = round(100.0 * sum(1 for a, _, _, c95 in cov_rows if a > c95) / cn, 1)
+
+            leaderboard.append(
+                SourceAccuracyMetrics(
+                    source=src_code,
+                    display_name=label,
+                    weeks_evaluated=len(weeks_seen),
+                    sample_size=n,
+                    mae=mae,
+                    rmse=rmse,
+                    bias=bias,
+                    corr_r=corr_r,
+                    coverage_10th_pct=cov10,
+                    coverage_85th_pct=cov85,
+                    coverage_95th_pct=cov95,
+                )
+            )
+
+        leaderboard.sort(key=lambda m: (m.mae, m.rmse))
+        return evaluated_weeks, leaderboard
 
 
 

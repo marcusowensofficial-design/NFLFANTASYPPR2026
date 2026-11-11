@@ -106,8 +106,8 @@ def get_consensus_waiver_board(
     from src.services.waiver.expert_consensus_service import expert_consensus_service
     league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
     if not league:
-        raw = expert_consensus_service.load_consensus_data(week=5)
-        return {"season": 2026, "week": 5, "positions": raw.get("positions", {}), "positional_needs": []}
+        raw = expert_consensus_service.load_consensus_data(week=10)
+        return {"season": 2026, "week": int(raw.get("week", 10)), "positions": raw.get("positions", {}), "positional_needs": []}
 
     target_team_id = team_id or league.user_team_id or 1
     expert_consensus_service.ensure_consensus_players_in_db(db)

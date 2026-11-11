@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 _live_props_cache: dict[str, Any] = {"mtime": 0, "players": {}}
+_LIVE_PROPS_MAX_AGE_SECONDS = 6 * 86400
 
 
 def _load_live_props_cache() -> None:
@@ -35,6 +36,31 @@ def _load_live_props_cache() -> None:
     try:
         with open(props_file, encoding="utf-8") as f:
             data = json.load(f)
+
+        now_ts = datetime.now(timezone.utc).timestamp()
+        feed_ts = mtime
+        for key in ("fetched_at", "timestamp", "as_of_date", "updated_at"):
+            raw_val = data.get(key)
+            if isinstance(raw_val, (int, float)) and raw_val > 1_000_000_000:
+                feed_ts = float(raw_val)
+                break
+            if isinstance(raw_val, str) and raw_val.strip():
+                try:
+                    parsed_dt = datetime.fromisoformat(raw_val.strip().replace("Z", "+00:00"))
+                    if parsed_dt.tzinfo is None:
+                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                    feed_ts = parsed_dt.timestamp()
+                    break
+                except ValueError:
+                    pass
+
+        if (now_ts - feed_ts) > _LIVE_PROPS_MAX_AGE_SECONDS:
+            logger.warning(
+                "Ignoring stale player_props_live.json (age %.1f days > 6 days); falling back to live Vegas synthesis.",
+                (now_ts - feed_ts) / 86400.0,
+            )
+            _live_props_cache = {"mtime": mtime, "players": {}}
+            return
 
         parsed: dict[str, dict[str, Any]] = {}
 
@@ -196,7 +222,7 @@ class VegasPropsClient:
         td_odds = match.get("td_odds")
         td_prob = match.get("td_prob") or 0.0
 
-        if rec_yds is None and rush_yds is None and pass_yds is None and td_odds is None:
+        if rec_yds is None and rush_yds is None and pass_yds is None:
             return None
 
         sharp_notes: list[str] = []
@@ -486,25 +512,26 @@ class VegasPropsClient:
         """Calculate market-implied PPR fantasy points strictly from prop lines."""
         pos = props.position.upper()
         pts = 0.0
+        is_live_sb = props.source == "SPORTSBOOK_CONSENSUS"
 
         if pos == "QB":
-            pass_yds = props.pass_yards_ou or 220.0
-            pass_tds = props.pass_tds_ou or 1.5
-            rush_yds = props.rush_yards_ou or 10.0
+            pass_yds = (props.pass_yards_ou or 0.0) if is_live_sb else (props.pass_yards_ou if props.pass_yards_ou is not None else 220.0)
+            pass_tds = (props.pass_tds_ou or 0.0) if is_live_sb else (props.pass_tds_ou if props.pass_tds_ou is not None else 1.5)
+            rush_yds = (props.rush_yards_ou or 0.0) if is_live_sb else (props.rush_yards_ou if props.rush_yards_ou is not None else 10.0)
             pts += (pass_yds / 25.0) + (pass_tds * 4.0) + (rush_yds / 10.0)
             pts += (props.anytime_td_prob * 6.0)
             pts -= 1.8  # ~0.9 INTs average
 
         elif pos == "RB":
-            rush_yds = props.rush_yards_ou or 45.0
-            rec_yds = props.rec_yards_ou or 15.0
-            recs = props.receptions_ou or 2.0
+            rush_yds = (props.rush_yards_ou or 0.0) if is_live_sb else (props.rush_yards_ou if props.rush_yards_ou is not None else 45.0)
+            rec_yds = (props.rec_yards_ou or 0.0) if is_live_sb else (props.rec_yards_ou if props.rec_yards_ou is not None else 15.0)
+            recs = (props.receptions_ou or 0.0) if is_live_sb else (props.receptions_ou if props.receptions_ou is not None else 2.0)
             pts += (rush_yds / 10.0) + (rec_yds / 10.0) + (recs * 1.0)
             pts += (props.anytime_td_prob * 6.0)
 
         elif pos in ("WR", "TE"):
-            rec_yds = props.rec_yards_ou or 45.0
-            recs = props.receptions_ou or 3.5
+            rec_yds = (props.rec_yards_ou or 0.0) if is_live_sb else (props.rec_yards_ou if props.rec_yards_ou is not None else 45.0)
+            recs = (props.receptions_ou or 0.0) if is_live_sb else (props.receptions_ou if props.receptions_ou is not None else 3.5)
             rush_yds = props.rush_yards_ou or 0.0
             pts += (rec_yds / 10.0) + (rush_yds / 10.0) + (recs * 1.0)
             pts += (props.anytime_td_prob * 6.0)

@@ -26,6 +26,8 @@ def setup_test_db():
     from src.services.recommendation.scoring_engine import scoring_engine, ScoringWeights
     scoring_engine.weights = ScoringWeights()
     scoring_engine.league_size = 8
+    from src.adapters.nfl.dvp_client import dvp_client
+    dvp_client.reset_to_defaults()
 
 
 

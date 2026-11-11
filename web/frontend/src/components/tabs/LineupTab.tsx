@@ -20,8 +20,8 @@ import { NFLTeamLogo } from '../shared/NFLTeamLogo'
 import { formatToMDT } from '../../utils/dateUtils'
 
 interface LineupTabProps {
-  projectionSource: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'
-  onProjectionSourceChange: (source: 'MODEL' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN') => void
+  projectionSource: 'MODEL' | 'ENSEMBLE' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN'
+  onProjectionSourceChange: (source: 'MODEL' | 'ENSEMBLE' | 'CONSENSUS' | 'FANTASYPROS' | 'SLEEPER' | 'ESPN') => void
   strategyMode: 'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO'
   onStrategyChange: (mode: 'BALANCED' | 'CEILING' | 'FLOOR' | 'AUTO') => void
   lineup: OptimizedLineupResult | null
@@ -170,7 +170,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
   useEffect(() => {
     const fetchMarketBuzz = async () => {
       try {
-        const week = league?.current_week || 7
+        const week = league?.current_week || 10
         const res = await fetch(`/api/analysis/market-sentiment/buzz?week=${week}`)
         if (res.ok) {
           setMarketBuzz(await res.json())
@@ -452,7 +452,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
             <span style={{ fontSize: '24px' }}>🏈</span>
             <div>
               <strong style={{ color: '#c084fc', fontSize: '15px' }}>
-                Week {league?.current_week || 7} Kickoff & Market Volatility Alert ({marketAlerts.length} Starter{marketAlerts.length > 1 ? 's' : ''} Flagged):
+                Week {league?.current_week || 10} Kickoff & Market Volatility Alert ({marketAlerts.length} Starter{marketAlerts.length > 1 ? 's' : ''} Flagged):
               </strong>
               <div style={{ fontSize: '12.5px', color: '#e9d5ff', marginTop: '2px' }}>
                 Polymarket prediction crowd odds detect volatile starting roles, decoy risks, or Thursday FLEX positioning.
@@ -505,6 +505,8 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                 <span style={{ color: '#38bdf8', marginLeft: '6px' }}>
                   {projectionSource === 'MODEL'
                     ? 'Our Quant Model (Default)'
+                    : projectionSource === 'ENSEMBLE'
+                    ? 'Ensemble (Quant + XGBoost ML + Vegas Props)'
                     : projectionSource === 'CONSENSUS'
                     ? 'Multi-Source Consensus (Model + FP + Sleeper + ESPN)'
                     : projectionSource === 'FANTASYPROS'
@@ -515,7 +517,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
                 </span>
               </div>
               <div className="projection-source-desc">
-                Re-solves optimal lineup & displays individual source stats for Week {league?.current_week || 7} (PPR scoring)
+                Re-solves optimal lineup & displays individual source stats for Week {league?.current_week || 10} (PPR scoring)
               </div>
             </div>
           </div>
@@ -526,6 +528,13 @@ export const LineupTab: React.FC<LineupTabProps> = ({
               title="Our Quantitative Vegas micro-volume script projection engine"
             >
               ⚡ Quant Model {lineup?.total_model_projected ? `(${lineup.total_model_projected.toFixed(1)})` : ''}
+            </button>
+            <button
+              className={`source-pill-btn ${projectionSource === 'ENSEMBLE' ? 'active' : ''}`}
+              onClick={() => onProjectionSourceChange('ENSEMBLE')}
+              title="Out-of-sample calibrated blend (35% Quant Physics + 55% XGBoost ML + 10% Vegas Props)"
+            >
+              🧠 Ensemble
             </button>
             <button
               className={`source-pill-btn ${projectionSource === 'CONSENSUS' ? 'active' : ''}`}
@@ -723,7 +732,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
             <span className="metric-label">{hasCustomSwaps ? 'Custom Lineup Total' : 'Optimal Projected Total'}</span>
             <span className="metric-val">{hasCustomSwaps ? currentLineupProjectedTotal : (lineup.total_effective_points || lineup.total_projected_points)} fpts</span>
             <span className="metric-sub">
-              Engine: {projectionSource === 'MODEL' ? 'Quant Model' : projectionSource === 'CONSENSUS' ? 'Multi-Source Consensus' : projectionSource === 'FANTASYPROS' ? 'FantasyPros PPR' : projectionSource === 'SLEEPER' ? 'Sleeper (RotoWire)' : 'ESPN Official'}
+              Engine: {projectionSource === 'MODEL' ? 'Quant Model' : projectionSource === 'ENSEMBLE' ? 'Ensemble (Quant+XGB+Props)' : projectionSource === 'CONSENSUS' ? 'Multi-Source Consensus' : projectionSource === 'FANTASYPROS' ? 'FantasyPros PPR' : projectionSource === 'SLEEPER' ? 'Sleeper (RotoWire)' : 'ESPN Official'}
             </span>
           </div>
 
@@ -802,7 +811,7 @@ export const LineupTab: React.FC<LineupTabProps> = ({
       <div className="card" style={{ marginBottom: '24px' }}>
         <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h3 className="card-title">⭐ Optimal Starting Lineup (Week {league?.current_week || 7})</h3>
+            <h3 className="card-title">⭐ Optimal Starting Lineup (Week {league?.current_week || 10})</h3>
             <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
               <span className="pill emerald">Maximum StartScore</span>
               <span className="pill zinc" style={{ fontSize: '11px' }}>QB • RB • RB • WR • WR • TE • FLEX • KICKER • DST</span>

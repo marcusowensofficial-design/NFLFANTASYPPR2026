@@ -334,6 +334,7 @@ class StartSitScoringEngine:
         actual_points: float | None = None,
         lineup_locked: bool = False,
         scoring_format: str = "PPR",
+        week: int | None = None,
     ) -> StartSitEvaluation:
         eff_size = league_size or self.league_size
         baselines = LEAGUE_SIZE_BASELINES.get(eff_size, LEAGUE_SIZE_BASELINES[8])
@@ -349,6 +350,7 @@ class StartSitScoringEngine:
             weather=weather,
             projection_source=projection_source,
             scoring_format=scoring_format,
+            week=week,
         )
         if q_proj.projected_points > 0.0:
             proj = q_proj.projected_points
@@ -375,6 +377,7 @@ class StartSitScoringEngine:
         opp_implied = 21.0
         team_spread = 0.0
         game_over_under = 44.0
+        is_bye_week = bool(q_proj and q_proj.model_provenance.get("reason") == "BYE week")
 
         if nfl_game:
             opponent = nfl_game.get_opponent_for_team(player.pro_team) or "BYE"
@@ -384,6 +387,8 @@ class StartSitScoringEngine:
             game_over_under = nfl_game.over_under
             if opponent != "BYE":
                 opp_implied = nfl_game.get_implied_total_for_team(opponent)
+            else:
+                is_bye_week = True
 
         # 1. Mathematical Projection Component (0 to 100)
         proj_ratio = proj / max(pos_baseline, 1.0)
@@ -862,7 +867,9 @@ class StartSitScoringEngine:
                     neg_reasons.append(f"[Defense] ⚠️ Disciplined Ball-Control Offense: {opponent} rarely gives away sacks or turnovers (rank #{opp_dvp_rank} in D/ST points conceded)")
                     floor_penalty += 5.0
             else:
-                raw_matchup_score, matchup_grade = dvp_client.calculate_matchup_score(opponent, pos)
+                raw_matchup_score, matchup_grade = dvp_client.calculate_matchup_score(
+                    opponent, pos, team_implied_total=implied_total
+                )
                 if matchup_grade == "ELITE":
                     pos_reasons.append(f"[Matchup] 🚀 Elite smash matchup vs {opponent} (DvP rank #{opp_dvp_rank} vs {pos}, Def rank #{opp_def_rank} - Prime Target Spot)")
                     ceiling_boost += 6.0
@@ -959,7 +966,8 @@ class StartSitScoringEngine:
             dvp_info = None
             if not is_dst and opponent != "BYE":
                 try:
-                    dvp_info = dvp_service.get_matchup_for_player(opponent, pos)
+                    dvp_week = week or (getattr(nfl_game, "week", None) if nfl_game else None) or 10
+                    dvp_info = dvp_service.get_matchup_for_player(opponent, pos, week=dvp_week)
                     if dvp_info:
                         fpa = dvp_info.get("dk_fpa", 0.0)
                         vs_avg = dvp_info.get("vs_avg", 0.0)
@@ -1143,7 +1151,12 @@ class StartSitScoringEngine:
             status = injury_report.status.upper()
 
         is_ruled_out = status in ("DOUBTFUL", "OUT", "IR", "INACTIVE", "SUSPENDED") or bool(injury_report and injury_report.is_out)
-        if status == "ACTIVE" and not is_ruled_out:
+        if is_bye_week and not is_ruled_out:
+            proj = 0.0
+            proj_score = 0.0
+            neg_reasons.append("[Schedule] 🛑 Bye Week: NFL team is on bye this week (0.0 proj fpts)")
+            floor_penalty += 50.0
+        elif status == "ACTIVE" and not is_ruled_out:
             health_score = 100.0
             if not player.injured and (fp_inj_note is None or not fp_inj_note):
                 pos_reasons.append("[Health] ✅ Clean Bill of Health: Full active status with zero injury report restrictions")
@@ -1247,7 +1260,7 @@ class StartSitScoringEngine:
         else:
             final_composite = composite
 
-        if is_ruled_out:
+        if is_ruled_out or is_bye_week:
             final_composite = 0.0
             calc_ceiling = 0.0
             calc_floor = 0.0
@@ -1444,7 +1457,7 @@ class StartSitScoringEngine:
         sorted_neg = sort_factor_reasons(dedupe(neg_reasons))
 
         # Resilient multi-source projection resolution
-        if is_ruled_out:
+        if is_ruled_out or is_bye_week:
             res_model_pts = 0.0
             res_fp_pts = 0.0
             res_sleeper_pts = 0.0

@@ -13,7 +13,7 @@ def test_consensus_data_integrity_and_sources():
     and is backed by verified national fantasy outlets."""
     data = expert_consensus_service.load_consensus_data()
     assert data["season"] == 2026
-    assert data["week"] in (2, 3, 4, 5, 6, 7)
+    assert 2 <= data["week"] <= 18
     assert "FantasyPros" in data["expert_sources"]
     assert "CBS Sports" in data["expert_sources"]
     assert "NFL.com" in data["expert_sources"]
@@ -39,18 +39,18 @@ def test_consensus_data_integrity_and_sources():
 def test_analyze_team_positional_needs_diagnoses_injuries_and_deficits():
     """Verify that team positional needs accurately diagnose Brock Bowers' injury
     and recommend consensus targets for high-need positions."""
-    hurts = PlayerModel(id=101, full_name="Jalen Hurts", position="QB", pro_team="PHI", projected_points=22.4, injury_status="ACTIVE")
+    allen = PlayerModel(id=101, full_name="Josh Allen", position="QB", pro_team="BUF", projected_points=23.1, injury_status="ACTIVE")
     bijan = PlayerModel(id=102, full_name="Bijan Robinson", position="RB", pro_team="ATL", projected_points=18.5, injury_status="ACTIVE")
     bowers = PlayerModel(id=103, full_name="Brock Bowers", position="TE", pro_team="LV", projected_points=12.5, injury_status="QUESTIONABLE")
     pierce = PlayerModel(id=104, full_name="Alec Pierce", position="WR", pro_team="IND", projected_points=6.2, injury_status="ACTIVE")
 
-    eval_hurts = scoring_engine.evaluate_player(hurts, league_size=8)
+    eval_allen = scoring_engine.evaluate_player(allen, league_size=8)
     eval_bijan = scoring_engine.evaluate_player(bijan, league_size=8)
     eval_bowers = scoring_engine.evaluate_player(bowers, league_size=8)
     eval_pierce = scoring_engine.evaluate_player(pierce, league_size=8)
 
     needs = expert_consensus_service.analyze_team_positional_needs(
-        [eval_hurts, eval_bijan, eval_bowers, eval_pierce],
+        [eval_allen, eval_bijan, eval_bowers, eval_pierce],
         league_size=8,
     )
 
@@ -61,10 +61,13 @@ def test_analyze_team_positional_needs_diagnoses_injuries_and_deficits():
     assert needs_by_pos["TE"].need_level in ("CRITICAL_NEED", "HIGH_NEED")
     assert any(
         t in needs_by_pos["TE"].recommended_consensus_targets
-        for t in ("T.J. Hockenson", "Tyler Higbee", "Kenyon Sadiq", "Mike Gesicki", "Hunter Henry")
+        for t in (
+            "Dalton Kincaid", "Kyle Pitts Sr.", "Darren Waller", "Brenton Strange",
+            "T.J. Hockenson", "Tyler Higbee", "Kenyon Sadiq", "Mike Gesicki", "Hunter Henry",
+        )
     )
 
-    # 2. QB should be stable with healthy Jalen Hurts
+    # 2. QB should be stable with healthy active non-bye Josh Allen
     assert "QB" in needs_by_pos
     assert needs_by_pos["QB"].need_level == "STABLE"
 
@@ -76,18 +79,24 @@ def test_get_consensus_board_with_availability(db_session):
     team2 = TeamModel(id=2, league_id=777, name="Opponent Team", is_user_team=False)
     db_session.add_all([league, team1, team2])
 
-    # Player 1 is on user team (e.g. Mike Gesicki)
-    p_user = PlayerModel(id=3116164, full_name="Mike Gesicki", position="TE", pro_team="CIN", projected_points=9.8)
-    # Player 2 is on opponent team (e.g. Jalen Coker)
-    p_opp = PlayerModel(id=4695883, full_name="Jalen Coker", position="WR", pro_team="CAR", projected_points=10.2)
-    # Player 3 is a free agent (e.g. Devaughn Vele)
-    p_wire = PlayerModel(id=4569559, full_name="Devaughn Vele", position="WR", pro_team="DEN", projected_points=8.9)
+    raw_consensus = expert_consensus_service.load_consensus_data()
+    te_user_info = raw_consensus["positions"]["TE"][0]
+    wr_opp_info = raw_consensus["positions"]["WR"][0]
+    wr_wire_info = raw_consensus["positions"]["WR"][1]
+
+    te_user_id = te_user_info.get("player_id") or 3116164
+    wr_opp_id = wr_opp_info.get("player_id") or 4695883
+    wr_wire_id = wr_wire_info.get("player_id") or 4569559
+
+    p_user = PlayerModel(id=te_user_id, full_name=te_user_info["full_name"], position="TE", pro_team=te_user_info["pro_team"], projected_points=10.5)
+    p_opp = PlayerModel(id=wr_opp_id, full_name=wr_opp_info["full_name"], position="WR", pro_team=wr_opp_info["pro_team"], projected_points=11.2)
+    p_wire = PlayerModel(id=wr_wire_id, full_name=wr_wire_info["full_name"], position="WR", pro_team=wr_wire_info["pro_team"], projected_points=9.8)
 
     db_session.add_all([p_user, p_opp, p_wire])
     db_session.commit()
 
-    entry_user = RosterEntryModel(id="777_1_3116164", league_id=777, team_id=1, player_id=3116164, lineup_slot_id=6, is_starter=True)
-    entry_opp = RosterEntryModel(id="777_2_4695883", league_id=777, team_id=2, player_id=4695883, lineup_slot_id=4, is_starter=True)
+    entry_user = RosterEntryModel(id=f"777_1_{te_user_id}", league_id=777, team_id=1, player_id=te_user_id, lineup_slot_id=6, is_starter=True)
+    entry_opp = RosterEntryModel(id=f"777_2_{wr_opp_id}", league_id=777, team_id=2, player_id=wr_opp_id, lineup_slot_id=4, is_starter=True)
     db_session.add_all([entry_user, entry_opp])
     db_session.commit()
 
@@ -104,19 +113,19 @@ def test_get_consensus_board_with_availability(db_session):
 
     # Check TE board
     te_list = board.get("TE", [])
-    gesicki_item = next((p for p in te_list if p.full_name == "Mike Gesicki"), None)
-    assert gesicki_item is not None
-    assert gesicki_item.availability_status == "ROSTERED_USER"
-    assert not gesicki_item.is_available
+    user_item = next((p for p in te_list if p.full_name == te_user_info["full_name"]), None)
+    assert user_item is not None
+    assert user_item.availability_status == "ROSTERED_USER"
+    assert not user_item.is_available
 
     # Check WR board
     wr_list = board.get("WR", [])
-    coker_item = next((p for p in wr_list if p.full_name == "Jalen Coker"), None)
-    assert coker_item is not None
-    assert coker_item.availability_status == "ROSTERED_OPPONENT"
-    assert not coker_item.is_available
+    opp_item = next((p for p in wr_list if p.full_name == wr_opp_info["full_name"]), None)
+    assert opp_item is not None
+    assert opp_item.availability_status == "ROSTERED_OPPONENT"
+    assert not opp_item.is_available
 
-    vele_item = next((p for p in wr_list if p.full_name == "Devaughn Vele"), None)
-    assert vele_item is not None
-    assert vele_item.availability_status == "AVAILABLE"
-    assert vele_item.is_available
+    wire_item = next((p for p in wr_list if p.full_name == wr_wire_info["full_name"]), None)
+    assert wire_item is not None
+    assert wire_item.availability_status == "AVAILABLE"
+    assert wire_item.is_available

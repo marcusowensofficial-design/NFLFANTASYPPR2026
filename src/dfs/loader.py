@@ -20,6 +20,7 @@ import pandas as pd
 from src.adapters.nfl.schedule_client import nfl_schedule_client
 from src.adapters.nfl.dvp_client import dvp_client
 from src.services.recommendation.projection_engine import (
+    _norm_team,
     quant_projection_engine,
     get_receiver_micro_metrics,
     get_team_trench_metrics,
@@ -106,14 +107,18 @@ class DFSSlateLoader:
                     conn_tmp = sqlite3.connect(DB_PATH)
                     cw = conn_tmp.execute("SELECT current_week FROM leagues LIMIT 1").fetchone()
                     conn_tmp.close()
-                    eff_week = cw[0] if cw and cw[0] else 7
+                    eff_week = cw[0] if cw and cw[0] else 10
                 except Exception:
-                    eff_week = 7
+                    eff_week = 10
 
-        # 1. Fetch Schedule & Vegas Lines
+        # 1. Hydrate DvP matrix and Fetch Schedule & Vegas Lines
+        dvp_client.ensure_hydrated(season=season, week=eff_week)
         sched = await nfl_schedule_client.fetch_week_schedule(season=season, week=eff_week)
         team_vegas: dict[str, dict[str, Any]] = {}
+        game_by_team: dict[str, Any] = {}
         for g in sched:
+            game_by_team[g.home_team] = g
+            game_by_team[g.away_team] = g
             # Home team
             team_vegas[g.home_team] = {
                 "opponent": g.away_team,
@@ -145,10 +150,12 @@ class DFSSlateLoader:
                 "venue": g.venue_name,
             }
 
-        # Expand team_vegas with standard aliases so both WSH/WAS and JAX/JAC succeed
+        # Expand team_vegas & game_by_team with standard aliases so both WSH/WAS and JAX/JAC succeed
         for alias_from, alias_to in [("WSH", "WAS"), ("WAS", "WSH"), ("JAX", "JAC"), ("JAC", "JAX"), ("LAR", "LA"), ("LV", "LVR")]:
             if alias_from in team_vegas and alias_to not in team_vegas:
                 team_vegas[alias_to] = team_vegas[alias_from]
+            if alias_from in game_by_team and alias_to not in game_by_team:
+                game_by_team[alias_to] = game_by_team[alias_from]
 
         # Automated real-world NFL roster normalization and non-slate player filtering
         from src.core.nfl_rosters import normalize_roster_dataframe
@@ -164,8 +171,12 @@ class DFSSlateLoader:
         try:
             conn = sqlite3.connect(DB_PATH)
             df_dvp = pd.read_sql_query(
-                "SELECT pro_team, position, rank_softness, rank_defense, tier, tier_label, fd_fpa, dk_fpa FROM defense_vs_position",
+                "SELECT pro_team, position, rank_softness, rank_defense, tier, tier_label, fd_fpa, dk_fpa "
+                "FROM defense_vs_position "
+                "WHERE week = COALESCE((SELECT MAX(week) FROM defense_vs_position WHERE season = 2026 AND week <= ?), "
+                "(SELECT MAX(week) FROM defense_vs_position WHERE season = 2026))",
                 conn,
+                params=(eff_week,),
             )
             conn.close()
             for _, r in df_dvp.iterrows():
@@ -196,28 +207,40 @@ class DFSSlateLoader:
         df_db_players = pd.read_sql_query(
             """SELECT id, full_name, pro_team, position, injury_status,
                       projected_points, projected_points_model, projected_points_fp,
-                      projected_points_sleeper, projected_points_espn, projected_points_consensus
+                      projected_points_sleeper, projected_points_sleeper_half,
+                      projected_points_espn, projected_points_consensus,
+                      fp_rank_ecr, fp_pos_rank
                FROM players""",
             conn,
         )
         conn.close()
 
         db_player_map: dict[tuple[str, str], dict[str, Any]] = {}
+        _team_alias_pairs = {"WAS": "WSH", "WSH": "WAS", "JAC": "JAX", "JAX": "JAC", "LA": "LAR", "LAR": "LA"}
         for _, r in df_db_players.iterrows():
             norm_name = r["full_name"].strip().lower()
-            db_player_map[(norm_name, r["pro_team"])] = {
+            raw_team = str(r["pro_team"] or "").upper().strip()
+            entry = {
                 "db_proj": r["projected_points"],
                 "proj_model": r["projected_points_model"],
                 "proj_fp": r["projected_points_fp"],
                 "proj_sleeper": r["projected_points_sleeper"],
+                "proj_sleeper_half": r["projected_points_sleeper_half"],
                 "proj_espn": r["projected_points_espn"],
                 "proj_consensus": r["projected_points_consensus"],
+                "consensus_rank": r["fp_rank_ecr"],
+                "fp_pos_rank": r["fp_pos_rank"],
                 "injury_status": r["injury_status"],
             }
+            db_player_map[(norm_name, raw_team)] = entry
+            norm_tm = _norm_team(raw_team)
+            db_player_map[(norm_name, norm_tm)] = entry
+            if raw_team in _team_alias_pairs:
+                db_player_map[(norm_name, _team_alias_pairs[raw_team])] = entry
 
         source_clean = (projection_source or "MODEL").upper().strip()
 
-        # 3b. Load Live Injury Wire & Beneficiary Hierarchies
+        # 3b. Load Live Injury Wire & Dynamic Beneficiary Hierarchies
         live_inactives: set[str] = set()
         live_beneficiaries: dict[str, dict[str, Any]] = {}
         inj_path = Path(self.data_dir) / "injuries_live_2026.json"
@@ -231,87 +254,15 @@ class DFSSlateLoader:
                     p_norm = re.sub(r"[^\w\s]", "", str(inj_item.get("name", "")).lower()).strip()
                     if is_out_flag and p_norm:
                         live_inactives.add(p_norm)
-
-                        # Verified Starters Sidelined -> Direct Beneficiaries
-                        if "BOWERS" in p_norm.upper():
-                            live_beneficiaries["michael mayer"] = {
-                                "injured_name": "Brock Bowers",
-                                "pos": "TE",
-                                "team": "LV",
-                                "status": "OUT",
-                                "note": "Assumes starting inline TE role and red-zone targets with Brock Bowers OUT.",
-                                "baseline_boost": 11.5,
-                            }
-                        elif "JACOBS" in p_norm.upper():
-                            live_beneficiaries["marshawn lloyd"] = {
-                                "injured_name": "Josh Jacobs",
-                                "pos": "RB",
-                                "team": "GB",
-                                "status": "OUT",
-                                "note": "Primary starting running back with Josh Jacobs OUT.",
-                                "baseline_boost": 13.0,
-                            }
-                            live_beneficiaries["emanuel wilson"] = {
-                                "injured_name": "Josh Jacobs",
-                                "pos": "RB",
-                                "team": "GB",
-                                "status": "OUT",
-                                "note": "Rotational goal-line and change-of-pace back with Josh Jacobs OUT.",
-                                "baseline_boost": 9.0,
-                            }
-                        elif "TUCKER" in p_norm.upper():
-                            live_beneficiaries["bucky irving"] = {
-                                "injured_name": "Sean Tucker",
-                                "pos": "RB",
-                                "team": "TB",
-                                "status": "DOUBTFUL",
-                                "note": "Consolidated workhorse bellcow role with Sean Tucker doubtful.",
-                                "baseline_boost": 17.5,
-                            }
-                        elif "DARNOLD" in p_norm.upper():
-                            live_beneficiaries["drew lock"] = {
-                                "injured_name": "Sam Darnold",
-                                "pos": "QB",
-                                "team": "SEA",
-                                "status": "DOUBTFUL",
-                                "note": "Starting QB taking over first-team snaps with Sam Darnold doubtful.",
-                                "baseline_boost": 13.5,
-                            }
-                        elif "MCMILLAN" in p_norm.upper():
-                            live_beneficiaries["emeka egbuka"] = {
-                                "injured_name": "Jalen McMillan",
-                                "pos": "WR",
-                                "team": "TB",
-                                "status": "DOUBTFUL",
-                                "note": "Target progression expansion with Jalen McMillan doubtful.",
-                                "baseline_boost": 14.5,
-                            }
-                        elif "HENDERSON" in p_norm.upper():
-                            live_beneficiaries["rhamondre stevenson"] = {
-                                "injured_name": "TreVeyon Henderson",
-                                "pos": "RB",
-                                "team": "NE",
-                                "status": "OUT",
-                                "note": "Workhorse consolidation with TreVeyon Henderson OUT.",
-                                "baseline_boost": 15.0,
-                            }
-                        elif "BROWN" in p_norm.upper() and "A.J." in inj_item.get("name", ""):
-                            live_beneficiaries["demario douglas"] = {
-                                "injured_name": "A.J. Brown",
-                                "pos": "WR",
-                                "team": "NE",
-                                "status": "IR",
-                                "note": "Primary perimeter target with A.J. Brown on IR.",
-                                "baseline_boost": 12.0,
-                            }
-                        elif "LOVE" in p_norm.upper() and st in ("OUT", "DOUBTFUL"):
-                            live_beneficiaries["tyler allgeier"] = {
-                                "injured_name": "Jeremiyah Love",
-                                "pos": "RB",
-                                "team": "ARI",
-                                "status": st,
-                                "note": "Workhorse starter with Jeremiyah Love sidelined.",
-                                "baseline_boost": 13.5,
+                        backup_name = str(inj_item.get("backup_athlete_name") or "").strip().lower()
+                        if backup_name:
+                            live_beneficiaries[backup_name] = {
+                                "injured_name": str(inj_item.get("name", "")),
+                                "pos": str(inj_item.get("position", "")),
+                                "team": str(inj_item.get("team", "")),
+                                "status": st or "OUT",
+                                "note": str(inj_item.get("beneficiary_note") or f"Elevated opportunity with {inj_item.get('name', 'starter')} {st or 'OUT'}."),
+                                "baseline_boost": float(inj_item.get("baseline_boost") or 10.5),
                             }
             except Exception as e:
                 logger.debug(f"Failed to load live injury wire in loader: {e}")
@@ -401,8 +352,12 @@ class DFSSlateLoader:
                 else:
                     soft_rank = dvp.get("softness_rank", 16)
 
-            # DB projection lookup
-            db_info = db_player_map.get((name.strip().lower(), team), {})
+            # DB projection lookup (alias-safe across WAS/WSH, JAX/JAC, LA/LAR)
+            db_info = (
+                db_player_map.get((name.strip().lower(), team.upper().strip()))
+                or db_player_map.get((name.strip().lower(), _norm_team(team)))
+                or {}
+            )
             db_status = db_info.get("injury_status", "ACTIVE")
 
             norm_name = re.sub(r"[^\w\s]", "", name.lower()).strip()
@@ -447,9 +402,13 @@ class DFSSlateLoader:
                     else:
                         base_proj = 4.0 if pos != "D" else 5.0
                 elif source_clean == "SLEEPER":
-                    val = db_info.get("proj_sleeper")
-                    if val is not None and pd.notna(val) and float(val) > 0:
-                        base_proj = float(val)
+                    val_half = db_info.get("proj_sleeper_half")
+                    val_ppr = db_info.get("proj_sleeper")
+                    if val_half is not None and pd.notna(val_half) and float(val_half) > 0:
+                        base_proj = float(val_half)
+                    elif val_ppr is not None and pd.notna(val_ppr) and float(val_ppr) > 0:
+                        disc = 1.0 if pos_clean in ("QB", "K", "PK", "D", "DEF", "D/ST", "DST") else 0.90
+                        base_proj = round(float(val_ppr) * disc, 2)
                     elif db_info.get("db_proj") and pd.notna(db_info.get("db_proj")) and float(db_info["db_proj"]) > 0:
                         base_proj = float(db_info["db_proj"])
                     elif fppg > 0:
@@ -472,7 +431,7 @@ class DFSSlateLoader:
                         base_proj = float(val)
                     else:
                         signals = [
-                            float(db_info[k]) for k in ("proj_model", "proj_fp", "proj_sleeper", "proj_espn", "db_proj")
+                            float(db_info[k]) for k in ("proj_model", "proj_fp", "proj_sleeper_half", "proj_espn", "db_proj")
                             if db_info.get(k) is not None and pd.notna(db_info.get(k)) and float(db_info[k]) > 0
                         ]
                         if signals:
@@ -484,26 +443,34 @@ class DFSSlateLoader:
                         else:
                             base_proj = 4.0 if pos != "D" else 5.0
                 else:
-                    # MODEL: Institutional Quant Engine in HALF_PPR mode
+                    # MODEL or ENSEMBLE: Institutional Quant / Ensemble Engine in HALF_PPR mode
+                    temp_pos = "D/ST" if pos_clean in ("D", "DEF", "DST", "D/ST") else pos
                     temp_player = PlayerModel(
                         id=0,
                         full_name=name,
-                        position=pos,
+                        position=temp_pos,
                         pro_team=team,
                         projected_points_espn=float(db_info.get("proj_espn") or fppg or 0.0),
                         projected_points_fp=float(db_info.get("proj_fp") or 0.0),
-                        projected_points_model=float(db_info.get("proj_model") or 0.0),
-                        fp_rank_ecr=int(db_info.get("consensus_rank")) if db_info.get("consensus_rank") else None,
+                        projected_points_sleeper=float(db_info.get("proj_sleeper") or 0.0),
+                        projected_points_sleeper_half=float(db_info.get("proj_sleeper_half") or 0.0),
+                        fp_rank_ecr=int(db_info.get("consensus_rank")) if db_info.get("consensus_rank") is not None and pd.notna(db_info.get("consensus_rank")) else None,
                         fp_pos_rank=str(db_info.get("fp_pos_rank") or ""),
                         injury_status="OUT" if is_out else db_status,
                     )
+                    nfl_game = game_by_team.get(team.upper().strip()) or game_by_team.get(_norm_team(team))
+                    active_engine_source = "ENSEMBLE" if source_clean == "ENSEMBLE" else "MODEL"
                     model_res = quant_projection_engine.calculate_player_projection(
                         temp_player,
+                        nfl_game=nfl_game,
                         scoring_format="HALF_PPR",
-                        projection_source="MODEL",
+                        projection_source=active_engine_source,
+                        week=eff_week,
                     )
                     base_proj = model_res.projected_points
                     final_proj = model_res.projected_points
+                    floor_proj = model_res.floor_points
+                    ceiling_proj = model_res.ceiling_points
                     milestone_bonus = model_res.milestone_bonus_points
                     player_xfp = model_res.xfp
                     player_fpoe = model_res.fpoe
@@ -529,8 +496,8 @@ class DFSSlateLoader:
                     base_proj = max(base_proj, boost * 0.88)
                     final_proj = max(final_proj, base_proj)
 
-                # Algorithm Adjusted Fantasy Projection for non-MODEL sources
-                if source_clean != "MODEL":
+                # Algorithm Adjusted Fantasy Projection for non-MODEL/ENSEMBLE sources
+                if source_clean not in ("MODEL", "ENSEMBLE"):
                     if pos == "D":
                         if base_proj > 0 and base_proj not in (4.0, 5.0):
                             final_proj = round(max(3.0, base_proj), 2)
@@ -562,29 +529,30 @@ class DFSSlateLoader:
                 value_ratio = round(final_proj / (salary / 1000), 2) if salary > 0 else 0.0
 
                 # 90th Percentile Ceiling & Safety Floor Modeling (FanDuel Half-PPR Nuances)
-                game_ou = v.get("game_ou", 44.0)
-                team_imp = v.get("team_implied", 22.0)
-                is_fav = v.get("is_fav", False)
+                if source_clean not in ("MODEL", "ENSEMBLE") or is_beneficiary:
+                    game_ou = v.get("game_ou", 44.0)
+                    team_imp = v.get("team_implied", 22.0)
+                    is_fav = v.get("is_fav", False)
 
-                if pos == "QB":
-                    shootout_boost = 2.0 if game_ou >= 48.0 else 0.0
-                    ceiling_proj = round(final_proj * 1.35 + shootout_boost, 2)
-                    floor_proj = round(final_proj * 0.70, 2)
-                elif pos == "RB":
-                    goal_line_boost = 2.5 if (is_fav and team_imp >= 24.0) else 0.0
-                    ceiling_proj = round(final_proj * 1.40 + goal_line_boost, 2)
-                    floor_proj = round(final_proj * 0.65, 2)
-                elif pos == "WR":
-                    boom_boost = 3.0 if game_ou >= 48.0 else (1.2 if soft_rank <= 8 else 0.0)
-                    ceiling_proj = round(final_proj * 1.45 + boom_boost, 2)
-                    floor_proj = round(final_proj * 0.55, 2)
-                elif pos == "TE":
-                    redzone_boost = 2.0 if team_imp >= 24.0 else 0.0
-                    ceiling_proj = round(final_proj * 1.40 + redzone_boost, 2)
-                    floor_proj = round(final_proj * 0.50, 2)
-                else:  # Defense
-                    ceiling_proj = round(final_proj * 1.65, 2)
-                    floor_proj = round(final_proj * 0.40, 2)
+                    if pos == "QB":
+                        shootout_boost = 2.0 if game_ou >= 48.0 else 0.0
+                        ceiling_proj = round(final_proj * 1.35 + shootout_boost, 2)
+                        floor_proj = round(final_proj * 0.70, 2)
+                    elif pos == "RB":
+                        goal_line_boost = 2.5 if (is_fav and team_imp >= 24.0) else 0.0
+                        ceiling_proj = round(final_proj * 1.40 + goal_line_boost, 2)
+                        floor_proj = round(final_proj * 0.65, 2)
+                    elif pos == "WR":
+                        boom_boost = 3.0 if game_ou >= 48.0 else (1.2 if soft_rank <= 8 else 0.0)
+                        ceiling_proj = round(final_proj * 1.45 + boom_boost, 2)
+                        floor_proj = round(final_proj * 0.55, 2)
+                    elif pos == "TE":
+                        redzone_boost = 2.0 if team_imp >= 24.0 else 0.0
+                        ceiling_proj = round(final_proj * 1.40 + redzone_boost, 2)
+                        floor_proj = round(final_proj * 0.50, 2)
+                    else:  # Defense
+                        ceiling_proj = round(final_proj * 1.65, 2)
+                        floor_proj = round(final_proj * 0.40, 2)
 
             enriched.append({
                 "player_id": r["Id"],

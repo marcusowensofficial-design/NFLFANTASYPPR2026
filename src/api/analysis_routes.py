@@ -58,7 +58,7 @@ def resolve_effective_week(db: Session | None = None, week: int | None = None) -
                 return league.current_week
     except Exception:
         pass
-    return 2
+    return 10
 
 
 class TaleOfTheTapeSlot(BaseModel):

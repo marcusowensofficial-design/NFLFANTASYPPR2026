@@ -46,7 +46,7 @@ class FantasyProsSyncService:
                 league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
 
             eff_season = season if season is not None else (league.season if league else 2026)
-            eff_week = week if week is not None else (league.current_week if league else 2)
+            eff_week = week if week is not None else (league.current_week if league else 10)
 
             logger.info("Starting FantasyPros intelligence sync for season=%s, week=%s", eff_season, eff_week)
 

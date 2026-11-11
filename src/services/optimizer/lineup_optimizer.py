@@ -93,8 +93,8 @@ def get_kickoff_timestamp(eval_item: StartSitEvaluation) -> str:
     """Returns a sortable ISO-like string representing game kickoff time."""
     if eval_item.game_date:
         return str(eval_item.game_date)
-    # Default fallback: standard Sunday 1:00 PM ET
-    return "2026-09-13T17:00:00Z"
+    # Default fallback: Sunday 1:00 PM ET (Week 10)
+    return "2026-11-15T18:00:00Z"
 
 
 class LineupOptimizer:

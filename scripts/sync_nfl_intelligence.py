@@ -125,7 +125,7 @@ async def sync_injuries() -> int:
 
 
 def get_current_season_and_week() -> tuple[int, int]:
-    """Dynamically resolve current NFL season and week from database or default to 2026 Week 5."""
+    """Dynamically resolve current NFL season and week from database or default to 2026 Week 10."""
     try:
         from src.db.session import SessionLocal
         from src.db.models import LeagueModel
@@ -135,7 +135,7 @@ def get_current_season_and_week() -> tuple[int, int]:
                 return l.season or 2026, l.current_week
     except Exception:
         pass
-    return 2026, 8
+    return 2026, 10
 
 
 async def sync_dvp(season: int = 2026, week: int | None = None) -> int:
@@ -215,6 +215,21 @@ async def sync_database_and_calibrate(season: int = 2026, week: int | None = Non
         sleeper_res = await sleeper_sync_service.sync_sleeper_projections(season=season, week=week)
         logger.info(f"Sleeper Sync Result: Success={sleeper_res.get('success')}, Enriched={sleeper_res.get('enriched_count')} players")
 
+        # 2b. FantasyPros Intelligence Sync (when API key configured)
+        try:
+            from src.core.config import settings
+            if settings.fantasypros_api_key:
+                from src.services.fantasypros_sync import fantasypros_sync_service
+                logger.info(f"Syncing FantasyPros Consensus & Projections (Season {season}, Week {week})...")
+                fp_res = await fantasypros_sync_service.sync_league_intelligence(
+                    league_id=league.id if league else None,
+                    season=season,
+                    week=week,
+                )
+                logger.info(f"FantasyPros Sync Result: Success={fp_res.get('success')}, Enriched={fp_res.get('enriched_count', 0)} players")
+        except Exception as fp_exc:
+            logger.warning(f"FantasyPros sync warning (non-fatal): {fp_exc}")
+
         # 3. Bulk Quant Projection Calibration
         logger.info("Calibrating all player projections with institutional quant engine...")
         calib_res = await bulk_projection_service.calibrate_all_players(season=season, week=week, projection_source="MODEL")
@@ -228,7 +243,7 @@ async def main():
     parser = argparse.ArgumentParser(description="Master NFL Intelligence Synchronizer")
     parser.add_argument("--with-db", action="store_true", help="Also sync ESPN, Sleeper, and calibrate database projections")
     parser.add_argument("--season", type=int, default=2026, help="NFL season year (default: 2026)")
-    parser.add_argument("--week", type=int, default=8, help="NFL week number (default: 8)")
+    parser.add_argument("--week", type=int, default=10, help="NFL week number (default: 10)")
     args = parser.parse_args()
 
     logger.info(f"=== Starting Master NFL Intelligence Sync (Season {args.season}, Week {args.week}) ===")

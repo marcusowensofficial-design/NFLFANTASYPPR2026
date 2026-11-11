@@ -99,7 +99,7 @@ def test_scoring_engine_dvp_reasons():
         away_implied_total=21.0,
     )
 
-    ev = scoring_engine.evaluate_player(qb, nfl_game=game)
+    ev = scoring_engine.evaluate_player(qb, nfl_game=game, week=1)
     assert ev.dvp_fpa is not None
     assert ev.dvp_fpa["defensive_team"] == "DAL"
     assert ev.dvp_fpa["dk_fpa"] >= 20.0

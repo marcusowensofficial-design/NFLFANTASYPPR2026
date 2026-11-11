@@ -15,10 +15,15 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from src.adapters.nfl.dvp_client import dvp_client
 from src.adapters.nfl.schedule_client import NFLGame, nfl_schedule_client
 from src.db.models import PlayerModel
 from src.db.session import SessionLocal
-from src.services.recommendation.projection_engine import quant_projection_engine
+from src.services.recommendation.projection_engine import (
+    QuantProjectionEngine,
+    _norm_team,
+    quant_projection_engine,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +46,17 @@ class BulkProjectionCalibrationService:
         """Calibrates and persists institutional quant projections for all players in the database."""
         db = self._get_db()
         try:
-            # 1. Fetch official week schedule
+            # 1. Hydrate DvP matrix from SQLite and fetch official week schedule
+            dvp_client.ensure_hydrated(season=season, week=week)
             games = await nfl_schedule_client.fetch_week_schedule(season=season, week=week)
             game_by_team: dict[str, NFLGame] = {}
             for g in games:
-                game_by_team[g.home_team.upper().strip()] = g
-                game_by_team[g.away_team.upper().strip()] = g
+                ht = g.home_team.upper().strip()
+                at = g.away_team.upper().strip()
+                game_by_team[ht] = g
+                game_by_team[at] = g
+                game_by_team[_norm_team(ht)] = g
+                game_by_team[_norm_team(at)] = g
 
             # 2. Retrieve all players
             stmt = select(PlayerModel)
@@ -58,17 +68,29 @@ class BulkProjectionCalibrationService:
             calibrated_count = 0
             position_counts: dict[str, int] = {}
             top_performers: list[dict[str, Any]] = []
+            pairs: list[tuple[PlayerModel, Any]] = []
 
             for p in players:
-                team_clean = p.pro_team.upper().strip()
+                team_clean = _norm_team(p.pro_team or "")
                 nfl_game = game_by_team.get(team_clean)
 
-                # Run Institutional Quant Engine
+                # Run Institutional Quant Engine (season-long PPR baseline for DB columns)
                 proj_res = quant_projection_engine.calculate_player_projection(
                     player=p,
                     nfl_game=nfl_game,
                     projection_source=projection_source,
+                    scoring_format="PPR",
+                    week=week,
                 )
+                pairs.append((p, proj_res))
+
+            # Apply team-level pass/rush conservation normalization
+            QuantProjectionEngine.normalize_team_projections(pairs, scoring_format="PPR")
+
+            for p, proj_res in pairs:
+                team_clean = _norm_team(p.pro_team or "")
+                nfl_game = game_by_team.get(team_clean)
+                is_bye = proj_res.model_provenance.get("reason") == "BYE week" or nfl_game is None
 
                 # Persist mathematical calibrations
                 p.projected_points_model = proj_res.model_points
@@ -89,7 +111,7 @@ class BulkProjectionCalibrationService:
                         "proj_model": proj_res.model_points,
                         "proj_consensus": proj_res.consensus_points,
                         "active": proj_res.projected_points,
-                        "opponent": nfl_game.get_opponent_for_team(team_clean) if nfl_game else "BYE",
+                        "opponent": "BYE" if is_bye else nfl_game.get_opponent_for_team(team_clean),
                     })
 
             db.commit()

@@ -208,7 +208,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
                 <span style={{ fontSize: '18px' }}>🎯</span>
                 <h3 className="positional-needs-title">Roster Positional Needs Diagnostic</h3>
                 <span className="pill purple" style={{ fontSize: '11px', fontWeight: 700 }}>
-                  Week {waivers.week || 5} 2026 Intelligence
+                  Week {waivers.week || 10} 2026 Intelligence
                 </span>
               </div>
               <p className="positional-needs-desc">
@@ -334,7 +334,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '22px' }}>🏆</span>
                 <h3 className="card-title" style={{ color: '#38bdf8' }}>
-                  2026 Week {waivers.week || 5} Expert Consensus Wire Board
+                  2026 Week {waivers.week || 10} Expert Consensus Wire Board
                 </h3>
               </div>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
@@ -557,11 +557,11 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '24px' }}>🌐</span>
                 <h3 className="card-title" style={{ color: '#38bdf8' }}>
-                  2026 Week {waivers.week || 7} League-Wide Positional Needs & Denial Radar
+                  2026 Week {waivers.week || 10} League-Wide Positional Needs & Denial Radar
                 </h3>
               </div>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
-                Forensically cross-references all 8 rosters against Week {waivers.week || 7} Byes (BUF, JAX, LAC, WSH), live injury reports, and starter fragility. Identifies each rival's desperate targets and reveals high-leverage <strong>defensive waiver claim blocks</strong> for your team.
+                Forensically cross-references all 8 rosters against Week {waivers.week || 10} Byes ({({ 8: 'HOU, NO, NYG, SF', 9: 'PIT, TEN', 10: 'CHI, DEN, PHI, TB', 11: 'ATL, CLE, GB, LAR, NE, SEA', 12: 'None', 13: 'BAL, IND, LV, NYJ', 14: 'ARI, DAL' } as Record<number, string>)[waivers.week || 10] || 'None'}), live injury reports, and starter fragility. Identifies each rival's desperate targets and reveals high-leverage <strong>defensive waiver claim blocks</strong> for your team.
               </p>
             </div>
             <button
@@ -580,7 +580,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
             <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
               <div className="spinner" style={{ margin: '0 auto 16px' }} />
               <p style={{ fontSize: '14px', fontWeight: 600 }}>
-                Scanning all 8 league rosters, Week {waivers.week || 7} bye casualties (BUF, JAX, LAC, WSH), and consensus wire matches...
+                Scanning all 8 league rosters, Week {waivers.week || 10} bye casualties ({({ 8: 'HOU, NO, NYG, SF', 9: 'PIT, TEN', 10: 'CHI, DEN, PHI, TB', 11: 'ATL, CLE, GB, LAR, NE, SEA', 12: 'None', 13: 'BAL, IND, LV, NYJ', 14: 'ARI, DAL' } as Record<number, string>)[waivers.week || 10] || 'None'}), and consensus wire matches...
               </p>
             </div>
           ) : (
@@ -626,7 +626,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
 
                     {/* Casualties: Byes & Injuries */}
                     <div className="league-card-section">
-                      <div className="section-label">Week {waivers.week || 7} Casualties:</div>
+                      <div className="section-label">Week {waivers.week || 10} Casualties:</div>
                       <div className="casualties-wrap">
                         {team.bye_players.length > 0 && (
                           <div className="casualty-group">
@@ -722,7 +722,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
             <div>
               <h3 className="card-title">🎯 Human-Pro Lineup Upgrades & Tactical Wire Claims</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
-                Every recommendation is tailored to diagnosed roster needs and cross-referenced with 2026 Week {waivers.week || 7} expert consensus value.
+                Every recommendation is tailored to diagnosed roster needs and cross-referenced with 2026 Week {waivers.week || 10} expert consensus value.
               </p>
             </div>
             <span className="pill emerald">8-Man Depth Calibrated</span>
@@ -1106,7 +1106,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
             {/* D/ST Lookaheads */}
             <div>
               <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                🛡️ Top Week {waivers?.lookahead_streaming_dst?.[0]?.next_week || 2} D/ST Stashes
+                🛡️ Top Week {waivers?.lookahead_streaming_dst?.[0]?.next_week || 11} D/ST Stashes
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {waivers?.lookahead_streaming_dst?.map((item) => (
@@ -1136,7 +1136,7 @@ export const WaiversTab: React.FC<WaiversTabProps> = ({
             {/* Kicker Lookaheads */}
             <div>
               <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                👟 Top Week {waivers?.lookahead_streaming_k?.[0]?.next_week || 2} Kicker Stashes
+                👟 Top Week {waivers?.lookahead_streaming_k?.[0]?.next_week || 11} Kicker Stashes
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {waivers?.lookahead_streaming_k?.map((item) => (

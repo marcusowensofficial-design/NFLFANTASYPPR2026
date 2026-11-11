@@ -23,12 +23,16 @@ class SleeperSyncService:
     async def sync_sleeper_projections(
         self,
         season: int = 2026,
-        week: int = 2,
+        week: int | None = None,
         season_type: str = "regular",
     ) -> dict[str, Any]:
         """Fetch weekly projections from Sleeper/RotoWire and enrich players in DB."""
         db = self._external_db or SessionLocal()
         try:
+            if week is None:
+                from src.db.models import LeagueModel
+                league = db.execute(select(LeagueModel).order_by(LeagueModel.last_synced_at.desc())).scalars().first()
+                week = league.current_week if league and league.current_week else 10
             raw_projs = await sleeper_client.fetch_projections(
                 season=season, week=week, season_type=season_type
             )
@@ -94,8 +98,10 @@ class SleeperSyncService:
                     raw_stats = matched_item.get("stats") or {}
                     sleeper_pts = float(raw_stats.get("pts_ppr", 0.0) or 0.0)
                     itemized = normalize_sleeper_stats(raw_stats)
+                    sleeper_half = float(itemized.get("pts_half_ppr", 0.0) or 0.0)
 
                     p.projected_points_sleeper = round(sleeper_pts, 2)
+                    p.projected_points_sleeper_half = round(sleeper_half, 2)
                     p.sleeper_projected_stats_json = json.dumps(itemized)
                     enriched_count += 1
 

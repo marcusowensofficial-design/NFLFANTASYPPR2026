@@ -3,7 +3,7 @@
 
 Validates Requirements R1, R2, and R3 per TEST_INFRA.md and PROJECT.md:
 - R1: Live NFL Injuries, Practice Statuses, Beneficiary Next-Man-Up & Offline Cache Fallback.
-- R2: Week 7 Season Transition (SQLite, Byes, Schedule, Vegas Lines, DvP, Projections, DFS Slate).
+- R2: Week 10 Season Transition (SQLite, Byes, Schedule, Vegas Lines, DvP, Projections, DFS Slate).
 - R3: API Router Endpoints & Schemas (Injuries, DFS Salaries, Lineup Optimizer, DvP Ratings, Waiver Consensus, League Summary).
 
 Usage:
@@ -98,7 +98,7 @@ class WebServicesLiveVerifier:
     # ==========================================================================
 
     def verify_data_stores(self):
-        """Verifies local data files and SQLite database state for Week 7."""
+        """Verifies local data files and SQLite database state for Week 10."""
         # 1. Injuries JSON
         inj_path = DATA_DIR / "injuries_live_2026.json"
         if not inj_path.exists():
@@ -139,7 +139,7 @@ class WebServicesLiveVerifier:
                 vegas_data = json.load(f)
             v_week = vegas_data.get("week")
             v_games = len(vegas_data.get("games", []))
-            self._record("Data Store", "Vegas Movement Week", "Week 7 or 8", f"Week {v_week}", v_week in (7, 8))
+            self._record("Data Store", "Vegas Movement Week", "Week 10", f"Week {v_week}", v_week == 10)
             self._record("Data Store", "Vegas Movement Games Count", "14 games", f"{v_games} games", v_games == 14)
 
         # 4. Projections JSON & Parquet
@@ -162,7 +162,7 @@ class WebServicesLiveVerifier:
         try:
             league = db.query(LeagueModel).order_by(LeagueModel.last_synced_at.desc()).first()
             cur_week = league.current_week if league else None
-            self._record("Data Store", "SQLite League Active Week", "Week 7 or 8", f"Week {cur_week}", cur_week in (7, 8))
+            self._record("Data Store", "SQLite League Active Week", "Week 10", f"Week {cur_week}", cur_week == 10)
 
             dvp_count = db.query(DefenseVsPositionModel).filter(
                 DefenseVsPositionModel.season == 2026,
@@ -202,8 +202,8 @@ class WebServicesLiveVerifier:
         self._record("Offline Fallback", "NFLDepthChartClient WAS/WSH Disk Parity", "Valid TeamDepthChart for both", f"WAS={bool(was_chart)}, WSH={bool(wsh_chart)}", has_charts)
 
         # 3. Schedule client offline fallback
-        fallback_schedule = nfl_schedule_client._get_fallback_schedule(week=7)
-        self._record("Offline Fallback", "NFLScheduleClient Week 7 Disk Fallback", "14 games", f"{len(fallback_schedule)} games", len(fallback_schedule) == 14)
+        fallback_schedule = nfl_schedule_client._get_fallback_schedule(week=10)
+        self._record("Offline Fallback", "NFLScheduleClient Week 10 Disk Fallback", "14 games", f"{len(fallback_schedule)} games", len(fallback_schedule) == 14)
 
     def verify_api_endpoints(self):
         """Validates all REST API endpoints for HTTP 200, schema adherence, and data accuracy."""
@@ -245,13 +245,13 @@ class WebServicesLiveVerifier:
         # 8. /api/waiver/consensus-board
         s8, d8 = self._http_get("/api/waiver/consensus-board")
         w_week = d8.get("week") if s8 == 200 and isinstance(d8, dict) else None
-        self._record("API Endpoints", "GET /api/waiver/consensus-board", "HTTP 200, week 7 or 8", f"HTTP {s8}, week {w_week}", s8 == 200 and w_week in (7, 8))
+        self._record("API Endpoints", "GET /api/waiver/consensus-board", "HTTP 200, week 10", f"HTTP {s8}, week {w_week}", s8 == 200 and w_week == 10)
 
         # 9. /api/league/summary
         s9, d9 = self._http_get("/api/league/summary")
         l_week = d9.get("current_week") if s9 == 200 and isinstance(d9, dict) else None
         l_teams = len(d9.get("teams", [])) if s9 == 200 and isinstance(d9, dict) else 0
-        self._record("API Endpoints", "GET /api/league/summary", "HTTP 200, week 7 or 8, 8 teams", f"HTTP {s9}, week {l_week}, {l_teams} teams", s9 == 200 and l_week in (7, 8) and l_teams == 8)
+        self._record("API Endpoints", "GET /api/league/summary", "HTTP 200, week 10, 8 teams", f"HTTP {s9}, week {l_week}, {l_teams} teams", s9 == 200 and l_week == 10 and l_teams == 8)
 
     def print_summary_table(self) -> bool:
         """Prints a human-readable ASCII table of all verification checks."""
@@ -259,7 +259,7 @@ class WebServicesLiveVerifier:
         separator = "-" * len(header)
 
         print("\n" + "=" * len(header))
-        print("  APEX FANTASY PLATFORM: WEEK 7 E2E WEB SERVICES VERIFICATION SUITE")
+        print("  APEX FANTASY PLATFORM: WEEK 10 E2E WEB SERVICES VERIFICATION SUITE")
         if self.server_url:
             print(f"  Target: Remote Server ({self.server_url})")
         else:
@@ -283,7 +283,7 @@ class WebServicesLiveVerifier:
         print("=" * len(header) + "\n")
 
         if all_passed:
-            print(">>> [SUCCESS] All Week 7 E2E Web Services & Contracts PASSED 100% genuine verification.\n")
+            print(">>> [SUCCESS] All Week 10 E2E Web Services & Contracts PASSED 100% genuine verification.\n")
         else:
             print(">>> [FAILURE] One or more verification checks failed. Inspect table above.\n")
 
@@ -291,7 +291,7 @@ class WebServicesLiveVerifier:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Verify Week 7 Web Services and Endpoints Live")
+    parser = argparse.ArgumentParser(description="Verify Week 10 Web Services and Endpoints Live")
     parser.add_argument("--server", type=str, default=None, help="Base URL of running server (e.g. http://127.0.0.1:8000)")
     parser.add_argument("--verbose", action="store_true", help="Print detailed progress logs")
     args = parser.parse_args()

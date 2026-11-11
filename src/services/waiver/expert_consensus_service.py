@@ -23,6 +23,8 @@ from src.services.recommendation.scoring_engine import StartSitEvaluation
 logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
+WEEK_10_PATH = DATA_DIR / "waiver_expert_consensus_week_10_2026.json"
+WEEK_9_PATH = DATA_DIR / "waiver_expert_consensus_week_9_2026.json"
 WEEK_8_PATH = DATA_DIR / "waiver_expert_consensus_week_8_2026.json"
 WEEK_7_PATH = DATA_DIR / "waiver_expert_consensus_week_7_2026.json"
 WEEK_6_PATH = DATA_DIR / "waiver_expert_consensus_week_6_2026.json"
@@ -30,7 +32,30 @@ WEEK_5_PATH = DATA_DIR / "waiver_expert_consensus_week_5_2026.json"
 WEEK_4_PATH = DATA_DIR / "waiver_expert_consensus_week_4_2026.json"
 WEEK_3_PATH = DATA_DIR / "waiver_expert_consensus_week_3_2026.json"
 WEEK_2_PATH = DATA_DIR / "waiver_expert_consensus_week_2_2026.json"
-CONSENSUS_DATA_PATH = WEEK_8_PATH if WEEK_8_PATH.exists() else (WEEK_7_PATH if WEEK_7_PATH.exists() else (WEEK_6_PATH if WEEK_6_PATH.exists() else (WEEK_5_PATH if WEEK_5_PATH.exists() else (WEEK_4_PATH if WEEK_4_PATH.exists() else (WEEK_3_PATH if WEEK_3_PATH.exists() else WEEK_2_PATH)))))
+
+
+def _resolve_latest_consensus_path() -> Path:
+    for wk in range(18, 1, -1):
+        candidate = DATA_DIR / f"waiver_expert_consensus_week_{wk}_2026.json"
+        if candidate.exists():
+            return candidate
+    return WEEK_2_PATH
+
+
+CONSENSUS_DATA_PATH = _resolve_latest_consensus_path()
+
+NFL_BYE_WEEKS_2026: dict[int, set[str]] = {
+    5: {"KC", "CAR"},
+    6: {"CIN", "DET", "MIA", "MIN"},
+    7: {"BUF", "JAX", "JAC", "LAC", "WAS", "WSH"},
+    8: {"HOU", "NO", "NYG", "SF"},
+    9: {"PIT", "TEN"},
+    10: {"CHI", "DEN", "PHI", "TB"},
+    11: {"ATL", "CLE", "GB", "LAR", "NE", "SEA"},
+    12: set(),
+    13: {"BAL", "IND", "LV", "NYJ"},
+    14: {"ARI", "DAL"},
+}
 
 
 class ExpertConsensusPlayerItem(BaseModel):
@@ -84,21 +109,11 @@ class ExpertConsensusWaiverService:
 
     def load_consensus_data(self, week: int | None = None) -> dict[str, Any]:
         """Loads and caches the expert consensus dataset for the active or requested week."""
-        target_path = self.data_path
-        if week == 8 and WEEK_8_PATH.exists():
-            target_path = WEEK_8_PATH
-        elif week == 7 and WEEK_7_PATH.exists():
-            target_path = WEEK_7_PATH
-        elif week == 6 and WEEK_6_PATH.exists():
-            target_path = WEEK_6_PATH
-        elif week == 5 and WEEK_5_PATH.exists():
-            target_path = WEEK_5_PATH
-        elif week == 4 and WEEK_4_PATH.exists():
-            target_path = WEEK_4_PATH
-        elif week == 3 and WEEK_3_PATH.exists():
-            target_path = WEEK_3_PATH
-        elif week == 2 and WEEK_2_PATH.exists():
-            target_path = WEEK_2_PATH
+        target_path = _resolve_latest_consensus_path() if self.data_path == CONSENSUS_DATA_PATH else self.data_path
+        if week is not None:
+            requested = DATA_DIR / f"waiver_expert_consensus_week_{int(week)}_2026.json"
+            if requested.exists():
+                target_path = requested
 
         if target_path == self.data_path and self._cache is not None:
             return self._cache
@@ -148,7 +163,28 @@ class ExpertConsensusWaiverService:
             "Kendre Miller": 4429013,
             "Zach Charbonnet": 4426385,
             "Chris Rodriguez Jr.": 4361579,
-            # Week 5 & Core WRs
+            "Audric Estime": 4569682,
+            "Alvin Kamara": 3054850,
+            "Jadarian Price": 4685512,
+            "Kaleb Johnson": 4819231,
+            "Rico Dowdle": 4038815,
+            "Justice Hill": 4038441,
+            "Dylan Sampson": 5081397,
+            "Kimani Vidal": 4430968,
+            # Week 5–10 WRs
+            "KC Concepcion": 4870653,
+            "DeMario Douglas": 4427095,
+            "Kayshon Boutte": 4429022,
+            "Christian Watson": 4248528,
+            "Omar Cooper Jr.": 4723820,
+            "Tank Dell": 4366031,
+            "Keenan Allen": 15818,
+            "Jakobi Meyers": 3916433,
+            "Malik Washington": 4569603,
+            "Josh Downs": 4688813,
+            "Jordyn Tyson": 4880281,
+            "Malachi Fields": 4682648,
+            "Treylon Burks": 4567156,
             "Keon Coleman": 4635008,
             "Romeo Doubs": 4361432,
             "Jameson Williams": 4426388,
@@ -172,7 +208,7 @@ class ExpertConsensusWaiverService:
             "Jalen Coker": 4695883,
             "Devaughn Vele": 4569559,
             "Caleb Douglas": 4869645,
-            "Mack Hollins": 3045144,
+            "Mack Hollins": 2991662,
             "Demarcus Robinson": 3045147,
             "Dontayvion Wicks": 4428850,
             "Deebo Samuel Sr.": 3126486,
@@ -189,7 +225,18 @@ class ExpertConsensusWaiverService:
             "Pat Freiermuth": 4361411,
             "Michael Mayer": 4429086,
             "David Njoku": 3123076,
-            # Week 5 & Core QBs
+            "Dalton Kincaid": 4385690,
+            "Darren Waller": 2576925,
+            "Chig Okonkwo": 4360635,
+            # Week 5–10 QBs
+            "C.J. Stroud": 4432577,
+            "Geno Smith": 15864,
+            "Kirk Cousins": 14880,
+            "J.J. McCarthy": 4433970,
+            "Michael Penix Jr.": 4360423,
+            "Shedeur Sanders": 4432762,
+            "Daniel Jones": 3917792,
+            "Deshaun Watson": 3122840,
             "Jacoby Brissett": 2578570,
             "Sam Darnold": 3912547,
             "Jalon Daniels": 4596472,
@@ -230,8 +277,25 @@ class ExpertConsensusWaiverService:
             "49ers D/ST": -16025,
             "Carolina Panthers D/ST": -16029,
             "Panthers D/ST": -16029,
+            "Jaguars D/ST": -16030,
+            "Jacksonville Jaguars D/ST": -16030,
+            "Texans D/ST": -16034,
+            "Houston Texans D/ST": -16034,
+            "Rams D/ST": -16014,
+            "Los Angeles Rams D/ST": -16014,
+            "Ravens D/ST": -16033,
+            "Baltimore Ravens D/ST": -16033,
+            "Vikings D/ST": -16016,
+            "Minnesota Vikings D/ST": -16016,
+            "Bills D/ST": -16002,
+            "Buffalo Bills D/ST": -16002,
             "Cyrus Allen": 4912218,
-            # Week 5 & Core Ks
+            # Week 5–10 Ks
+            "Chris Boswell": 17372,
+            "Evan McPherson": 4360234,
+            "Andre Szmyt": 4258620,
+            "Andy Borregales": 4569923,
+            "Matt Gay": 4249087,
             "Cairo Santos": 17427,
             "Harrison Mevis": 4574716,
             "Eddy Pineiro": 4034949,
@@ -267,23 +331,39 @@ class ExpertConsensusWaiverService:
             "T.J. Hockenson": 13.5, "Tyler Higbee": 11.2, "Kenyon Sadiq": 9.8,
             "Hunter Henry": 10.1, "Mike Gesicki": 9.0, "Brenton Strange": 8.2,
             "Greg Dulcich": 7.8, "Kyle Pitts Sr.": 10.5, "Dalton Schultz": 10.0,
-            "Pat Freiermuth": 8.2, "Michael Mayer": 6.5,
+            "Pat Freiermuth": 8.2, "Michael Mayer": 6.5, "Dalton Kincaid": 11.5,
+            "Darren Waller": 9.4, "Chig Okonkwo": 8.8,
+            "Audric Estime": 12.6, "Alvin Kamara": 11.4, "Jadarian Price": 10.8,
+            "Kaleb Johnson": 11.8, "Rico Dowdle": 10.9, "Justice Hill": 9.6,
+            "Dylan Sampson": 9.2, "Kimani Vidal": 10.5,
+            "KC Concepcion": 12.4, "DeMario Douglas": 11.2, "Kayshon Boutte": 10.8,
+            "Christian Watson": 12.0, "Omar Cooper Jr.": 10.6, "Tank Dell": 11.5,
+            "Keenan Allen": 11.0, "Jakobi Meyers": 10.4, "Malik Washington": 8.9,
+            "Josh Downs": 9.8, "Jordyn Tyson": 9.5, "Malachi Fields": 8.4,
+            "Treylon Burks": 8.2,
             "Jacoby Brissett": 17.5, "Sam Darnold": 17.2, "Jalon Daniels": 16.5,
             "Trevor Lawrence": 17.2, "Bryce Young": 16.8, "Malik Willis": 15.5,
             "Dak Prescott": 17.0, "Bo Nix": 16.2, "Baker Mayfield": 16.5,
+            "C.J. Stroud": 18.4, "Geno Smith": 16.4, "Kirk Cousins": 16.1,
+            "J.J. McCarthy": 15.8, "Michael Penix Jr.": 15.4, "Shedeur Sanders": 15.6,
+            "Daniel Jones": 14.8, "Deshaun Watson": 14.5,
             "Saints D/ST": 8.5, "Bears D/ST": 8.0, "Seahawks D/ST": 7.5,
             "Browns D/ST": 7.5, "Steelers D/ST": 7.5, "Lions D/ST": 7.5,
             "Patriots D/ST": 7.0, "Packers D/ST": 7.0, "Buccaneers D/ST": 6.5,
+            "Jaguars D/ST": 8.6, "Texans D/ST": 8.4, "Rams D/ST": 8.2,
+            "Ravens D/ST": 8.0, "Vikings D/ST": 7.4, "Bills D/ST": 7.2,
             "Cairo Santos": 8.8, "Harrison Mevis": 8.2, "Eddy Pineiro": 8.2,
             "Nick Folk": 7.8, "Jake Bates": 8.8, "Trey Smack": 9.0,
             "Will Reichard": 8.2, "Chase McLaughlin": 7.8,
             "Spencer Shrader": 8.5, "Dominic Zvada": 8.2, "Tyler Bass": 9.0,
+            "Chris Boswell": 9.1, "Evan McPherson": 8.9, "Andre Szmyt": 8.3,
+            "Andy Borregales": 8.1, "Matt Gay": 8.0,
         }
 
         for pos_key, p_list in pos_dict.items():
             for p_info in p_list:
                 name = p_info["full_name"]
-                pid = KNOWN_IDS.get(name) or (9900000 + abs(hash(name)) % 90000)
+                pid = p_info.get("player_id") or KNOWN_IDS.get(name) or (9900000 + abs(hash(name)) % 90000)
                 existing = db.execute(
                     select(PlayerModel).where((PlayerModel.id == pid) | (PlayerModel.full_name == name))
                 ).scalars().first()
@@ -324,7 +404,7 @@ class ExpertConsensusWaiverService:
         rostered_names: set[str] | None = None,
         rostered_pids: set[int] | None = None,
         rostered_dst_teams: set[str] | None = None,
-        current_week: int = 8,
+        current_week: int = 10,
     ) -> list[PositionalNeedItem]:
         """Diagnoses team roster health, injuries, projection gaps, and bench depth by position.
 
@@ -382,7 +462,7 @@ class ExpertConsensusWaiverService:
             return avail
 
         # Identify bye teams for current week (Week 8: HOU, NO, NYG, SF | Week 7: BUF, JAX, LAC, WSH | Week 6: CIN, DET, MIA, MIN | Week 5: KC, CAR)
-        bye_teams = {"HOU", "NO", "NYG", "SF"} if current_week == 8 else ({"BUF", "JAX", "LAC", "WSH"} if current_week == 7 else ({"CIN", "DET", "MIA", "MIN"} if current_week == 6 else ({"KC", "CAR"} if current_week == 5 else set())))
+        bye_teams = NFL_BYE_WEEKS_2026.get(current_week, set())
 
         needs: list[PositionalNeedItem] = []
 
@@ -875,7 +955,7 @@ class ExpertConsensusWaiverService:
         self,
         db: Session,
         league_id: int,
-        current_week: int = 8,
+        current_week: int = 10,
         user_team_id: int = 6,
     ) -> list[LeagueTeamWaiverProfile]:
         """Analyzes all teams in the league to diagnose their Week 8 positional needs, bye casualties,
@@ -902,7 +982,7 @@ class ExpertConsensusWaiverService:
         rostered_names.update(rostered_names_clean)
         rostered_dst_teams = {r[2].upper() for r in rostered_rows if r[3] and r[3].upper() in ("D/ST", "DST") and r[2]}
 
-        bye_teams = {"HOU", "NO", "NYG", "SF"} if current_week == 8 else ({"BUF", "JAX", "LAC", "WSH"} if current_week == 7 else ({"CIN", "DET", "MIA", "MIN"} if current_week == 6 else ({"KC", "CAR"} if current_week == 5 else set())))
+        bye_teams = NFL_BYE_WEEKS_2026.get(current_week, set())
 
         profiles: list[LeagueTeamWaiverProfile] = []
 
@@ -948,31 +1028,36 @@ class ExpertConsensusWaiverService:
                             top_targets_set.append(tgt)
             top_targets = top_targets_set[:4]
 
-            # Generate defensive blocking intelligence
+            # Generate defensive blocking intelligence dynamically for the active week
             is_user = (t.id == user_team_id)
+            te_count = len([e for e in user_evals if e.position == "TE"])
+            week_byes_str = ", ".join(sorted(bye_teams)) if bye_teams else "None"
             if is_user:
-                intel = "🛡️ YOUR ROSTER: Submit priority $0 claim by placing Tyreek Hill into IR slot. Secure T.J. Hockenson (#1 TE) and Will Shipley (#1 RB)."
+                inj_preview = f" Monitor {', '.join(injured_players[:2])} injury status/IR eligibility." if injured_players else ""
+                bye_preview = f" Account for {len(bye_players)} Week {current_week} bye(s) ({week_byes_str})." if bye_players else ""
+                intel = f"🛡️ YOUR ROSTER (Week {current_week}): Prioritize top consensus upgrades for thin slots.{inj_preview}{bye_preview}".strip()
                 prio = "LOW"
-            elif any("Saquon" in ip for ip in injured_players):
-                intel = f"🚨 URGENT BLOCK TARGET: {t.name} has Saquon Barkley injured (hamstring DNP) and Travis Kelce ON BYE. Snagging Will Shipley and T.J. Hockenson starves their starting lineup of viable replacements!"
+            elif len(bye_players) >= 3 or (len(injured_players) >= 3 and len(bye_players) >= 1):
+                missing_parts = []
+                if injured_players:
+                    missing_parts.append(f"injured ({', '.join(injured_players[:2])})")
+                if bye_players:
+                    missing_parts.append(f"Week {current_week} byes ({', '.join(bye_players[:2])})")
+                intel = f"🚨 URGENT BLOCK TARGET: {t.name} is shorthanded with {' and '.join(missing_parts)}. Claiming their top positional replacements starves their Week {current_week} lineup."
                 prio = "URGENT"
-            elif any("Achane" in ip for ip in injured_players) and len(injured_players) >= 5:
-                intel = f"⚠️ HIGH BLOCK TARGET: {t.name} has Achane on IR with Love & Stevenson questionable. Claiming Will Shipley or Kyle Monangai denies their only starting RB solutions!"
+            elif len(injured_players) >= 2 or len(bye_players) >= 2:
+                intel = f"⚠️ HIGH BLOCK TARGET: {t.name} carries {len(injured_players)} injury flag(s) and {len(bye_players)} Week {current_week} bye(s) ({week_byes_str}). Snagging plug-in starters blocks their pivot."
                 prio = "HIGH"
-            elif len(bye_players) >= 3:
-                intel = f"⚡ HIGH BLOCK TARGET: {t.name} is gutted by 4 Week 5 Byes ({', '.join(b.split(' ')[0] for b in bye_players[:3])}). Blocking Kyle Monangai and Cairo Santos denies their fill-in starters."
-                prio = "HIGH"
-            elif any("Mahomes" in bp for bp in bye_players):
-                intel = f"💡 MODERATE BLOCK TARGET: {t.name} has Patrick Mahomes on bye and Kirk Cousins facing Denver. Grabbing Jacoby Brissett prevents their top QB streaming pivot."
-                prio = "MODERATE"
-            elif len([e for e in user_evals if e.position == 'TE']) == 1:
-                intel = f"💡 MODERATE BLOCK TARGET: {t.name} has only 1 tight end on the roster. Stashing T.J. Hockenson or Tyler Higbee blocks their only positional upgrade path."
-                prio = "MODERATE"
-            elif any("Lamar" in ip for ip in injured_players):
-                intel = f"💡 MODERATE BLOCK TARGET: {t.name} has Lamar Jackson nursing an ankle injury. Stashing Jacoby Brissett or Sam Darnold denies their elite QB insurance."
+            elif te_count <= 1 or injured_players or bye_players:
+                reason = (
+                    f"only {te_count} TE rostered"
+                    if te_count <= 1
+                    else f"{len(injured_players)} injured / {len(bye_players)} Week {current_week} bye slot(s)"
+                )
+                intel = f"💡 MODERATE BLOCK TARGET: {t.name} has {reason}. Stashing viable Week {current_week} streamers limits their upgrade paths."
                 prio = "MODERATE"
             else:
-                intel = "Standard league competitor. Roster is relatively balanced; monitor weekend practice reports."
+                intel = f"Standard league competitor for Week {current_week}. Roster is relatively balanced; monitor weekend practice reports."
                 prio = "LOW"
 
             profiles.append(

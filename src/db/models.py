@@ -3,7 +3,7 @@
 import json
 from datetime import datetime, timezone
 from typing import Any
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, ForeignKeyConstraint, Index, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, ForeignKeyConstraint, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.adapters.espn.constants import SLOT_NAME_MAP, RosterSlot
@@ -117,6 +117,7 @@ class PlayerModel(Base):
     projected_points_espn: Mapped[float] = mapped_column(Float, default=0.0)
     projected_points_fp: Mapped[float] = mapped_column(Float, default=0.0)
     projected_points_sleeper: Mapped[float] = mapped_column(Float, default=0.0)
+    projected_points_sleeper_half: Mapped[float] = mapped_column(Float, default=0.0)
     projected_points_model: Mapped[float] = mapped_column(Float, default=0.0)
     projected_points_consensus: Mapped[float] = mapped_column(Float, default=0.0)
     fp_projected_stats_json: Mapped[str] = mapped_column(Text, default="{}")
@@ -301,5 +302,40 @@ class DefenseVsPositionModel(Base):
     @supporting_stats.setter
     def supporting_stats(self, value: dict[str, float]) -> None:
         self.supporting_stats_json = json.dumps(value)
+
+
+class WeeklyProjectionHistoryModel(Base):
+    """Longitudinal pre-kickoff projections vs realized actuals across weeks and scoring formats."""
+
+    __tablename__ = "weekly_projection_history"
+    __table_args__ = (
+        UniqueConstraint("player_id", "season", "week", "scoring_format", name="uq_proj_hist_player_wk_fmt"),
+        Index("ix_proj_hist_season_week_fmt", "season", "week", "scoring_format"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    player_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    player_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    position: Mapped[str] = mapped_column(String(10), nullable=False)
+    pro_team: Mapped[str] = mapped_column(String(10), nullable=False, default="FA")
+    season: Mapped[int] = mapped_column(Integer, nullable=False, default=2026)
+    week: Mapped[int] = mapped_column(Integer, nullable=False)
+    scoring_format: Mapped[str] = mapped_column(String(16), nullable=False, default="HALF_PPR")
+    model_pts: Mapped[float] = mapped_column(Float, default=0.0)
+    quant_pts: Mapped[float] = mapped_column(Float, default=0.0)
+    xgboost_pts: Mapped[float] = mapped_column(Float, default=0.0)
+    ensemble_pts: Mapped[float] = mapped_column(Float, default=0.0)
+    props_pts: Mapped[float] = mapped_column(Float, default=0.0)
+    consensus_pts: Mapped[float] = mapped_column(Float, default=0.0)
+    fp_pts: Mapped[float] = mapped_column(Float, default=0.0)
+    sleeper_pts: Mapped[float] = mapped_column(Float, default=0.0)
+    espn_pts: Mapped[float] = mapped_column(Float, default=0.0)
+    actual_pts: Mapped[float | None] = mapped_column(Float, nullable=True)
+    floor_10th: Mapped[float] = mapped_column(Float, default=0.0)
+    median_50th: Mapped[float] = mapped_column(Float, default=0.0)
+    ceiling_85th: Mapped[float] = mapped_column(Float, default=0.0)
+    ceiling_95th: Mapped[float] = mapped_column(Float, default=0.0)
+    is_bye: Mapped[bool] = mapped_column(Boolean, default=False)
+    snapshot_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
 
 

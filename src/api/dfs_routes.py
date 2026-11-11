@@ -276,7 +276,7 @@ class DFSOptimizeRequest(BaseModel):
     mode: str = Field(default="SINGLE_ENTRY_GPP", description="'SINGLE_ENTRY_GPP' or 'CASH'")
     num_lineups: int = Field(default=1, ge=1, le=20, description="Number of unique lineups to generate (1-20)")
     randomness: float = Field(default=0.0, ge=0.0, le=0.5, description="Projection variance factor for portfolio diversification")
-    projection_source: str = Field(default="MODEL", description="Projection source: MODEL, CONSENSUS, FANTASYPROS, SLEEPER, ESPN")
+    projection_source: str = Field(default="MODEL", description="Projection source: MODEL, ENSEMBLE, CONSENSUS, FANTASYPROS, SLEEPER, ESPN")
     custom_projections: dict[str, float] = Field(default_factory=dict, description="Custom projection overrides (player name or ID to points)")
     stack_qb: str | None = Field(default=None, description="Optional quarterback to stack")
     stack_team: str | None = Field(default=None, description="Team abbreviation for primary stack")
@@ -406,7 +406,7 @@ async def get_available_slates() -> list[dict[str, Any]]:
 async def get_dfs_salaries(
     slate: str | None = Query(default=None, description="Slate ID (e.g. 'main', 'early')"),
     slate_id: str | None = Query(default=None, description="Slate ID alias"),
-    projection_source: str = Query(default="MODEL", description="Projection source: MODEL, CONSENSUS, FANTASYPROS, SLEEPER, ESPN"),
+    projection_source: str = Query(default="MODEL", description="Projection source: MODEL, ENSEMBLE, CONSENSUS, FANTASYPROS, SLEEPER, ESPN"),
 ) -> dict[str, Any]:
     """Returns salary catalog and player pool for the specified DFS slate."""
     target_slate = slate or slate_id or "main"
@@ -435,7 +435,7 @@ async def get_dfs_salaries(
 @router.get("/slate-data")
 async def get_slate_data(
     slate_id: str = Query(default="main"),
-    projection_source: str = Query(default="MODEL", description="Projection source: MODEL, CONSENSUS, FANTASYPROS, SLEEPER, ESPN"),
+    projection_source: str = Query(default="MODEL", description="Projection source: MODEL, ENSEMBLE, CONSENSUS, FANTASYPROS, SLEEPER, ESPN"),
     force_reload: bool = Query(default=False, description="Force re-reading CSV from disk"),
 ) -> dict[str, Any]:
     """Returns enriched player pool, top game stacks, chalk radar, and tournament leverage targets."""

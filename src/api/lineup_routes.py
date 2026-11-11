@@ -73,7 +73,7 @@ class LineupPushResponse(BaseModel):
 async def get_optimal_lineup(
     team_id: int | None = Query(default=None, description="Optional team ID (defaults to user team)"),
     mode: str = Query(default="BALANCED", description="Strategy mode: BALANCED, CEILING, FLOOR, or AUTO"),
-    projection_source: str = Query(default="MODEL", description="Projection source: MODEL, FANTASYPROS, SLEEPER, ESPN, or CONSENSUS"),
+    projection_source: str = Query(default="MODEL", description="Projection source: MODEL, ENSEMBLE, FANTASYPROS, SLEEPER, ESPN, or CONSENSUS"),
     opponent_projected_points: float | None = Query(default=None, description="Optional opponent projected points (auto-retrieved from matchup if omitted)"),
     db: Session = Depends(get_db),
 ) -> OptimizedLineupResult:
@@ -201,6 +201,7 @@ async def get_optimal_lineup(
             projection_source=proj_source_val,
             actual_points=player.actual_points,
             lineup_locked=re.lineup_locked,
+            week=league.current_week,
         )
         evaluations.append(ev)
 

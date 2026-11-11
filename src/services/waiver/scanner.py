@@ -101,7 +101,7 @@ class RosterArchitectureAudit(BaseModel):
 
 class WaiverAnalysisResult(BaseModel):
     season: int = 2026
-    week: int = 5
+    week: int = 10
     user_team_id: int
     total_available_scanned: int
     top_upgrades: list[WaiverUpgradeRecommendation]
@@ -133,7 +133,7 @@ class WaiverScanner:
         injuries_by_athlete: dict[int, Any] | None = None,
         weather_by_team: dict[str, Any] | None = None,
         league_size: int = 8,
-        current_week: int = 7,
+        current_week: int = 10,
         next_week_games: list[Any] | None = None,
     ) -> WaiverAnalysisResult:
         # 0. Ensure 2026 expert consensus players are present in PlayerModel (for production/full DBs)
